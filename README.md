@@ -1,25 +1,53 @@
-## AWS Amplify Next.js (App Router) Starter Template
+# Agtasks
 
-This repository provides a starter template for creating applications using Next.js (App Router) and AWS Amplify, emphasizing easy setup for authentication, API, and database capabilities.
+Agtasks es un sistema de gestión de tareas agrícolas construido con Next.js 15, React 19, TypeScript y React Query. Esta aplicación consume la API de ClickUp para gestionar listas y tareas.
 
-## Overview
+## Características
 
-This template equips you with a foundational Next.js application integrated with AWS Amplify, streamlined for scalability and performance. It is ideal for developers looking to jumpstart their project with pre-configured AWS services like Cognito, AppSync, and DynamoDB.
+- Gestión de listas y tareas consumiendo la API de ClickUp con React Query.
+- Internacionalización con `next-intl`.
+- UI basada en ui.shadcn/tailwind CSS.
 
-## Features
+## Tecnologías
 
-- **Authentication**: Setup with Amazon Cognito for secure user authentication.
-- **API**: Ready-to-use GraphQL endpoint with AWS AppSync.
-- **Database**: Real-time database powered by Amazon DynamoDB.
+- [Nextjs 15 App Router](https://nextjs.org/docs)
+- [React 19](https://react.dev/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [React Hook Form](https://react-hook-form.com/)
+- [React Query](https://tanstack.com/query/latest/docs/framework/react/overview)
+- [shadcn/ui](https://ui.shadcn.com/docs)
+- [Lucide React Icons](https://lucide.dev/icons/)
+- [ClickUp API](https://developer.clickup.com/)
+- [Amplify Gen2](https://docs.amplify.aws/nextjs/start/quickstart/nextjs-app-router-client-components/)
 
-## Deploying to AWS
 
-For detailed instructions on deploying your application, refer to the [deployment section](https://docs.amplify.aws/nextjs/start/quickstart/nextjs-app-router-client-components/#deploy-a-fullstack-app-to-aws) of our documentation.
+## Instalación
 
-## Security
+1. Clona el repositorio:
+```
+git clone https://github.com/FrancoGavegno/agtasks-app.git 
+cd agtasks-app
+```
 
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+2. Instala las dependencias:
+```
+npm install
+```
 
-## License
+3. Configura las variables de entorno: 
+Crea un archivo .env.local en la raíz del proyecto y añade tu clave de API de ClickUp.
 
-This library is licensed under the MIT-0 License. See the LICENSE file.
+```
+// file env.local
+
+API_URL='your-task-manager-api-url'
+API_KEY='your-task-manager-api-key'
+PARENT='your-task-manager-parent-id'
+```
+
+4. Inicia el servidor de desarrollo: 
+```
+npm run dev
+```
+
+5. Esta App corre por defecto en http://localhost:3000.

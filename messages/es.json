@@ -1,0 +1,70 @@
+{
+  "DashPage": {
+    "title": "Dashboard"
+  },
+  "AccountsPage": {
+    "title": "Cuentas Conectadas",
+    "subtitle": "Administra tus cuentas de gestor de tareas conectadas",
+    "noAccountTitle": "No hay cuentas conectadas",
+    "noAccountSubtitle": "Conecta tu cuenta de gestor de tareas para comenzar",
+    "noAccountButton": "Conectar Cuenta",
+    "connectedEmail": "Conectado con email",
+    "lastSynced": "Última sincronización",
+    "connected": "Conectado"
+  },
+  "TemplatesPage": {
+    "title": "Plantillas",
+    "subtitle": "Crea nuevas plantillas a partir de plantillas preconfiguradas de su gestor de tareas",
+    "addTemplate": "Agregar Plantilla",
+    "useTemplate": "Usar Plantilla",
+    "dialogTitle": "Crea un nuevo proyecto desde una plantilla",
+    "dialogDescription": "Crea un nuevo proyecto usando",
+    "dialogDescription2": "como plantilla. Se copiarán todas las tareas y la estructura.",
+    "dialogLabel": "Nombre del proyecto",
+    "dialogInput": "Ingresa nombre del proyecto",
+    "dialogLoader": "Creando...",
+    "dialogCheck": "Crear Proyecto",
+    "noTemplatesTitle": "No hay plantillas disponibles",
+    "noTemplatesSubtitle": "Aún no hay plantillas disponibles en tu espacio de trabajo."
+  },
+  "ProjectsPage": {
+    "title": "Proyectos",
+    "subtitle": "Aquí tienes una lista de tus proyectos",
+    "dropdownLabel": "Acciones",
+    "dropdownViewDetails": "Ver detalle",
+    "dropdownViewTasks": "Ver tareas",
+    "dropdownEdit": "Editar proyecto",
+    "dropdownDelete": "Borrar proyecto"
+  },
+  "TasksPage": {
+    "title": "Tareas",
+    "subtitle": "Administra la lista de tareas del proyecto",
+    "filterPlaceholder": "Filtrar tareas...",
+    "statusSearch": "Estado",
+    "prioritySearch": "Prioridad",
+    "colTask": "Tareas",
+    "colKoboForm": "Form Kobo",
+    "colStatus": "Estado",
+    "colPriority": "Prioridad",
+    "dropdownLabel": "Acciones",
+    "dropdownEdit":"Editar",
+    "dropdownKobo":" Form",
+    "dropdownDelete":"Borrar"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "accounts": "Cuentas",
+    "projects": "Proyectos",
+    "templates": "Plantillas",
+    "team": "Equipo",
+    "subscriptions": "Suscripciones",
+    "notifications": "Notificaciones",
+    "support": "Ayuda y Soporte",
+    "settings": "Configuración",
+    "profile": "Perfil"
+  },
+  "footer": {
+    "poweredBy": "Desarrollado por"
+  }
+}
+

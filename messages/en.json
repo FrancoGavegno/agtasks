@@ -1,0 +1,90 @@
+{
+  "DashPage": {
+    "title": "Dashboard"
+  },
+  "AccountsPage": {
+    "title": "Connected Account",
+    "subtitle": "Manage your connected task manager account",
+    "noAccountTitle": "No account connected",
+    "noAccountSubtitle": "Connect your task manager account to get started",
+    "noAccountButton": "Connect Account",
+    "connectedEmail": "Connected email",
+    "lastSynced": "Last synced",
+    "connected": "Connected"
+  },
+  "TemplatesPage": {
+    "title": "Templates",
+    "subtitle": "Browse and use project templates",
+    "addTemplate": "Create",
+    "useTemplate": "Use this template",
+    "newTemplate": "Add template",
+    "dialogTitle": "Create a new project from template",
+    "dialogDescription": "Create a new project using ",
+    "dialogDescription2": "as a template. All tasks and structure will be copied.",
+    "dialogLabel": "Project name",
+    "dialogInput": "Enter project name",
+    "dialogLoader": "Creating...",
+    "dialogCheck": "Create Project",
+    "noTemplatesTitle": "No templates available",
+    "noTemplatesSubtitle": "No templates found matching your criteria."
+  },
+  "ProjectsPage": {
+    "title": "Projects",
+    "subtitle": "View and manage your projects",
+    "createButton": "Create",
+    "dropdownLabel": "Actions",
+    "dropdownViewDetails": "View details",
+    "dropdownViewTasks": "View tasks",
+    "dropdownEdit": "Edit project",
+    "dropdownDelete": "Delete project",
+    "noProjectsTitle": "No projects available",
+    "noProjectsSubtitle": "There are no projects available in your workspace yet."
+  },
+  "TasksPage": {
+    "title": "Tasks",
+    "subtitle": "View and manage your project tasks",
+    "createButton": "Create",
+    "filterPlaceholder": "Filter tasks...",
+    "statusSearch": "Status",
+    "prioritySearch": "Priority",
+    "colTask": "Tasks",
+    "colKoboForm": "Kobo Form",
+    "colStatus": "Status",
+    "colPriority": "Priority",
+    "dropdownLabel": "Actions",
+    "dropdownEdit":"Edit",
+    "dropdownKobo":"Kobo Form",
+    "dropdownDelete":"Delete",
+    "noTasksTitle": "No tasks available",
+    "noTasksSubtitle": "There are no tasks available in this project yet."
+  },
+  "KoboFormsPage": {
+    "title": "Kobo Forms",
+    "subtitle": "Manage the list of your Kobo forms",
+    "filterPlaceholder": "Filter forms...",
+    "colForm": "Form",
+    "colStatus": "Status",
+    "colDate": "Date",
+    "dropdownLabel": "Actions",
+    "dropdownEdit":"Edit",
+    "dropdownDelete":"Delete",
+    "noFormsTitle": "No forms available",
+    "noFormsSubtitle": "There are no forms available in your workspace yet."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "accounts": "Accounts",
+    "projects": "Projects",
+    "templates": "Templates",
+    "team": "Team",
+    "subscriptions": "Subscriptions",
+    "notifications": "Notifications",
+    "support": "Help & Support",
+    "settings": "Settings",
+    "profile": "Profile"
+  },
+  "footer": {
+    "poweredBy": "Powered by"
+  }
+}
+

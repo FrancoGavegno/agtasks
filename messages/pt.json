@@ -1,0 +1,17 @@
+{
+  "nav": {
+    "dashboard": "Painel",
+    "accounts": "Contas",
+    "projects": "Projetos",
+    "templates": "Modelos",
+    "team": "Equipe",
+    "subscriptions": "Assinaturas",
+    "notifications": "Notificações",
+    "support": "Ajuda e Suporte",
+    "settings": "Configurações"
+  },
+  "footer": {
+    "poweredBy": "Desenvolvido por"
+  }
+}
+
