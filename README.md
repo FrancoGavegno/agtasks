@@ -10,8 +10,8 @@ Agtasks es un sistema de gestión de tareas agrícolas construido con Next.js 15
 
 ## Tecnologías
 
-- [Nextjs 15 App Router](https://nextjs.org/docs)
-- [React 19](https://react.dev/)
+- [Nextjs 14 App Router](https://nextjs.org/docs)
+- [React 18](https://react.dev/)
 - [TypeScript](https://www.typescriptlang.org/)
 - [React Hook Form](https://react-hook-form.com/)
 - [React Query](https://tanstack.com/query/latest/docs/framework/react/overview)

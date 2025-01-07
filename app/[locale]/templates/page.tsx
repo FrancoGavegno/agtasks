@@ -1,4 +1,4 @@
-import { TemplatesList } from "@/components/template-list"
+import { TemplatesList } from "@/components/templates-list-aws"
 
 export default function TemplatesPage() {
   return (

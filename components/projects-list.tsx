@@ -124,7 +124,7 @@ interface Project {
 
 //const projects: any = []
 
-export function ProjectList() {
+export function ProjectsList() {
   const t = useTranslations('ProjectsPage');
   // parentId = Folder ID From GeoAgro Clickup Official Account
   const parentId = process.env.NEXT_PUBLIC_PROJECTS || "123";
@@ -169,7 +169,7 @@ export function ProjectList() {
           <h2 className="text-2xl font-bold">{t('title')}</h2>
           <p className="text-muted-foreground">{t('subtitle')}</p>
         </div>
-        <div className='flex items-center space-x-2'>
+        {/* <div className='flex items-center space-x-2'>
           <Button className="gap-2">
             <Link href="/projects/create">
               <span>
@@ -177,7 +177,7 @@ export function ProjectList() {
               </span>
             </Link>
           </Button>
-        </div> 
+        </div> */} 
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

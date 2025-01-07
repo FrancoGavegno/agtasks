@@ -1,5 +1,5 @@
-import { ProjectList } from "@/components/project-list";
+import { ProjectsList } from "@/components/projects-list";
 
 export default function ProjectsPage() {
-  return <ProjectList />
+  return <ProjectsList />
 }

@@ -1,11 +1,16 @@
 'use client'
 
 import * as React from "react"
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/routing';
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+import { Amplify } from "aws-amplify";
+import outputs from "@/amplify_outputs.json";
+import { generateClient } from "aws-amplify/data";
+import type { Schema } from "@/amplify/data/resource";
 import { Loader2, X } from 'lucide-react'
-
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -26,32 +31,37 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-//import { useToast } from "@/components/ui/use-toast"
-
 import { Badge } from "@/components/ui/badge"
 import { FormValues, Template } from "@/lib/types"
+
+Amplify.configure(outputs);
+const client = generateClient<Schema>();
+
 
 const formSchema = z.object({
   templateUrl: z.string().url("Please enter a valid URL"),
   name: z.string()
     .min(2, "Name must be at least 2 characters")
     .max(50, "Name must be less than 50 characters"),
-  description: z.string()
-    .min(10, "Description must be at least 10 characters")
-    .max(500, "Description must be less than 500 characters"),
-  visibility: z.enum(["Community", "Private"], {
+  description: z.string(),
+  visibility: z.enum(["COMMUNITY", "PRIVATE"], {
     required_error: "Please select visibility",
   }),
   tags: z.array(z.string()).min(1, "Please add at least one tag")
 })
 
+
 // In-memory storage for templates
-let templates: Template[] = []
+// let templates: Template[] = []
+
 
 export default function CreateTemplateForm() {
+  const t = useTranslations('RegisterTemplateForm');
+
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [tags, setTags] = React.useState<string[]>([])
+
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -59,10 +69,11 @@ export default function CreateTemplateForm() {
       templateUrl: "",
       name: "",
       description: "",
-      visibility: "Community",
+      visibility: "COMMUNITY",
       tags: [],
     },
   })
+
 
   const addTag = (tag: string) => {
     if (tag && !tags.includes(tag)) {
@@ -71,29 +82,68 @@ export default function CreateTemplateForm() {
     }
   }
 
+
   const removeTag = (tagToRemove: string) => {
     const updatedTags = tags.filter(tag => tag !== tagToRemove)
     setTags(updatedTags)
     form.setValue('tags', updatedTags)
   }
 
+
+  // const createTemplate = client.models.Template.create({
+  //   templateUrl: "https://app.clickup.com/template/subcategory/t-901108019153/b8cf718733bff6c8c7",
+  //   name: "Ambientación con Mapa de Productividad",
+  //   description: "",
+  //   taskCount: 4,
+  //   space: "",
+  //   tags: ["GeoAgro", "Proyecto", "Agricultura"],
+  //   visibility: "COMMUNITY",
+  //   thumbnail: "",
+  // });
+
+
+  // try {
+  //   await promise;
+  // } catch (error) {
+  //   console.log(error);
+  //   // If the error is because the request was cancelled you can confirm here.
+  //   if (client.isCancelError(error)) {
+  //     console.log(error.message); // "my message for cancellation"
+  //     // handle user cancellation logic
+  //   }
+  // }
+
+
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
     try {
-      const newTemplate: Template = {
-        id: Date.now().toString(), // Simple ID generation
-        ...values
-      }
-      templates.push(newTemplate)
-      
-      console.log(templates);
-      
+      // Crear el template usando los valores del formulario 
+      const createTemplate = client.models.Template.create({ 
+        templateUrl: values.templateUrl, 
+        name: values.name, 
+        description: values.description, 
+        taskCount: values.taskCount, 
+        tags: values.tags, 
+        visibility: values.visibility,
+      });
+
+      await createTemplate;
+
+      // const newTemplate: Template = {
+      //   id: Date.now().toString(), // Simple ID generation
+      //   ...values
+      // }
+      // templates.push(newTemplate)
+
+
       toast({
         title: "Success",
-        description: `Template ${templates[0].name} created successfully`,
+        description: `Template created successfully`,
       })
       form.reset()
       setTags([])
+
+
     } catch (error) {
       toast({
         title: "Error",
@@ -104,6 +154,7 @@ export default function CreateTemplateForm() {
       setIsSubmitting(false)
     }
   }
+
 
   return (
     <div className="max-w-2xl mx-auto p-6">
@@ -140,7 +191,7 @@ export default function CreateTemplateForm() {
               <FormItem>
                 <FormLabel>Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter template name" {...field} />
+                  <Input placeholder="" {...field} />
                 </FormControl>
                 <FormDescription>
                   This will be the display name of your template
@@ -157,9 +208,9 @@ export default function CreateTemplateForm() {
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    placeholder="Enter template description" 
-                    {...field} 
+                  <Textarea
+                    placeholder=""
+                    {...field}
                   />
                 </FormControl>
                 <FormDescription>
@@ -179,12 +230,12 @@ export default function CreateTemplateForm() {
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select visibility" />
+                      <SelectValue placeholder="" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Community">Community</SelectItem>
-                    <SelectItem value="Private">Private</SelectItem>
+                    <SelectItem value="COMMUNITY">Community</SelectItem>
+                    <SelectItem value="PRIVATE">Private</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormDescription>
@@ -218,12 +269,12 @@ export default function CreateTemplateForm() {
                       </Badge>
                     ))}
                     <Input
-                      placeholder="Add a tag"
+                      placeholder=""
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault()
                           addTag((e.target as HTMLInputElement).value)
-                          ;(e.target as HTMLInputElement).value = ''
+                            ; (e.target as HTMLInputElement).value = ''
                         }
                       }}
                     />

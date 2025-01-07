@@ -28,7 +28,7 @@ interface ConnectedAccount {
 const connectedAccounts: ConnectedAccount[] = [
   {
     id: "1",
-    name: "(GeoAgro) Testing Team",
+    name: "Demo GeoAgro",
     type: "Clickup",
     email: "fgavegno@geoagro.com",
     lastSync: "2024-12-20T10:30:00",

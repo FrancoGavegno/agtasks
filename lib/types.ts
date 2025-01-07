@@ -1,25 +1,17 @@
 export type Folder = "DS_Bossio" | "DS_Local" | "DS_local_KMZ" | "DS_local_shp" | "DS_MyJD_360Dev"
 
-// export type Template = {
-//   id: string
-//   name: string
-// }
-
-// export type FormValues = {
-//   template: string
-//   name: string
-//   folder: Folder
-// }
-
-export type Visibility = "Community" | "Private"
+export type Visibility = "COMMUNITY" | "PRIVATE"
 
 export type Template = {
   id: string
   templateUrl: string
   name: string
-  description: string
-  visibility: Visibility
+  description?: string
+  taskCount?: number
+  space?: string
   tags: string[]
+  visibility: Visibility
+  thumbnail?: string
 }
 
 export type FormValues = Omit<Template, 'id'>

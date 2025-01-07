@@ -17,7 +17,7 @@
     "subtitle": "Browse and use project templates",
     "addTemplate": "Create",
     "useTemplate": "Use this template",
-    "newTemplate": "Add template",
+    "newTemplate": "Register template",
     "dialogTitle": "Create a new project from template",
     "dialogDescription": "Create a new project using ",
     "dialogDescription2": "as a template. All tasks and structure will be copied.",
@@ -27,6 +27,8 @@
     "dialogCheck": "Create Project",
     "noTemplatesTitle": "No templates available",
     "noTemplatesSubtitle": "No templates found matching your criteria."
+  },
+  "RegisterTemplateForm": {
   },
   "ProjectsPage": {
     "title": "Projects",
