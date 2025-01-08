@@ -62,9 +62,9 @@ const statuses: { label: string; value: Status }[] = [
 ]
 
 const taskTypes: { label: string; value: TaskType }[] = [
-    { label: "Tillage", value: "tillage" },
-    { label: "Field Visit", value: "field-visit" },
-    { label: "Regular Task", value: "regular-task" },
+    { label: "Laboreo", value: "tillage" },
+    { label: "Recorrida", value: "field-visit" },
+    { label: "Tarea", value: "regular-task" },
 ]
 
 const farms: { label: string; value: Farm }[] = [
@@ -92,31 +92,43 @@ const tasks: Task[] = [
         priority: "high",
         status: "in-progress",
         dueDate: new Date(2024, 1, 15),
-        scope: "Scope-360Farm",
+        scope: "fgavegno@geoagro.com",
         taskType: "regular-task",
         farm: "ds-bossio",
-        fieldList: "lote-1b",
+        fieldList: "lote-3b",
         collectForm: "",
     },
     {
         id: "TASK-7878",
         name: "Validar MP con recorrida a campo",
-        priority: "normal",
+        priority: "high",
         status: "todo",
         dueDate: new Date(2024, 1, 20),
-        scope: "Scope-360Farm",
+        scope: "fgavegno@geoagro.com",
         taskType: "field-visit",
         farm: "ds-local",
-        fieldList: "lote-2b",
+        fieldList: "lote-3b",
         collectForm: "crop-monitoring",
     },
     {
         id: "TASK-7839",
         name: "Generar reporte de recorrida a campo",
-        priority: "urgent",
+        priority: "normal",
         status: "review",
         dueDate: new Date(2024, 1, 25),
-        scope: "Scope-360Farm",
+        scope: "fgavegno@geoagro.com",
+        taskType: "regular-task",
+        farm: "ds-local-kmz",
+        fieldList: "lote-3b",
+        collectForm: "",
+    },
+    {
+        id: "TASK-9939",
+        name: "Generar mapa de productividad",
+        priority: "low",
+        status: "review",
+        dueDate: new Date(2024, 1, 25),
+        scope: "fgavegno@geoagro.com",
         taskType: "regular-task",
         farm: "ds-local-kmz",
         fieldList: "lote-3b",
@@ -165,7 +177,7 @@ export default function TaskList() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="text-2xl">Ambientación con Mapa de Productividad</CardTitle>
+                <CardTitle className="text-2xl">Ambientación con mapa de productividad (DEMO)</CardTitle>
                 <CardDescription>
                     View and manage your project tasks
                 </CardDescription>
@@ -232,11 +244,11 @@ export default function TaskList() {
                                     <Checkbox />
                                 </TableHead>
                                 <TableHead>Task</TableHead>
+                                <TableHead>Type</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Priority</TableHead>
                                 <TableHead>Due Date</TableHead>
-                                <TableHead>Scope</TableHead>
-                                <TableHead>Task Type</TableHead>
+                                <TableHead>Assignee</TableHead>
                                 <TableHead>Farm</TableHead>
                                 <TableHead>Field List</TableHead>
                                 <TableHead>Collect Form</TableHead>
@@ -256,6 +268,9 @@ export default function TaskList() {
                                                 {task.name}
                                             </div>
                                         </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        {taskTypes.find((t) => t.value === task.taskType)?.label}
                                     </TableCell>
                                     <TableCell>
                                         <DropdownMenu>
@@ -285,9 +300,7 @@ export default function TaskList() {
                                     <TableCell>{getPriorityBadge(task.priority)}</TableCell>
                                     <TableCell>{format(task.dueDate, "MMM dd, yyyy")}</TableCell>
                                     <TableCell>{task.scope}</TableCell>
-                                    <TableCell>
-                                        {taskTypes.find((t) => t.value === task.taskType)?.label}
-                                    </TableCell>
+                                    
                                     <TableCell>
                                         {farms.find((f) => f.value === task.farm)?.label}
                                     </TableCell>
@@ -295,7 +308,7 @@ export default function TaskList() {
                                         {fieldLists.find((f) => f.value === task.fieldList)?.label}
                                     </TableCell>
                                     <TableCell className="underline text-blue-500">
-                                        <Link href="/projects/1/tasks/1/kobo-form">
+                                        <Link href="https://ee.kobotoolbox.org/x/gY0GIPKm" target="_blank">
                                             {collectForms.find((f) => f.value === task.collectForm)?.label}
                                         </Link>
                                     </TableCell>
@@ -308,9 +321,19 @@ export default function TaskList() {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem><Link href="/projects/1/tasks/1/kobo-form">{t("dropdownKobo")}</Link></DropdownMenuItem>
-                                                <DropdownMenuItem><Link href="/projects/1/tasks/1/edit">{t("dropdownEdit")}</Link></DropdownMenuItem>
-                                                <DropdownMenuItem>Delete</DropdownMenuItem>
+                                                <DropdownMenuItem>
+                                                    <Link href="/projects/1/tasks/1/collect-form">
+                                                        {t("ddCollectForm")}
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem>
+                                                    <Link href="/projects/1/tasks/1/edit">
+                                                        {t("ddEdit")}
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem>
+                                                    {t("ddDelete")}
+                                                </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>

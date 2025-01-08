@@ -80,11 +80,11 @@ export default function StepperForm() {
           {clickUpProject ? (
             <>
               <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="projectName">Project Name</Label>
+                <Label htmlFor="projectName">Name</Label>
                 <Input id="projectName" value={clickUpProject.name} readOnly />
               </div>
               <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="projectDescription">Project Description</Label>
+                <Label htmlFor="projectDescription">Description</Label>
                 <Input id="projectDescription" value={clickUpProject.description} readOnly />
               </div>
             </>

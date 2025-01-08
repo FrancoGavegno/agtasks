@@ -30,7 +30,8 @@ import {
   CalendarDays,
   MoreHorizontal,
   Users2,
-  FolderKanban
+  FolderKanban,
+  FileText
 } from 'lucide-react'
 
 // Ref.: https://developer.clickup.com/reference/getlists
@@ -129,7 +130,7 @@ export function ProjectsList() {
   // parentId = Folder ID From GeoAgro Clickup Official Account
   const parentId = process.env.NEXT_PUBLIC_PROJECTS || "123";
   const [projects, setProjects] = useState<Project[]>([]);
-  
+
   useEffect(() => {
     getLists(parentId)
       .then((data) => {
@@ -161,7 +162,7 @@ export function ProjectsList() {
         console.error('Error fetching lists:', error);
       });
   }, [])
-  
+
   return (
     <div className="container px-1 py-10 mx-auto">
       <div className="flex items-center justify-between mb-8">
@@ -177,7 +178,7 @@ export function ProjectsList() {
               </span>
             </Link>
           </Button>
-        </div> */} 
+        </div> */}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -196,7 +197,7 @@ export function ProjectsList() {
         {projects.map((project) => (
           <Card key={project.id}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-bold">{project.name}</CardTitle>
+              <CardTitle className="text-lg font-bold min-h-12">{project.name}</CardTitle>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-8 w-8 p-0">
@@ -205,11 +206,25 @@ export function ProjectsList() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>{t('dropdownLabel')}</DropdownMenuLabel>
-                  <DropdownMenuItem><Link href={`/projects/${project.id}/tasks`}>{t('dropdownViewDetails')}</Link></DropdownMenuItem>
-                  <DropdownMenuItem><Link href={`/projects/${project.id}/tasks`}>{t('dropdownViewTasks')}</Link></DropdownMenuItem>
+                  {/* <DropdownMenuItem>
+                    <Link href={`/projects/${project.id}/tasks`}>
+                      {t('dropdownViewDetails')}
+                    </Link>
+                  </DropdownMenuItem> */}
+                  <DropdownMenuItem>
+                    <Link href={`/projects/${project.id}/edit`}>
+                      {t('dropdownEdit')}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href={`/projects/${project.id}/tasks`}>
+                      {t('dropdownViewTasks')}
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem><Link href={`/projects/${project.id}/edit`}>{t('dropdownEdit')}</Link></DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive">{t('dropdownDelete')}</DropdownMenuItem>
+                  <DropdownMenuItem className="text-destructive">
+                    {t('dropdownDelete')}
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </CardHeader>
@@ -217,8 +232,11 @@ export function ProjectsList() {
               <CardDescription className="mb-3">{project.description}</CardDescription>
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <div className="flex -space-x-2">
-                    {project.team.slice(0, 3).map((member, i) => (
+                  <div className="flex items-center text-sm">
+                    <FileText className="mr-1 h-4 w-4" />
+                    {project.taskCount} tasks
+                    {/* <div className="flex -space-x-2"> */}
+                    {/* project.team.slice(0, 3).map((member, i) => (
                       <Avatar key={i} className="border-2 border-background">
                         <AvatarImage src={member.image} alt={member.name} />
                         <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
@@ -228,11 +246,11 @@ export function ProjectsList() {
                       <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-background bg-muted text-sm">
                         +{project.team.length - 3}
                       </div>
-                    )}
+                    )*/ }
                   </div>
                   <div className="flex items-center text-sm text-muted-foreground">
-                    <Users2 className="mr-1 h-4 w-4" />
-                    {project.team.length} members
+                    {/* <Users2 className="mr-1 h-4 w-4" />
+                    {project.team.length} members*/}
                   </div>
                 </div>
                 <div className="space-y-2">

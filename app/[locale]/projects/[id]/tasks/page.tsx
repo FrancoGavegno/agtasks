@@ -24,7 +24,7 @@ export default function Page() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Ambientación con Mapa de Productividad</BreadcrumbPage>
+            <BreadcrumbPage>Ambientación con Mapa de Productividad (DEMO)</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>

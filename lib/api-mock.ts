@@ -13,6 +13,7 @@ export const fetchArtifacts = async (): Promise<Artifact[]> => {
     { id: 'collect_form', name: 'Collect Form' },
     { id: 'inputs', name: 'Inputs' },
     { id: 'reports', name: 'Reports' },
+    { id: 'tasktype', name: 'Task type'},
   ];
 };
 
@@ -20,11 +21,11 @@ export const fetchCustomFields = async (): Promise<CustomField[]> => {
   await new Promise(resolve => setTimeout(resolve, 1000));
   
   return [
-    { id: 'custom_field_1', name: 'Custom Field 1' },
-    { id: 'custom_field_2', name: 'Custom Field 2' },
-    { id: 'custom_field_3', name: 'Custom Field 3' },
-    { id: 'custom_field_4', name: 'Custom Field 4' },
-    { id: 'custom_field_5', name: 'Custom Field 5' },
+    { id: 'custom_field_1', name: 'Scope' },
+    { id: 'custom_field_2', name: 'Farm' },
+    { id: 'custom_field_3', name: 'Field List' },
+    { id: 'custom_field_4', name: 'Task Type' },
+    { id: 'custom_field_5', name: 'Collect Form' },
   ];
 };
 
@@ -41,6 +42,7 @@ export const fetchArtifactOptions = async (artifactId: string): Promise<string[]
     collect_form: ['Form A', 'Form B', 'Form C'],
     inputs: ['Input 1', 'Input 2', 'Input 3'],
     reports: ['Report X', 'Report Y', 'Report Z'],
+    tasktype: ['Laboreo', 'Recorrida', 'Tarea'],
   };
   
   return options[artifactId as keyof typeof options] || [];
@@ -52,8 +54,8 @@ export const fetchClickUpProject = async (projectId: string): Promise<ClickUpPro
   // Simulated API response
   return {
     id: projectId,
-    name: "Ambientacion",
-    description: "una prueba"
+    name: "Ambientación con mapa de productividad (DEMO)",
+    description: "Esto es un proyecto de prueba..."
   };
 };
 

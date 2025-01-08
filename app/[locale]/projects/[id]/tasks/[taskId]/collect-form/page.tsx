@@ -1,5 +1,5 @@
 import { KoboForms } from "@/components/kobo-forms"
 
-export default function KoboFormPage() {
+export default function CollectFormPage() {
   return <KoboForms />
 }

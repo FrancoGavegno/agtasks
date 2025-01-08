@@ -176,18 +176,18 @@ export function KoboForms() {
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
                     <BreadcrumbItem>
-                        <BreadcrumbLink2 href="/projects/1/tasks">Ambientación con Mapa de Productividad</BreadcrumbLink2>
+                        <BreadcrumbLink2 href="/projects/1/tasks">Ambientación con Mapa de Productividad (DEMO)</BreadcrumbLink2>
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
                     <BreadcrumbItem>
-                        <BreadcrumbPage>KoboToolbox Forms</BreadcrumbPage>
+                        <BreadcrumbPage>Collect Forms</BreadcrumbPage>
                     </BreadcrumbItem>
                 </BreadcrumbList>
             </Breadcrumb>
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-2xl">KoboToolbox Forms</CardTitle>
+                    <CardTitle className="text-2xl">Collect Forms</CardTitle>
                     <CardDescription>
                         Manage and share your KoboToolbox forms
                     </CardDescription>

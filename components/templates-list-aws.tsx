@@ -139,9 +139,13 @@ export function TemplatesList() {
           {templates.length > 0 && filteredTemplates.map((template) => (
             <Card key={template.id} className="flex flex-col">
               <CardHeader className="flex flex-row items-start justify-between space-y-0">
-                <div>
-                  <CardTitle>{template.name}</CardTitle>
-                  <CardDescription>{template.description}</CardDescription>
+                <div className="min-h-18">
+                  <CardTitle className="min-h-8">
+                    {template.name}
+                  </CardTitle>
+                  <CardDescription className="min-h-10 pt-1">
+                    {template.description}
+                  </CardDescription>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -160,7 +164,7 @@ export function TemplatesList() {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => handleDelete(template.id)}
-                      className="text-red-600"  
+                      className="text-red-600"
                     >
                       <Trash className="mr-2 h-4 w-4" />
                       Delete
@@ -171,17 +175,18 @@ export function TemplatesList() {
               <CardContent className="flex-1">
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center">
-                    <FileText className="mr-1 h-4 w-4" />
-                    {template.taskCount} tasks
+                    <Users className="mr-1 h-4 w-4" />
+                    {template.visibility}
+                    {/* <FileText className="mr-1 h-4 w-4" />
+                    {template.taskCount} tasks */}
                   </div>
                   <div className="flex items-center">
-                    <LayoutTemplate className="mr-1 h-4 w-4" />
-                    {template.space}
+                    {/* <LayoutTemplate className="mr-1 h-4 w-4" />
+                    {template.space} */}
                   </div>
 
                   <div className="flex items-center">
-                    <Users className="mr-1 h-4 w-4" />
-                    {template.visibility}
+
                   </div>
                 </div>
                 <Separator className="my-4" />
