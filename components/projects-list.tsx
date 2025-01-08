@@ -205,10 +205,10 @@ export function ProjectsList() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>{t('dropdownLabel')}</DropdownMenuLabel>
-                  <DropdownMenuItem><Link href="/projects/1/tasks">{t('dropdownViewDetails')}</Link></DropdownMenuItem>
-                  <DropdownMenuItem><Link href="/projects/1/tasks">{t('dropdownViewTasks')}</Link></DropdownMenuItem>
+                  <DropdownMenuItem><Link href={`/projects/${project.id}/tasks`}>{t('dropdownViewDetails')}</Link></DropdownMenuItem>
+                  <DropdownMenuItem><Link href={`/projects/${project.id}/tasks`}>{t('dropdownViewTasks')}</Link></DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>{t('dropdownEdit')}</DropdownMenuItem>
+                  <DropdownMenuItem><Link href={`/projects/${project.id}/edit`}>{t('dropdownEdit')}</Link></DropdownMenuItem>
                   <DropdownMenuItem className="text-destructive">{t('dropdownDelete')}</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

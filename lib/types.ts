@@ -15,3 +15,25 @@ export type Template = {
 }
 
 export type FormValues = Omit<Template, 'id'>
+
+export interface Artifact {
+  id: string;
+  name: string;
+}
+
+export interface CustomField {
+  id: string;
+  name: string;
+}
+
+export interface ClickUpProject {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface FormData {
+  clickupProjectId: string;
+  customFieldAssignments: Record<string, string>;
+  artifactValues: Record<string, string>;
+}
