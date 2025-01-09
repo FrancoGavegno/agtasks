@@ -153,33 +153,33 @@ export default function CreateProjectStepper() {
       case 0:
         return (
           <FormField
-                                  control={form.control}
-                                  name="templateId"
-                                  render={({ field }) => (
-                                      <FormItem>
-                                          <FormLabel>Template</FormLabel>
-                                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                              <FormControl>
-                                                  <SelectTrigger>
-                                                      <SelectValue placeholder="Select a template" />
-                                                  </SelectTrigger>
-                                              </FormControl>
-                                              <SelectContent>
-                                                  {templates.map((template) => (
-                                                      <SelectItem key={template.id} value={template.id}>
-                                                          {template.name}
-                                                      </SelectItem>
-                                                  ))}
-                                              </SelectContent>
-                                          </Select>
-                                          <FormDescription>
-                                              Choose a template to create your Project from
-                                          </FormDescription>
-                                          <FormMessage />
-                                      </FormItem>
-                                  )}
-                              />
-          
+            control={form.control}
+            name="templateId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Template</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a template" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {templates.map((template) => (
+                      <SelectItem key={template.id} value={template.id}>
+                        {template.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Choose a template to create your Project from
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
         )
 
       case 1:
@@ -192,7 +192,7 @@ export default function CreateProjectStepper() {
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter project name" {...field} />
+                    <Input placeholder="" {...field} />
                   </FormControl>
                   <FormDescription>
                     This will be the display name of your project
@@ -209,7 +209,7 @@ export default function CreateProjectStepper() {
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Enter project description" {...field} />
+                    <Textarea placeholder="" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -470,8 +470,8 @@ export default function CreateProjectStepper() {
                     index < currentStep
                       ? "bg-primary text-primary-foreground border-primary"
                       : index === currentStep
-                      ? "border-primary"
-                      : "border-muted"
+                        ? "border-primary"
+                        : "border-muted"
                   )}
                 >
                   {index < currentStep ? (

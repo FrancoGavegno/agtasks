@@ -127,8 +127,13 @@ interface Project {
 
 export function ProjectsList() {
   const t = useTranslations('ProjectsPage');
-  // parentId = Folder ID From GeoAgro Clickup Official Account
-  const parentId = process.env.NEXT_PUBLIC_PROJECTS || "123";
+
+  // teamId from GeoAgro Clickup Official Account
+  const teamId = process.env.NEXT_PUBLIC_TEAM_ID;
+
+  // parentId from GeoAgro Clickup Official Account
+  const parentId = process.env.NEXT_PUBLIC_FOLDER_ID_PROJECTS || "123";
+
   const [projects, setProjects] = useState<Project[]>([]);
 
   useEffect(() => {
@@ -205,25 +210,29 @@ export function ProjectsList() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>{t('dropdownLabel')}</DropdownMenuLabel>
-                  {/* <DropdownMenuItem>
-                    <Link href={`/projects/${project.id}/tasks`}>
-                      {t('dropdownViewDetails')}
-                    </Link>
-                  </DropdownMenuItem> */}
+                  <DropdownMenuLabel>
+                    {t('ddLabel')}
+                  </DropdownMenuLabel>
                   <DropdownMenuItem>
                     <Link href={`/projects/${project.id}/edit`}>
-                      {t('dropdownEdit')}
+                      {t('ddEdit')}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link
+                      href={`https://app.clickup.com/${teamId}/v/li/${project.id}`}
+                      target='_blank'>
+                      {t('ddGoTo')}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <Link href={`/projects/${project.id}/tasks`}>
-                      {t('dropdownViewTasks')}
+                      {t('ddTasks')}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="text-destructive">
-                    {t('dropdownDelete')}
+                    {t('ddDelete')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
