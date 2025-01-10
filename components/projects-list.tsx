@@ -1,14 +1,15 @@
 "use client"
 
+import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { useState, useEffect } from 'react'
 import { getLists } from '@/lib/clickup';
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage
-} from "@/components/ui/avatar"
+import { Project } from "@/lib/interfaces";
+// import {
+//   Avatar,
+//   AvatarFallback,
+//   AvatarImage
+// } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -29,109 +30,16 @@ import { Progress } from "@/components/ui/progress"
 import {
   CalendarDays,
   MoreHorizontal,
-  Users2,
+  //Users2,
   FolderKanban,
   FileText
 } from 'lucide-react'
 
-// Ref.: https://developer.clickup.com/reference/getlists
-// {
-//     "lists": [
-//       {
-//         "id": "901106185206",
-//         "name": "Ambientación con Mapa de Productividad",
-//         "orderindex": 1,
-//         "content": "",
-//         "status": null,
-//         "priority": null,
-//         "assignee": null,
-//         "task_count": 4,
-//         "due_date": "1733554800000",
-//         "start_date": null,
-//         "folder": {
-//           "id": "90113518509",
-//           "name": "Siembra Variable",
-//           "hidden": false,
-//           "access": true
-//         },
-//         "space": {
-//           "id": "90111991192",
-//           "name": "Ambientación",
-//           "access": true
-//         },
-//         "archived": false,
-//         "override_statuses": false,
-//         "permission_level": "create"
-//       },
-//       { ... },
-//     ]
-//   }
-
-interface Project {
-  id: number;
-  name: string;
-  description: string;
-  taskCount: number;
-  space: string;
-  tags: string[];
-  progress: number;
-  dueDate: string;
-  status: string;
-  team: { name: string, image: string }[];
-  thumbnail?: string;
-}
-
-// const projects: Project[] = [
-//   {
-//     id: 1,
-//     name: "Website Redesign",
-//     description: "Redesign and implement the new company website",
-//     progress: 68,
-//     dueDate: "2024-02-15",
-//     team: [
-//       { name: "Alex Kim", image: "/placeholder.svg" },
-//       { name: "Sarah Chen", image: "/placeholder.svg" },
-//       { name: "Mike Jones", image: "/placeholder.svg" },
-//     ],
-//     status: "In Progress",
-//   },
-//   {
-//     id: 2,
-//     name: "Mobile App Development",
-//     description: "Create a new mobile app for customer engagement",
-//     progress: 23,
-//     dueDate: "2024-03-30",
-//     team: [
-//       { name: "Lisa Wong", image: "/placeholder.svg" },
-//       { name: "Tom Smith", image: "/placeholder.svg" },
-//     ],
-//     status: "Planning",
-//   },
-//   {
-//     id: 3,
-//     name: "Marketing Campaign",
-//     description: "Q1 2024 digital marketing campaign",
-//     progress: 92,
-//     dueDate: "2024-01-31",
-//     team: [
-//       { name: "John Doe", image: "/placeholder.svg" },
-//       { name: "Emma Wilson", image: "/placeholder.svg" },
-//       { name: "James Brown", image: "/placeholder.svg" },
-//       { name: "Maria Garcia", image: "/placeholder.svg" },
-//     ],
-//     status: "Review",
-//   },
-// ]
-
-//const projects: any = []
-
 export function ProjectsList() {
   const t = useTranslations('ProjectsPage');
 
-  // teamId from GeoAgro Clickup Official Account
-  const teamId = process.env.NEXT_PUBLIC_TEAM_ID;
-
-  // parentId from GeoAgro Clickup Official Account
+  // from GeoAgro Clickup Official Account
+  const teamId = process.env.NEXT_PUBLIC_TEAM_ID; 
   const parentId = process.env.NEXT_PUBLIC_FOLDER_ID_PROJECTS || "123";
 
   const [projects, setProjects] = useState<Project[]>([]);

@@ -1,10 +1,13 @@
+import { useEffect, useState } from 'react';
+import { Link } from '@/i18n/routing';
 import { UseFormReturn } from 'react-hook-form';
-import { FormData } from '@/components/project-stepper/types';
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from '@/components/ui/label';
-import Link from 'next/link';
+import { FormData } from '@/lib/types';
+import { getList } from '@/lib/clickup';
+import { Project } from "@/lib/interfaces";
 import { Button } from '@/components/ui/button';
+import { Input } from "@/components/ui/input"
+import { Label } from '@/components/ui/label';
+import { Textarea } from "@/components/ui/textarea";
 import { SquareArrowOutUpRight } from 'lucide-react';
 
 type Step1Props = {
@@ -12,6 +15,29 @@ type Step1Props = {
 };
 
 export default function Step1({ methods }: Step1Props) {
+    const [project, setProject] = useState<Project>({
+        id: 0,
+        name: '',
+        description: '',
+        taskCount: 0,
+        space: '',
+        tags: [],
+        progress: 0,
+        dueDate: '',
+        status: '',
+        team: [{ name: '', image: '' }]
+    });
+
+    // obtener información de la tarea consultando la API???
+    useEffect(() => {
+        getList("901108557658")
+            .then((data) => {
+                setProject(data);
+            })
+            .catch((error) => {
+                console.error('Error fetching list:', error);
+            });
+    }, []);
 
     return (
         <div className="space-y-4">
@@ -22,7 +48,7 @@ export default function Step1({ methods }: Step1Props) {
                     id="name"
                     disabled
                     {...methods.register('name')}
-                    placeholder="Ambientación con mapa de productividad (DEMO)" />
+                    placeholder={project.name} />
             </div>
             <div>
                 <Label htmlFor="description">Description</Label>
@@ -30,7 +56,7 @@ export default function Step1({ methods }: Step1Props) {
                     id="description"
                     disabled
                     {...methods.register('description')}
-                    placeholder="Esta es una descripción de prueba" />
+                    placeholder={project.description} />
             </div>
             <div>
                 <Label htmlFor="url">URL proyecto</Label>
@@ -42,7 +68,7 @@ export default function Step1({ methods }: Step1Props) {
                     />
                     <Button asChild>
                         <Link href="https://app.clickup.com/9011455509/v/li/901108172278" target="_blank">
-                        <SquareArrowOutUpRight />
+                            <SquareArrowOutUpRight />
                         </Link>
                     </Button>
                 </div>

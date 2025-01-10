@@ -1,9 +1,9 @@
 "use client";
 
-import ProjectForm from "@/components/project-stepper/stepper";
+import StepperProjectForm from "@/components/project-form/stepper";
 
 export default function EditProjectPage({ params }: { params: { id: string } }) {
   return (
-    <ProjectForm projectId={params.id} />
+    <StepperProjectForm projectId={params.id} />
   );
 }

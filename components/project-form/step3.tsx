@@ -2,18 +2,31 @@ import { useState, useEffect } from 'react';
 import { Link } from '@/i18n/routing';
 import { UseFormReturn } from 'react-hook-form';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { FormData } from "@/components/project-stepper/types";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from '@/components/ui/label';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { FormData } from "@/lib/types";
 import { Checkbox } from '@/components/ui/checkbox';
-import { FloatingActionBar } from '@/components/project-stepper/floating-action-bar';
+import { 
+    Select, 
+    SelectContent, 
+    SelectItem, 
+    SelectTrigger, 
+    SelectValue 
+} from "@/components/ui/select";
+import { 
+    Table, 
+    TableHeader, 
+    TableRow, 
+    TableHead, 
+    TableBody, 
+    TableCell 
+} from '@/components/ui/table';
+import { FloatingActionBar } from '@/components/project-form/floating-action-bar';
 
 type Step3Props = {
     methods: UseFormReturn<FormData>;
     projectId: string;
 };
 
+// Estas tareas debería obtenerlas del List con GetTasks vía API
 const mockTasks = [
     { id: '1', name: 'Generar reporte de mapa de productividad' },
     { id: '2', name: 'Validar MP con recorrida a campo' },

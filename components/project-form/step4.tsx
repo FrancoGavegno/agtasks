@@ -1,5 +1,5 @@
 import { UseFormReturn } from 'react-hook-form';
-import { FormData } from '@/components/project-stepper/types';
+import { FormData } from '@/lib/types';
 
 type Step4Props = {
     methods: UseFormReturn<FormData>;
@@ -78,66 +78,8 @@ export default function Step4({ methods }: Step4Props) {
                     </li>
                 ))}
             </ul>
-
-
-            {/* <p><strong>Generic Fields:</strong></p>
-            <ul>
-                {Object.entries(formData).filter(([key]) =>
-                    !['name', 'description'].includes(key) &&
-                    !key.startsWith('match_') 
-                ).map(([key, value]) => (
-                    <li key={key}><strong>{key}:</strong> {value as string || 'Not provided'}</li>
-                ))}
-            </ul> */}
-
-
             <p><strong>Object Representation:</strong></p>
             <pre>{JSON.stringify(formData, null, 2)}</pre>
-
         </div>
     );
-
-    // return (
-    //     <div className="space-y-4">
-    //         <p><strong>Name:</strong> {formData.name}</p>
-
-    //         <p><strong>Description:</strong> {formData.description}</p>
-
-    //         <p><strong>Field Matching:</strong></p>
-    //         <ul>
-    //             {Object.entries(formData).filter(([key]) => key.startsWith('match_') && !key.startsWith('task_')).map(([key, value]) => (
-    //                 <li key={key}><strong>{key.replace('match_', '')}:</strong> {value as string}</li>
-    //             ))}
-    //         </ul>
-
-    //         <p><strong>Selected Artifacts:</strong></p>
-    //         <ul>
-    //             {Object.entries(formData).filter(([key]) => key.startsWith('selected') && !key.startsWith('task_')).map(([key, value]) => (
-    //                 <li key={key}><strong>{key.replace('selected', '')}:</strong> {value as string}</li>
-    //             ))}
-    //         </ul>
-
-    //         <p><strong>Tasks Configuration:</strong></p>
-    //         <ul>
-    //             {Object.entries(formData).filter(([key]) => key.startsWith('task_')).map(([key, value]) => {
-    //                 if (key.includes('match_')) {
-    //                     const taskId = key.split('_')[1];
-    //                     const fieldName = key.replace(`task_${taskId}_match_`, '');
-    //                     return (
-    //                         <li key={key}>
-    //                             <strong>Task {taskId} - {fieldName}:</strong> {value as string}, 
-    //                             Selected: {formData[key.replace('match_', 'selected')] as string}
-    //                         </li>
-    //                     );
-    //                 }
-    //                 return null;
-    //             })}
-    //         </ul>
-
-    //         <p><strong>Object Representation:</strong></p>
-    //         <pre>{JSON.stringify(formData, null, 2)}</pre>
-
-    //         {/* <button onClick={methods.handleSubmit(handleSubmit)}>Submit and Update Tasks</button> */}
-    //     </div>
-    // );
 }

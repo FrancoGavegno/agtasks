@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useTranslations } from 'next-intl';
-import { Link } from '@/i18n/routing';
+// import { Link } from '@/i18n/routing';
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -10,8 +10,8 @@ import { Amplify } from "aws-amplify";
 import outputs from "@/amplify_outputs.json";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "@/amplify/data/resource";
-import { Loader2, X } from 'lucide-react'
-import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -20,19 +20,20 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/hooks/use-toast"
-import { Badge } from "@/components/ui/badge"
-import { FormValues, Template } from "@/lib/types"
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, X } from 'lucide-react';
+import { FormValues, Template } from "@/lib/types";
+
 
 Amplify.configure(outputs);
 const client = generateClient<Schema>();
@@ -42,7 +43,7 @@ const formSchema = z.object({
   templateUrl: z.string().url("Please enter a valid URL"),
   name: z.string()
     .min(2, "Name must be at least 2 characters")
-    .max(50, "Name must be less than 50 characters"),
+    .max(100, "Name must be less than 100 characters"),
   description: z.string(),
   visibility: z.enum(["COMMUNITY", "PRIVATE"], {
     required_error: "Please select visibility",
@@ -51,13 +52,8 @@ const formSchema = z.object({
 })
 
 
-// In-memory storage for templates
-// let templates: Template[] = []
-
-
-export default function CreateTemplateForm() {
+export default function RegisterTemplateForm() {
   const t = useTranslations('RegisterTemplateForm');
-
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [tags, setTags] = React.useState<string[]>([])
@@ -90,34 +86,10 @@ export default function CreateTemplateForm() {
   }
 
 
-  // const createTemplate = client.models.Template.create({
-  //   templateUrl: "https://app.clickup.com/template/subcategory/t-901108019153/b8cf718733bff6c8c7",
-  //   name: "Ambientación con Mapa de Productividad",
-  //   description: "",
-  //   taskCount: 4,
-  //   space: "",
-  //   tags: ["GeoAgro", "Proyecto", "Agricultura"],
-  //   visibility: "COMMUNITY",
-  //   thumbnail: "",
-  // });
-
-
-  // try {
-  //   await promise;
-  // } catch (error) {
-  //   console.log(error);
-  //   // If the error is because the request was cancelled you can confirm here.
-  //   if (client.isCancelError(error)) {
-  //     console.log(error.message); // "my message for cancellation"
-  //     // handle user cancellation logic
-  //   }
-  // }
-
-
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
     try {
-      // Crear el template usando los valores del formulario 
+      // Crea el template usando los valores del formulario 
       const createTemplate = client.models.Template.create({ 
         templateUrl: values.templateUrl, 
         name: values.name, 
@@ -126,24 +98,15 @@ export default function CreateTemplateForm() {
         tags: values.tags, 
         visibility: values.visibility,
       });
-
       await createTemplate;
-
-      // const newTemplate: Template = {
-      //   id: Date.now().toString(), // Simple ID generation
-      //   ...values
-      // }
-      // templates.push(newTemplate)
-
 
       toast({
         title: "Success",
         description: `Template created successfully`,
-      })
-      form.reset()
-      setTags([])
+      });
 
-
+      form.reset();
+      setTags([]);
     } catch (error) {
       toast({
         title: "Error",
@@ -177,7 +140,7 @@ export default function CreateTemplateForm() {
                   <Input placeholder="https://app.clickup.com/t/..." {...field} />
                 </FormControl>
                 <FormDescription>
-                  Enter the URL of the ClickUp template you want to use
+                  Enter the URL of the template you want to use
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -213,9 +176,9 @@ export default function CreateTemplateForm() {
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>
+                {/* <FormDescription>
                   Provide a brief description of the template
-                </FormDescription>
+                </FormDescription> */}
                 <FormMessage />
               </FormItem>
             )}

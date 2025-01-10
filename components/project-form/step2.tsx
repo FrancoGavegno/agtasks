@@ -1,15 +1,31 @@
+import { useEffect } from 'react';
 import { Link } from '@/i18n/routing';
 import { UseFormReturn } from 'react-hook-form';
-import { FormData } from '@/components/project-stepper/types';
-import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { FormData } from '@/lib/types';
+import { getListCustomFields } from '@/lib/clickup';
+import { Label } from '@/components/ui/label';
+import { 
+    Select, 
+    SelectContent, 
+    SelectItem, 
+    SelectTrigger, 
+    SelectValue 
+} from '@/components/ui/select';
 
 type Step2Props = {
     methods: UseFormReturn<FormData>;
 };
 
 export default function Step2({ methods }: Step2Props) {
+    // Estos custom fields deben ser obtenidos del List vía API
     const customFields = ['Scope', 'Task_Type', 'Area', 'Workspace', 'Season', 'Farm', 'Field', 'Collect_Form'];
+    
+    useEffect(() => {
+          getListCustomFields("901108557658")
+            .then();
+      }, []);
+
+    // Estos artefactos podemos setearlos por el momento desde acá 
     const artifacts = ['Scope', 'Task_Type', 'Area', 'Workspace', 'Season', 'Farm', 'Field', 'Collect_Form'];
 
     return (
