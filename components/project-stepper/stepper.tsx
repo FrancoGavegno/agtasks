@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { useForm, FormProvider, UseFormReturn } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
-import { FormData } from '@/components/stepper/types';
+import { FormData } from '@/components/project-stepper/types';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 // Asegúrate de importar los componentes de UI correctamente
-import Step1 from '@/components/stepper/step1';
-import Step2 from '@/components/stepper/step2';
-import Step3 from '@/components/stepper/step3';
-import Step4 from '@/components/stepper/step4';
+import Step1 from '@/components/project-stepper/step1';
+import Step2 from '@/components/project-stepper/step2';
+import Step3 from '@/components/project-stepper/step3';
+import Step4 from '@/components/project-stepper/step4';
 
 
 export default function ProjectForm({ projectId }: { projectId: string }) {
@@ -16,10 +16,10 @@ export default function ProjectForm({ projectId }: { projectId: string }) {
   const [currentStep, setCurrentStep] = useState(0);
 
   const steps = [
-    { title: 'Información Básica', content: <Step1 methods={methods as UseFormReturn<FormData>} /> },
-    { title: 'Asociación de Campos', content: <Step2 methods={methods as UseFormReturn<FormData>} /> },
-    { title: 'Selección de Artefactos', content: <Step3 methods={methods as UseFormReturn<FormData>} projectId={projectId} /> },
-    { title: 'Revisión', content: <Step4 methods={methods as UseFormReturn<FormData>} /> },
+    { title: 'Información básica', content: <Step1 methods={methods as UseFormReturn<FormData>} /> },
+    { title: 'Asociación de campos', content: <Step2 methods={methods as UseFormReturn<FormData>} /> },
+    { title: 'Selección de artefactos', content: <Step3 methods={methods as UseFormReturn<FormData>} projectId={projectId} /> },
+    { title: 'Resumen', content: <Step4 methods={methods as UseFormReturn<FormData>} /> },
   ];
 
   return (
@@ -30,7 +30,7 @@ export default function ProjectForm({ projectId }: { projectId: string }) {
       </CardHeader>
       <CardContent>
         <div className="p-6"> 
-          <h2 className="mb-4">{steps[currentStep].title}</h2>
+          <h2 className="text-lg font-semibold mb-4">{steps[currentStep].title}</h2>
           {steps[currentStep].content}
         </div>
         <div className="flex justify-between p-6"> 
