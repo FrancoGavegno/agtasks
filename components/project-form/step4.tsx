@@ -44,12 +44,11 @@ export default function Step4({ methods }: Step4Props) {
 
     return (
         <div className="space-y-4">
-            <p className="text-sm text-slate-400">Verifique que los campos custom y valores seleccionados en cada paso estén correctos. Confirme para finalizar.</p>
-            <p>Step 1: </p>
-            <p><strong>Name:</strong> {formData.name || 'Not provided'}</p>
-            <p><strong>Description:</strong> {formData.description || 'Not provided'}</p>
-
-            <p>Step 2: </p>
+            <p className="text-sm text-slate-400">Verifique que la información esté correcta. Confirme para finalizar.</p>
+            
+            <p><strong>Selected Template:</strong></p>
+            <p>Name: {formData.name || 'Not provided'}</p>
+            
             <p><strong>Field Matching:</strong></p>
             <ul>
                 {Object.entries(formData).filter(([key]) => key.startsWith('match_') && !key.startsWith('task_')).map(([key, value]) => (
@@ -57,7 +56,6 @@ export default function Step4({ methods }: Step4Props) {
                 ))}
             </ul>
 
-            <p>Step 3: </p>
             <p><strong>Selected Artifacts:</strong></p>
             <ul>
                 {['1', '2', '3', '4'].map(taskId => (
@@ -78,8 +76,8 @@ export default function Step4({ methods }: Step4Props) {
                     </li>
                 ))}
             </ul>
-            <p><strong>Object Representation:</strong></p>
-            <pre>{JSON.stringify(formData, null, 2)}</pre>
+            {/* <p><strong>Object Representation:</strong></p>
+            <pre>{JSON.stringify(formData, null, 2)}</pre> */}
         </div>
     );
 }

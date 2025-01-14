@@ -9,10 +9,11 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import Step1 from '@/components/project-form/step1';
-import Step2 from '@/components/project-form/step2';
-import Step3 from '@/components/project-form/step3';
-import Step4 from '@/components/project-form/step4';
+import Step1 from '@/components/project-form-v2/step1';
+import Step2 from '@/components/project-form-v2/step2';
+//import Step3 from '@/components/project-form-v2/step3';
+import Step4 from '@/components/project-form-v2/step4';
+
 
 export default function StepperProjectForm({ projectId }: { projectId: string }) {
   const methods = useForm<FormData>();
@@ -21,7 +22,7 @@ export default function StepperProjectForm({ projectId }: { projectId: string })
   const steps = [
     { title: 'Proyecto seleccionado', content: <Step1 methods={methods as UseFormReturn<FormData>} /> },
     { title: 'Asociación de campos', content: <Step2 methods={methods as UseFormReturn<FormData>} /> },
-    { title: 'Selección de artefactos', content: <Step3 methods={methods as UseFormReturn<FormData>} projectId={projectId} /> },
+    //{ title: 'Selección de artefactos', content: <Step3 methods={methods as UseFormReturn<FormData>} projectId={projectId} /> },
     { title: 'Resumen', content: <Step4 methods={methods as UseFormReturn<FormData>} /> },
   ]; 
 
@@ -29,7 +30,7 @@ export default function StepperProjectForm({ projectId }: { projectId: string })
     <FormProvider {...methods}>
       <Card className="w-full max-w-4xl mx-auto">
         <CardHeader>
-          <CardTitle>Editing Project</CardTitle>
+          <CardTitle>Edit Project</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="p-6">
@@ -60,7 +61,14 @@ export default function StepperProjectForm({ projectId }: { projectId: string })
     </FormProvider>
   );
 
+  // function onSubmit(data: FormData) {
+  //   console.log('Form data:', data);
+  //   // Aquí podrías enviar los datos al backend
+  // }
+
   function onSubmit(data: FormData) {
+    window.alert("Formulario Actualizado con Exito!");
+
     console.log('Form data:', data);
     // Aquí podrías enviar los datos al backend
   }

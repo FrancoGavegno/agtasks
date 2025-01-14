@@ -54,17 +54,10 @@ export function ProjectsList() {
             name: list.name,
             description: list.content || '',
             taskCount: list.task_count,
-            space: list.space?.name || 'Unknown Space',
-            tags: ['Project', 'Agriculture', 'GeoAgro'],
+            space: list.space?.name || '',
             progress: 0,
-            dueDate: new Date(parseInt(list.due_date)).toLocaleDateString(),
-            status: 'In Progress',
-            team: [
-              { name: "Alex Kim", image: "/placeholder.svg" },
-              { name: "Sarah Chen", image: "/placeholder.svg" },
-              { name: "Mike Jones", image: "/placeholder.svg" },
-            ],
-            thumbnail: undefined
+            due_date: new Date(parseInt(list.due_date)).toLocaleDateString(),
+            status: list.status?.status,
           }));
           setProjects(fetchedProjects);
         } else {
@@ -127,6 +120,11 @@ export function ProjectsList() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
+                    <Link href={`/projects/${project.id}/edit-v2`}>
+                      {t('ddEdit')+" v2"}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
                     <Link
                       href={`https://app.clickup.com/${teamId}/v/li/${project.id}`}
                       target='_blank'>
@@ -174,21 +172,15 @@ export function ProjectsList() {
                   <div className="flex justify-between text-sm">
                     <div className="flex items-center">
                       <CalendarDays className="mr-1 h-4 w-4 text-muted-foreground" />
-                      <span>Due {new Date(project.dueDate).toLocaleDateString()}</span>
+                      <span>Due {new Date(project.due_date).toLocaleDateString()}</span>
                     </div>
                     <span className="text-muted-foreground">{project.progress}%</span>
                   </div>
                   <Progress value={project.progress} className="h-2" />
                 </div>
                 <div className="flex justify-end">
-                  <div className={`text-sm px-2.5 py-0.5 rounded-full font-medium
-                  ${project.status === "In Progress"
-                      ? "bg-blue-100 text-blue-700"
-                      : project.status === "Review"
-                        ? "bg-amber-100 text-amber-700"
-                        : "bg-slate-100 text-slate-700"
-                    }`}>
-                    {project.status}
+                  <div className={`text-sm px-2.5 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700`}>
+                    {project.status?.status}
                   </div>
                 </div>
               </div>

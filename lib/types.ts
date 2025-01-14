@@ -1,4 +1,4 @@
-export type Folder = "DS_Bossio" | "DS_Local" | "DS_local_KMZ" | "DS_local_shp" | "DS_MyJD_360Dev"
+// export type Folder = "DS_Bossio" | "DS_Local" | "DS_local_KMZ" | "DS_local_shp" | "DS_MyJD_360Dev"
 
 export type Visibility = "COMMUNITY" | "PRIVATE"
 
@@ -18,32 +18,6 @@ export type FormValues = Omit<Template, 'id'>
 
 export type FormData = {
   name: string;
-  description: string;
+  description?: string;
   [key: string]: string | undefined; 
 };
-
-
-// export interface Artifact {
-//   id: string;
-//   name: string;
-// }
-
-// export interface CustomField {
-//   id: string;
-//   name: string;
-// }
-
-// export interface ClickUpProject {
-//   id: string;
-//   name: string;
-//   description: string;
-// }
-
-// export interface FormData {
-//   clickupProjectId: string;
-//   customFieldAssignments: Record<string, string>;
-//   artifactValues: Record<string, string>;
-// }
-
-
-

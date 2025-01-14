@@ -1,0 +1,57 @@
+[
+    {
+      "type": "text",
+      "label": "Tarea",
+      "name": "tarea",
+      "required": true,
+      "placeholder": "Tarea"
+    },
+    {
+      "type": "select",
+      "label": "Establecimiento",
+      "name": "establecimiento",
+      "required": true,
+      "options": [
+        {"value": "El Clavel Blanco", "label": "El Clavel Blanco"}
+      ]
+    },
+    {
+      "type": "select",
+      "label": "Responsable",
+      "name": "responsable",
+      "required": true,
+      "options": [
+        {"value": "Evelyn Coronel, Admin Area T...", "label": "Evelyn Coronel, Admin Area T..."}
+      ]
+    },
+    {
+      "type": "checkbox",
+      "label": "Lotes",
+      "name": "lotes",
+      "options": [
+        {"value": "1", "label": "1"},
+        {"value": "2y3", "label": "2 y 3"}
+      ]
+    },
+    {
+      "type": "select",
+      "label": "Estado",
+      "name": "estado",
+      "required": true,
+      "options": [
+        {"value": "Planificado", "label": "Planificado"}
+      ]
+    },
+    {
+      "type": "date",
+      "label": "Fecha Inicio",
+      "name": "fechaInicio",
+      "value": "2025-01-14"
+    },
+    {
+      "type": "date",
+      "label": "Fecha Fin",
+      "name": "fechaFin",
+      "value": "2025-01-15"
+    }
+  ]
