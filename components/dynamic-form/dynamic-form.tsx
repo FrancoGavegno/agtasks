@@ -293,7 +293,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ jsonUrl }) => {
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Formulario Dinámico</CardTitle>
+        <CardTitle>Formulario {jsonUrl}</CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent>

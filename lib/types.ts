@@ -2,6 +2,8 @@
 
 export type Visibility = "COMMUNITY" | "PRIVATE"
 
+export type Scope = "NONE" | "INHERITED" | "DOMAIN" | "AREA" | "WORKSPACE" | "FARM" | "FIELD"
+
 export type Template = {
   id: string
   templateUrl: string
@@ -12,6 +14,7 @@ export type Template = {
   tags: string[]
   visibility: Visibility
   thumbnail?: string
+  scope: Scope
 }
 
 export type FormValues = Omit<Template, 'id'>

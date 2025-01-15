@@ -114,7 +114,7 @@ export function ProjectsList() {
                   <DropdownMenuLabel>
                     {t('ddLabel')}
                   </DropdownMenuLabel>
-                  <DropdownMenuItem>
+                  {/* <DropdownMenuItem>
                     <Link href={`/projects/${project.id}/edit`}>
                       {t('ddEdit')}
                     </Link>
@@ -123,14 +123,14 @@ export function ProjectsList() {
                     <Link href={`/projects/${project.id}/edit-v2`}>
                       {t('ddEdit')+" v2"}
                     </Link>
-                  </DropdownMenuItem>
+                  </DropdownMenuItem> 
                   <DropdownMenuItem>
                     <Link
                       href={`https://app.clickup.com/${teamId}/v/li/${project.id}`}
                       target='_blank'>
                       {t('ddGoTo')}
                     </Link>
-                  </DropdownMenuItem>
+                  </DropdownMenuItem> */}
                   <DropdownMenuItem>
                     <Link href={`/projects/${project.id}/tasks`}>
                       {t('ddTasks')}

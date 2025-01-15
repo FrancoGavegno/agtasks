@@ -1,8 +1,8 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { useEffect, useState } from "react"
 import { Amplify } from "aws-amplify";
 import outputs from "@/amplify_outputs.json";
 import { generateClient } from "aws-amplify/data";
@@ -80,7 +80,8 @@ export function TemplatesList() {
     const matchesSearch =
       template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       template.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      template.tags?.some(tag => tag?.toLowerCase().includes(searchQuery.toLowerCase()));
+      template.tags?.some(tag => tag?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      template.scope?.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesVisibility = visibilityFilter === "all" || template.visibility === visibilityFilter.toLocaleUpperCase();
     return matchesSearch && matchesVisibility;
@@ -181,8 +182,8 @@ export function TemplatesList() {
                     {template.taskCount} tasks */}
                   </div>
                   <div className="flex items-center">
-                    {/* <LayoutTemplate className="mr-1 h-4 w-4" />
-                    {template.space} */}
+                    <LayoutTemplate className="mr-1 h-4 w-4" />
+                    {template.scope}
                   </div>
 
                   <div className="flex items-center">

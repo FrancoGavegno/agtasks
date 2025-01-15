@@ -13,7 +13,7 @@
     "connected": "Connected"
   },
   "TemplatesPage": {
-    "title": "Templates",
+    "title": "Template Repository",
     "subtitle": "Browse and use project templates",
     "addTemplate": "Create",
     "useTemplate": "Use template",

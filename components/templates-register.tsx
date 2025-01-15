@@ -32,7 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, X } from 'lucide-react';
-import { FormValues, Template } from "@/lib/types";
+import { FormValues } from "@/lib/types";
 
 
 Amplify.configure(outputs);
@@ -45,10 +45,30 @@ const formSchema = z.object({
     .min(2, "Name must be at least 2 characters")
     .max(100, "Name must be less than 100 characters"),
   description: z.string(),
-  visibility: z.enum(["COMMUNITY", "PRIVATE"], {
-    required_error: "Please select visibility",
-  }),
-  tags: z.array(z.string()).min(1, "Please add at least one tag")
+  visibility: z.enum(
+    [
+      "COMMUNITY",
+      "PRIVATE"
+    ],
+    {
+      required_error: "Please select template visibility",
+    }
+  ).default("COMMUNITY"),
+  tags: z.array(z.string()).min(1, "Please add at least one tag"),
+  scope: z.enum(
+    [
+      "NONE",
+      "INHERITED",
+      "DOMAIN",
+      "AREA",
+      "WORKSPACE",
+      "FARM",
+      "FIELD"
+    ],
+    {
+      required_error: "Please select template scope",
+    }
+  ).default("INHERITED"),
 })
 
 
@@ -67,6 +87,7 @@ export default function RegisterTemplateForm() {
       description: "",
       visibility: "COMMUNITY",
       tags: [],
+      scope: "INHERITED"
     },
   })
 
@@ -90,13 +111,14 @@ export default function RegisterTemplateForm() {
     setIsSubmitting(true)
     try {
       // Crea el template usando los valores del formulario 
-      const createTemplate = client.models.Template.create({ 
-        templateUrl: values.templateUrl, 
-        name: values.name, 
-        description: values.description, 
-        taskCount: values.taskCount, 
-        tags: values.tags, 
+      const createTemplate = client.models.Template.create({
+        templateUrl: values.templateUrl,
+        name: values.name,
+        description: values.description,
+        taskCount: values.taskCount,
+        tags: values.tags,
         visibility: values.visibility,
+        scope: values.scope,
       });
       await createTemplate;
 
@@ -124,7 +146,7 @@ export default function RegisterTemplateForm() {
       <div className="mb-6">
         <h2 className="text-2xl font-bold tracking-tight">New Template</h2>
         <p className="text-muted-foreground">
-          Register a new template from a ClickUp template URL.
+          Register a new template in our repository templates.
         </p>
       </div>
 
@@ -245,6 +267,36 @@ export default function RegisterTemplateForm() {
                 </FormControl>
                 <FormDescription>
                   Press Enter to add a tag
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="scope"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Scope</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="NONE">None</SelectItem>
+                    <SelectItem value="INHERITED">Inherited</SelectItem>
+                    <SelectItem value="DOMAIN">Domain</SelectItem>
+                    <SelectItem value="AREA">Area</SelectItem>
+                    <SelectItem value="WORKSPACE">Workspace</SelectItem>
+                    <SelectItem value="FARM">Farm</SelectItem>
+                    <SelectItem value="FIELD">Field</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Choose whether the template should be visible
                 </FormDescription>
                 <FormMessage />
               </FormItem>

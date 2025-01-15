@@ -1,349 +1,138 @@
 "use client"
 
-import * as React from "react"
-import { useTranslations } from 'next-intl';
-import { Link } from '@/i18n/routing';
-import { format } from "date-fns"
-import { Check, ChevronDown, MoreHorizontal, Search } from 'lucide-react'
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
 import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
-
-type Priority = "urgent" | "high" | "normal" | "low"
-type Status = "todo" | "in-progress" | "review" | "done"
-type TaskType = "tillage" | "field-visit" | "regular-task"
-type Farm = "ds-bossio" | "ds-local" | "ds-local-kmz"
-type FieldList = "lote-1b" | "lote-2b" | "lote-3b"
-type CollectForm = "crop-monitoring" | "field-survey" | ""
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import { 
+  MoreVertical, 
+  Calendar, 
+  AlertCircle, 
+  Flag 
+} from "lucide-react";
+import { getTasks } from "@/lib/clickup";
+import { Link } from "@/i18n/routing";
 
 interface Task {
+  id: string
+  name: string
+  custom_item_id?: number
+  due_date: string
+  status?: {
+    color: string
     id: string
-    name: string
-    priority: Priority
-    status: Status
-    dueDate: Date
-    scope: string
-    taskType: TaskType
-    farm: Farm
-    fieldList: FieldList
-    collectForm: CollectForm
+    orderindex: number
+    status: string
+    type: string    
+  }
+  priority?: {
+    color: string
+    id: string
+    orderindex: string
+    priority: string
+  }
 }
 
-const priorities: { label: string; value: Priority; color: string }[] = [
-    { label: "Urgent", value: "urgent", color: "destructive" },
-    { label: "High", value: "high", color: "destructive" },
-    { label: "Normal", value: "normal", color: "default" },
-    { label: "Low", value: "low", color: "secondary" },
-]
-
-const statuses: { label: string; value: Status }[] = [
-    { label: "To Do", value: "todo" },
-    { label: "In Progress", value: "in-progress" },
-    { label: "Review", value: "review" },
-    { label: "Done", value: "done" },
-]
-
-const taskTypes: { label: string; value: TaskType }[] = [
-    { label: "Laboreo", value: "tillage" },
-    { label: "Recorrida", value: "field-visit" },
-    { label: "Tarea", value: "regular-task" },
-]
-
-const farms: { label: string; value: Farm }[] = [
-    { label: "DS_Bossio", value: "ds-bossio" },
-    { label: "DS_Local", value: "ds-local" },
-    { label: "DS_Local_KMZ", value: "ds-local-kmz" },
-]
-
-const fieldLists: { label: string; value: FieldList }[] = [
-    { label: "Lote 1B", value: "lote-1b" },
-    { label: "Lote 2B", value: "lote-2b" },
-    { label: "Lote 3B", value: "lote-3b" },
-]
-
-const collectForms: { label: string; value: CollectForm }[] = [
-    { label: "Crop Monitoring", value: "crop-monitoring" },
-    { label: "Field Survey", value: "field-survey" },
-]
-
-// Mock data
-const tasks: Task[] = [
-    {
-        id: "TASK-8782",
-        name: "Generar reporte de mapa de productividad",
-        priority: "high",
-        status: "in-progress",
-        dueDate: new Date(2024, 1, 15),
-        scope: "fgavegno@geoagro.com",
-        taskType: "regular-task",
-        farm: "ds-bossio",
-        fieldList: "lote-3b",
-        collectForm: "",
-    },
-    {
-        id: "TASK-7878",
-        name: "Validar MP con recorrida a campo",
-        priority: "high",
-        status: "todo",
-        dueDate: new Date(2024, 1, 20),
-        scope: "fgavegno@geoagro.com",
-        taskType: "field-visit",
-        farm: "ds-local",
-        fieldList: "lote-3b",
-        collectForm: "crop-monitoring",
-    },
-    {
-        id: "TASK-7839",
-        name: "Generar reporte de recorrida a campo",
-        priority: "normal",
-        status: "review",
-        dueDate: new Date(2024, 1, 25),
-        scope: "fgavegno@geoagro.com",
-        taskType: "regular-task",
-        farm: "ds-local-kmz",
-        fieldList: "lote-3b",
-        collectForm: "",
-    },
-    {
-        id: "TASK-9939",
-        name: "Generar mapa de productividad",
-        priority: "low",
-        status: "review",
-        dueDate: new Date(2024, 1, 25),
-        scope: "fgavegno@geoagro.com",
-        taskType: "regular-task",
-        farm: "ds-local-kmz",
-        fieldList: "lote-3b",
-        collectForm: "",
-    },
-]
-
 export default function TaskList() {
-    const t = useTranslations('TasksPage');
+  const { id } = useParams();
+  const projectId = Array.isArray(id) ? id[0] : id;
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-    const [search, setSearch] = React.useState("")
-    const [selectedStatus, setSelectedStatus] = React.useState<Status | "">("")
-    const [selectedPriority, setSelectedPriority] = React.useState<Priority | "">("")
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const tasksData = await getTasks(projectId);
+        //console.log("tasksData:", tasksData);
+        setTasks(tasksData);
+      } catch (error) {
+        console.error('Error fetching tasks:', error)
+      } finally {
+        setIsLoading(false);
+      }
+    }
 
-    const filteredTasks = tasks.filter((task) => {
-        const matchesSearch = task.name.toLowerCase().includes(search.toLowerCase())
-        const matchesStatus = selectedStatus ? task.status === selectedStatus : true
-        const matchesPriority = selectedPriority ? task.priority === selectedPriority : true
-        return matchesSearch && matchesStatus && matchesPriority
+    fetchTasks()
+  }, [])
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     })
+  }
 
-    const getPriorityBadge = (priority: Priority) => {
-        const priorityConfig = priorities.find((p) => p.value === priority)
-        return (
-            <Badge variant={priorityConfig?.color as any}>
-                {priorityConfig?.label}
-            </Badge>
-        )
-    }
-
-    const getStatusIcon = (status: Status) => {
-        switch (status) {
-            case "todo":
-                return "○"
-            case "in-progress":
-                return "◔"
-            case "review":
-                return "◕"
-            case "done":
-                return "●"
-            default:
-                return "○"
-        }
-    }
-
+  if (isLoading) {
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-2xl">Ambientación con mapa de productividad (DEMO)</CardTitle>
-                <CardDescription>
-                    View and manage your project tasks
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="flex items-center gap-4 mb-6">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Filter tasks..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="pl-8"
-                        />
-                    </div>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="w-[100px]">
-                                Status <ChevronDown className="ml-2 h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setSelectedStatus("")}>
-                                All
-                            </DropdownMenuItem>
-                            {statuses.map((status) => (
-                                <DropdownMenuCheckboxItem
-                                    key={status.value}
-                                    checked={selectedStatus === status.value}
-                                    onCheckedChange={() => setSelectedStatus(status.value)}
-                                >
-                                    {status.label}
-                                </DropdownMenuCheckboxItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="w-[100px]">
-                                Priority <ChevronDown className="ml-2 h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setSelectedPriority("")}>
-                                All
-                            </DropdownMenuItem>
-                            {priorities.map((priority) => (
-                                <DropdownMenuCheckboxItem
-                                    key={priority.value}
-                                    checked={selectedPriority === priority.value}
-                                    onCheckedChange={() => setSelectedPriority(priority.value)}
-                                >
-                                    {priority.label}
-                                </DropdownMenuCheckboxItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-                <div className="rounded-md border">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[30px]">
-                                    <Checkbox />
-                                </TableHead>
-                                <TableHead>Task</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Priority</TableHead>
-                                <TableHead>Due Date</TableHead>
-                                <TableHead>Assignee</TableHead>
-                                <TableHead>Farm</TableHead>
-                                <TableHead>Field List</TableHead>
-                                <TableHead>Collect Form</TableHead>
-                                <TableHead className="w-[50px]"></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filteredTasks.map((task) => (
-                                <TableRow key={task.id}>
-                                    <TableCell>
-                                        <Checkbox />
-                                    </TableCell>
-                                    <TableCell>
-                                        <div>
-                                            <div className="font-medium">{task.id}</div>
-                                            <div className="text-sm text-muted-foreground">
-                                                {task.name}
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        {taskTypes.find((t) => t.value === task.taskType)?.label}
-                                    </TableCell>
-                                    <TableCell>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                                    <span className="sr-only">Open status menu</span>
-                                                    {getStatusIcon(task.status)}
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                {statuses.map((status) => (
-                                                    <DropdownMenuItem key={status.value}>
-                                                        <Check
-                                                            className={cn(
-                                                                "mr-2 h-4 w-4",
-                                                                task.status === status.value
-                                                                    ? "opacity-100"
-                                                                    : "opacity-0"
-                                                            )}
-                                                        />
-                                                        {status.label}
-                                                    </DropdownMenuItem>
-                                                ))}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                    <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-                                    <TableCell>{format(task.dueDate, "MMM dd, yyyy")}</TableCell>
-                                    <TableCell>{task.scope}</TableCell>
-                                    
-                                    <TableCell>
-                                        {farms.find((f) => f.value === task.farm)?.label}
-                                    </TableCell>
-                                    <TableCell>
-                                        {fieldLists.find((f) => f.value === task.fieldList)?.label}
-                                    </TableCell>
-                                    <TableCell className="underline text-blue-500">
-                                        <Link href="https://ee.kobotoolbox.org/x/gY0GIPKm" target="_blank">
-                                            {collectForms.find((f) => f.value === task.collectForm)?.label}
-                                        </Link>
-                                    </TableCell>
-                                    <TableCell>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                                    <span className="sr-only">Open menu</span>
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem>
-                                                    <Link href="/projects/1/tasks/1/collect-form">
-                                                        {t("ddCollectForm")}
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem>
-                                                    <Link href="/projects/1/tasks/1/edit">
-                                                        {t("ddEdit")}
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem>
-                                                    {t("ddDelete")}
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
-            </CardContent>
-        </Card>
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardContent className="p-6">
+          <div className="flex justify-center items-center h-40">
+            <p className="text-lg text-muted-foreground">Cargando tareas...</p>
+          </div>
+        </CardContent>
+      </Card>
     )
+  }
+
+  return (
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle className="text-2xl font-bold">Tareas </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {tasks.map((task, index) => (
+          <div key={task.id}>
+            {index > 0 && <Separator className="my-4" />}
+            <div className="flex items-start justify-between group">
+              <div className="flex-grow space-y-2 mr-4 min-w-0">
+                <h3 className="text-sm font-bold truncate max-w-[calc(100%-2rem)]" title={task.name}>{task.name}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2 w-full">
+                  <div className="flex items-center justify-start text-sm text-muted-foreground">
+                    <Calendar className="mr-2 h-4 w-4" />
+                    <span>{formatDate(task.due_date)}</span>
+                  </div>
+                  <div className="flex items-center justify-start text-sm">
+                    <AlertCircle className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <span style={{color: task.status?.color}}>{task.status?.status}</span>
+                  </div>
+                  <div className="flex items-center justify-start text-sm">
+                    <Flag className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <span>{task.priority?.priority}</span>
+                    <span>{task.custom_item_id}</span>
+                  </div>
+                </div>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="opacity-0 group-hover:opacity-100 focus:opacity-100">
+                  <MoreVertical className="h-5 w-5 text-muted-foreground" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>
+                    <Link
+                      href={`/task/${task.id}/edit/${task.custom_item_id}`}
+                    >Edit
+                    </Link>
+                    
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  )
 }
 

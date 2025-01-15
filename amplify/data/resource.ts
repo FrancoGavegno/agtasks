@@ -19,6 +19,16 @@ const schema = a
       "PRIVATE"
     ]),
 
+    Scope: a.enum([
+      "NONE",
+      "INHERITED",
+      "DOMAIN",
+      "AREA",
+      "WORKSPACE",
+      "FARM",
+      "FIELD"
+    ]),
+
     Template: a.model({
       id: a.id().required(),
       templateUrl: a.url().required(),
@@ -29,6 +39,7 @@ const schema = a
       tags: a.string().array(),
       visibility: a.ref("Visibility").required(),
       thumbnail: a.string(),
+      scope: a.ref("Scope"),
     }),
 
   })
