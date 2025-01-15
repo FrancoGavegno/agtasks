@@ -49,3 +49,21 @@ export const getListCustomFields = async (listId: string) => {
     throw new Error('Error fetching custom fields'); 
   }
 }
+
+
+export const getTasks = async (listId: string) => {
+  // https://developer.clickup.com/reference/gettasks
+
+  return {
+
+  }
+}
+
+
+export const setCustomFieldValue = async (taskId: string, fieldId: string) => {
+  // https://developer.clickup.com/reference/setcustomfieldvalue
+
+  return {
+
+  }
+}

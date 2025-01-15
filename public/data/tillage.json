@@ -1,20 +1,47 @@
 [
     {
+        "type": "select",
+        "label": "Tipo de Laboreo",
+        "name": "tipoLaboreo",
+        "options": [
+          {"value": "Siembra", "label": "Siembra"}
+        ]
+    },
+    {
+      "type": "select",
+      "label": "Establecimiento API",
+      "name": "establecimiento-api",
+      "apiCall": "listFarms" 
+    },
+    {
       "type": "select",
       "label": "Establecimiento",
       "name": "establecimiento",
       "options": [
+        {"value": "Capitanich Gustavo", "label": "Capitanich Gustavo"},
+        {"value": "Capitanich Gustavo", "label": "Capitanich Gustavo"},
         {"value": "Capitanich Gustavo", "label": "Capitanich Gustavo"}
       ]
     },
     {
-      "type": "select",
-      "label": "Tipo de Laboreo",
-      "name": "tipoLaboreo",
-      "options": [
-        {"value": "Siembra", "label": "Siembra"}
-      ]
-    },
+        "type": "select",
+        "label": "Lote",
+        "name": "lote",
+        "options": [
+          {
+            "Capitanich Gustavo": [
+              {"value": "Lote 1 - 07-Jun-2023 - 66.80", "label": "Lote 1 - 07-Jun-2023 - 66.80"}
+            ]
+          },
+          {
+            "Capitanich Gustavo": [
+              {"value": "Lote 1 - 07-Jun-2023 - 66.80", "label": "Lote 1 - 07-Jun-2023 - 66.80"}
+            ]
+          }
+        ],
+        "dependsOn": "establecimiento",
+        "multiple": true
+      },
     {
       "type": "select",
       "label": "Estado",
@@ -22,23 +49,6 @@
       "options": [
         {"value": "Planificado", "label": "Planificado"}
       ]
-    },
-    {
-      "type": "select",
-      "label": "Establecimiento",
-      "name": "loteEstablecimiento",
-      "options": [
-        {"value": "Capitanich Gustavo", "label": "Capitanich Gustavo"}
-      ]
-    },
-    {
-      "type": "select",
-      "label": "Lote",
-      "name": "lote",
-      "options": [
-        {"value": "Lote 1 - 07-Jun-2023 - 66.80", "label": "Lote 1 - 07-Jun-2023 - 66.80"}
-      ],
-      "dependsOn": "loteEstablecimiento"
     },
     {
       "type": "select",
@@ -57,29 +67,44 @@
       ]
     },
     {
+      "type": "subform",
+      "label": "Insumos y Dosis",
+      "name": "insumosDosis",
+      "fields": [
+        {
+          "type": "select",
+          "label": "Insumos",
+          "name": "insumos",
+          "options": [
+            {"value": "Banner Maxx - propiconazole", "label": "Banner Maxx - propiconazole"}
+          ]
+        },
+        {
+          "type": "text",
+          "label": "Dosis",
+          "name": "dosis",
+          "placeholder": "1"
+        },
+        {
+          "type": "text",
+          "label": "Unidad",
+          "name": "unidad",
+          "placeholder": "kg/ha"
+        },
+        {
+          "type": "text",
+          "label": "Hectareas",
+          "name": "hectareas",
+          "placeholder": "Hectareas"
+        }
+      ],
+      "addButtonText": "Agregar Insumo",
+      "removeButtonText": "Eliminar"
+    },
+    {
       "type": "select",
-      "label": "Insumos",
-      "name": "insumos",
-      "options": [
-        {"value": "Banner Maxx - propiconazole", "label": "Banner Maxx - propiconazole"}
-      ]
-    },
-    {
-      "type": "text",
-      "label": "Dosis",
-      "name": "dosis",
-      "placeholder": "1"
-    },
-    {
-      "type": "text",
-      "label": "Unidad",
-      "name": "unidad",
-      "placeholder": "kg/ha"
-    },
-    {
-      "type": "select",
-      "label": "Contrastista",
-      "name": "contrastista",
+      "label": "Contratista",
+      "name": "contratista",
       "options": [
         {"value": "Benitez - edipollina@gmail.com", "label": "Benitez - edipollina@gmail.com"}
       ]
