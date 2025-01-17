@@ -5,11 +5,6 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { getLists } from '@/lib/clickup';
 import { Project } from "@/lib/interfaces";
-// import {
-//   Avatar,
-//   AvatarFallback,
-//   AvatarImage
-// } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -30,7 +25,6 @@ import { Progress } from "@/components/ui/progress"
 import {
   CalendarDays,
   MoreHorizontal,
-  //Users2,
   FolderKanban,
   FileText
 } from 'lucide-react'

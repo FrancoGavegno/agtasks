@@ -2,27 +2,30 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import { 
-  MoreVertical, 
-  Calendar, 
-  AlertCircle, 
-  Flag 
+import {
+  MoreHorizontal,
+  Calendar,
+  AlertCircle,
+  Flag
 } from "lucide-react";
 import { getTasks } from "@/lib/clickup";
 import { Link } from "@/i18n/routing";
+import { capitalizeFirstLetter } from "@/lib/utils";
 
 interface Task {
   id: string
@@ -34,14 +37,16 @@ interface Task {
     id: string
     orderindex: number
     status: string
-    type: string    
+    type: string
   }
   priority?: {
     color: string
     id: string
     orderindex: string
     priority: string
-  }
+  },
+  orderindex: string
+  url: string
 }
 
 export default function TaskList() {
@@ -54,8 +59,11 @@ export default function TaskList() {
     const fetchTasks = async () => {
       try {
         const tasksData = await getTasks(projectId);
-        //console.log("tasksData:", tasksData);
-        setTasks(tasksData);
+        // setTasks(tasksData);
+
+        const sortedTasks: Task[] = tasksData.sort((a: Task, b: Task) => parseFloat(a.orderindex) - parseFloat(b.orderindex));
+        setTasks(sortedTasks);
+
       } catch (error) {
         console.error('Error fetching tasks:', error)
       } finally {
@@ -69,7 +77,7 @@ export default function TaskList() {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
       year: 'numeric',
-      month: 'long',
+      month: 'numeric',
       day: 'numeric'
     })
   }
@@ -98,33 +106,39 @@ export default function TaskList() {
             <div className="flex items-start justify-between group">
               <div className="flex-grow space-y-2 mr-4 min-w-0">
                 <h3 className="text-sm font-bold truncate max-w-[calc(100%-2rem)]" title={task.name}>{task.name}</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2 w-full">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-2 w-full">
                   <div className="flex items-center justify-start text-sm text-muted-foreground">
                     <Calendar className="mr-2 h-4 w-4" />
                     <span>{formatDate(task.due_date)}</span>
                   </div>
-                  <div className="flex items-center justify-start text-sm">
-                    <AlertCircle className="mr-2 h-4 w-4 text-muted-foreground" />
-                    <span style={{color: task.status?.color}}>{task.status?.status}</span>
+                  <div className="flex items-center justify-start text-sm text-muted-foreground">
+                    <AlertCircle className="mr-2 h-4 w-4" />
+                    <span style={{ color: task.status?.color }}>{capitalizeFirstLetter(task.status?.status || '')}</span>
                   </div>
-                  <div className="flex items-center justify-start text-sm">
-                    <Flag className="mr-2 h-4 w-4 text-muted-foreground" />
-                    <span>{task.priority?.priority}</span>
+                  <div className="flex items-center justify-start text-sm text-muted-foreground">
+                    <Flag className="mr-2 h-4 w-4" />
+                    <span>{capitalizeFirstLetter(task.priority?.priority || '')}</span>
+                  </div>
+                  <div className="flex items-center justify-start text-sm text-muted-foreground">
                     <span>{task.custom_item_id}</span>
                   </div>
                 </div>
               </div>
               <DropdownMenu>
-                <DropdownMenuTrigger className="opacity-0 group-hover:opacity-100 focus:opacity-100">
-                  <MoreVertical className="h-5 w-5 text-muted-foreground" />
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>
+                    Actions
+                  </DropdownMenuLabel>
                   <DropdownMenuItem>
                     <Link
                       href={`/task/${task.id}/edit/${task.custom_item_id}`}
                     >Edit
                     </Link>
-                    
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

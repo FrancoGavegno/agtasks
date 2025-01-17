@@ -5,18 +5,10 @@ import { useState, useEffect } from 'react';
 import DynamicForm from '@/components/dynamic-form/dynamic-form';
 
 export default function Page() {
-    // http://localhost:3000/en/task/868bxg9b6/edit
-
-    // getTask 
-    // https://developer.clickup.com/reference/gettask 
-
-    // getCustomTaskTypes
-    // https://developer.clickup.com/reference/getcustomitems
-    
     const { taskId, taskType } = useParams();
     const [jsonFiles, setJsonFiles] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
-    const [taskTypeForm, setTaskTypeForm] = useState<string>("regular_task");
+    const [taskTypeForm, setTaskTypeForm] = useState<string>("regular_task_v2");
 
     useEffect(() => {
         async function fetchJsonFiles() {
@@ -25,6 +17,14 @@ export default function Page() {
                 const files = await response.json();
                 setJsonFiles(files);
 
+                // TO DO: getTask 
+                // https://developer.clickup.com/reference/gettask
+
+
+                // TO DO: getCustomTaskTypes
+                // https://developer.clickup.com/reference/getcustomitems
+                
+                
                 if (taskType==="1001") {
                     setTaskTypeForm("field_visit"); 
                 } 

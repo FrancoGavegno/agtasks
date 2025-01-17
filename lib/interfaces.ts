@@ -86,3 +86,40 @@ export interface Option {
   color:      null;
   orderindex: number;
 }
+
+
+// usados en Template Builder
+
+export interface FormType {
+  title: string;
+  description?: string;
+  icon?: string;
+}
+
+export interface TaskType {
+  taskId: string;
+  taskName: string;
+  description: string;
+  documentation?: string;
+}
+
+export interface FieldType {
+  label: string;
+  name: string;
+  type: string;
+  required: boolean;
+  placeholder?: string;
+  options?: string[];
+  apiCall?: string;
+  [key: string]: string | boolean | string[] | undefined;
+}
+
+// export interface Column {
+//   key: string;
+//   title: string;
+// }
+
+// export interface Field {
+//   fieldId: string;
+//   fieldName: string;
+// }

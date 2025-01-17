@@ -1,0 +1,295 @@
+[
+    {
+        "name": "loteId",
+        "label": "Identificador del Lote",
+        "type": "text",
+        "required": true
+    },
+    {
+        "name": "loteName",
+        "label": "Nombre del Lote",
+        "type": "text",
+        "required": true
+    },
+    {
+        "name": "loteArea",
+        "label": "Área del Lote (ha)",
+        "type": "number",
+        "required": true
+    },
+    {
+        "name": "coordinates",
+        "label": "Coordenadas del Lote",
+        "type": "textarea",
+        "required": true,
+        "placeholder": "Ejemplo: Latitud, Longitud; Latitud, Longitud"
+    },
+    {
+        "name": "updateDate",
+        "label": "Fecha de Última Actualización",
+        "type": "date",
+        "required": true
+    },
+    {
+        "name": "cultivo",
+        "label": "Cultivo a Asignar",
+        "type": "select",
+        "options": ["Maíz", "Trigo", "Soja", "Cebada", "Girazol"],
+        "required": true
+    },
+    {
+        "name": "variedad",
+        "label": "Variedad del Cultivo",
+        "type": "text",
+        "required": true
+    },
+    {
+        "name": "fechaSiembra",
+        "label": "Fecha de Siembra Planificada",
+        "type": "date",
+        "required": true
+    },
+    {
+        "name": "ph",
+        "label": "pH del Suelo",
+        "type": "number",
+        "step": "0.1",
+        "required": true
+    },
+    {
+        "name": "materiaOrganica",
+        "label": "% de Materia Orgánica",
+        "type": "number",
+        "step": "0.1",
+        "required": true
+    },
+    {
+        "name": "nutrientes",
+        "label": "Nutrientes (N, P, K)",
+        "type": "textarea",
+        "required": true,
+        "placeholder": "Ejemplo: N: 50, P: 30, K: 40"
+    },
+    {
+        "name": "fechaCosecha",
+        "label": "Fecha Estimada de Cosecha",
+        "type": "date",
+        "required": true
+    },
+    {
+        "name": "cambios",
+        "label": "Descripción de Cambios",
+        "type": "textarea",
+        "required": true,
+        "placeholder": "Describa los ajustes realizados"
+    },
+    {
+        "name": "motivo",
+        "label": "Motivo del Ajuste",
+        "type": "text",
+        "required": true
+    },
+    {
+        "name": "fechaAjuste",
+        "label": "Fecha del Ajuste",
+        "type": "date",
+        "required": true
+    },
+    {
+        "name": "farmName",
+        "label": "Nombre de la Granja",
+        "type": "text",
+        "required": true
+    },
+    {
+        "name": "fieldId",
+        "label": "Identificador del Campo",
+        "type": "text",
+        "required": true
+    },
+    {
+        "name": "fieldName",
+        "label": "Nombre del Campo",
+        "type": "text",
+        "required": true
+    },
+    {
+        "name": "fieldArea",
+        "label": "Área del Campo (ha)",
+        "type": "number",
+        "required": true
+    },
+    {
+        "name": "coordinates",
+        "label": "Coordenadas del Campo",
+        "type": "textarea",
+        "required": true,
+        "placeholder": "Ejemplo: Latitud, Longitud; Latitud, Longitud"
+    },
+    {
+        "name": "cropType",
+        "label": "Tipo de Cultivo",
+        "type": "select",
+        "options": ["Maíz", "Trigo", "Soja", "Cebada", "Girazol", "Otro"],
+        "required": true
+    },
+    {
+        "name": "cropVariety",
+        "label": "Variedad del Cultivo",
+        "type": "text",
+        "required": false
+    },
+    {
+        "name": "plantingDate",
+        "label": "Fecha de Siembra",
+        "type": "date",
+        "required": true
+    },
+    {
+        "name": "harvestDate",
+        "label": "Fecha de Cosecha",
+        "type": "date",
+        "required": true
+    },
+    {
+        "name": "soilPh",
+        "label": "pH del Suelo",
+        "type": "number",
+        "step": "0.1",
+        "required": true
+    },
+    {
+        "name": "soilOrganicMatter",
+        "label": "% de Materia Orgánica",
+        "type": "number",
+        "step": "0.1",
+        "required": true
+    },
+    {
+        "name": "nutrientLevels",
+        "label": "Niveles de Nutrientes (N, P, K)",
+        "type": "textarea",
+        "required": true,
+        "placeholder": "Ejemplo: N: 50, P: 30, K: 40"
+    },
+    {
+        "name": "pesticideApplied",
+        "label": "Pesticida Aplicado",
+        "type": "text",
+        "required": false
+    },
+    {
+        "name": "pesticideApplicationDate",
+        "label": "Fecha de Aplicación de Pesticida",
+        "type": "date",
+        "required": false
+    },
+    {
+        "name": "fertilizerType",
+        "label": "Tipo de Fertilizante",
+        "type": "text",
+        "required": false
+    },
+    {
+        "name": "fertilizerApplicationDate",
+        "label": "Fecha de Aplicación de Fertilizante",
+        "type": "date",
+        "required": false
+    },
+    {
+        "name": "fertilizerAmount",
+        "label": "Cantidad de Fertilizante (kg/ha)",
+        "type": "number",
+        "required": false
+    },
+    {
+        "name": "waterAmount",
+        "label": "Cantidad de Agua Aplicada (litros/ha)",
+        "type": "number",
+        "required": false
+    },
+    {
+        "name": "irrigationDate",
+        "label": "Fecha de Riego",
+        "type": "date",
+        "required": false
+    },
+    {
+        "name": "yieldEstimate",
+        "label": "Estimación de Rendimiento (ton/ha)",
+        "type": "number",
+        "required": false
+    },
+    {
+        "name": "actualYield",
+        "label": "Rendimiento Real (ton/ha)",
+        "type": "number",
+        "required": false
+    },
+    {
+        "name": "observations",
+        "label": "Observaciones",
+        "type": "textarea",
+        "required": false,
+        "placeholder": "Añade cualquier observación relevante"
+    },
+    {
+        "name": "machineType",
+        "label": "Tipo de Maquinaria",
+        "type": "text",
+        "required": false
+    },
+    {
+        "name": "machineMaintenance",
+        "label": "Mantenimiento de Maquinaria",
+        "type": "text",
+        "required": false
+    },
+    {
+        "name": "maintenanceDate",
+        "label": "Fecha de Mantenimiento",
+        "type": "date",
+        "required": false
+    },
+    {
+        "name": "wasteManagement",
+        "label": "Manejo de Residuos",
+        "type": "textarea",
+        "required": false,
+        "placeholder": "Describe el manejo de residuos"
+    },
+    {
+        "name": "dataAnalysis",
+        "label": "Análisis de Datos",
+        "type": "textarea",
+        "required": false,
+        "placeholder": "Añade análisis o conclusiones"
+    },
+    {
+        "name": "soilSamplingDate",
+        "label": "Fecha de Muestreo de Suelo",
+        "type": "date",
+        "required": false
+    },
+    {
+        "name": "soilMoisture",
+        "label": "Humedad del Suelo (%)",
+        "type": "number",
+        "step": "0.1",
+        "required": false
+    },
+    {
+        "name": "weedControl",
+        "label": "Control de Malezas",
+        "type": "textarea",
+        "required": false,
+        "placeholder": "Descripción de métodos de control de malezas"
+    },
+    {
+        "name": "pestObservations",
+        "label": "Observaciones de Plagas",
+        "type": "textarea",
+        "required": false,
+        "placeholder": "Describe plagas observadas y acciones tomadas"
+    }
+]
