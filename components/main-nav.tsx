@@ -38,7 +38,7 @@ const menuItems = [
   },
   {
     title: "Projects",
-    href: "/projects",
+    href: "/projects2",
     icon: FolderKanban,
     description: "View and manage your projects"
   },

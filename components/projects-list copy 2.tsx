@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { Link } from "@/i18n/routing"
-import { getLists, getSpaces, getFolders, getFolderlessLists } from "@/lib/clickup"
-import type { Project, Space, Folder } from "@/lib/interfaces"
+import { getLists, getSpaces, getFolderlessLists } from "@/lib/clickup"
+import type { Project, Space } from "@/lib/interfaces"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -22,66 +22,55 @@ import { CalendarDays, MoreHorizontal, FolderKanban, FileText, Search } from "lu
 
 export function ProjectsList() {
   const t = useTranslations("ProjectsPage")
+
+  // from GeoAgro Clickup Official Account
   const teamId = process.env.NEXT_PUBLIC_TEAM_ID || ""
+  //const parentId = process.env.NEXT_PUBLIC_FOLDER_ID_PROJECTS || ""
   const [projects, setProjects] = useState<Project[]>([])
   const [spaces, setSpaces] = useState<Space[]>([])
-  const [folders, setFolders] = useState<Folder[]>([])
   const [selectedSpace, setSelectedSpace] = useState<string>("")
-  const [selectedFolder, setSelectedFolder] = useState<string>("")
   const [searchQuery, setSearchQuery] = useState<string>("")
 
   useEffect(() => {
     getSpaces(teamId)
       .then((data) => {
-        setSpaces(data.spaces)
+        const mappedSpaces: Space[] = data.spaces.map((space: any) => ({
+          id: space.id,
+          name: space.name,
+          color: space.color,
+          private: space.private,
+          avatar: space.avatar,
+          admin_can_manage: space.admin_can_manage,
+          statuses: space.statuses,
+          multiple_assignees: space.multiple_assignees,
+          features: {
+            due_dates: space.features.due_dates,
+            sprints: space.features.sprints,
+            time_tracking: space.features.time_tracking,
+            tags: space.features.tags,
+            time_estimates: space.features.time_estimates,
+            checklists: space.features.checklists,
+            custom_fields: space.features.custom_fields,
+            remap_dependencies: space.features.remap_dependencies,
+            dependency_warning: space.features.dependency_warning,
+            portfolios: space.features.portfolios,
+          },
+          archived: space.archived,
+        }))
+        setSpaces(mappedSpaces)
       })
       .catch((error) => {
         console.error("Error fetching spaces:", error)
       })
-  }, [teamId])
+  }, [])
 
   useEffect(() => {
     if (selectedSpace) {
-      getFolders(selectedSpace)
-        .then((data) => {
-          setFolders(data.folders)
-        })
-        .catch((error) => {
-          console.error("Error fetching folders:", error)
-        })
-    }
-  }, [selectedSpace])
-
-  useEffect(() => {
-    if (selectedFolder) {
-      getLists(selectedFolder)
-        .then((data) => {
-          const lists = data.lists
-          if (Array.isArray(lists)) {
-            const fetchedProjects: Project[] = lists.map((list) => ({
-              id: list.id,
-              name: list.name,
-              description: list.content || "",
-              taskCount: list.task_count,
-              space: list.space?.name || "",
-              progress: 0,
-              due_date: list.due_date ? new Date(Number.parseInt(list.due_date)).toLocaleDateString() : "",
-              status: list.status?.status || "",
-            }))
-            setProjects(fetchedProjects)
-          } else {
-            console.error("Unexpected data format:", lists)
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching lists:", error)
-        })
-    } else if (selectedSpace) {
       getFolderlessLists(selectedSpace)
         .then((data) => {
           const lists = data.lists
           if (Array.isArray(lists)) {
-            const fetchedProjects: Project[] = lists.map((list) => ({
+            const fetchedProjects: Project[] = lists.map((list: any) => ({
               id: list.id,
               name: list.name,
               description: list.content || "",
@@ -89,7 +78,7 @@ export function ProjectsList() {
               space: list.space?.name || "",
               progress: 0,
               due_date: list.due_date ? new Date(Number.parseInt(list.due_date)).toLocaleDateString() : "",
-              status: list.status?.status || "",
+              status: list.status?.status,
             }))
             setProjects(fetchedProjects)
           } else {
@@ -100,17 +89,7 @@ export function ProjectsList() {
           console.error("Error fetching folderless lists:", error)
         })
     }
-  }, [selectedSpace, selectedFolder])
-
-  const handleSpaceSelect = (spaceId: string) => {
-    setSelectedSpace(spaceId)
-    setSelectedFolder("")
-    setProjects([])
-  }
-
-  const handleFolderSelect = (folderId: string) => {
-    setSelectedFolder(folderId)
-  }
+  }, [selectedSpace])
 
   return (
     <div className="container px-1 py-10 mx-auto">
@@ -123,7 +102,7 @@ export function ProjectsList() {
 
       <div className="flex flex-col gap-6">
         <div className="flex items-center gap-4">
-          <Select value={selectedSpace} onValueChange={handleSpaceSelect}>
+          <Select value={selectedSpace} onValueChange={(value) => setSelectedSpace(value)}>
             <SelectTrigger className="w-[380px]">
               <SelectValue placeholder="Select space" />
             </SelectTrigger>
@@ -135,22 +114,10 @@ export function ProjectsList() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={selectedFolder} onValueChange={handleFolderSelect}>
-            <SelectTrigger className="w-[380px]">
-              <SelectValue placeholder="Select folder" />
-            </SelectTrigger>
-            <SelectContent>
-              {folders.map((folder) => (
-                <SelectItem key={folder.id} value={folder.id}>
-                  {folder.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
           <div className="relative flex-1">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search projects..."
+              placeholder={`Search projects...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8"
@@ -187,6 +154,23 @@ export function ProjectsList() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>{t("ddLabel")}</DropdownMenuLabel>
+                      {/* <DropdownMenuItem>
+                      <Link href={`/projects/${project.id}/edit`}>
+                        {t('ddEdit')}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Link href={`/projects/${project.id}/edit-v2`}>
+                        {t('ddEdit')+" v2"}
+                      </Link>
+                    </DropdownMenuItem> 
+                    <DropdownMenuItem>
+                      <Link
+                        href={`https://app.clickup.com/${teamId}/v/li/${project.id}`}
+                        target='_blank'>
+                        {t('ddGoTo')}
+                      </Link>
+                    </DropdownMenuItem> */}
                       <DropdownMenuItem>
                         <Link href={`/projects/${project.id}/tasks`}>{t("ddTasks")}</Link>
                       </DropdownMenuItem>
@@ -202,13 +186,29 @@ export function ProjectsList() {
                       <div className="flex items-center text-sm">
                         <FileText className="mr-1 h-4 w-4" />
                         {project.taskCount} tasks
+                        {/* <div className="flex -space-x-2"> */}
+                        {/* project.team.slice(0, 3).map((member, i) => (
+                        <Avatar key={i} className="border-2 border-background">
+                          <AvatarImage src={member.image} alt={member.name} />
+                          <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                        </Avatar>
+                      ))}
+                      {project.team.length > 3 && (
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-background bg-muted text-sm">
+                          +{project.team.length - 3}
+                        </div>
+                      )*/}
+                      </div>
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        {/* <Users2 className="mr-1 h-4 w-4" />
+                      {project.team.length} members*/}
                       </div>
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <div className="flex items-center">
                           <CalendarDays className="mr-1 h-4 w-4 text-muted-foreground" />
-                          <span>Due {project.due_date}</span>
+                          <span>Due {new Date(project.due_date).toLocaleDateString()}</span>
                         </div>
                         <span className="text-muted-foreground">{project.progress}%</span>
                       </div>

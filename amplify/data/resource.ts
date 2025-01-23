@@ -1,5 +1,6 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
-import { Visibility } from "aws-cdk-lib/aws-appsync";
+// import { Visibility } from "aws-cdk-lib/aws-appsync";
+import { parseISO } from 'date-fns';
 
 /*== STEP 1 ===============================================================
 The section below creates a Todo database table with a "content" field. Try
@@ -40,6 +41,14 @@ const schema = a
       visibility: a.ref("Visibility").required(),
       thumbnail: a.string(),
       scope: a.ref("Scope"),
+    }),
+
+    ProjectRole: a.model({
+      id: a.id().required(),
+      projectId: a.string().required(),
+      userId: a.string().required(),
+      userRole: a.string().required(),
+      status: a.string().default("ACTIVE"),
     }),
 
   })

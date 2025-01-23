@@ -7,8 +7,8 @@ import { Amplify } from "aws-amplify";
 import outputs from "@/amplify_outputs.json";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "@/amplify/data/resource";
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -16,25 +16,24 @@ import {
   CardFooter,
   CardHeader,
   CardTitle
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import {
-  FileText,
   Search,
   Users,
   Tags,
@@ -42,7 +41,7 @@ import {
   MoreVertical,
   Pencil,
   Trash
-} from 'lucide-react'
+} from "lucide-react";
 
 
 Amplify.configure(outputs);
@@ -90,7 +89,6 @@ export function TemplatesList() {
 
   return (
     <div className="container px-1 py-10 mx-auto">
-
       <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-2xl font-bold">{t('title')}</h2>
@@ -135,8 +133,8 @@ export function TemplatesList() {
             </SelectContent>
           </Select>
         </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {templates.length > 0 && filteredTemplates.map((template) => (
             <Card key={template.id} className="flex flex-col">
               <CardHeader className="flex flex-row items-start justify-between space-y-0">
