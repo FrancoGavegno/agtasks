@@ -31,30 +31,33 @@ export default function AwsExample({ initialProjectRoles }: Props) {
     return () => subscription.unsubscribe();
   }, [projectRoles]);
 
-  const createProjectRole = async () => {
-    // This is a simplified example. In practice, you'd want to ask for more details like projectId, userId, userRole
-    const userRole = window.prompt("Role for the user");
-    const projectId = window.prompt("Project ID");
-    const userId = window.prompt("User ID");
-    if (userRole && projectId && userId) {
-      const response = await client.models.ProjectRole.create({ 
-        userRole: userRole, 
-        projectId: projectId, 
-        userId: userId 
-      });
-      const newProjectRole = response.data as Schema["ProjectRole"]["type"];
-      setProjectRoles(prevProjectRoles => [...prevProjectRoles, newProjectRole]);
-    }
-  };
+  // const createProjectRole = async () => {
+  //   // This is a simplified example. In practice, you'd want to ask for more details like projectId, userId, userRole
+  //   const userRole = window.prompt("Role for the user");
+  //   const projectId = window.prompt("Project ID");
+  //   const userId = window.prompt("User ID");
+  //   if (userRole && projectId && userId) {
+  //     const response = await client.models.ProjectRole.create({ 
+  //       ro: userRole, 
+  //       projectId: projectId, 
+  //       userId: userId 
+  //     });
+  //     const newProjectRole = response.data as Schema["ProjectRole"]["type"];
+  //     setProjectRoles(prevProjectRoles => [...prevProjectRoles, newProjectRole]);
+  //   }
+  // };
 
   return (
     <main>
       <h1>Project Roles</h1>
-      <button onClick={createProjectRole}>+ new role</button>
+      {/* <button onClick={createProjectRole}>Create Project Role</button> */}
       <ul>
         {projectRoles.map((role) => (
           <li key={role.id}>
-            Project: {role.projectId}, User: {role.userId}, Role: {role.userRole}, Status: {role.status} , Created at: {role.createdAt} </li>
+            Project: {role.projectId} {role.projectName} | 
+            User: {role.userId} {role.userName} {role.userEmail} |
+            Role: {role.roleId} {role.roleName} | 
+            Created at: {role.createdAt} </li>
         ))}
       </ul>
     </main>

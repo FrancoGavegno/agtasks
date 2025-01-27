@@ -45,9 +45,13 @@ const schema = a
 
     ProjectRole: a.model({
       id: a.id().required(),
-      projectId: a.string().required(),
+      projectId: a.string(),
+      projectName: a.string(),
       userId: a.string().required(),
-      userRole: a.string().required(),
+      userName: a.string(),
+      userEmail: a.email(),
+      roleId: a.string(),
+      roleName: a.string().required(),
       status: a.string().default("ACTIVE"),
     }),
 

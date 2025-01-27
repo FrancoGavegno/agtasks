@@ -84,6 +84,22 @@ export const getList = async (listId: string) => {
 }
 
 
+export const getWorkspaceCustomFields = async (teamId: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/team/${teamId}/field`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `${API_KEY}`,
+      },
+    });
+    return response.data.fields;
+  } catch (error) {
+    console.error('Error fetching workspace custom fields:', error);
+    throw new Error('Error fetching workspace custom fields');
+  }
+}
+
+
 export const getListCustomFields = async (listId: string) => {
   try {
     const response = await axios.get(`${API_URL}/list/${listId}/field`, {
@@ -116,68 +132,59 @@ export const getTasks = async (listId: string) => {
 }
 
 
-export const getTask = async (taskId: string) => {
-  // https://developer.clickup.com/reference/gettask
+// export const getTask = async (taskId: string) => {
+//   // https://developer.clickup.com/reference/gettask
 
-  return {
+//   return {
+//   }
+// }
 
-  }
-}
 
+// export const getCustomTaskTypes = async (teamId: string) => {
+//   // https://developer.clickup.com/reference/getcustomitems
 
-export const getCustomTaskTypes = async (teamId: string) => {
-  // https://developer.clickup.com/reference/getcustomitems
-
-  return {
-    "custom_items": [
-      {
-        "id": 1,
-        "name": "milestone",
-        "name_plural": null,
-        "description": null,
-        "avatar": {
-          "source": null,
-          "value": null
-        }
-      },
-      {
-        "id": 3,
-        "name": "form_response",
-        "name_plural": null,
-        "description": null,
-        "avatar": {
-          "source": null,
-          "value": null
-        }
-      },
-      {
-        "id": 1001,
-        "name": "FieldVisit",
-        "name_plural": "FieldVisits",
-        "description": null,
-        "avatar": {
-          "source": "fas",
-          "value": "location-dot"
-        }
-      },
-      {
-        "id": 1002,
-        "name": "Tillage",
-        "name_plural": "Tillages",
-        "description": null,
-        "avatar": {
-          "source": "fas",
-          "value": "truck-fast"
-        }
-      }
-    ]
-  }
-}
-
-export const setCustomFieldValue = async (taskId: string, fieldId: string) => {
-  // https://developer.clickup.com/reference/setcustomfieldvalue
-
-  return {
-
-  }
-}
+//   return {
+//     "custom_items": [
+//       {
+//         "id": 1,
+//         "name": "milestone",
+//         "name_plural": null,
+//         "description": null,
+//         "avatar": {
+//           "source": null,
+//           "value": null
+//         }
+//       },
+//       {
+//         "id": 3,
+//         "name": "form_response",
+//         "name_plural": null,
+//         "description": null,
+//         "avatar": {
+//           "source": null,
+//           "value": null
+//         }
+//       },
+//       {
+//         "id": 1001,
+//         "name": "FieldVisit",
+//         "name_plural": "FieldVisits",
+//         "description": null,
+//         "avatar": {
+//           "source": "fas",
+//           "value": "location-dot"
+//         }
+//       },
+//       {
+//         "id": 1002,
+//         "name": "Tillage",
+//         "name_plural": "Tillages",
+//         "description": null,
+//         "avatar": {
+//           "source": "fas",
+//           "value": "truck-fast"
+//         }
+//       }
+//     ]
+//   }
+// }

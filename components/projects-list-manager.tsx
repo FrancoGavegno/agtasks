@@ -5,29 +5,34 @@ import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChevronRight, ChevronDown, Search, FolderIcon, ListIcon, SquareArrowOutUpRight } from "lucide-react"
-import type { Space, Folder, Project, TreeItem, User, ProjectRole } from "@/lib/interfaces"
-import { getSpaces, getFolders, getFolderlessLists } from "@/lib/clickup"
-import { useForm, Controller } from 'react-hook-form'
+import type { Space, Folder, Project, TreeItem, FormData, User, Role, ProjectRole, Field } from "@/lib/interfaces"
+import { getSpaces, getFolders, getFolderlessLists, getWorkspaceCustomFields } from "@/lib/clickup"
+import { useForm, Controller } from "react-hook-form"
 import { listUsersByWs } from "@/lib/360"
 
-import { Amplify } from "aws-amplify";
-import outputs from "@/amplify_outputs.json";
-Amplify.configure(outputs);
-import { generateClient } from "aws-amplify/data";
-import type { Schema } from "@/amplify/data/resource";
+import { Amplify } from "aws-amplify"
+import outputs from "@/amplify_outputs.json"
+Amplify.configure(outputs)
+import { generateClient } from "aws-amplify/data"
+import type { Schema } from "@/amplify/data/resource"
+import ProjectRoleDetail from "@/components/project-role"
+import { useToast } from "@/hooks/use-toast"
 
 const client = generateClient<Schema>()
 
-
-interface FormData {
-  [key: string]: string;
-}
-
-export default function ClickUpManager() {
-  const teamId = process.env.NEXT_PUBLIC_TEAM_ID || ""
+export default function ProjectsList() {
+  const tmWorkspaceId = process.env.NEXT_PUBLIC_TEAM_ID || "9011455509"
+  const fmsWorkspaceId = process.env.NEXT_PUBLIC_FMS_WK_ID || "5203"
   const [spaces, setSpaces] = useState<Space[]>([])
   const [treeData, setTreeData] = useState<TreeItem[]>([])
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
@@ -36,40 +41,50 @@ export default function ClickUpManager() {
   const [selectedItem, setSelectedItem] = useState<TreeItem | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectAll, setSelectAll] = useState(false)
-  const [users, setUsers] = useState<User[]>([]);
-  const { control, handleSubmit, formState: { errors } } = useForm();
-
-  // Mock users data - replace with actual users API
-  // const users = [
-  //   { id: "1", name: "Olivia Martin", email: "m@example.com" },
-  //   { id: "2", name: "Isabella Nguyen", email: "b@example.com" },
-  //   { id: "3", name: "Sofia Davis", email: "p@example.com" },
-  //   { id: "4", name: "Ethan Smith", email: "ethan@example.com" },
-  //   { id: "5", name: "Ava Johnson", email: "ava@example.com" },
-  //   { id: "6", name: "Liam Brown", email: "liam@example.com" },
-  //   { id: "7", name: "Emma Wilson", email: "emma@example.com" },
-  //   { id: "8", name: "Noah Taylor", email: "noah@example.com" },
-  //   { id: "9", name: "Sophia Lee", email: "sophia@example.com" },
-  //   { id: "10", name: "James Anderson", email: "james@example.com" },
-  // ]
+  const [roles, setRoles] = useState<Role[]>([])
+  const [users, setUsers] = useState<User[]>([])
+  const { toast } = useToast()
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm()
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchTaskRoles = async () => {
       try {
-        const usersData: User[] = await listUsersByWs(5203);
-        setUsers(usersData);
-
+        const fields: Field[] = await getWorkspaceCustomFields(tmWorkspaceId)
+        const taskRoleField: Field[] = fields.filter((cf) => cf.name === "Task_Role")
+        const rolesData: Role[] =
+          taskRoleField[0]?.type_config?.options?.map((option) => ({
+            id: option.id,
+            name: option.name,
+            color: option.color || undefined,
+            orderindex: option.orderindex,
+          })) || []
+        setRoles(rolesData)
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching Task_Role data:", error)
       }
     }
-    fetchUsers();
+
+    const fetchUsers = async () => {
+      try {
+        const usersData: User[] = await listUsersByWs(Number.parseInt(fmsWorkspaceId))
+        setUsers(usersData)
+      } catch (error) {
+        console.error("Error fetching 360 Workspace Users data:", error)
+      }
+    }
+
+    fetchUsers()
+    fetchTaskRoles()
   }, [])
 
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const spacesData = await getSpaces(teamId)
+        const spacesData = await getSpaces(tmWorkspaceId)
         setSpaces(spacesData.spaces)
 
         const treeItems: TreeItem[] = await Promise.all(
@@ -130,7 +145,10 @@ export default function ClickUpManager() {
 
   const handleItemClick = (item: TreeItem) => {
     setSelectedItem(item)
-    if (item.type !== "list") {
+    if (item.type === "list") {
+      setSelectedLists(new Set([item.id]))
+      setSelectAll(false)
+    } else {
       setSelectedLists(new Set())
       setSelectAll(false)
     }
@@ -191,8 +209,9 @@ export default function ClickUpManager() {
     return (
       <div key={item.id} className="select-none">
         <div
-          className={`flex items-center py-1 px-2 hover:bg-gray-100 cursor-pointer ${selectedItem?.id === item.id ? "bg-gray-100" : ""
-            }`}
+          className={`flex items-center py-1 px-2 hover:bg-gray-100 cursor-pointer ${
+            selectedItem?.id === item.id ? "bg-gray-100" : ""
+          }`}
           style={{ paddingLeft: `${level * 20}px` }}
           onClick={() => handleItemClick(item)}
         >
@@ -222,65 +241,67 @@ export default function ClickUpManager() {
     )
   }
 
-  // Validación personalizada para asegurar que al menos un usuario 
-  // tenga un rol diferente de 'none'
   const validateAtLeastOneRole = (values: Record<string, string>) => {
-    return Object.values(values).some(value => value !== "none") || "Please select a role other than 'none' for at least one user.";
-  };
+    return (
+      Object.values(values).some((value) => value !== "none") ||
+      "Please select a role other than 'none' for at least one user."
+    )
+  }
 
   const onSubmit = async (data: FormData) => {
-    const validationResult = validateAtLeastOneRole(data);
-    if (typeof validationResult === 'string') {
-      // Si la validación falla, se establece un error en el formulario
-      return { root: { message: validationResult } };
+    const validationResult = validateAtLeastOneRole(data)
+    if (typeof validationResult === "string") {
+      toast({
+        title: "Validation Error",
+        description: validationResult,
+        variant: "destructive",
+      })
+      return { root: { message: validationResult } }
     }
 
-    // Si la validación pasa, se procede con el envío
-    // console.log('Listas seleccionadas:', selectedLists);
-    // console.log('Form submitted with data:', data);
-
-    // Aquí procesamos los roles
-    const rolesToCreate: ProjectRole[] = [];
+    const rolesToCreate: ProjectRole[] = []
     Object.entries(data).forEach(([key, roleName]) => {
-      if (key.startsWith('user_') && roleName !== 'none') {
-        const userId = key.split('_')[1];
-        selectedLists.forEach(projectId => {
+      if (key.startsWith("user_") && roleName !== "none") {
+        const userId = key.split("_")[1]
+        selectedLists.forEach((projectId) => {
           rolesToCreate.push({
             projectId,
+            projectName: selectedItem?.name,
             userId,
-            userRole: roleName,
-            status: "ACTIVE"
-          });
-        });
+            userName: users.find((user) => user.id === userId)?.name,
+            userEmail: users.find((user) => user.id === userId)?.email,
+            roleId: roles.find((role) => role.name === roleName)?.id,
+            roleName: roleName,
+            status: "ACTIVE",
+          })
+        })
       }
-    });
+    })
 
     try {
-      // Crear múltiples entradas en la tabla ProjectRole
-      const promises = rolesToCreate.map(role => 
-        client.models.ProjectRole.create(role)
-      );
-      const results = await Promise.all(promises);
+      const promises = rolesToCreate.map((role) => client.models.ProjectRole.create(role))
+      const results = await Promise.all(promises)
 
-      // await Promise.all(rolesToCreate.map(role =>
-      //   client.models.ProjectRole.create(role)
-      // ));
-      
-      console.log('Registros creados:', results);
-      // console.log('Roles asignados con éxito:', rolesToCreate);
-      setIsModalOpen(false); // Cierra el modal después de enviar
+      console.log("Registros creados:", results)
+      setIsModalOpen(false)
 
-      // Reset states to their initial values
-      setSearchTerm("");
-      setSelectedLists(new Set());
-      setSelectedItem(null);
-      // setUsers([]);
+      setSearchTerm("")
+      setSelectedLists(new Set())
+      setSelectedItem(null)
 
+      toast({
+        title: "Success",
+        description: `${results.length} project roles have been created successfully.`,
+      })
     } catch (error) {
-      console.error('Error al crear registros de ProjectRole:', error);
-      // Manejar el error según sea necesario, quizás mostrando un mensaje al usuario
+      console.error("Error al crear registros de ProjectRole:", error)
+      toast({
+        title: "Error",
+        description: "An error occurred while creating project roles. Please try again.",
+        variant: "destructive",
+      })
     }
-  };
+  }
 
   return (
     <div className="flex h-[calc(100vh-4rem)] border rounded-lg overflow-hidden">
@@ -307,44 +328,44 @@ export default function ClickUpManager() {
         <div className="p-4 border-b flex justify-between items-center">
           <h2 className="text-lg font-semibold">{selectedItem ? selectedItem.name : "Select an item"}</h2>
           <Button onClick={() => setIsModalOpen(true)} disabled={selectedLists.size === 0}>
-            Edit
+            Edit Roles
           </Button>
         </div>
         <div className="overflow-auto flex-1 p-4">
           {(selectedItem?.type === "list" || selectedItem?.children) && (
             <div className="flex items-center space-x-2 mb-4">
               <Checkbox id="select-all" checked={selectAll} onCheckedChange={handleSelectAll} />
-              <label htmlFor="select-all" className="text-sm text-gray-700">Select All</label>
+              <label htmlFor="select-all" className="text-sm text-gray-700">
+                Select All
+              </label>
             </div>
           )}
           {selectedItem?.type === "list" ? (
-            <div className="space-y-2">
+            <div className="space-y-4">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id={selectedItem.id}
                   checked={selectedLists.has(selectedItem.id)}
                   onCheckedChange={() => handleListCheckbox(selectedItem.id)}
                 />
-                <label htmlFor={selectedItem.id}
-                  className="flex items-center justify-between w-full pr-4">
-                  <div>
-                    {selectedItem.name}
-                  </div>
+                <label htmlFor={selectedItem.id} className="flex items-center justify-between w-full pr-4">
+                  <div>{selectedItem.name}</div>
 
-                  <Link href={`https://app.clickup.com/9011455509/v/li/${selectedItem.id}`}
+                  <Link
+                    href={`https://app.clickup.com/9011455509/v/li/${selectedItem.id}`}
                     target="_blank"
                     className="text-blue-500 hover:text-blue-700 text-sm"
                   >
                     <SquareArrowOutUpRight size={18} />
                   </Link>
-
                 </label>
               </div>
 
+              <ProjectRoleDetail projectId={selectedItem.id} />
             </div>
-          ) : selectedItem?.children ? (
+          ) : selectedItem?.type === "folder" || selectedItem?.type === "space" ? (
             <div className="space-y-2">
-              {selectedItem.children
+              {(selectedItem.children || [])
                 .filter((child) => child.type === "list")
                 .map((list) => (
                   <div key={list.id} className="flex items-center space-x-2">
@@ -353,13 +374,11 @@ export default function ClickUpManager() {
                       checked={selectedLists.has(list.id)}
                       onCheckedChange={() => handleListCheckbox(list.id)}
                     />
-                    <label htmlFor={list.id}
-                      className="flex items-center justify-between w-full pr-4">
-                      <div>
-                        {list.name}
-                      </div>
+                    <label htmlFor={list.id} className="flex items-center justify-between w-full pr-4">
+                      <div>{list.name}</div>
 
-                      <Link href={`https://app.clickup.com/9011455509/v/li/${list.id}`}
+                      <Link
+                        href={`https://app.clickup.com/9011455509/v/li/${list.id}`}
                         target="_blank"
                         className="text-blue-500 hover:text-blue-700"
                       >
@@ -378,9 +397,7 @@ export default function ClickUpManager() {
         <DialogContent className="sm:max-w-[450px]">
           <DialogHeader>
             <DialogTitle>Edit User Roles</DialogTitle>
-            <DialogDescription >
-              Asigne usuarios a roles de su/s proyecto/s
-            </DialogDescription>
+            <DialogDescription>Asigne usuarios a roles de su/s proyecto/s</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-4 py-4">
@@ -395,40 +412,43 @@ export default function ClickUpManager() {
               </div>
               {/* Scrollable Container */}
               <div className="max-h-[calc(100vh*0.6)] overflow-y-auto pl-2 pr-2">
-                {users.filter(user =>
-                  user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                  user.email.toLowerCase().includes(searchTerm.toLowerCase())
-                ).map((user) => (
-                  <div key={user.id} className="flex items-center justify-between py-2">
-                    <div>
-                      <p className="font-medium">{user.name}</p>
-                      <p className="text-sm text-gray-500">{user.email}</p>
+                {users
+                  .filter(
+                    (user) =>
+                      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      user.email.toLowerCase().includes(searchTerm.toLowerCase()),
+                  )
+                  .map((user) => (
+                    <div key={user.id} className="flex items-center justify-between py-2">
+                      <div>
+                        <p className="font-medium">{user.name}</p>
+                        <p className="text-sm text-gray-500">{user.email}</p>
+                      </div>
+                      <Controller
+                        name={`user_${user.id}`}
+                        control={control}
+                        defaultValue="none"
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger className="w-[130px]">
+                              <SelectValue placeholder="Select role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">...</SelectItem>
+                              {roles.map((role) => (
+                                <SelectItem key={role.id} value={role.name}>
+                                  {role.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
                     </div>
-                    <Controller
-                      name={`user_${user.id}`}
-                      control={control}
-                      defaultValue="none"
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <SelectTrigger className="w-[130px]">
-                            <SelectValue placeholder="Select role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">...</SelectItem>
-                            <SelectItem value="Supervisor_recorrida">Supervisor_recorrida</SelectItem>
-                            <SelectItem value="Operador_GIS">Operador_GIS</SelectItem>
-                            <SelectItem value="Colector_recorrida">Colector_recorrida</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
-            {errors.root && (
-              <p className="text-red-500 text-xs italic">{errors.root.message}</p>
-            )}
+            {errors.root && <p className="text-red-500 text-xs italic">{errors.root.message}</p>}
             {/* Form for Submission */}
             <div className="flex justify-end mt-4">
               <Button type="submit">Confirm</Button>
@@ -436,7 +456,6 @@ export default function ClickUpManager() {
           </form>
         </DialogContent>
       </Dialog>
-
     </div>
   )
 }

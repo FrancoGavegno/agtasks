@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const apiUrl = process.env.NEXT_PUBLIC_360_API_URL || '';
-const apiKey = process.env.NEXT_PUBLIC_360_API_KEY || '';
+const apiUrl = process.env.NEXT_PUBLIC_FMS_API_URL || '';
+const apiKey = process.env.NEXT_PUBLIC_FMS_API_KEY || '';
 
 
 export const listUsersByWs = async (workspaceId: number) => {

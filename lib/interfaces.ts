@@ -130,6 +130,8 @@ export interface FieldType {
   [key: string]: string | boolean | string[] | undefined
 }
 
+// Projects
+
 export interface TreeItem {
   id: string
   name: string
@@ -144,9 +146,49 @@ export interface User {
   email: string
 }
 
+export interface Role {
+  id: string
+  name: string
+  color?: string
+  orderindex: number
+}
+
+export interface FormData {
+  [key: string]: string
+}
+
 export interface ProjectRole {
-  projectId: string
+  projectId?: string
+  projectName?: string
   userId: string
-  userRole: string
+  userName?: string
+  userEmail?: string
+  roleId?: string
+  roleName: string
   status: string
+}
+
+// Custom Fields
+
+export interface Field {
+  id:               string
+  name:             string
+  type:             string
+  type_config:      TypeConfig
+  date_created:     string
+  hide_from_guests: boolean
+  required:         boolean
+}
+
+export interface TypeConfig {
+  sorting?:       string
+  new_drop_down?: boolean
+  options?:       Option[]
+}
+
+export interface Option {
+  id:         string
+  name:       string
+  color:      null
+  orderindex: number
 }
