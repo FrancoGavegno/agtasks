@@ -26,28 +26,7 @@ import {
 import { getTasks } from "@/lib/clickup";
 import { Link } from "@/i18n/routing";
 import { capitalizeFirstLetter } from "@/lib/utils";
-
-interface Task {
-  id: string
-  name: string
-  custom_item_id?: number
-  due_date: string
-  status?: {
-    color: string
-    id: string
-    orderindex: number
-    status: string
-    type: string
-  }
-  priority?: {
-    color: string
-    id: string
-    orderindex: string
-    priority: string
-  },
-  orderindex: string
-  url: string
-}
+import { Task } from "@/lib/interfaces";
 
 export default function TaskList() {
   const { id } = useParams();

@@ -1,4 +1,4 @@
-import RegisterTemplateForm from "@/components/templates-register";
+import RegisterTemplateForm from "@/components/templates/templates-register";
 
 export default function RegisterTemplatePage() {
   return <RegisterTemplateForm />

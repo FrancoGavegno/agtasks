@@ -7,7 +7,7 @@ export interface Space {
   admin_can_manage: boolean
   statuses: Status[]
   multiple_assignees: boolean
-  features: {
+  features?: {
     due_dates: {
       enabled: boolean
       start_date: boolean
@@ -64,12 +64,7 @@ export interface Project {
   deleted?: boolean
   orderindex?: number
   status?: Status
-  priority?: {
-    id: string
-    priority: string
-    color: string
-    orderindex: string
-  }
+  priority?: Priority
   assignee?: null | {
     id: number
     username: string
@@ -96,6 +91,18 @@ export interface Project {
   thumbnail?: string
 }
 
+export interface Task {
+  id: string
+  name: string
+  custom_item_id?: number
+  due_date: string
+  status?: Status
+  priority?: Priority
+  orderindex: string
+  url: string
+  custom_fields?: Field[]
+}
+
 export interface Status {
   id: string
   status: string
@@ -103,6 +110,13 @@ export interface Status {
   color: string
   type: string
   status_group?: string
+}
+
+export interface Priority {
+  id: string
+  color: string
+  orderindex: string
+  priority: string
 }
 
 // Template Builder
@@ -169,13 +183,23 @@ export interface ProjectRole {
   status: string
 }
 
-// Custom Fields
+// export interface CustomField {
+//   id: string
+//   name: string
+//   type: string
+//   type_config: TypeConfig
+//   value?: string | null
+//   date_created: string
+//   hide_from_guests: boolean
+//   required: boolean
+// }
 
 export interface Field {
   id: string
   name: string
   type: string
   type_config: TypeConfig
+  value?: string | null
   date_created: string
   hide_from_guests: boolean
   required: boolean
@@ -193,28 +217,3 @@ export interface Option {
   color: null
   orderindex: number
 }
-
-export interface CustomField {
-  id: string
-  name: string
-  type: string
-  type_config: {
-    options?: {
-      id: string
-      name: string
-      color?: string | null
-      orderindex: number
-    }[]
-  }
-  value?: string | null
-}
-
-export interface Task {
-  id: string
-  name: string
-  status: {
-    color: string
-  }
-  custom_fields?: CustomField[]
-}
-

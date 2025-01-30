@@ -1,7 +1,5 @@
-import { ProjectsList } from "@/components/projects-list";
-import TaskList  from "@/components/tasks-list";
+import TaskList  from "@/components/tasks/tasks-list";
 
-export default function ProjectsPage() {
-  //return <ProjectsList />
+export default function ProjectPage() {
   return <TaskList />
 }

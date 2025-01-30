@@ -1,8 +1,10 @@
+// http://localhost:3000/en/tasks/868c3tfrf/edit/field_visit
+
 'use client'
 
 import { useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import DynamicForm from '@/components/dynamic-form/dynamic-form';
+import DynamicForm from '@/components/tasks/tasks-edit/dynamic-form';
 
 export default function Page() {
     const { taskId, taskType } = useParams();

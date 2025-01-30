@@ -1,4 +1,4 @@
-import ProjectsList from "@/components/projects-list-manager";
+import ProjectsList from "@/components/projects/projects-list";
 
 export default function ProjectsPage() {
   return (

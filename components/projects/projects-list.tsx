@@ -2,6 +2,18 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useForm, Controller } from "react-hook-form"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -13,7 +25,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
 import {
   ChevronRight,
   ChevronDown,
@@ -35,10 +54,14 @@ import type {
   ProjectRole,
   Field,
   Task,
-  CustomField,
 } from "@/lib/interfaces"
-import { getSpaces, getFolders, getFolderlessLists, getWorkspaceCustomFields, getTasks } from "@/lib/clickup"
-import { useForm, Controller } from "react-hook-form"
+import { 
+  getSpaces, 
+  getFolders, 
+  getFolderlessLists, 
+  getWorkspaceCustomFields, 
+  getTasks 
+} from "@/lib/clickup"
 import { listUsersByWs } from "@/lib/360"
 
 import { Amplify } from "aws-amplify"
@@ -46,25 +69,14 @@ import outputs from "@/amplify_outputs.json"
 Amplify.configure(outputs)
 import { generateClient } from "aws-amplify/data"
 import type { Schema } from "@/amplify/data/resource"
-import ProjectRoleDetail from "@/components/project-role"
-import { useToast } from "@/hooks/use-toast"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+// import ProjectRoleDetail from "@/components/projects/project-role"
+
 
 const client = generateClient<Schema>()
 
 export default function ProjectsList() {
-  const tmWorkspaceId = "9011455509"
-  const fmsWorkspaceId = "5203"
+  const tmWorkspaceId = process.env.NEXT_PUBLIC_TEAM_ID || "9011455509"
+  const fmsWorkspaceId = process.env.NEXT_PUBLIC_FMS_WK_ID || "5203"
   const [spaces, setSpaces] = useState<Space[]>([])
   const [treeData, setTreeData] = useState<TreeItem[]>([])
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
@@ -512,7 +524,7 @@ export default function ProjectsList() {
                               <div className="flex items-center space-x-2">
                                 <div
                                   className="w-2 h-2 rounded-full flex-shrink-0"
-                                  style={{ backgroundColor: task.status.color }}
+                                  style={{ backgroundColor: task.status?.color }}
                                 />
                                 <span className="truncate">{task.name}</span>
                               </div>
