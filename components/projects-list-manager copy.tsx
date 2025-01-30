@@ -14,30 +14,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  ChevronRight,
-  ChevronDown,
-  Search,
-  FolderIcon,
-  ListIcon,
-  SquareArrowOutUpRight,
-  UserCircle2,
-  Trash2,
-} from "lucide-react"
-import type {
-  Space,
-  Folder,
-  Project,
-  TreeItem,
-  FormData,
-  User,
-  Role,
-  ProjectRole,
-  Field,
-  Task,
-  CustomField,
-} from "@/lib/interfaces"
-import { getSpaces, getFolders, getFolderlessLists, getWorkspaceCustomFields, getTasks } from "@/lib/clickup"
+import { ChevronRight, ChevronDown, Search, FolderIcon, ListIcon, SquareArrowOutUpRight } from "lucide-react"
+import type { Space, Folder, Project, TreeItem, FormData, User, Role, ProjectRole, Field } from "@/lib/interfaces"
+import { getSpaces, getFolders, getFolderlessLists, getWorkspaceCustomFields } from "@/lib/clickup"
 import { useForm, Controller } from "react-hook-form"
 import { listUsersByWs } from "@/lib/360"
 
@@ -48,23 +27,12 @@ import { generateClient } from "aws-amplify/data"
 import type { Schema } from "@/amplify/data/resource"
 import ProjectRoleDetail from "@/components/project-role"
 import { useToast } from "@/hooks/use-toast"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
 
 const client = generateClient<Schema>()
 
 export default function ProjectsList() {
-  const tmWorkspaceId = "9011455509"
-  const fmsWorkspaceId = "5203"
+  const tmWorkspaceId = process.env.NEXT_PUBLIC_TEAM_ID || "9011455509"
+  const fmsWorkspaceId = process.env.NEXT_PUBLIC_FMS_WK_ID || "5203"
   const [spaces, setSpaces] = useState<Space[]>([])
   const [treeData, setTreeData] = useState<TreeItem[]>([])
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
@@ -75,13 +43,6 @@ export default function ProjectsList() {
   const [selectAll, setSelectAll] = useState(false)
   const [roles, setRoles] = useState<Role[]>([])
   const [users, setUsers] = useState<User[]>([])
-  const [tasks, setTasks] = useState<any[]>([])
-  const [isLoadingTasks, setIsLoadingTasks] = useState(false)
-  const [customFields, setCustomFields] = useState<{
-    taskType?: Field
-    taskRole?: Field
-  }>({})
-  const [projectRoles, setProjectRoles] = useState<Array<Schema["ProjectRole"]["type"]>>([])
   const { toast } = useToast()
   const {
     control,
@@ -170,25 +131,6 @@ export default function ProjectsList() {
     fetchInitialData()
   }, [])
 
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      try {
-        const fields: Field[] = await getWorkspaceCustomFields(tmWorkspaceId)
-        const taskTypeField = fields.find((field) => field.name === "Task_Type")
-        const taskRoleField = fields.find((field) => field.name === "Task_Role")
-
-        setCustomFields({
-          taskType: taskTypeField,
-          taskRole: taskRoleField,
-        })
-      } catch (error) {
-        console.error("Error fetching custom fields:", error)
-      }
-    }
-
-    fetchCustomFields()
-  }, [])
-
   const toggleExpand = (itemId: string) => {
     setExpandedItems((prev) => {
       const next = new Set(prev)
@@ -201,36 +143,14 @@ export default function ProjectsList() {
     })
   }
 
-  const handleItemClick = async (item: TreeItem) => {
+  const handleItemClick = (item: TreeItem) => {
     setSelectedItem(item)
     if (item.type === "list") {
       setSelectedLists(new Set([item.id]))
       setSelectAll(false)
-      setIsLoadingTasks(true)
-      try {
-        const [tasksData, projectRolesData] = await Promise.all([
-          getTasks(item.id),
-          client.models.ProjectRole.list({
-            filter: { projectId: { eq: item.id } },
-          }),
-        ])
-        setTasks(tasksData)
-        setProjectRoles(projectRolesData.data)
-      } catch (error) {
-        console.error("Error fetching data:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load data. Please try again.",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoadingTasks(false)
-      }
     } else {
       setSelectedLists(new Set())
       setSelectAll(false)
-      setTasks([])
-      setProjectRoles([])
     }
   }
 
@@ -383,52 +303,6 @@ export default function ProjectsList() {
     }
   }
 
-  const getCustomFieldOptionName = (task: Task, fieldName: string): string | null => {
-    if (!task.custom_fields) return null
-
-    const field = task.custom_fields.find((f) => f.name === fieldName)
-    if (!field || typeof field.value !== "number") return null
-
-    const option = field.type_config?.options?.[field.value]
-    return option?.name || null
-  }
-
-  const findProjectRolesForTask = (task: Task): Schema["ProjectRole"]["type"][] => {
-    if (!selectedItem?.id) return []
-
-    const taskRole = getCustomFieldOptionName(task, "Task_Role")
-    if (!taskRole) return []
-
-    return projectRoles.filter(
-      (role) => role.projectId === selectedItem.id && role.roleName === taskRole && role.status === "ACTIVE",
-    )
-  }
-
-  const handleDelete = async (id: string) => {
-    try {
-      await client.models.ProjectRole.delete({ id: id })
-      console.log("ProjectRole deleted: ", id)
-      toast({
-        title: "Success",
-        description: "Project role has been deleted successfully.",
-      })
-      // Refresh the project roles
-      if (selectedItem?.id) {
-        const updatedProjectRoles = await client.models.ProjectRole.list({
-          filter: { projectId: { eq: selectedItem.id } },
-        })
-        setProjectRoles(updatedProjectRoles.data)
-      }
-    } catch (error) {
-      console.error("Error deleting ProjectRole:", error)
-      toast({
-        title: "Error",
-        description: "An error occurred while deleting the project role. Please try again.",
-        variant: "destructive",
-      })
-    }
-  }
-
   return (
     <div className="flex h-[calc(100vh-4rem)] border rounded-lg overflow-hidden">
       {/* Left Column */}
@@ -454,7 +328,7 @@ export default function ProjectsList() {
         <div className="p-4 border-b flex justify-between items-center">
           <h2 className="text-lg font-semibold">{selectedItem ? selectedItem.name : "Select an item"}</h2>
           <Button onClick={() => setIsModalOpen(true)} disabled={selectedLists.size === 0}>
-            Assignee
+            Edit Roles
           </Button>
         </div>
         <div className="overflow-auto flex-1 p-4">
@@ -487,83 +361,7 @@ export default function ProjectsList() {
                 </label>
               </div>
 
-              {isLoadingTasks ? (
-                <div className="text-center">Loading tasks...</div>
-              ) : (
-                <div className="space-y-2">
-                  <h3 className="text-md font-semibold">Tasks</h3>
-                  {tasks.length > 0 ? (
-                    <div className="border rounded-lg">
-                      <div className="grid grid-cols-4 gap-4 p-3 border-b bg-gray-50">
-                        <div className="font-medium">Name</div>
-                        <div className="font-medium">Task Type</div>
-                        <div className="font-medium">Task Role</div>
-                        <div className="font-medium">Assignee</div>
-                      </div>
-                      <div className="divide-y">
-                        {tasks.map((task: Task) => {
-                          const taskType = getCustomFieldOptionName(task, "Task_Type")
-                          const taskRole = getCustomFieldOptionName(task, "Task_Role")
-                          console.log("Task Role for task:", task.name, taskRole)
-                          const assignees = findProjectRolesForTask(task)
-                          console.log("Assignees found:", assignees)
-                          return (
-                            <div key={task.id} className="grid grid-cols-4 gap-4 p-3 items-center hover:bg-gray-50">
-                              <div className="flex items-center space-x-2">
-                                <div
-                                  className="w-2 h-2 rounded-full flex-shrink-0"
-                                  style={{ backgroundColor: task.status.color }}
-                                />
-                                <span className="truncate">{task.name}</span>
-                              </div>
-                              <div className="truncate">{taskType || "-"}</div>
-                              <div className="truncate">{taskRole || "-"}</div>
-                              <div className="space-y-1">
-                                {assignees.length > 0 ? (
-                                  assignees.map((role) => (
-                                    <div key={role.id} className="flex items-center justify-between">
-                                      <div className="flex items-center space-x-1">
-                                        <UserCircle2 className="h-4 w-4 text-gray-500" />
-                                        <span className="truncate text-sm">{role.userName}</span>
-                                      </div>
-                                      <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                          <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-500 cursor-pointer" />
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                          <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                              This action cannot be undone. This will permanently delete the project
-                                              role for {role.userName}.
-                                            </AlertDialogDescription>
-                                          </AlertDialogHeader>
-                                          <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleDelete(role.id)}>
-                                              Delete
-                                            </AlertDialogAction>
-                                          </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                      </AlertDialog>
-                                    </div>
-                                  ))
-                                ) : (
-                                  <span className="text-gray-400">-</span>
-                                )}
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  ) : (
-                    <p>No tasks found for this list.</p>
-                  )}
-                </div>
-              )}
-
-              {/* <ProjectRoleDetail projectId={selectedItem.id} /> */}
+              <ProjectRoleDetail projectId={selectedItem.id} />
             </div>
           ) : selectedItem?.type === "folder" || selectedItem?.type === "space" ? (
             <div className="space-y-2">

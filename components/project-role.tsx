@@ -73,8 +73,9 @@ export default function ProjectRoleDetail({ projectId }: ProjectRoleProps) {
 
   return (
     <div className="mt-4">
-      <h2 className="text-md font-semibold mb-2">Project Roles</h2>
+      <h2 className="text-md font-semibold mb-2">Roles</h2>
       <ul className="space-y-2">
+        {projectRoles.length === 0 && <p>Not found user assigned to roles.</p>}
         {projectRoles.map((role) => (
           <li key={role.id} className="bg-gray-100 p-2 rounded relative">
             <AlertDialog>
@@ -101,9 +102,9 @@ export default function ProjectRoleDetail({ projectId }: ProjectRoleProps) {
             <p>
               <strong>Role:</strong> {role.roleName}
             </p>
-            <p>
+            {/* <p>
               <strong>Created at:</strong> {new Date(role.createdAt).toLocaleString()}
-            </p>
+            </p> */}
           </li>
         ))}
       </ul>

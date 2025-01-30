@@ -89,9 +89,10 @@ export interface Project {
   permission_level?: string
   tags?: string[]
   progress?: number
-  team?: { 
-    name: string, 
-    image: string }[]
+  team?: {
+    name: string
+    image: string
+  }[]
   thumbnail?: string
 }
 
@@ -171,24 +172,49 @@ export interface ProjectRole {
 // Custom Fields
 
 export interface Field {
-  id:               string
-  name:             string
-  type:             string
-  type_config:      TypeConfig
-  date_created:     string
+  id: string
+  name: string
+  type: string
+  type_config: TypeConfig
+  date_created: string
   hide_from_guests: boolean
-  required:         boolean
+  required: boolean
 }
 
 export interface TypeConfig {
-  sorting?:       string
+  sorting?: string
   new_drop_down?: boolean
-  options?:       Option[]
+  options?: Option[]
 }
 
 export interface Option {
-  id:         string
-  name:       string
-  color:      null
+  id: string
+  name: string
+  color: null
   orderindex: number
 }
+
+export interface CustomField {
+  id: string
+  name: string
+  type: string
+  type_config: {
+    options?: {
+      id: string
+      name: string
+      color?: string | null
+      orderindex: number
+    }[]
+  }
+  value?: string | null
+}
+
+export interface Task {
+  id: string
+  name: string
+  status: {
+    color: string
+  }
+  custom_fields?: CustomField[]
+}
+
