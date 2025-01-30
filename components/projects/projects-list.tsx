@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { useForm, Controller } from "react-hook-form"
 import {
@@ -25,12 +25,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -55,12 +55,12 @@ import type {
   Field,
   Task,
 } from "@/lib/interfaces"
-import { 
-  getSpaces, 
-  getFolders, 
-  getFolderlessLists, 
-  getWorkspaceCustomFields, 
-  getTasks 
+import {
+  getSpaces,
+  getFolders,
+  getFolderlessLists,
+  getWorkspaceCustomFields,
+  getTasks
 } from "@/lib/clickup"
 import { listUsersByWs } from "@/lib/360"
 
@@ -75,10 +75,11 @@ import type { Schema } from "@/amplify/data/resource"
 const client = generateClient<Schema>()
 
 export default function ProjectsList() {
-  const tmWorkspaceId = process.env.NEXT_PUBLIC_TEAM_ID || "9011455509"
+  const tmWorkspaceId = process.env.NEXT_PUBLIC_TEAM_ID || ""
   const fmsWorkspaceId = process.env.NEXT_PUBLIC_FMS_WK_ID || "5203"
   const [spaces, setSpaces] = useState<Space[]>([])
   const [treeData, setTreeData] = useState<TreeItem[]>([])
+  const [filteredTreeData, setFilteredTreeData] = useState<TreeItem[]>([]);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedLists, setSelectedLists] = useState<Set<string>>(new Set())
@@ -101,105 +102,101 @@ export default function ProjectsList() {
     formState: { errors },
   } = useForm()
 
-  useEffect(() => {
-    const fetchTaskRoles = async () => {
-      try {
-        const fields: Field[] = await getWorkspaceCustomFields(tmWorkspaceId)
-        const taskRoleField: Field[] = fields.filter((cf) => cf.name === "Task_Role")
-        const rolesData: Role[] =
-          taskRoleField[0]?.type_config?.options?.map((option) => ({
-            id: option.id,
-            name: option.name,
-            color: option.color || undefined,
-            orderindex: option.orderindex,
-          })) || []
-        setRoles(rolesData)
-      } catch (error) {
-        console.error("Error fetching Task_Role data:", error)
-      }
+
+  const fetchSpacesData = async () => {
+    try {
+      const spacesData = await getSpaces(tmWorkspaceId)
+      setSpaces(spacesData.spaces)
+
+      const treeItems: TreeItem[] = await Promise.all(
+        spacesData.spaces.map(async (space: Space) => {
+          const [foldersData, folderlessLists] = await Promise.all([
+            getFolders(space.id),
+            getFolderlessLists(space.id),
+          ])
+
+          return {
+            id: space.id,
+            name: space.name,
+            type: "space",
+            children: [
+              ...foldersData.folders.map((folder: Folder) => ({
+                id: folder.id,
+                name: folder.name,
+                type: "folder",
+                parentId: space.id,
+                children:
+                  folder.lists?.map((list: Project) => ({
+                    id: list.id,
+                    name: list.name,
+                    type: "list",
+                    parentId: folder.id,
+                  })) || [],
+              })),
+              ...folderlessLists.lists.map((list: Project) => ({
+                id: list.id,
+                name: list.name,
+                type: "list",
+                parentId: space.id,
+              })),
+            ],
+          }
+        }),
+      )
+      setTreeData(treeItems)
+    } catch (error) {
+      console.error("Error fetching spaces data:", error)
     }
+  }
 
-    const fetchUsers = async () => {
-      try {
-        const usersData: User[] = await listUsersByWs(Number.parseInt(fmsWorkspaceId))
-        setUsers(usersData)
-      } catch (error) {
-        console.error("Error fetching 360 Workspace Users data:", error)
+  const fetchCustomFieldsAndRoles = async () => {
+    try {
+      const fields: Field[] = await getWorkspaceCustomFields(tmWorkspaceId);
+      const taskTypeField = fields.find((field) => field.name === "Task_Type");
+      const taskRoleField = fields.find((field) => field.name === "Task_Role");
+
+      setCustomFields({
+        taskType: taskTypeField,
+        taskRole: taskRoleField,
+      });
+
+      // Procesando roles de tarea
+      if (taskRoleField && taskRoleField.type_config?.options) {
+        const rolesData: Role[] = taskRoleField.type_config.options.map((option) => ({
+          id: option.id,
+          name: option.name,
+          color: option.color || undefined,
+          orderindex: option.orderindex,
+        }));
+        setRoles(rolesData);
       }
+    } catch (error) {
+      console.error("Error fetching custom fields and roles:", error);
     }
+  };
 
-    fetchUsers()
-    fetchTaskRoles()
-  }, [])
-
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        const spacesData = await getSpaces(tmWorkspaceId)
-        setSpaces(spacesData.spaces)
-
-        const treeItems: TreeItem[] = await Promise.all(
-          spacesData.spaces.map(async (space: Space) => {
-            const [foldersData, folderlessLists] = await Promise.all([
-              getFolders(space.id),
-              getFolderlessLists(space.id),
-            ])
-
-            return {
-              id: space.id,
-              name: space.name,
-              type: "space",
-              children: [
-                ...foldersData.folders.map((folder: Folder) => ({
-                  id: folder.id,
-                  name: folder.name,
-                  type: "folder",
-                  parentId: space.id,
-                  children:
-                    folder.lists?.map((list: Project) => ({
-                      id: list.id,
-                      name: list.name,
-                      type: "list",
-                      parentId: folder.id,
-                    })) || [],
-                })),
-                ...folderlessLists.lists.map((list: Project) => ({
-                  id: list.id,
-                  name: list.name,
-                  type: "list",
-                  parentId: space.id,
-                })),
-              ],
-            }
-          }),
-        )
-        setTreeData(treeItems)
-      } catch (error) {
-        console.error("Error fetching data:", error)
-      }
-    }
-
-    fetchInitialData()
-  }, [])
 
   useEffect(() => {
-    const fetchCustomFields = async () => {
+    const fetchData = async () => {
+      await fetchSpacesData();
+      await fetchCustomFieldsAndRoles();
+
       try {
-        const fields: Field[] = await getWorkspaceCustomFields(tmWorkspaceId)
-        const taskTypeField = fields.find((field) => field.name === "Task_Type")
-        const taskRoleField = fields.find((field) => field.name === "Task_Role")
-
-        setCustomFields({
-          taskType: taskTypeField,
-          taskRole: taskRoleField,
-        })
+        const usersData: User[] = await listUsersByWs(Number.parseInt(fmsWorkspaceId));
+        setUsers(usersData);
       } catch (error) {
-        console.error("Error fetching custom fields:", error)
+        console.error("Error fetching 360 Workspace Users data:", error);
       }
-    }
+    };
 
-    fetchCustomFields()
-  }, [])
+    fetchData();
+  }, []);
+
+
+  useEffect(() => {
+    setFilteredTreeData(filterTree(treeData, searchTerm));
+  }, [treeData, searchTerm]);
+
 
   const toggleExpand = (itemId: string) => {
     setExpandedItems((prev) => {
@@ -213,7 +210,8 @@ export default function ProjectsList() {
     })
   }
 
-  const handleItemClick = async (item: TreeItem) => {
+  const handleItemClick = useCallback(async (item: TreeItem) => {
+    //const handleItemClick = async (item: TreeItem) => {
     setSelectedItem(item)
     if (item.type === "list") {
       setSelectedLists(new Set([item.id]))
@@ -244,7 +242,7 @@ export default function ProjectsList() {
       setTasks([])
       setProjectRoles([])
     }
-  }
+  }, [client, setSelectedItem, setSelectedLists, setSelectAll, setIsLoadingTasks, setTasks, setProjectRoles, toast]);
 
   const handleListCheckbox = (listId: string) => {
     setSelectedLists((prev) => {
@@ -296,14 +294,13 @@ export default function ProjectsList() {
   const renderTreeItem = (item: TreeItem, level = 0) => {
     const isExpanded = expandedItems.has(item.id)
     const hasChildren = item.children && item.children.length > 0
-    const filteredChildren = searchTerm && hasChildren ? filterTree(item.children || [], searchTerm) : item.children
-
+    const filteredChildren = searchTerm && hasChildren ? item.children : item.children
+    
     return (
       <div key={item.id} className="select-none">
         <div
-          className={`flex items-center py-1 px-2 hover:bg-gray-100 cursor-pointer ${
-            selectedItem?.id === item.id ? "bg-gray-100" : ""
-          }`}
+          className={`flex items-center py-1 px-2 hover:bg-gray-100 cursor-pointer ${selectedItem?.id === item.id ? "bg-gray-100" : ""
+            }`}
           style={{ paddingLeft: `${level * 20}px` }}
           onClick={() => handleItemClick(item)}
         >
@@ -457,7 +454,7 @@ export default function ProjectsList() {
           </div>
         </div>
         <div className="overflow-auto flex-1">
-          {filterTree(treeData, searchTerm).map((item) => renderTreeItem(item))}
+          {filteredTreeData.map((item) => renderTreeItem(item))}  
         </div>
       </div>
 
