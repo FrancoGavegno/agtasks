@@ -64,15 +64,9 @@ import {
 } from "@/lib/clickup"
 import { listUsersByWs } from "@/lib/360"
 
-import { Amplify } from "aws-amplify"
-import outputs from "@/amplify_outputs.json"
-Amplify.configure(outputs)
-import { generateClient } from "aws-amplify/data"
 import type { Schema } from "@/amplify/data/resource"
-// import ProjectRoleDetail from "@/components/projects/project-role"
+import { client } from "@/lib/amplify"
 
-
-const client = generateClient<Schema>()
 
 export default function ProjectsList() {
   const tmWorkspaceId = process.env.NEXT_PUBLIC_TEAM_ID || ""

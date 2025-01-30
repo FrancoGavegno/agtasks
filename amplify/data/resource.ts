@@ -55,6 +55,11 @@ const schema = a
       status: a.string().default("ACTIVE"),
     }),
 
+    TaskManagerConfig: a.model({
+      apiKey: a.string(),
+      teamId: a.string(),
+    })
+
   })
   .authorization((allow) => [allow.publicApiKey()]);
 
