@@ -40,9 +40,13 @@ Crea un archivo .env.local en la raíz del proyecto y añade tu clave de API de 
 ```
 // file env.local
 
-API_URL='your-task-manager-api-url'
-API_KEY='your-task-manager-api-key'
-PARENT='your-task-manager-parent-id'
+NEXT_PUBLIC_API_URL=https://api.clickup.com/api/v2
+NEXT_PUBLIC_API_KEY=clickup-api-key
+NEXT_PUBLIC_TEAM_ID=clickup-team-id
+NEXT_PUBLIC_FMS_API_URL=360-api-url
+NEXT_PUBLIC_FMS_API_KEY=360-api-key
+NEXT_PUBLIC_FMS_WK_ID=360-workspace-id
+
 ```
 
 4. Inicia el servidor de desarrollo: 
