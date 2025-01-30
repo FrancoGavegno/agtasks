@@ -3,12 +3,12 @@
 import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { DataSourceSection } from "@/components/tasks/task-create/data-source-section"
-import { TaskTypeSection } from "@/components/tasks/task-create/task-type-section"
-import { DateSection } from "@/components/tasks/task-create/date-section"
-import { ProductsSection } from "@/components/tasks/task-create/products-section"
-import { AssigneesSection } from "@/components/tasks/task-create/assignees-section"
-import { ProjectSection } from "@/components/tasks/task-create/project-section"
+import { DataSourceSection } from "./data-source-section"
+import { TaskTypeSection } from "./task-type-section"
+import { DateSection } from "./date-section"
+import { ProductsSection } from "./products-section"
+import { AssigneesSection } from "./assignees-section"
+import { ProjectSection } from "./project-section"
 
 export function TaskCreate() {
   interface Product {

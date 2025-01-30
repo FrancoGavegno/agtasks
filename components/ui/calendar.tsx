@@ -59,13 +59,19 @@ function Calendar({
         day_hidden: "invisible",
         ...classNames,
       }}
-      components={{
-        IconLeft: ({ className, ...props }) => (
-          <ChevronLeft className={cn("h-4 w-4", className)} {...props} />
-        ),
-        IconRight: ({ className, ...props }) => (
-          <ChevronRight className={cn("h-4 w-4", className)} {...props} />
-        ),
+      modifiersClassNames={{
+        selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+        today: "bg-accent text-accent-foreground",
+        outside: "day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
+        disabled: "text-muted-foreground opacity-50",
+        range_start: "day-range-start",
+        range_end: "day-range-end",
+        range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+        hidden: "invisible",
+      }}
+      modifiers={{
+        selected: (date) => date.getDate() === new Date().getDate(),
+        today: (date) => date.getDate() === new Date().getDate(),
       }}
       {...props}
     />
