@@ -41,6 +41,7 @@ const schema = a
       visibility: a.ref("Visibility").required(),
       thumbnail: a.string(),
       scope: a.ref("Scope"),
+      tenantId: a.string(),
     }),
 
     ProjectRole: a.model({
@@ -53,11 +54,13 @@ const schema = a
       roleId: a.string(),
       roleName: a.string().required(),
       status: a.string().default("ACTIVE"),
+      tenantId: a.string(),
     }),
 
     TaskManagerConfig: a.model({
       apiKey: a.string(),
       teamId: a.string(),
+      tenantId: a.string(),
     })
 
   })
