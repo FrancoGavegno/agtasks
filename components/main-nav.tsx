@@ -15,32 +15,57 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { BarChart3, Settings, Link2, LayoutTemplate, CreditCard, Users, FolderKanban, Bell, HelpCircle, Menu } from 'lucide-react'
+import { 
+  BarChart3, 
+  Settings, 
+  Link2, 
+  LayoutTemplate,
+  CreditCard, 
+  Users, 
+  FolderKanban,
+  Bell, 
+  HelpCircle, 
+  Menu,
+  Monitor,
+  CalendarCheck2
+} from 'lucide-react'
 
 const menuItems = [
+  // {
+  //   title: "Dashboard",
+  //   href: "/",
+  //   icon: BarChart3,
+  //   description: "View your dashboard and analytics"
+  // },
   {
-    title: "Dashboard",
-    href: "/",
-    icon: BarChart3,
-    description: "View your dashboard and analytics"
-  },
-  {
-    title: "Account",
-    href: "/account",
+    title: "Accounts",
+    href: "/accounts",
     icon: Link2,
-    description: "Manage your connected account"
+    description: "Manage your connected accounts"
   },
   {
-    title: "Templates",
-    href: "/templates",
+    title: "Portals",
+    href: "/portals",
+    icon: Monitor,
+    description: "Manage your service portals"
+  },
+  {
+    title: "Protocols",
+    href: "/protocols",
     icon: LayoutTemplate,
-    description: "Browse and use project templates"
+    description: "Browse and use protocols templates"
   },
+  // {
+  //   title: "Projects",
+  //   href: "/projects",
+  //   icon: FolderKanban,
+  //   description: "Manage your projects"
+  // },
   {
-    title: "Projects",
-    href: "/projects",
-    icon: FolderKanban,
-    description: "View and manage your projects"
+    title: "Tasks",
+    href: "/tasks",
+    icon: CalendarCheck2,
+    description: "View and manage your service tasks"
   },
   {
     title: "Team",
@@ -54,12 +79,12 @@ const menuItems = [
     icon: CreditCard,
     description: "Manage your subscription plans"
   },
-  {
-    title: "Notifications",
-    href: "/notifications",
-    icon: Bell,
-    description: "View your notifications"
-  },
+  // {
+  //   title: "Notifications",
+  //   href: "/notifications",
+  //   icon: Bell,
+  //   description: "View your notifications"
+  // },
   {
     title: "Help & Support",
     href: "/support",

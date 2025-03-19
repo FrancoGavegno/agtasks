@@ -28,6 +28,22 @@
     "noTemplatesTitle": "No templates available",
     "noTemplatesSubtitle": "No templates found matching your criteria."
   },
+  "ProtocolsPage": {
+    "title": "Protocols Repository",
+    "subtitle": "Browse and use protocols templates",
+    "addProtocol": "Create",
+    "useProtocol": "Use protocol",
+    "newProtocol": "Register protocol",
+    "dialogTitle": "Create a new service from protocol template",
+    "dialogDescription": "Create a new service using ",
+    "dialogDescription2": "as a template. All tasks and structure will be copied.",
+    "dialogLabel": "Service name",
+    "dialogInput": "Enter service name",
+    "dialogLoader": "Creating...",
+    "dialogCheck": "Create Service",
+    "noProtocolsTitle": "No protocols available",
+    "noProtocolsSubtitle": "No protocols found matching your criteria."
+  },
   "RegisterTemplateForm": {
   },
   "ProjectsPage": {
