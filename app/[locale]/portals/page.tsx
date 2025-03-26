@@ -1,10 +1,9 @@
-import { ServicePortals } from "@/components/portales/portales"
+import { ServicePortalsList } from "@/components/portals/service-portals-list"
 
-export default function PortalsPage() {
+export default function ServicePortalsPage() {
   return (
-    <main>
-      <ServicePortals />
+    <main className="container mx-auto py-10">
+      <ServicePortalsList />
     </main>
   )
 }
-

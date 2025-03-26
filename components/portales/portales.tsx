@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
 import { NuevoPortalServicioModal } from "./nuevo-portal-servicio-modal"
 import { DetallePortalServicio } from "./detalle-portal-servicio"
+import { Link } from '@/i18n/routing';
 
 // Tipo para los portales de servicio
 export type PortalServicio = {
@@ -26,9 +27,15 @@ export interface Rol {
   nombre: string
 }
 
+const portales = [
+  { id: "1", nombre: "Portal 1", dominio: "Dominio 1", area: "Area 1", espacioTrabajo: "Espacio de trabajo 1", portalServicio: "Portal de servicio 1", protocolos: ["Protocolo 1", "Protocolo 2"], roles: ["Rol 1", "Rol 2"], formularios: ["Formulario 1", "Formulario 2"] },
+  { id: "2", nombre: "Portal 2", dominio: "Dominio 2", area: "Area 2", espacioTrabajo: "Espacio de trabajo 2", portalServicio: "Portal de servicio 2", protocolos: ["Protocolo 3", "Protocolo 4"], roles: ["Rol 3", "Rol 4"], formularios: ["Formulario 3", "Formulario 4"] },
+  { id: "3", nombre: "Portal 3", dominio: "Dominio 3", area: "Area 3", espacioTrabajo: "Espacio de trabajo 3", portalServicio: "Portal de servicio 3", protocolos: ["Protocolo 5", "Protocolo 6"], roles: ["Rol 5", "Rol 6"], formularios: ["Formulario 5", "Formulario 6"] },
+]
+
 export function ServicePortals() {
   // Estado para los portales de servicio
-  const [portalesServicio, setPortalesServicio] = useState<PortalServicio[]>([])
+  const [portalesServicio, setPortalesServicio] = useState<PortalServicio[]>(portales)
   const [filtro, setFiltro] = useState("")
   const [modalAbierto, setModalAbierto] = useState(false)
   const [portalServicioSeleccionado, setPortalServicioSeleccionado] = useState<PortalServicio | null>(null)
@@ -76,7 +83,8 @@ export function ServicePortals() {
   }
 
   // Si hay un portal de servicio seleccionado, mostrar la vista de detalle
-  if (portalServicioSeleccionado) {
+  {/* 
+    if (portalServicioSeleccionado) {
     return (
       <DetallePortalServicio
         portalServicio={portalServicioSeleccionado}
@@ -87,12 +95,13 @@ export function ServicePortals() {
       />
     )
   }
+    */}
 
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-6">
-      <h1 className="text-3xl font-bold">Portales de servicio</h1>
-      <Button onClick={() => setModalAbierto(true)}>Nuevo portal de servicio</Button>
+        <h1 className="text-3xl font-bold">Portales de servicio</h1>
+        <Button onClick={() => setModalAbierto(true)}>Nuevo portal de servicio</Button>
       </div>
 
       <div className="relative mb-4">
@@ -115,8 +124,13 @@ export function ServicePortals() {
             >
               <h3 className="text-lg font-semibold">{portalServicio.nombre}</h3>
               <p className="text-sm text-muted-foreground">
-                {portalServicio.dominio} - {portalServicio.area}
-              </p>
+                {portalServicio.dominio}
+                - {portalServicio.area}
+                - {portalServicio.espacioTrabajo}</p>
+              <Link href={`/portals/${portalServicio.id}`}
+                className="text-sm" target="_blank">
+                Ver
+              </Link>
             </div>
           ))}
         </div>

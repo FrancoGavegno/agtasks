@@ -176,7 +176,7 @@ export default function ServicesPage() {
               <Plus className="mr-2 h-4 w-4" /> Create Service
             </Link>
           </Button>
-          
+
         </div>
       </div>
 
@@ -222,6 +222,11 @@ export default function ServicesPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold">Services</h2>
+      </div> */}
+
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
@@ -295,6 +300,31 @@ export default function ServicesPage() {
                   </div>
                 </div>
 
+                <Separator />
+
+                <div className="space-y-2">
+                  <h4 className="font-medium">Status</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="filter-corn" defaultChecked />
+                      <Label htmlFor="filter-corn">To Do</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="filter-soybeans" defaultChecked />
+                      <Label htmlFor="filter-soybeans">In Progress</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="filter-wheat" defaultChecked />
+                      <Label htmlFor="filter-wheat">Completed</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="filter-other-crops" defaultChecked />
+                      <Label htmlFor="filter-other-crops">Done</Label>
+                    </div>
+                  </div>
+                </div>
+
+
                 <div className="pt-2 flex justify-between">
                   <Button variant="outline" size="sm">
                     Reset
@@ -354,9 +384,13 @@ export default function ServicesPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="all" className="mb-6" onValueChange={setActiveTab}>
+
+      {viewType === "grid" && <ServicesGridView services={filteredServices} />}
+      {viewType === "list" && <ServicesListView services={filteredServices} />}
+
+      {/* <Tabs defaultValue="all" className="mb-6" onValueChange={setActiveTab}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Service Projects</h2>
+          <h2 className="text-xl font-semibold">Services</h2>
           <TabsList>
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="active">Active</TabsTrigger>
@@ -378,7 +412,8 @@ export default function ServicesPage() {
           {viewType === "grid" && <ServicesGridView services={filteredServices} />}
           {viewType === "list" && <ServicesListView services={filteredServices} />}
         </TabsContent>
-      </Tabs>
+      </Tabs> 
+      */}
     </div>
   )
 }

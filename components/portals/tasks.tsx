@@ -2,32 +2,20 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import {
-  CalendarDays,
-  CheckSquare,
-  ChevronDown,
-  Clock,
-  Filter,
-  Grid,
-  List,
-  Plus,
-  Search,
-  SlidersHorizontal,
-} from "lucide-react"
-import { TasksKanbanView } from "@/components/portals/tasks-kanban-view"
-import { TasksListView } from "@/components/portals/tasks-list-view"
-import { TasksGanttView } from "@/components/portals/tasks-gantt-view"
-import { TasksCalendarView } from "@/components/portals/tasks-calendar-view"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { TaskForm } from "@/components/portals/task-form"
-import { useTranslations } from 'next-intl';
-import { Link } from '@/i18n/routing';
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { CalendarDays, ChevronDown, Filter, Grid, List, Plus, Search, SlidersHorizontal } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "../ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
+import { Label } from "../ui/label"
+import { Separator } from "../ui/separator"
+import { TasksKanbanView } from "./tasks-kanban-view"
+import { TasksListView } from "./tasks-list-view"
+import { TasksGanttView } from "./tasks-gantt-view"
+import { TasksCalendarView } from "./tasks-calendar-view"
 
 interface Task {
   id: string
@@ -45,21 +33,12 @@ interface Task {
   serviceName: string | null
 }
 
-export default function TasksPage() {
+export function ServiceTasks() {
   const [viewType, setViewType] = useState<"kanban" | "list" | "gantt" | "calendar">("kanban")
   const [searchQuery, setSearchQuery] = useState("")
-  const [isTaskFormOpen, setIsTaskFormOpen] = useState(false)
-
-  // Sample metrics data
-  const metrics = {
-    activeTasks: 12,
-    completedTasks: 8,
-    upcomingDeadlines: 5,
-    overdueTasks: 2,
-  }
-
-  // Sample task data - this would normally come from a database
-  const [allTasks, setTasks] = useState<Task[]>([
+  
+  // Sample tasks data
+  const [tasks, setTasks] = useState<Task[]>([
     {
       id: "1",
       title: "Review soil analysis report",
@@ -213,74 +192,68 @@ export default function TasksPage() {
     },
   ])
 
-  const handleTaskSubmit = (task: any) => {
-    console.log("New task created:", task)
-    // Here you would typically save the task to your database
-    // and then update the task list
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(date)
   }
 
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "destructive"
+      case "medium":
+        return "default"
+      case "low":
+        return "secondary"
+      default:
+        return "default"
+    }
+  }
+
+  const toggleTaskStatus = (taskId: string) => {
+    setTasks(
+      tasks.map((task) => {
+        if (task.id === taskId) {
+          const newStatus = task.status === "completed" ? "todo" : "completed"
+          return { ...task, status: newStatus }
+        }
+        return task
+      }),
+    )
+  }
+
+  const todoTasks = tasks.filter((task) => task.status === "todo")
+  const inProgressTasks = tasks.filter((task) => task.status === "in-progress")
+  const completedTasks = tasks.filter((task) => task.status === "completed")
+
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Tasks</h1>
-          <p className="text-muted-foreground mt-1">Manage and track all tasks across your organization</p>
+          <h2 className="text-xl font-semibold">Tasks</h2>
+          <p className="text-sm text-muted-foreground">Manage and track tasks for this service</p>
         </div>
-        <div className="flex gap-2">
-          {/*  <Button onClick={() => setIsTaskFormOpen(true)}>
+        <div className="flex items-center gap-4">
+          <Select defaultValue="all">
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Tasks</SelectItem>
+              <SelectItem value="todo">To Do</SelectItem>
+              <SelectItem value="in-progress">In Progress</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button>
             <Plus className="mr-2 h-4 w-4" />
             Add Task
-          </Button> */}
-          <Button asChild>
-            <Link href="/portals/1/tasks/create">
-              <Plus className="mr-2 h-4 w-4" />
-              Create Task
-            </Link>
           </Button>
         </div>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-4 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Active Tasks</CardTitle>
-            <CheckSquare className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.activeTasks}</div>
-            <p className="text-xs text-muted-foreground">Across all services and ad-hoc</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Completed Tasks</CardTitle>
-            <CheckSquare className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.completedTasks}</div>
-            <p className="text-xs text-muted-foreground">In the last 30 days</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming Deadlines</CardTitle>
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.upcomingDeadlines}</div>
-            <p className="text-xs text-muted-foreground">Due in the next 7 days</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Overdue Tasks</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">{metrics.overdueTasks}</div>
-            <p className="text-xs text-muted-foreground">Require immediate attention</p>
-          </CardContent>
-        </Card>
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
@@ -433,12 +406,143 @@ export default function TasksPage() {
         </div>
       </div>
 
-      {viewType === "kanban" && <TasksKanbanView tasks={allTasks} />}
-      {viewType === "list" && <TasksListView tasks={allTasks} />}
-      {viewType === "gantt" && <TasksGanttView tasks={allTasks} />}
-      {viewType === "calendar" && <TasksCalendarView tasks={allTasks} />}
+      {viewType === "kanban" && <TasksKanbanView tasks={tasks} />}
+      {viewType === "list" && <TasksListView tasks={tasks} />}
+      {viewType === "gantt" && <TasksGanttView tasks={tasks} />}
+      {viewType === "calendar" && <TasksCalendarView tasks={tasks} />}
 
-      <TaskForm open={isTaskFormOpen} onOpenChange={setIsTaskFormOpen} onSubmit={handleTaskSubmit} />
+      {/*<div className="grid gap-6 md:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">To Do</CardTitle>
+            <CardDescription>{todoTasks.length} tasks</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {todoTasks.map((task) => (
+              <div key={task.id} className="rounded-md border p-3 shadow-sm">
+                <div className="flex items-start gap-2">
+                  <Checkbox id={`task-${task.id}`} className="mt-1" onCheckedChange={() => toggleTaskStatus(task.id)} />
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label htmlFor={`task-${task.id}`} className="font-medium cursor-pointer">
+                        {task.title}
+                      </label>
+                      <Badge variant={getPriorityColor(task.priority) as any}>{task.priority}</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{task.description}</p>
+                    <div className="flex items-center justify-between pt-2">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <CalendarDays className="h-3 w-3" />
+                        <span>Due {formatDate(task.dueDate)}</span>
+                      </div>
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={task.assignee.avatar} />
+                        <AvatarFallback>
+                          {task.assignee.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+            <CardDescription>{inProgressTasks.length} tasks</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {inProgressTasks.map((task) => (
+              <div key={task.id} className="rounded-md border p-3 shadow-sm">
+                <div className="flex items-start gap-2">
+                  <Checkbox id={`task-${task.id}`} className="mt-1" onCheckedChange={() => toggleTaskStatus(task.id)} />
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label htmlFor={`task-${task.id}`} className="font-medium cursor-pointer">
+                        {task.title}
+                      </label>
+                      <Badge variant={getPriorityColor(task.priority) as any}>{task.priority}</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{task.description}</p>
+                    <div className="flex items-center justify-between pt-2">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <CalendarDays className="h-3 w-3" />
+                        <span>Due {formatDate(task.dueDate)}</span>
+                      </div>
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={task.assignee.avatar} />
+                        <AvatarFallback>
+                          {task.assignee.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <CardDescription>{completedTasks.length} tasks</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {completedTasks.map((task) => (
+              <div key={task.id} className="rounded-md border p-3 shadow-sm bg-muted/50">
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id={`task-${task.id}`}
+                    className="mt-1"
+                    checked={true}
+                    onCheckedChange={() => toggleTaskStatus(task.id)}
+                  />
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label
+                        htmlFor={`task-${task.id}`}
+                        className="font-medium cursor-pointer line-through text-muted-foreground"
+                      >
+                        {task.title}
+                      </label>
+                      <Badge variant={getPriorityColor(task.priority) as any}>{task.priority}</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{task.description}</p>
+                    <div className="flex items-center justify-between pt-2">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <CalendarDays className="h-3 w-3" />
+                        <span>Due {formatDate(task.dueDate)}</span>
+                      </div>
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={task.assignee.avatar} />
+                        <AvatarFallback>
+                          {task.assignee.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+      */}
+
+
     </div>
   )
 }

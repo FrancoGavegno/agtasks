@@ -12,7 +12,8 @@ import {
   Layers,
   MonitorCheck,
   Plus,
-  Home
+  Home,
+  ArrowLeft
 } from "lucide-react"
 import {
   Sidebar,
@@ -42,7 +43,7 @@ export function AppSidebar() {
   const mainNavItems = [
     //Dashboard link is commented out but code is preserved
     {
-      title: "Home",
+      title: "Portal",
       href: "/",
       icon: Home,
     },
@@ -87,9 +88,16 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="flex items-center justify-between px-4 py-2">
         <div className="flex items-center gap-2">
-          <div className="rounded-md bg-green-600 p-1">
+          {/* <div className="rounded-md bg-green-600 p-1">
             <MonitorCheck className="h-6 w-6 text-white" />
-          </div>
+          </div> */}
+
+          {/* <Button asChild variant="outline" size="icon">
+            <Link href="/portals">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button> */}
+          
           <span className="text-xl font-bold">Portal Name</span>
         </div>
       </SidebarHeader>

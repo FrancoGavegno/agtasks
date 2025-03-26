@@ -8,16 +8,16 @@ import { CalendarDays, ChevronLeft, Clock, Download, Edit, MapPin, MessageSquare
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { ServiceChat } from "@/components/portals/service-chat"
-import { ServiceTasks } from "@/components/portals/service-tasks"
+import { ServiceTasks } from "@/components/portals/tasks"
 import { ServiceMap } from "@/components/portals/service-map"
 
-interface ServicePageProps {
+interface Props {
   params: {
     id: string
   }
 }
 
-export default function ServicePage({ params }: ServicePageProps) {
+export default function ServicePage({ params }: Props) {
   // This would normally come from a database
   const service = {
     id: params.id,
