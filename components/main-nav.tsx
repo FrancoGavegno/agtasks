@@ -49,36 +49,36 @@ const menuItems = [
     icon: Monitor,
     description: "Manage your service portals"
   },
-  {
-    title: "Protocols",
-    href: "/protocols",
-    icon: LayoutTemplate,
-    description: "Browse and use protocols templates"
-  },
+  // {
+  //   title: "Protocols",
+  //   href: "/protocols",
+  //   icon: LayoutTemplate,
+  //   description: "Browse and use protocols templates"
+  // },
   // {
   //   title: "Projects",
   //   href: "/projects",
   //   icon: FolderKanban,
   //   description: "Manage your projects"
   // },
-  {
-    title: "Tasks",
-    href: "/tasks",
-    icon: CalendarCheck2,
-    description: "View and manage your service tasks"
-  },
-  {
-    title: "Team",
-    href: "/team",
-    icon: Users,
-    description: "Manage your team members"
-  },
-  {
-    title: "Subscriptions",
-    href: "/subscriptions",
-    icon: CreditCard,
-    description: "Manage your subscription plans"
-  },
+  // {
+  //   title: "Tasks",
+  //   href: "/tasks",
+  //   icon: CalendarCheck2,
+  //   description: "View and manage your service tasks"
+  // },
+  // {
+  //   title: "Team",
+  //   href: "/team",
+  //   icon: Users,
+  //   description: "Manage your team members"
+  // },
+  // {
+  //   title: "Subscriptions",
+  //   href: "/subscriptions",
+  //   icon: CreditCard,
+  //   description: "Manage your subscription plans"
+  // },
   // {
   //   title: "Notifications",
   //   href: "/notifications",
@@ -91,12 +91,12 @@ const menuItems = [
     icon: HelpCircle,
     description: "Get help and documentation"
   },
-  {
-    title: "Settings",
-    href: "/settings",
-    icon: Settings,
-    description: "Manage your account settings"
-  },
+  // {
+  //   title: "Settings",
+  //   href: "/settings",
+  //   icon: Settings,
+  //   description: "Manage your account settings"
+  // },
 ]
 
 export function MainNav() {

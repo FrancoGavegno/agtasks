@@ -22,7 +22,7 @@ export function ServicePortalsList() {
   const [servicePortals, setServicePortals] = useState<ServicePortal[]>([])
   const [filter, setFilter] = useState("")
   const [isLoading, setIsLoading] = useState(true)
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list")
   const [portalToDelete, setPortalToDelete] = useState<ServicePortal | null>(null)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
 
@@ -155,7 +155,7 @@ export function ServicePortalsList() {
             </Button> */}
 
             <Button asChild variant="outline" size="sm">
-              <Link href={`/portals/${portal.id}`} target="_blank">
+              <Link href={`/portals/${portal.id}`}>
                 <Eye className="mr-2 h-4 w-4" />
                 View
               </Link>
@@ -196,8 +196,18 @@ export function ServicePortalsList() {
               <TableCell>{portal.workspace}</TableCell>
               <TableCell>{portal.servicePortal}</TableCell>
               <TableCell className="text-right">
-                <div className="flex justify-end space-x-2">
-                  {/* <Button variant="ghost" size="icon" onClick={() => handleView(portal.id)}>
+
+                <div className="flex justify-end gap-2">
+                  <Link href={`/portals/${portal.id}`} target="_blank">
+                    <Button variant="ghost" size="sm">
+                      View
+                    </Button>
+                  </Link>
+
+                </div>
+
+                {/* <div className="flex justify-end space-x-2">
+                   <Button variant="ghost" size="icon" onClick={() => handleView(portal.id)}>
                     <Eye className="h-4 w-4" />
                   </Button>
                   <Button variant="ghost" size="icon" onClick={() => handleEdit(portal.id)}>
@@ -210,21 +220,22 @@ export function ServicePortalsList() {
                     className="text-destructive hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
-                  </Button> */}
+                  </Button> 
 
                   <Button asChild variant="ghost" size="icon">
                     <Link href={`/portals/${portal.id}`} target="_blank">
                       <Eye className="mr-2 h-4 w-4" />
                     </Link>
                   </Button>
-
-                  {/* <Button asChild variant="ghost" size="icon">
+                  
+                 <Button asChild variant="ghost" size="icon">
                     <Link href={`/portals/${portal.id}/edit`}>
                       <Pencil className="mr-2 h-4 w-4" />
                     </Link>
-                  </Button> */}
+                  </Button> 
 
-                </div>
+                </div> */}
+
               </TableCell>
             </TableRow>
           ))}
@@ -234,8 +245,8 @@ export function ServicePortalsList() {
   )
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Service Portals</h1>
         <div className="flex items-center gap-2">
           <div className="flex items-center border rounded-md p-1">
@@ -265,10 +276,10 @@ export function ServicePortalsList() {
         </div>
       </div>
 
-      <div className="relative mb-6">
+      <div className="relative w-full max-w-sm">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Filter service portals by name..."
+          placeholder="Search..."
           value={filter}
           onChange={handleSearch}
           className="pl-10"

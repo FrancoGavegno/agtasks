@@ -119,7 +119,7 @@ export default function PortalDetail({ params }: Props) {
     { id: "form9", nombre: "Registro de Asistencia" },
     { id: "form10", nombre: "Formulario de Seguimiento" },
   ]
-
+  
   const [filtro, setFiltro] = useState("")
   const [seleccion, setSeleccion] = useState<string[]>([])
 
@@ -147,27 +147,17 @@ export default function PortalDetail({ params }: Props) {
           <h1 className="text-3xl font-bold tracking-tight">Portal</h1>
           <p className="text-muted-foreground mt-1">Manage your portal configuration</p>
         </div>
-        {/* <Button variant="outline">
+        <Button variant="outline">
           <Edit className="mr-2 h-4 w-4" />
           Edit
-        </Button> */}
+        </Button>
       </div>
 
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <CardTitle>Details</CardTitle>
-                <CardDescription>Información general acerca de este portal de servicio</CardDescription>
-
-              </div>
-
-              <Button variant="outline">
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </Button>
-            </div>
+            <CardTitle>Details</CardTitle>
+            <CardDescription>Información detallada del portal de servicio</CardDescription>
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -185,7 +175,7 @@ export default function PortalDetail({ params }: Props) {
               </div>
               <div>
                 <dt className="text-sm font-medium text-muted-foreground">Proyecto</dt>
-                <dd className="text-sm">Project 1</dd>
+                <dd className="text-sm">CLIENTE 1</dd>
               </div>
             </dl>
           </CardContent>
@@ -224,98 +214,111 @@ export default function PortalDetail({ params }: Props) {
         </Card>
       </div> */}
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Protocols</CardTitle>
-                <CardDescription>Protocols associated with this portal</CardDescription>
-              </div>
-              <Button variant="outline">
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              <ul className="list-disc list-inside text-sm">
-                <li>Monitoreo satelital y control de malezas</li>
-                <li>Protocolo Siembra y/o Fertilización Variable</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Users</CardTitle>
-              <CardDescription>People assigned to this portal</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {service.team.map((member) => (
-                  <div key={member.id} className="flex items-center space-x-3">
-                    <Avatar>
-                      <AvatarImage src={member.avatar} />
-                      <AvatarFallback>
-                        {member.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-sm">{member.name}</p>
-                      <p className="text-sm text-muted-foreground">{member.role}</p>
-                    </div>
+        <Tabs defaultValue="protocols" className="mb-6">
+          <TabsList className="mb-4">
+            <TabsTrigger value="protocols">Protocols</TabsTrigger>
+            <TabsTrigger value="team">Team</TabsTrigger>
+            <TabsTrigger value="forms">Forms</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="protocols" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Protocols</CardTitle>
+                    <CardDescription>Protocols associated with this portal</CardDescription>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Roles</CardTitle>
-                  <CardDescription>Roles associated with this portal</CardDescription>
+                  <Button variant="outline">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button>
                 </div>
-                <Button variant="outline">
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <ul className="list-disc list-inside text-sm">
-                  <li>Supervisor</li>
-                  <li>Colector</li>
-                  <li>Operador GIS</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <ul className="list-disc list-inside text-sm">
+                    <li>Monitoreo satelital y control de malezas</li>
+                    <li>Protocolo Siembra y/o Fertilización Variable</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Forms</CardTitle>
-                <CardDescription>Kobo Toolbox Forms associated with this portal</CardDescription>
-              </div>
-              <Button variant="outline">
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </Button>
+          <TabsContent value="team">
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Users</CardTitle>
+                  <CardDescription>People assigned to this portal</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {service.team.map((member) => (
+                      <div key={member.id} className="flex items-center space-x-3">
+                        <Avatar>
+                          <AvatarImage src={member.avatar} />
+                          <AvatarFallback>
+                            {member.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{member.name}</p>
+                          <p className="text-sm text-muted-foreground">{member.role}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Roles</CardTitle>
+                      <CardDescription>Roles associated with this portal</CardDescription>
+                    </div>
+                    <Button variant="outline">
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <ul className="list-disc list-inside text-sm">
+                      <li>Supervisor</li>
+                      <li>Colector</li>
+                      <li>Operador GIS</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </CardHeader>
-          <CardContent>
-            {/* <div className="space-y-6">
+          </TabsContent>
+
+          <TabsContent value="forms">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Forms</CardTitle>
+                    <CardDescription>Kobo Toolbox Forms associated with this portal</CardDescription>
+                  </div>
+                  {/* <Button variant="outline">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button> */}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {/* <div className="space-y-6">
                   <ul className="list-disc list-inside text-sm">
                     <li>Evaluación de Necesidades</li>
                     <li>Monitoreo de Actividades</li>
@@ -325,7 +328,7 @@ export default function PortalDetail({ params }: Props) {
                   </ul>
                 </div> */}
 
-            {/* <div className="relative my-4">
+                {/* <div className="relative my-4">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     placeholder="Filtrar formularios..."
@@ -335,27 +338,59 @@ export default function PortalDetail({ params }: Props) {
                   />
                 </div> */}
 
-            <div className="max-h-[200px] overflow-y-auto pr-1">
-              {formulariosFiltrados.length > 0 ? (
-                <div className="space-y-4">
-                  <ul className="list-disc list-inside text-sm">
-                    {formulariosFiltrados.map((formulario) => (
-                      <li key={formulario.id} >
-                        {formulario.nombre}
-                      </li>
-                    ))}
-                  </ul>
+                <div className="max-h-[200px] overflow-y-auto pr-1">
+                  {formulariosFiltrados.length > 0 ? (
+                    <div className="space-y-4">
+                      {formulariosFiltrados.map((formulario) => (
+                        <div key={formulario.id} className="flex items-center justify-between">
+                          <Label htmlFor={`formulario-${formulario.id}`} className="flex-1 cursor-pointer">
+                            {formulario.nombre} 
+                          </Label>
+                          <Switch
+                            id={`formulario-${formulario.id}`}
+                            checked={seleccion.includes(formulario.id)}
+                            onCheckedChange={() => toggleFormulario(formulario.id)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex h-20 items-center justify-center rounded-lg border border-dashed">
+                      <p className="text-sm text-muted-foreground">No se encontraron formularios.</p>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="flex h-20 items-center justify-center rounded-lg border border-dashed">
-                  <p className="text-sm text-muted-foreground">No se encontraron formularios.</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
 
+        {/* <Tabs defaultValue="active" className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Protocols</h2>
+            <TabsList>
+            <TabsTrigger value="active">Active</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
+          </TabsList> 
+          </div>
+
+          <TabsContent value="active" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {activeServices.map((service) => (
+              <ServiceCard key={service.id} service={service} />
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="completed" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {completedServices.map((service) => (
+              <ServiceCard key={service.id} service={service} />
+            ))}
+          </div>
+        </TabsContent>
+        </Tabs>*/}
 
       </div>
     </main>

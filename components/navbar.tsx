@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Bell } from 'lucide-react'
+import DomainSelector from "@/components/navbar/domain-selector"
+import UserTypeSelector from "@/components/navbar/usertype-selector"
 
 export function Navbar() {
   const t = useTranslations("nav")
@@ -23,10 +25,14 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center mx-auto">
-        <MainNav />
+        <DomainSelector />
+        <span className="px-2"> / </span>
+        <UserTypeSelector />
+        {/* <MainNav />
         <Link href="/" className="font-bold">
           Agtasks
-        </Link>
+        </Link> */}
+        
         <div className="flex flex-1 items-center justify-end space-x-4">
           <nav className="flex items-center space-x-2">
             <Button variant="ghost" size="icon">

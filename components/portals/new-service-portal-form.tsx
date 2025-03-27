@@ -8,11 +8,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { createServicePortal } from "@/lib/db"
 import { DOMAINS, AREAS, WORKSPACES, SERVICE_PROJECTS } from "@/lib/types"
+import { Link } from "@/i18n/routing"
 
 export function NewServicePortalForm() {
   const router = useRouter()
@@ -51,7 +52,7 @@ export function NewServicePortalForm() {
       })
 
       // Redirect to main page
-      router.push("/")
+      router.push("/en/portals")
     } catch (error) {
       console.error("Error creating portal:", error)
       toast({
@@ -65,34 +66,41 @@ export function NewServicePortalForm() {
   }
 
   return (
-    <>
-      <div className="mb-6">
-        <Button variant="outline" className="flex items-center gap-2" onClick={() => router.push("/")}>
-          <ArrowLeft className="h-4 w-4" />
+    <div className="space-y-6">
+
+      <div>
+        <Link href="/portals"
+          className="group flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
           Back to Service Portals
-        </Button>
+        </Link>
       </div>
 
+
       <Card>
-        <CardContent className="pt-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <CardHeader>
+          <CardTitle>Create New Service Portal</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="name">Service portal name</Label>
+                <Label htmlFor="name">Portal Name <span className="text-red-500">*</span></Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => handleChange("name", e.target.value)}
-                  placeholder="Enter service portal name"
+                  placeholder=""
                   required
                 />
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="domain">Domain</Label>
+                <Label htmlFor="domain">Domain <span className="text-red-500">*</span></Label>
                 <Select value={formData.domain} onValueChange={(value) => handleChange("domain", value)} required>
                   <SelectTrigger id="domain">
-                    <SelectValue placeholder="Select domain" />
+                    <SelectValue placeholder="" />
                   </SelectTrigger>
                   <SelectContent>
                     {DOMAINS.map((d) => (
@@ -105,10 +113,10 @@ export function NewServicePortalForm() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="area">Area</Label>
+                <Label htmlFor="area">Area <span className="text-red-500">*</span></Label>
                 <Select value={formData.area} onValueChange={(value) => handleChange("area", value)} required>
                   <SelectTrigger id="area">
-                    <SelectValue placeholder="Select area" />
+                    <SelectValue placeholder="" />
                   </SelectTrigger>
                   <SelectContent>
                     {AREAS.map((a) => (
@@ -124,7 +132,7 @@ export function NewServicePortalForm() {
                 <Label htmlFor="workspace">Workspace</Label>
                 <Select value={formData.workspace} onValueChange={(value) => handleChange("workspace", value)} required>
                   <SelectTrigger id="workspace">
-                    <SelectValue placeholder="Select workspace" />
+                    <SelectValue placeholder="" />
                   </SelectTrigger>
                   <SelectContent>
                     {WORKSPACES.map((w) => (
@@ -137,14 +145,14 @@ export function NewServicePortalForm() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="servicePortal">Service project</Label>
+                <Label htmlFor="servicePortal">Task Manager Project <span className="text-red-500">*</span></Label>
                 <Select
                   value={formData.servicePortal}
                   onValueChange={(value) => handleChange("servicePortal", value)}
                   required
                 >
                   <SelectTrigger id="servicePortal">
-                    <SelectValue placeholder="Select service project" />
+                    <SelectValue placeholder="" />
                   </SelectTrigger>
                   <SelectContent>
                     {SERVICE_PROJECTS.map((p) => (
@@ -157,18 +165,21 @@ export function NewServicePortalForm() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => router.push("/")} disabled={isSubmitting}>
-                Cancel
-              </Button>
+            <div className="flex gap-2 pt-4">
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : "Save"}
+                {isSubmitting ? "Saving..." : "Confirm"}
               </Button>
+              <Link href="/portals">
+                <Button variant="outline" type="button">
+                  Cancel
+                </Button>
+              </Link>
             </div>
+
           </form>
         </CardContent>
       </Card>
-    </>
+    </div>
   )
 }
 
