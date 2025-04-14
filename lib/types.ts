@@ -46,10 +46,10 @@ export interface Role {
 }
 
 // Datos de ejemplo
-export const DOMAINS = ["GeoAgro", "Rigran"]
+export const DOMAINS = ["GeoAgro", "Rigran", "Cerestolvas", "Prodas Advanced"]
 export const AREAS = ["Area 1", "Area 2"]
 export const WORKSPACES = ["Workspace 1", "Workspace 2"]
-export const SERVICE_PROJECTS = ["CLIENT 1 (Agtasks)", "PROJECT 2"]
+export const SERVICE_PROJECTS = ["Project 1", "Project 2"]
 
 export const PROTOCOLS = [
   { id: "Satellite monitoring and weed control", name: "Satellite monitoring and weed control", language: "EN" },
@@ -85,3 +85,19 @@ export const FORMS = [
   { id: "form10", name: "Follow-up Form" },
 ]
 
+
+
+// ------------- Accounts
+export type Domain = "GeoAgro" | "Rigran" | "Cerestolvas" | "Prodas Advanced"
+export type TaskManagerType = "Jira" | "Trello" | "Clickup" | "Asana"
+
+export interface Account {
+  id: string
+  name: string
+  domain: Domain
+  taskManagerType: TaskManagerType
+  taskManagerApiKey: string
+  koboToolboxApiKey: string
+  createdAt: Date
+  updatedAt: Date
+}

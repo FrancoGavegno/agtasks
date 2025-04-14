@@ -98,7 +98,7 @@ export function AppSidebar() {
             </Link>
           </Button> */}
           
-          <span className="text-xl font-bold">Portal Name</span>
+          <span className="text-xl font-bold">Rigran Tech</span>
         </div>
       </SidebarHeader>
       <SidebarSeparator />
