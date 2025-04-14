@@ -6,7 +6,7 @@ import { getMessages } from "next-intl/server"
 import { routing } from "@/i18n/routing"
 import ReactQueryProvider from "@/components/react-query-provider"
 import { Toaster } from "@/components/ui/toaster"
-import { Navbar } from "@/components/navbar"
+import { Navbar } from "@/components/navbar/navbar"
 import { Footer } from "@/components/footer"
 import { AppSidebar } from "@/components/sidebar"
 import { 
@@ -17,10 +17,12 @@ import {
 import { Separator } from "@/components/ui/separator"
 import "./globals.css"
 
-export const metadata: Metadata = {
-  title: "Agtasks",
-  description: "Agricultural Task Management System",
-}
+// export const metadata: Metadata = {
+//   title: "Agtasks",
+//   description: "Agricultural Task Management System",
+// }
+
+import { getUser } from "@/lib/360"
 
 export default async function LocaleLayout({
   children,
@@ -30,6 +32,7 @@ export default async function LocaleLayout({
   params: { locale: string }
 }) {
   const { locale } = await params
+  const user = await getUser("fmaggioni@geoagro.com")
 
   // Ensure that the incoming `locale` is valid
   if (!routing.locales.includes(locale as any)) {
@@ -47,10 +50,10 @@ export default async function LocaleLayout({
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
           <ReactQueryProvider>
-            <Navbar />
+            <Navbar user={user} />
             <div className="flex flex-1 overflow-hidden">
               <SidebarProvider>
-                <AppSidebar />
+                <AppSidebar user={user} />
                 <SidebarInset>
                   {/* <header className="flex h-14 items-center gap-2 border-b px-4">
                     <SidebarTrigger className="-ml-1" />

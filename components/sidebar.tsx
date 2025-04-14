@@ -1,6 +1,8 @@
 "use client"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+
+import { useEffect, useState } from "react"
+import { Link } from "@/i18n/routing"
+// import { usePathname } from "next/navigation"
 import {
   Sidebar,
   SidebarContent,
@@ -13,83 +15,118 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
-const sidebarAdminNavItems = [
-  {
-    title: "Apps",
-    href: "/apps",
-  },
-  {
-    title: "Protocols",
-    href: "/protocols",
-  },
-  {
-    title: "Teams",
-    href: "/teams",
-  },
-  {
-    title: "Forms",
-    href: "/forms",
-  },
-  {
-    title: "Projects",
-    href: "/projects",
-  }
-]
+import { User, Project } from "@/lib/interfaces"
+import { listProjectsByDomain } from "@/lib/agtasks"
 
-const sidebarMemberNavItems = [
-  {
-    title: "Projects",
-    href: "/projects",
-  }
-]
+import DomainSelector from "@/components/navbar/domain-selector"
+import ProjectSelector from "@/components/navbar/project-selector"
+import { Settings } from "lucide-react"
 
 
-// Navigation data
+// const sidebarAdminNavItems = [
+//   {
+//     title: "Apps",
+//     href: "/apps",
+//   },
+//   {
+//     title: "Protocols",
+//     href: "/protocols",
+//   },
+//   {
+//     title: "Teams",
+//     href: "/teams",
+//   },
+//   {
+//     title: "Forms",
+//     href: "/forms",
+//   },
+//   {
+//     title: "Projects",
+//     href: "/projects",
+//   }
+// ]
+
 const sidebarNavItems = [
-  {
-    title: "Accounts",
-    href: "/accounts",
-  },
-  {
-    title: "Dashboard",
-    href: "/dashboard",
-  },
-  {
-    title: "Tasks",
-    href: "/tasks",
-  },
-  {
-    title: "Calendar",
-    href: "/calendar",
-  },
-  {
-    title: "Reports",
-    href: "/reports",
-  },
   {
     title: "Settings",
     href: "/settings",
-  },
+    icon: Settings,
+    description: "Manage your domain settings"
+  }
 ]
 
-export function AppSidebar() {
-  const pathname = usePathname()
+// Navigation data
+// const sidebarNavItems = [
+//   {
+//     title: "Accounts",
+//     href: "/accounts",
+//   },
+//   {
+//     title: "Dashboard",
+//     href: "/dashboard",
+//   },
+//   {
+//     title: "Tasks",
+//     href: "/tasks",
+//   },
+//   {
+//     title: "Calendar",
+//     href: "/calendar",
+//   },
+//   {
+//     title: "Reports",
+//     href: "/reports",
+//   },
+//   {
+//     title: "Settings",
+//     href: "/settings",
+//   },
+// ]
+
+interface Props {
+  user: User
+}
+
+export function AppSidebar({ user }: Props) {
+  //const pathname = usePathname()
+
+  const [selectedDomain, setSelectedDomain] = useState<number | null>(null)
+  const [projects, setProjects] = useState<Project[]>([])
+
+  useEffect(() => {
+    if (selectedDomain) {
+      listProjectsByDomain(selectedDomain).then(setProjects)
+    }
+  }, [selectedDomain])
 
   return (
     <Sidebar className="pt-12">
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Agtasks</SidebarGroupLabel>
+          <SidebarGroupLabel>Platform</SidebarGroupLabel>
           <SidebarGroupContent>
+            <DomainSelector user={user} onDomainSelect={setSelectedDomain} />
             <SidebarMenu>
-              {sidebarMemberNavItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname.startsWith(item.href)}>
-                    <Link href={item.href}>{item.title}</Link>
+              {sidebarNavItems.map((item) => {
+                const Icon = item.icon 
+                return (
+                  <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <Link href={`/${selectedDomain}/${item.href}`}>
+                      <Icon className="h-4 w-4" />
+                     {item.title}
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              ))}
+                ) 
+              })}
             </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Projects</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <ProjectSelector projects={projects} />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
