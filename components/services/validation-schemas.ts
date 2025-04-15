@@ -2,7 +2,7 @@ import { z } from "zod"
 
 // Esquema de validación para el paso 1 (selección de protocolo)
 export const step1Schema = z.object({
-  protocol: z.enum(["variable-seeding", "satellite-monitoring"], {
+  protocol: z.enum(["variable-seeding", "satellite-monitoring", ""], {
     required_error: "Por favor, seleccione un protocolo",
   }),
 })

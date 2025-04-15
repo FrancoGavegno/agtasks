@@ -8,11 +8,7 @@ import {
 } from "@/components/ui/breadcrumb"
 import TabsNavigation from "@/components/settings/tabs-navigation"
 
-interface Props {
-  domain: number
-}
-
-export default function SettingsPage({ domain }: Props) {
+export default function SettingsPage() {
   return (
     <div className="container w-full pt-4 pb-4">
       <Breadcrumb>

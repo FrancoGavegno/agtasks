@@ -134,7 +134,7 @@ export function AppSidebar({ user }: Props) {
                 return (
                   <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <Link href={`/${selectedDomain}${item.href}`}>
+                    <Link href={`/domains/${selectedDomain}${item.href}`}>
                       <Icon className="h-4 w-4" />
                      {item.title}
                     </Link>
@@ -155,7 +155,7 @@ export function AppSidebar({ user }: Props) {
                 return (
                   <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <Link href={`/${selectedDomain}/projects/${selectedProject}${item.href}`}>
+                    <Link href={`/domains/${selectedDomain}/projects/${selectedProject}${item.href}`}>
                       <Icon className="h-4 w-4" />
                      {item.title}
                     </Link>

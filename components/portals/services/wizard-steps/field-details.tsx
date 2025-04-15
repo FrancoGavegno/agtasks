@@ -209,9 +209,7 @@ export default function FieldDetails({ formData, updateFormData }: FieldDetailsP
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="topography-rolling"
-                  checked={formData.topography.includes("Rolling")}
-                  onCheckedChange
-                  checked={formData.topography.includes("Rolling")}
+                   checked={formData.topography.includes("Rolling")}
                   onCheckedChange={(checked) => handleTopographyChange("Rolling", checked as boolean)}
                 />
                 <Label htmlFor="topography-rolling" className="text-sm font-normal">
