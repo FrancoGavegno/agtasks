@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
@@ -47,9 +46,6 @@ export function FormModal({ isOpen, onClose, forms, selectedForms, onSave }: For
             <DialogTitle>Formularios</DialogTitle>
             <DialogDescription>Selecciona los formularios que deseas mostrar.</DialogDescription>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6">
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
         <div className="space-y-4 py-2">
           {forms.map((form) => (

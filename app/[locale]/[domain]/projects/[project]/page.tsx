@@ -6,13 +6,9 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import TabsNavigation from "@/components/settings/tabs-navigation"
+import { ProjectDetails } from "@/components/projects/project-page"
 
-interface Props {
-  domain: number
-}
-
-export default function SettingsPage({ domain }: Props) {
+export default function ProjectPage() {
   return (
     <div className="container w-full pt-4 pb-4">
       <Breadcrumb>
@@ -22,19 +18,23 @@ export default function SettingsPage({ domain }: Props) {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Settings</BreadcrumbPage>
+            <BreadcrumbLink href="/">Projects</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>01 - Tandil</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
       <div className="flex justify-between items-center mt-5 mb-5">
         <div className="space-y-1.5">
-          <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">Manage your domain settings</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Project Page</h1>
+          <p className="text-muted-foreground">Manage your project</p>
         </div>
       </div>
 
-      <TabsNavigation />
+      <ProjectDetails />
     </div>
   )
 }

@@ -42,7 +42,7 @@ export default function Protocols() {
       <div className="flex justify-between items-center mb-5">
         <div className="space-y-1.5">
           <h2 className="text-xl font-semibold tracking-tight">Protocols</h2>
-          <p className="text-muted-foreground">Manage your service protocols</p>
+          <p className="text-muted-foreground">Manage service protocols</p>
         </div>
         <Button size="sm" onClick={() => setIsModalOpen(true)}>
           Edit

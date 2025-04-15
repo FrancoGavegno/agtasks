@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { RoleModal } from "./role-modal"
@@ -8,14 +9,15 @@ import { RoleModal } from "./role-modal"
 interface Role {
   id: string
   name: string
+  language: string
 }
 
 export default function Roles() {
   const [roles] = useState<Role[]>([
-    { id: "1", name: "Supervisor" },
-    { id: "2", name: "Operador" },
-    { id: "3", name: "Coordinador" },
-    { id: "4", name: "Colector" },
+    { id: "1", name: "Supervisor", language: "ES" },
+    { id: "2", name: "Operador", language: "ES" },
+    { id: "3", name: "Coordinador", language: "ES" },
+    { id: "4", name: "Colector", language: "ES" },
   ])
 
   // Initialize selectedRoles with all role IDs
@@ -38,7 +40,7 @@ export default function Roles() {
       <div className="flex justify-between items-center mb-5">
         <div className="space-y-1.5">
           <h2 className="text-xl font-semibold tracking-tight">Roles</h2>
-          <p className="text-muted-foreground">Manage user roles and permissions</p>
+          <p className="text-muted-foreground">Manage user roles</p>
         </div>
         <Button size="sm" onClick={() => setIsModalOpen(true)}>
           Edit
@@ -55,14 +57,18 @@ export default function Roles() {
       </div>
 
       <div className="rounded-md border">
-        <div className="grid grid-cols-1 items-center px-4 py-3 bg-muted/50 text-sm">
-          <div className="font-medium">Role</div>
+        <div className="grid grid-cols-10 items-center px-4 py-3 bg-muted/50 text-sm">
+          <div className="col-span-8 font-medium">Role</div>
+          <div className="col-span-2 font-medium text-center">Language</div>
         </div>
 
         {filteredRoles.length > 0 ? (
           filteredRoles.map((role) => (
-            <div key={role.id} className="grid grid-cols-1 items-center px-4 py-3 border-t text-sm">
-              <div className="font-medium">{role.name}</div>
+            <div key={role.id} className="grid grid-cols-10 items-center px-4 py-3 border-t text-sm">
+              <div className="col-span-8 font-medium">{role.name}</div>
+              <div className="col-span-2 text-center">
+                <Badge variant="outline">{role.language}</Badge>
+              </div>
             </div>
           ))
         ) : (

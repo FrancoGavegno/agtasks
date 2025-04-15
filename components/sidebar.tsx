@@ -20,7 +20,7 @@ import { listProjectsByDomain } from "@/lib/agtasks"
 
 import DomainSelector from "@/components/navbar/domain-selector"
 import ProjectSelector from "@/components/navbar/project-selector"
-import { Settings } from "lucide-react"
+import { Settings, FolderCheck, ClipboardCheck, Folder, LayoutList } from "lucide-react"
 
 
 // const sidebarAdminNavItems = [
@@ -53,6 +53,27 @@ const sidebarNavItems = [
     icon: Settings,
     description: "Manage your domain settings"
   }
+]
+
+const projectNavItems = [
+  {
+    title: "Project page",
+    href: "",
+    icon: Folder,
+    description: "Manage your project page"
+  },
+  {
+    title: "Services",
+    href: "/services",
+    icon: LayoutList,
+    description: "Manage your services"
+  },
+  // {
+  //   title: "Tasks",
+  //   href: "/tasks",
+  //   icon: ClipboardCheck,
+  //   description: "Manage your tasks"
+  // },
 ]
 
 // Navigation data
@@ -91,6 +112,7 @@ export function AppSidebar({ user }: Props) {
   //const pathname = usePathname()
 
   const [selectedDomain, setSelectedDomain] = useState<number | null>(null)
+  const [selectedProject, setSelectedProject] = useState<number | null>(null)
   const [projects, setProjects] = useState<Project[]>([])
 
   useEffect(() => {
@@ -112,7 +134,7 @@ export function AppSidebar({ user }: Props) {
                 return (
                   <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <Link href={`/${selectedDomain}/${item.href}`}>
+                    <Link href={`/${selectedDomain}${item.href}`}>
                       <Icon className="h-4 w-4" />
                      {item.title}
                     </Link>
@@ -126,7 +148,22 @@ export function AppSidebar({ user }: Props) {
         <SidebarGroup>
           <SidebarGroupLabel>Projects</SidebarGroupLabel>
           <SidebarGroupContent>
-            <ProjectSelector projects={projects} />
+            <ProjectSelector projects={projects} onProjectSelect={setSelectedProject} />
+            <SidebarMenu>
+              {projectNavItems.map((item) => {
+                const Icon = item.icon 
+                return (
+                  <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <Link href={`/${selectedDomain}/projects/${selectedProject}${item.href}`}>
+                      <Icon className="h-4 w-4" />
+                     {item.title}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                ) 
+              })}
+            </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

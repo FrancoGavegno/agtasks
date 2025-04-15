@@ -16,9 +16,10 @@ import { Project } from "@/lib/interfaces"
 
 interface Props {
   projects: Project[]
+  onProjectSelect: (domainId: number) => void 
 }
 
-export default function ProjectSelector({ projects }: Props) {
+export default function ProjectSelector({ projects, onProjectSelect }: Props) {
   const [open, setOpen] = useState(false)
   const [selectedProject, setSelectedProject] = useState<Project | undefined>(undefined)
 
@@ -26,7 +27,11 @@ export default function ProjectSelector({ projects }: Props) {
     if (projects.length > 0 && !selectedProject) {
       setSelectedProject(projects[0])
     }
+    if (selectedProject) {
+      onProjectSelect(selectedProject.id)
+    }
   }, [projects, selectedProject])
+  // }, [projects, selectedProject, onProjectSelect])
 
   return (
     <div className="w-full max-w-[260px] mx-auto mb-2">

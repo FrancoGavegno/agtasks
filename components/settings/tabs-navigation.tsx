@@ -1,6 +1,7 @@
 "use client"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Protocols from "@/components/settings/protocols"
+import Users from "@/components/settings/users"
 import Roles from "@/components/settings/roles"
 import Forms from "@/components/settings/forms"
 
@@ -28,10 +29,7 @@ export default function TabsNavigation() {
         </TabsContent>
 
         <TabsContent value="users" className="mt-6">
-          <div className="rounded-lg border bg-card p-6 shadow-sm">
-            <h3 className="text-lg font-medium">Users</h3>
-            <p className="text-muted-foreground mt-2">User management content will be displayed here.</p>
-          </div>
+          <Users />
         </TabsContent>
 
         <TabsContent value="roles" className="mt-6">
