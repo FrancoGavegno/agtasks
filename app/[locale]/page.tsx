@@ -1,5 +1,5 @@
 
-export default function Page() {
+export default function DashboardPage() {
   return (
     <div>
       <h1>Welcome</h1>
