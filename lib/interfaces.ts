@@ -1,11 +1,14 @@
-// Agtasks
+// Organization/Users
 
 export interface User {
     email: string
     firstName: string
-    id: string
+    id?: string
     lastName: string
     invitationStatus?: "Not Sent" | "Sent"
+    isoLanguages?: string // "es" | "en" | "pt"
+    created?: string
+    lastLogin?: string
 }
 
 export interface Domain {
@@ -16,6 +19,30 @@ export interface Domain {
     domainUrl: string
     deleted: boolean
 }
+
+
+// Settings
+
+export interface Protocol {
+  id: string
+  name: string
+  language: string // "PT" | "EN" | "ES"
+}
+
+export interface Role {
+  id: string
+  name: string
+  language: string
+}
+
+export interface Form {
+  id: string
+  name: string
+  questions: number
+}
+
+
+// Projects 
 
 export interface Project {
     id: number
@@ -35,9 +62,7 @@ export interface Service {
 }
 
 
-
-
-// Jira 
+// TM / Jira 
 
 export interface JiraCustomerData {
     displayName: string

@@ -4,12 +4,10 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
+import { Input } from "@/components/ui/input"
+import { Search } from "lucide-react"
+import { Protocol } from "@/lib/interfaces"
 
-interface Protocol {
-  id: string
-  name: string
-  language: "PT" | "EN" | "ES"
-}
 
 interface ModalProtocolsProps {
   isOpen: boolean
@@ -21,11 +19,13 @@ interface ModalProtocolsProps {
 
 export function ModalProtocols({ isOpen, onClose, protocols, selectedProtocols, onSave }: ModalProtocolsProps) {
   const [localSelected, setLocalSelected] = useState<string[]>([])
+  const [searchTerm, setSearchTerm] = useState("")
 
   // Initialize local state when modal opens
   useEffect(() => {
     if (isOpen) {
       setLocalSelected([...selectedProtocols])
+      setSearchTerm("")
     }
   }, [isOpen, selectedProtocols])
 
@@ -38,6 +38,13 @@ export function ModalProtocols({ isOpen, onClose, protocols, selectedProtocols, 
     onClose()
   }
 
+  // Filter protocols based on search term
+  const filteredProtocols = protocols.filter(
+    (protocol) =>
+      protocol.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      protocol.language.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -46,21 +53,41 @@ export function ModalProtocols({ isOpen, onClose, protocols, selectedProtocols, 
             <DialogTitle>Protocolos</DialogTitle>
             <DialogDescription>Indica qué protocolos usará tu dominio.</DialogDescription>
           </div>
+          
         </DialogHeader>
-        <div className="space-y-4 py-2">
-          {protocols.map((protocol) => (
-            <div key={protocol.id} className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <div className="font-medium">{protocol.name}</div>
-                <div className="text-xs text-muted-foreground">{protocol.language}</div>
-              </div>
-              <Switch
-                checked={localSelected.includes(protocol.id)}
-                onCheckedChange={() => toggleProtocol(protocol.id)}
-              />
-            </div>
-          ))}
+
+        <div className="mb-4">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Buscar protocolos..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
+
+        <div className="space-y-4 py-2 max-h-[300px] overflow-y-auto pr-2">
+          {filteredProtocols.length > 0 ? (
+            filteredProtocols.map((protocol) => (
+              <div key={protocol.id} className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <div className="text-sm text-foreground">{protocol.name}</div>
+                  <div className="text-xs text-muted-foreground">{protocol.language}</div>
+                </div>
+                <Switch
+                  checked={localSelected.includes(protocol.id)}
+                  onCheckedChange={() => toggleProtocol(protocol.id)}
+                />
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-4 text-sm text-muted-foreground">No se encontraron protocolos.</div>
+          )}
+        </div>
+
         <div className="flex justify-center mt-4">
           <Button onClick={handleSave}>Guardar preferencias</Button>
         </div>

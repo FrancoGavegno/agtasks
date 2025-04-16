@@ -1,9 +1,9 @@
-import { redirect } from "next/navigation"
 
-export default function Overview() {
+export default function Page() {
   return (
     <div>
-      <h1>Welcome user</h1>
+      <h1>Welcome</h1>
+      <h2>Discover</h2>
     </div>
   )
 }

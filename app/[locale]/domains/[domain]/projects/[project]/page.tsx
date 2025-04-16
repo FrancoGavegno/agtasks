@@ -18,7 +18,7 @@ export default function ProjectPage() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink href="/">Projects</BreadcrumbLink>
+            <BreadcrumbLink href="/en/domains/8644/projects">Projects</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>

@@ -8,9 +8,9 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { Button } from "@/components/ui/button"
-import { Services } from "@/components/projects/services"
 import { Plus } from "lucide-react"
 import { Link } from "@/i18n/routing"
+import { Services } from "@/components/projects/services"
 
 export default function ServicesPage() {
   return (
@@ -22,11 +22,11 @@ export default function ServicesPage() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink href="/">Projects</BreadcrumbLink>
+            <BreadcrumbLink href="/en/domains/8644/projects">Projects</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink href="/en/8644/projects/1">01 - Tandil</BreadcrumbLink>
+            <BreadcrumbLink href="/en/domains/8644/projects/1">01 - Tandil</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -41,7 +41,7 @@ export default function ServicesPage() {
           <h2 className="text-2xl font-semibold tracking-tight">Services</h2>
           <p className="text-muted-foreground">Manage your project services</p>
         </div>
-        <Link href={`/8644/projects/1/services/create`} >
+        <Link href={`/domains/8644/projects/1/services/create`} >
             <Button>
             <Plus className="mr-2 h-4 w-4" /> Crear Servicio
             </Button>
