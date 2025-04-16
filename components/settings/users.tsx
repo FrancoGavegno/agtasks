@@ -11,6 +11,7 @@ import { listUsersByDomain } from "@/lib/360"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2, Search } from "lucide-react"
+import { v4 as uuidv4 } from 'uuid';
 
 export default function Users() {
   // Original users data from API
@@ -32,6 +33,7 @@ export default function Users() {
         const fetchedUsers = await listUsersByDomain(8644)
         const usersWithStatus = fetchedUsers.map(user => ({
           ...user,
+          id: uuidv4(),
           invitationStatus: "Not Sent" as "Not Sent" | "Sent" | undefined,
         }))
         setOriginalUsers(usersWithStatus)

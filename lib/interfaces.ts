@@ -3,7 +3,7 @@
 export interface User {
     email: string
     firstName: string
-    id?: string
+    id: string
     lastName: string
     invitationStatus?: "Not Sent" | "Sent"
     isoLanguages?: string // "es" | "en" | "pt"
