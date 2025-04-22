@@ -287,5 +287,3 @@ export async function createCustomerRequest(requestData: JiraCustomerRequestData
   }
 }
 
-
-

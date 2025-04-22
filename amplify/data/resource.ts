@@ -10,55 +10,88 @@ specifies that any user authenticated via an API key can "create", "read",
 =========================================================================*/
 const schema = a
   .schema({
-    Todo: a.model({
-      content: a.string(),
-      isDone: a.boolean().default(true),
-    }),
-
-    Visibility: a.enum([
-      "COMMUNITY",
-      "PRIVATE"
-    ]),
-
-    Scope: a.enum([
-      "NONE",
-      "INHERITED",
-      "DOMAIN",
-      "AREA",
-      "WORKSPACE",
-      "FARM",
-      "FIELD"
-    ]),
-
-    Template: a.model({
-      id: a.id().required(),
-      templateUrl: a.url().required(),
+    Role: a.model({
       name: a.string().required(),
-      description: a.string(),
-      taskCount: a.integer(),
-      space: a.string(),
-      tags: a.string().array(),
-      visibility: a.ref("Visibility").required(),
-      thumbnail: a.string(),
-      scope: a.ref("Scope"),
     }),
 
-    ProjectRole: a.model({
-      id: a.id().required(),
-      projectId: a.string(),
-      projectName: a.string(),
-      userId: a.string().required(),
-      userName: a.string(),
-      userEmail: a.email(),
-      roleId: a.string(),
-      roleName: a.string().required(),
-      status: a.string().default("ACTIVE"),
+    Domain: a.model({
+      name: a.string().required(),
+      protocols: a.hasMany('DomainProtocol', 'domainId'),
+      roles: a.hasMany('DomainRole', 'domainId'),
+      forms: a.hasMany('DomainForm', 'domainId'),
     }),
 
-    TaskManagerConfig: a.model({
-      apiKey: a.string(),
-      teamId: a.string(),
-    })
+    DomainProtocol: a.model({
+      name: a.string().required(),
+      language: a.string().required(),
+      tmProtocolId: a.string().required(), // The ID or Key of the customer request 
+      domainId: a.id(),
+      domain: a.belongsTo('Domain', 'domainId')
+    }),
+
+    DomainRole: a.model({
+      name: a.string().required(),    
+      domainId: a.id(),
+      domain: a.belongsTo('Domain', 'domainId')
+    }),
+
+    DomainForm: a.model({
+      name: a.string().required(),
+      ktFormId: a.string().required(),
+      domainId: a.id(),
+      domain: a.belongsTo('Domain', 'domainId')
+    }),
+    
+    
+    // Todo: a.model({
+    //   content: a.string(),
+    //   isDone: a.boolean().default(true),
+    // }),
+
+    // Visibility: a.enum([
+    //   "COMMUNITY",
+    //   "PRIVATE"
+    // ]),
+
+    // Scope: a.enum([
+    //   "NONE",
+    //   "INHERITED",
+    //   "DOMAIN",
+    //   "AREA",
+    //   "WORKSPACE",
+    //   "FARM",
+    //   "FIELD"
+    // ]),
+
+    // Template: a.model({
+    //   id: a.id().required(),
+    //   templateUrl: a.url().required(),
+    //   name: a.string().required(),
+    //   description: a.string(),
+    //   taskCount: a.integer(),
+    //   space: a.string(),
+    //   tags: a.string().array(),
+    //   visibility: a.ref("Visibility").required(),
+    //   thumbnail: a.string(),
+    //   scope: a.ref("Scope"),
+    // }),
+
+    // ProjectRole: a.model({
+    //   id: a.id().required(),
+    //   projectId: a.string(),
+    //   projectName: a.string(),
+    //   userId: a.string().required(),
+    //   userName: a.string(),
+    //   userEmail: a.email(),
+    //   roleId: a.string(),
+    //   roleName: a.string().required(),
+    //   status: a.string().default("ACTIVE"),
+    // }),
+
+    // TaskManagerConfig: a.model({
+    //   apiKey: a.string(),
+    //   teamId: a.string(),
+    // })
 
   })
   .authorization((allow) => [allow.publicApiKey()]);
