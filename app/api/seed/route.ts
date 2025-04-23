@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
-import { generateClient } from 'aws-amplify/data';
-import { type Schema } from '@/amplify/data/resource';
+// import { generateClient } from 'aws-amplify/data';
+// import { type Schema } from '@/amplify/data/resource';
+// const client = generateClient<Schema>();
 
-const client = generateClient<Schema>();
+import { getClient } from "@/lib/amplify"
 
 export async function POST() {
-    const domainName = 'Empresa X';
+    const client = getClient()
+    const domainName = 'Agrotecnología';
 
     // 1. Buscar o crear Domain
     const domainRes = await client.models.Domain.list({
@@ -19,13 +21,6 @@ export async function POST() {
 
     // 2. Crear 6 protocolos si no existen (basado en tmProtocolId únicos)
     const protocolsToSeed = [
-        // { name: 'Protocolo A', language: 'es', tmProtocolId: 'proto-001' },
-        // { name: 'Protocolo B', language: 'es', tmProtocolId: 'proto-002' },
-        // { name: 'Protocolo C', language: 'en', tmProtocolId: 'proto-003' },
-        // { name: 'Protocolo D', language: 'en', tmProtocolId: 'proto-004' },
-        // { name: 'Protocolo E', language: 'pt', tmProtocolId: 'proto-005' },
-        // { name: 'Protocolo F', language: 'fr', tmProtocolId: 'proto-006' },
-
         { tmProtocolId: 'TEM-1', name: 'Monitoreo satelital y control de malezas', language: 'ES' },
         { tmProtocolId: 'TEM-2', name: 'Protocolo Siembra y/o Fertilización Variable', language: 'ES' },
         { tmProtocolId: 'TEM-24', name: 'Variable rate recommendations & applications', language: 'EN' },
@@ -34,12 +29,12 @@ export async function POST() {
         { tmProtocolId: 'TEM-44', name: 'Monitoramento Satelital', language: 'PT' },
     ];
 
-
-
-
     const createdProtocols = [];
 
     for (const proto of protocolsToSeed) {
+        if (!domain) {
+            throw new Error('Domain is null or undefined');
+        }
         const existing = await client.models.DomainProtocol.list({
             filter: {
                 tmProtocolId: { eq: proto.tmProtocolId },
@@ -50,7 +45,7 @@ export async function POST() {
         if (existing.data.length === 0) {
             const created = await client.models.DomainProtocol.create({
                 ...proto,
-                domain: { id: domain.id },
+                domainId: domain.id,
             });
             createdProtocols.push(created.data);
         } else {
@@ -59,7 +54,7 @@ export async function POST() {
     }
 
     return NextResponse.json({
-        message: 'Seed completo',
+        message: 'Se completó la creación de protocolos',
         domain,
         createdProtocols,
     });

@@ -1,36 +1,75 @@
+// import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+// import createIntlMiddleware from 'next-intl/middleware'
+// import { routing } from './i18n/routing'
+
+// // Configuración de next-intl
+// const intlMiddleware = createIntlMiddleware(routing)
+
+// // Rutas protegidas: cualquier cosa dentro de /en/, /es/, /pt/
+// const isProtectedRoute = createRouteMatcher([
+//   '/(en|es|pt)(/.*)?'  // Protege todas las rutas como /en, /en/home, etc.
+// ])
+
+// // Middleware combinado
+// export default clerkMiddleware(async (auth, req) => {
+//   // Protege solo rutas internacionalizadas
+//   if (isProtectedRoute(req)) {
+//     await auth.protect()
+//   }
+
+//   // Siempre ejecuta el middleware de internacionalización
+//   return intlMiddleware(req)
+// })
+
+// // Matcher global para Clerk + next-intl
+// export const config = {
+//   matcher: [
+//     // Clerk internals y rutas protegidas
+//     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+//     '/(api|trpc)(.*)',
+
+//     // next-intl
+//     '/',
+//     '/(en|es|pt)/:path*'
+//   ]
+// }
+
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import createIntlMiddleware from 'next-intl/middleware'
 import { routing } from './i18n/routing'
+import { NextResponse } from 'next/server'
 
-// Configuración de next-intl
 const intlMiddleware = createIntlMiddleware(routing)
 
-// Rutas protegidas: cualquier cosa dentro de /en/, /es/, /pt/
+// Rutas protegidas: solo las internacionalizadas
 const isProtectedRoute = createRouteMatcher([
-  '/(en|es|pt)(/.*)?'  // Protege todas las rutas como /en, /en/home, etc.
+  '/(en|es|pt)(/.*)?'
 ])
 
 // Middleware combinado
 export default clerkMiddleware(async (auth, req) => {
-  // Protege solo rutas internacionalizadas
+  const { pathname } = req.nextUrl
+
+  // Excluir API routes del intlMiddleware
+  if (pathname.startsWith('/api') || pathname.startsWith('/trpc')) {
+    return NextResponse.next()
+  }
+
+  // Protege rutas internacionalizadas
   if (isProtectedRoute(req)) {
     await auth.protect()
   }
 
-  // Siempre ejecuta el middleware de internacionalización
+  // Ejecuta el middleware de internacionalización si corresponde
   return intlMiddleware(req)
 })
 
-// Matcher global para Clerk + next-intl
+// Solo aplicar middleware a rutas relevantes (excluye /api)
 export const config = {
   matcher: [
-    // Clerk internals y rutas protegidas
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    '/(api|trpc)(.*)',
-
-    // next-intl
+    // Rutas de frontend internacionalizadas
     '/',
-    '/(en|es|pt)/:path*'
+    '/(en|es|pt)/:path*',
   ]
 }
 
