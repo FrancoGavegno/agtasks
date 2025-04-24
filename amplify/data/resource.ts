@@ -31,12 +31,14 @@ const schema = a
 
     DomainRole: a.model({
       name: a.string().required(),    
+      language: a.string().required(),
       domainId: a.id(),
       domain: a.belongsTo('Domain', 'domainId')
     }),
 
     DomainForm: a.model({
       name: a.string().required(),
+      language: a.string().required(),
       ktFormId: a.string().required(),
       domainId: a.id(),
       domain: a.belongsTo('Domain', 'domainId')

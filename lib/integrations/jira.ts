@@ -1,4 +1,4 @@
-"use server" // Mark this file or function as a Server Action
+"use server" 
 
 import axios, { type AxiosError, type AxiosResponse } from "axios"
 import type {
@@ -14,6 +14,9 @@ import type {
 
 const JIRA_API_URL = process.env.NEXT_PUBLIC_JIRA_API_URL || "your_jira_username"
 const JIRA_API_TOKEN = process.env.NEXT_PUBLIC_JIRA_API_TOKEN || "your_jira_api_token"
+
+// 
+
 const JIRA_SD_ID = process.env.NEXT_PUBLIC_JIRA_SD_ID || "your_jira_sd_id"
 
 export const jiraApi = axios.create({
@@ -34,6 +37,47 @@ jiraApi.interceptors.response.use(
     throw error
   },
 )
+
+
+// Task Manager Protocols
+
+export async function listTaskManagerProtocols(serviceDeskId: string, queueId: string): Promise<JiraResponse> {
+  try {
+    const endpoint = `/rest/servicedeskapi/servicedesk/${serviceDeskId}/queue/${queueId}/issue`
+    const response = await jiraApi.get<QueueIssueResponse>(endpoint)
+
+    // console.log(response.data.values);
+    // console.log('Jira queue issues retrieved successfully:', response.status);
+    return {
+      success: true,
+      data: response.data,
+    }
+  } catch (error) {
+    let errorMessage: string
+
+    if (axios.isAxiosError(error)) {
+      // Manejo específico de errores de Axios
+      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
+    } else {
+      // Manejo de errores genéricos
+      errorMessage = "Unknown error occurred while fetching Jira queue issues"
+    }
+
+    return {
+      success: false,
+      error: errorMessage,
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
 
 // Función para formatear datos (simplificada sin fields y monitors)
 const formatDataToJiraPost = (data: JiraRequestData, lang: string): string => {

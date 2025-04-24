@@ -1,21 +1,46 @@
-import { NextResponse } from 'next/server';
-// import { generateClient } from 'aws-amplify/data';
-// import { type Schema } from '@/amplify/data/resource';
-// const client = generateClient<Schema>();
-
-import { getClient } from "@/lib/amplify"
+import { NextResponse } from "next/server";
+import { createDomainForm, listDomainForms } from "@/lib/services/agtasks";
+import { domainFormSchema, domainFormQuerySchema } from "@/lib/schemas";
 
 export async function POST(req: Request) {
-    const client = getClient()
-    
-    const body = await req.json();
-    const { name, ktFormId, domainId } = body;
+    try {
+        const json = await req.json();
 
-    const result = await client.models.DomainForm.create({
-        name,
-        ktFormId,
-        domainId
-    });
+        const parsed = domainFormSchema.safeParse(json);
 
-    return NextResponse.json(result);
+        if (!parsed.success) {
+            return NextResponse.json(
+                { error: "Validation error", issues: parsed.error.format() },
+                { status: 400 }
+            );
+        }
+
+        const result = await createDomainForm(parsed.data);
+        return NextResponse.json(result, { status: 201 });
+    } catch (error) {
+        console.error("Error creating domain Form:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    }
+}
+
+export async function GET(req: Request) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const domainId = searchParams.get("domainId");
+
+        const parsed = domainFormQuerySchema.safeParse({ domainId });
+
+        if (!parsed.success) {
+            return NextResponse.json(
+                { error: "Validation error", issues: parsed.error.format() },
+                { status: 400 }
+            );
+        }
+
+        const result = await listDomainForms(parsed.data.domainId);
+        return NextResponse.json(result, { status: 200 });
+    } catch (error) {
+        console.error("Error fetching domain Form:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    }
 }

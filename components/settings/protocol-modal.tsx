@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
 import { Protocol } from "@/lib/interfaces"
 
-
 interface ModalProtocolsProps {
   isOpen: boolean
   onClose: () => void
@@ -33,10 +32,33 @@ export function ModalProtocols({ isOpen, onClose, protocols, selectedProtocols, 
     setLocalSelected((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]))
   }
 
-  const handleSave = () => {
-    onSave(localSelected)
-    onClose()
-  }
+  const handleSave = async () => {
+    try {
+      // Hacer una solicitud DELETE por cada ID en localSelected
+      const deletePromises = localSelected.map(async (protocolId) => {
+        const response = await fetch(`/api/domain-protocol?protocolId=${protocolId}`, {
+          method: "DELETE",
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to delete protocol with ID ${protocolId}`);
+        }
+
+        return response.json();
+      });
+
+      // Esperar a que todas las solicitudes DELETE se completen
+      await Promise.all(deletePromises);
+
+      // Llamar a onSave y cerrar el modal si todo sale bien
+      onSave(localSelected);
+      onClose();
+    } catch (error) {
+      console.error("Error deleting protocols:", error);
+      // Opcional: Mostrar un mensaje de error al usuario aquí
+      // Por ejemplo, podrías usar una notificación o un estado para mostrar el error
+    }
+  };
 
   // Filter protocols based on search term
   const filteredProtocols = protocols.filter(
@@ -53,7 +75,6 @@ export function ModalProtocols({ isOpen, onClose, protocols, selectedProtocols, 
             <DialogTitle>Protocolos</DialogTitle>
             <DialogDescription>Indica qué protocolos usará tu dominio.</DialogDescription>
           </div>
-          
         </DialogHeader>
 
         <div className="mb-4">
@@ -74,12 +95,12 @@ export function ModalProtocols({ isOpen, onClose, protocols, selectedProtocols, 
             filteredProtocols.map((protocol) => (
               <div key={protocol.id} className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <div className="text-sm text-foreground">{protocol.name}</div>
+                  <div className="text-sm text-foreground">{protocol.id} {protocol.name}</div>
                   <div className="text-xs text-muted-foreground">{protocol.language}</div>
                 </div>
                 <Switch
-                  checked={localSelected.includes(protocol.id)}
-                  onCheckedChange={() => toggleProtocol(protocol.id)}
+                  checked={localSelected.includes(protocol.tmProtocolId)}
+                  onCheckedChange={() => toggleProtocol(protocol.tmProtocolId)}
                 />
               </div>
             ))

@@ -3,7 +3,7 @@ import {
   SidebarProvider,
   SidebarInset
 } from "@/components/ui/sidebar"
-import { getUser } from "@/lib/360"
+import { getUser } from "@/lib/integrations/360"
 
 export default async function AppLayout({
   children

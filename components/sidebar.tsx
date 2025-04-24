@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sidebar"
 
 import { User, Project } from "@/lib/interfaces"
-import { listProjectsByDomain } from "@/lib/agtasks"
+import { listProjectsByDomain } from "@/lib/services/agtasks"
 
 import DomainSelector from "@/components/navbar/domain-selector"
 import ProjectSelector from "@/components/navbar/project-selector"

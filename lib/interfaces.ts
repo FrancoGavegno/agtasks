@@ -27,6 +27,11 @@ export interface Protocol {
   id: string
   name: string
   language: string // "PT" | "EN" | "ES"
+  tmProtocolId: string // The ID or Key of the customer request
+  domainId?: string
+  domain?: Domain
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface Role {

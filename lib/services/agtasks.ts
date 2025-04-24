@@ -1,4 +1,84 @@
-import { Project, Service, Role } from "@/lib/interfaces"
+// import { Project, Service, Role } from "@/lib/core/interfaces"
+
+import { Amplify } from "aws-amplify"
+import outputs from "@/amplify_outputs.json"
+import { generateClient } from "aws-amplify/api";
+import { Schema } from "@/amplify/data/resource";
+
+// const client = generateClient<Schema>();
+
+let clientInstance: ReturnType<typeof generateClient<Schema>> | null = null
+let configured = false
+
+export function getClient() {
+  if (!configured) {
+    Amplify.configure(outputs)
+    configured = true
+  }
+
+  if (!clientInstance) {
+    clientInstance = generateClient<Schema>()
+  }
+
+  return clientInstance
+}
+
+const client = getClient()
+
+// Domain
+
+export async function createDomain(data: { name: string }) {  
+  return await client.models.Domain.create({ name: data.name });
+}
+
+// DomainProtocol
+
+export async function createDomainProtocol(data: { name: string; domainId: string, language: string, tmProtocolId: string }) {
+  return await client.models.DomainProtocol.create({
+    name: data.name,
+    domainId: data.domainId,
+    language: data.language,
+    tmProtocolId: data.tmProtocolId
+  });
+}
+
+export async function listDomainProtocols(domainId: string) {
+  return await client.models.DomainProtocol.list({ filter: { domainId: { eq: domainId } } });
+}
+
+export async function deleteDomainProtocol(protocolId: string) {
+  return await client.models.DomainProtocol.delete({ id: protocolId })
+}
+
+// DomainRole
+
+export async function createDomainRole(data: { name: string; domainId: string, language: string }) {
+  return await client.models.DomainRole.create({
+    name: data.name,
+    domainId: data.domainId,
+    language: data.language
+  });
+}
+
+export async function listDomainRoles(domainId: string) {
+  return await client.models.DomainRole.list({ filter: { domainId: { eq: domainId } } });
+}
+
+// DomainForm
+
+export async function createDomainForm(data: { name: string; domainId: string, language: string, ktFormId: string }) {
+  return await client.models.DomainForm.create({
+    name: data.name,
+    domainId: data.domainId,
+    language: data.language,
+    ktFormId: data.ktFormId
+  });
+}
+
+export async function listDomainForms(domainId: string) {
+  return await client.models.DomainForm.list({ filter: { domainId: { eq: domainId } } });
+}
+
 
 
 // TO DO: implement 

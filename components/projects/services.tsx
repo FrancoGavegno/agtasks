@@ -18,7 +18,7 @@ import {
   ArrowUpDown,
 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { listServicesByProject } from "@/lib/agtasks"
+import { listServicesByProject } from "@/lib/services/agtasks"
 import type { Service } from "@/lib/interfaces"
 
 export function Services() {

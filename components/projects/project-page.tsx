@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertTriangle, CheckCircle, Clock, Wrench } from "lucide-react"
-import { listServicesByProject } from "@/lib/agtasks"
+import { listServicesByProject } from "@/lib/services/agtasks"
 import type { Service } from "@/lib/interfaces"
 
 export function ProjectDetails() {

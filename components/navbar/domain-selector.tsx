@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { User, Domain } from "@/lib/interfaces"
-import { listDomains } from "@/lib/360"
+import { listDomains } from "@/lib/integrations/360"
 
 interface Props {
   user: User

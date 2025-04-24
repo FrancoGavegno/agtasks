@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from "lucide-react"
 import type { Form } from "@/lib/interfaces"
-import { listForms } from "@/lib/agtasks"
+import { listForms } from "@/lib/services/agtasks"
 
 
 export default function Forms() {

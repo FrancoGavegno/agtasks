@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from "lucide-react"
 import { Role } from "@/lib/interfaces"
-import { listRoles } from "@/lib/agtasks"
+import { listRoles } from "@/lib/services/agtasks"
 
 export default function Roles() {
   const [ roles, setRoles ] = useState<Role[]>([])
