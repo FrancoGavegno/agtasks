@@ -6,19 +6,28 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
-import { Protocol } from "@/lib/interfaces"
+import type { Protocol } from "@/lib/interfaces"
 
 interface ModalProtocolsProps {
   isOpen: boolean
   onClose: () => void
   protocols: Protocol[]
+  allProtocols: Protocol[]
   selectedProtocols: string[]
   onSave: (selectedIds: string[]) => void
 }
 
-export function ModalProtocols({ isOpen, onClose, protocols, selectedProtocols, onSave }: ModalProtocolsProps) {
+export function ModalProtocols({
+  isOpen,
+  onClose,
+  protocols,
+  allProtocols,
+  selectedProtocols,
+  onSave,
+}: ModalProtocolsProps) {
   const [localSelected, setLocalSelected] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState("")
+  const [isSaving, setIsSaving] = useState(false)
 
   // Initialize local state when modal opens
   useEffect(() => {
@@ -29,39 +38,100 @@ export function ModalProtocols({ isOpen, onClose, protocols, selectedProtocols, 
   }, [isOpen, selectedProtocols])
 
   const toggleProtocol = (id: string) => {
-    setLocalSelected((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]))
+    setLocalSelected((prev) => {
+      const newSelected = prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+      return newSelected
+    })
   }
 
   const handleSave = async () => {
+    setIsSaving(true) // Deshabilitar el botón mientras se ejecuta
     try {
-      // Hacer una solicitud DELETE por cada ID en localSelected
-      const deletePromises = localSelected.map(async (protocolId) => {
-        const response = await fetch(`/api/domain-protocol?protocolId=${protocolId}`, {
+      // 1. Identificar protocolos que deben eliminarse
+      // (tmProtocolId que ya no están seleccionados)
+      const protocolsToDeleteTmProtocolIds = selectedProtocols.filter(
+        (protocolId) => !localSelected.includes(protocolId),
+      )
+
+      // Mapear tmProtocolId a id usando protocols (los DomainProtocol asociados)
+      const protocolsToDelete = protocolsToDeleteTmProtocolIds
+        .map((tmProtocolId) => {
+          const protocol = protocols.find((p) => p.tmProtocolId === tmProtocolId)
+          if (protocol) {
+            return { tmProtocolId, id: protocol.id }
+          }
+          console.warn(`No se encontró DomainProtocol para tmProtocolId ${tmProtocolId}`)
+          return null
+        })
+        .filter((item): item is { tmProtocolId: string; id: string } => item !== null)
+
+      // 2. Identificar protocolos que deben crearse (tmProtocolId que no están en protocols)
+      const protocolsToCreate = localSelected.filter(
+        (protocolId) => !protocols.some((protocol) => protocol.tmProtocolId === protocolId),
+      )
+
+      // 3. Eliminar protocolos deseleccionados usando el id del DomainProtocol
+      const deletePromises = protocolsToDelete.map(async ({ tmProtocolId, id }) => {
+        const response = await fetch(`/api/domain-protocol?protocolId=${id}`, {
           method: "DELETE",
-        });
+        })
 
         if (!response.ok) {
-          throw new Error(`Failed to delete protocol with ID ${protocolId}`);
+          const errorData = await response.json()
+          console.error(`Error en DELETE para id ${id}:`, errorData)
+          throw new Error(`Failed to delete protocol with id ${id}`)
         }
 
-        return response.json();
-      });
+        const data = await response.json()
+        return data
+      })
 
-      // Esperar a que todas las solicitudes DELETE se completen
-      await Promise.all(deletePromises);
+      // 4. Crear nuevos protocolos
+      const createPromises = protocolsToCreate.map(async (protocolId) => {
+        const protocolData = allProtocols.find((protocol) => protocol.tmProtocolId === protocolId)
 
-      // Llamar a onSave y cerrar el modal si todo sale bien
-      onSave(localSelected);
-      onClose();
+        if (!protocolData) {
+          throw new Error(`Protocol data not found for tmProtocolId ${protocolId}`)
+        }
+
+        const response = await fetch("/api/domain-protocol", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            domainId: "dd8ae98f-2231-444e-8daf-120a4c416d15",
+            tmProtocolId: protocolData.tmProtocolId,
+            name: protocolData.name,
+            language: protocolData.language,
+          }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          console.error(`Error en POST para tmProtocolId ${protocolId}:`, errorData)
+          throw new Error(`Failed to create protocol with tmProtocolId ${protocolId}`)
+        }
+
+        const data = await response.json()
+        return data
+      })
+
+      // 5. Ejecutar todas las operaciones (DELETE y POST) en paralelo
+      await Promise.all([...deletePromises, ...createPromises])
+
+      // 6. Llamar a onSave y cerrar el modal si todo sale bien
+      onSave(localSelected)
+      onClose()
     } catch (error) {
-      console.error("Error deleting protocols:", error);
-      // Opcional: Mostrar un mensaje de error al usuario aquí
-      // Por ejemplo, podrías usar una notificación o un estado para mostrar el error
+      console.error("Error processing protocols:", error)
+    } finally {
+      setIsSaving(false) // Rehabilitar el botón cuando termine (incluso si hay error)
     }
-  };
+  }
 
   // Filter protocols based on search term
-  const filteredProtocols = protocols.filter(
+  const filteredProtocols = allProtocols.filter(
     (protocol) =>
       protocol.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       protocol.language.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -95,7 +165,7 @@ export function ModalProtocols({ isOpen, onClose, protocols, selectedProtocols, 
             filteredProtocols.map((protocol) => (
               <div key={protocol.id} className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <div className="text-sm text-foreground">{protocol.id} {protocol.name}</div>
+                  <div className="text-sm text-foreground">{protocol.name}</div>
                   <div className="text-xs text-muted-foreground">{protocol.language}</div>
                 </div>
                 <Switch
@@ -110,7 +180,9 @@ export function ModalProtocols({ isOpen, onClose, protocols, selectedProtocols, 
         </div>
 
         <div className="flex justify-center mt-4">
-          <Button onClick={handleSave}>Guardar preferencias</Button>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving ? "Guardando preferencias..." : "Guardar preferencias"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

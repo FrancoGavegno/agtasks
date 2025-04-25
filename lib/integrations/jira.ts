@@ -38,7 +38,6 @@ jiraApi.interceptors.response.use(
   },
 )
 
-
 // Task Manager Protocols
 
 export async function listTaskManagerProtocols(serviceDeskId: string, queueId: string): Promise<JiraResponse> {
@@ -69,8 +68,6 @@ export async function listTaskManagerProtocols(serviceDeskId: string, queueId: s
     }
   }
 }
-
-
 
 
 

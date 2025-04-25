@@ -1,36 +1,16 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { FormModal } from "./form-modal"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from "lucide-react"
-import type { Form } from "@/lib/interfaces"
-import { listForms } from "@/lib/services/agtasks"
-
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2, Search } from "lucide-react"
+import { useSettings } from "@/lib/contexts/settings-context"
 
 export default function Forms() {
-  // Use the Protocol interface from /lib/interfaces
-  const [forms, setForms] = useState<Form[]>([])
-
-  // Use the provided useEffect to fetch forms
-  useEffect(() => {
-    const fetchforms = async () => {
-      const data = await listForms()
-      setForms(data)
-    }
-    fetchforms()
-  }, [])
-
-  // Initialize selectedforms with all protocol IDs
-  const [selectedForms, setSelectedForms] = useState<string[]>([])
-
-  // Update selectedForms when forms change
-  useEffect(() => {
-    setSelectedForms(forms.map((p) => p.id))
-  }, [forms])
+  const { forms, allForms, selectedForms, formsLoading, setSelectedForms, refreshForms } = useSettings()
 
   const [filter, setFilter] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -47,8 +27,18 @@ export default function Forms() {
   const startIndex = (page - 1) * rowsPerPage
   const paginatedForms = filteredForms.slice(startIndex, startIndex + rowsPerPage)
 
-  const handleSavePreferences = (selectedIds: string[]) => {
+  const handleSavePreferences = async (selectedIds: string[]) => {
     setSelectedForms(selectedIds)
+    refreshForms()
+  }
+
+  if (formsLoading) {
+    return (
+      <div className="flex h-[400px] w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Loading forms...</span>
+      </div>
+    )
   }
 
   return (
@@ -110,8 +100,9 @@ export default function Forms() {
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
           {filteredForms.length > 0
-            ? `Showing ${startIndex + 1} to ${Math.min(startIndex + rowsPerPage, filteredForms.length)} of ${filteredForms.length
-            } forms`
+            ? `Showing ${startIndex + 1} to ${Math.min(startIndex + rowsPerPage, filteredForms.length)} of ${
+                filteredForms.length
+              } forms`
             : "No forms found"}
         </div>
         <div className="flex items-center space-x-6">
@@ -181,6 +172,7 @@ export default function Forms() {
       <FormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        allForms={allForms}
         forms={forms}
         selectedForms={selectedForms}
         onSave={handleSavePreferences}

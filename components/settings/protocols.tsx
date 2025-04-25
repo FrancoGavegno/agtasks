@@ -1,88 +1,18 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ModalProtocols } from "./protocol-modal"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from "lucide-react"
-import type { Protocol } from "@/lib/interfaces"
-//import { listProtocols } from "@/lib/services/agtasks"
-
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2, Search } from "lucide-react"
+import { useSettings } from "@/lib/contexts/settings-context"
 
 export default function Protocols() {
-  const [protocols, setProtocols] = useState<Protocol[]>([]);
-  const [taskManagerProtocols, setTaskManagerProtocols] = useState<Protocol[]>([]);
-
-  // Primer useEffect: Obtener protocols
-  useEffect(() => {
-    const fetchDomainProtocols = async () => {
-      try {
-        const res = await fetch("/api/domain-protocol?domainId=dd8ae98f-2231-444e-8daf-120a4c416d15");
-        const data = await res.json();
-
-        setProtocols(data.data);
-      } catch (error) {
-        console.error("Error fetching protocols:", error);
-      }
-    };
-
-    fetchDomainProtocols();
-  }, []);
-
-  // Segundo useEffect: Obtener taskManagerProtocols y asignar el id de protocols
-  useEffect(() => {
-    const fetchTaskManagerProtocols = async () => {
-      try {
-        const res = await fetch("/api/tm-protocol?projectId=TEM&queueId=82");
-        const data = await res.json();
-
-        // Mapear los datos de tm-protocol y buscar el id correspondiente en protocols
-        const newProtocols = data.data.values.map((protocol: any) => {
-          // Buscar el protocolo en protocols que coincida con tmProtocolId
-          const matchingProtocol = protocols.find(
-            (p) => p.tmProtocolId === protocol.key
-          );
-
-          return {
-            id: matchingProtocol ? matchingProtocol.id : protocol.id, // Usar el id de protocols si hay coincidencia, sino usar el id original
-            name: protocol.fields.summary,
-            language: protocol.fields.labels[0] || "N/A", // Añadí un fallback por si labels está vacío
-            tmProtocolId: protocol.key,
-          };
-        });
-
-        // Actualizar el estado con los nuevos protocolos
-        setTaskManagerProtocols(newProtocols);
-      } catch (error) {
-        console.error("Error fetching task manager protocols", error);
-      }
-    };
-
-    // Asegurarnos de que protocols esté disponible antes de ejecutar fetchTaskManagerProtocols
-    if (protocols.length > 0) {
-      fetchTaskManagerProtocols();
-    }
-  }, [protocols]); // Dependencia en protocols para que se ejecute después de que protocols esté listo
-
-  
-  // useEffect(() => {
-  //   console.log("protocolos del tm:", taskManagerProtocols)
-  // }, [taskManagerProtocols])
-
-  // useEffect(() => {
-  //   console.log("protocols actualizados: ", protocols)
-  // }, [protocols])
-
-  // Initialize selectedProtocols with all protocol IDs
-  const [selectedProtocols, setSelectedProtocols] = useState<string[]>([])
-
-  // Update selectedProtocols when protocols change
-  useEffect(() => {
-    setSelectedProtocols(protocols.map((p) => p.tmProtocolId))
-  }, [protocols])
+  const { protocols, allProtocols, selectedProtocols, protocolsLoading, setSelectedProtocols, refreshProtocols } =
+    useSettings()
 
   const [filter, setFilter] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -99,8 +29,18 @@ export default function Protocols() {
   const startIndex = (page - 1) * rowsPerPage
   const paginatedProtocols = filteredProtocols.slice(startIndex, startIndex + rowsPerPage)
 
-  const handleSavePreferences = (selectedIds: string[]) => {
+  const handleSavePreferences = async (selectedIds: string[]) => {
     setSelectedProtocols(selectedIds)
+    refreshProtocols()
+  }
+
+  if (protocolsLoading) {
+    return (
+      <div className="flex h-[400px] w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Loading protocols...</span>
+      </div>
+    )
   }
 
   return (
@@ -140,7 +80,7 @@ export default function Protocols() {
             {paginatedProtocols.length > 0 ? (
               paginatedProtocols.map((protocol) => (
                 <TableRow key={protocol.id}>
-                  <TableCell className="font-medium">{protocol.id} {protocol.name}</TableCell>
+                  <TableCell className="font-medium">{protocol.name}</TableCell>
                   <TableCell className="text-center">
                     <Badge variant="outline">{protocol.language}</Badge>
                   </TableCell>
@@ -160,8 +100,9 @@ export default function Protocols() {
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
           {filteredProtocols.length > 0
-            ? `Showing ${startIndex + 1} to ${Math.min(startIndex + rowsPerPage, filteredProtocols.length)} of ${filteredProtocols.length
-            } protocols`
+            ? `Showing ${startIndex + 1} to ${Math.min(startIndex + rowsPerPage, filteredProtocols.length)} of ${
+                filteredProtocols.length
+              } protocols`
             : "No protocols found"}
         </div>
         <div className="flex items-center space-x-6">
@@ -231,7 +172,8 @@ export default function Protocols() {
       <ModalProtocols
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        protocols={taskManagerProtocols}
+        allProtocols={allProtocols}
+        protocols={protocols}
         selectedProtocols={selectedProtocols}
         onSave={handleSavePreferences}
       />

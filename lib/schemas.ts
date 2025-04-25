@@ -33,6 +33,10 @@ export const domainRoleQuerySchema = z.object({
     domainId: z.string().min(1, "domainId is required"),
 });
 
+export const deleteDomainRoleSchema = z.object({
+    roleId: z.string().min(1, "roleId is required"),
+});
+
 // amplify/data/resource.ts DomainForm
 
 export const domainFormSchema = z.object({
@@ -48,7 +52,11 @@ export const domainFormQuerySchema = z.object({
     domainId: z.string().min(1, "domainId is required"),
 });
 
-// Task Manager Protocols
+export const deleteDomainFormSchema = z.object({
+    formId: z.string().min(1, "formId is required"),
+});
+
+// Task Manager Protocol
 
 export const taskManagerProtocolQuerySchema = z.object({
     projectId: z.string().min(1, "projectId is required"),

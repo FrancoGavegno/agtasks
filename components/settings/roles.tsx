@@ -1,35 +1,17 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { RoleModal } from "./role-modal"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from "lucide-react"
-import { Role } from "@/lib/interfaces"
-import { listRoles } from "@/lib/services/agtasks"
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2, Search } from "lucide-react"
+import { useSettings } from "@/lib/contexts/settings-context"
 
 export default function Roles() {
-  const [ roles, setRoles ] = useState<Role[]>([])
-  
-  useEffect(() => {
-    const fetchRoles = async () => {
-      const data = await listRoles()
-      //console.log(data)
-      setRoles(data)
-    }
-    fetchRoles()
-  }, [])
-
-  // Initialize selectedProtocols with all protocol IDs
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([])
-
-  // Update selectedProtocols when protocols change
-  useEffect(() => {
-    setSelectedRoles(roles.map((p) => p.id))
-  }, [roles])
+  const { roles, allRoles, selectedRoles, rolesLoading, setSelectedRoles, refreshRoles } = useSettings()
 
   const [filter, setFilter] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -41,13 +23,37 @@ export default function Roles() {
     .filter((role) => selectedRoles.includes(role.id))
     .filter((role) => role.name.toLowerCase().includes(filter.toLowerCase()))
 
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredRoles.length / rowsPerPage)
-  const startIndex = (page - 1) * rowsPerPage
-  const paginatedRoles = filteredRoles.slice(startIndex, startIndex + rowsPerPage)
+  // Remove duplicate roles (same name and language)
+  const uniqueRoles = filteredRoles.reduce(
+    (acc, current) => {
+      const isDuplicate = acc.find(
+        (item) => item.name === current.name && item.language.toLowerCase() === current.language.toLowerCase(),
+      )
+      if (!isDuplicate) {
+        return acc.concat([current])
+      }
+      return acc
+    },
+    [] as typeof filteredRoles,
+  )
 
-  const handleSavePreferences = (selectedIds: string[]) => {
+  // Calculate pagination
+  const totalPages = Math.ceil(uniqueRoles.length / rowsPerPage)
+  const startIndex = (page - 1) * rowsPerPage
+  const paginatedRoles = uniqueRoles.slice(startIndex, startIndex + rowsPerPage)
+
+  const handleSavePreferences = async (selectedIds: string[]) => {
     setSelectedRoles(selectedIds)
+    refreshRoles()
+  }
+
+  if (rolesLoading) {
+    return (
+      <div className="flex h-[400px] w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Loading roles...</span>
+      </div>
+    )
   }
 
   return (
@@ -106,9 +112,9 @@ export default function Roles() {
 
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          {filteredRoles.length > 0
-            ? `Showing ${startIndex + 1} to ${Math.min(startIndex + rowsPerPage, filteredRoles.length)} of ${
-                filteredRoles.length
+          {uniqueRoles.length > 0
+            ? `Showing ${startIndex + 1} to ${Math.min(startIndex + rowsPerPage, uniqueRoles.length)} of ${
+                uniqueRoles.length
               } roles`
             : "No roles found"}
         </div>
@@ -179,6 +185,7 @@ export default function Roles() {
       <RoleModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        allRoles={allRoles}
         roles={roles}
         selectedRoles={selectedRoles}
         onSave={handleSavePreferences}

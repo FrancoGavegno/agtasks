@@ -5,7 +5,7 @@ import outputs from "@/amplify_outputs.json"
 import { generateClient } from "aws-amplify/api";
 import { Schema } from "@/amplify/data/resource";
 
-// const client = generateClient<Schema>();
+// Amplify 
 
 let clientInstance: ReturnType<typeof generateClient<Schema>> | null = null
 let configured = false
@@ -64,6 +64,10 @@ export async function listDomainRoles(domainId: string) {
   return await client.models.DomainRole.list({ filter: { domainId: { eq: domainId } } });
 }
 
+export async function deleteDomainRole(roleId: string) {
+  return await client.models.DomainRole.delete({ id: roleId })
+}
+
 // DomainForm
 
 export async function createDomainForm(data: { name: string; domainId: string, language: string, ktFormId: string }) {
@@ -79,7 +83,11 @@ export async function listDomainForms(domainId: string) {
   return await client.models.DomainForm.list({ filter: { domainId: { eq: domainId } } });
 }
 
+export async function deleteDomainForm(formId: string) {
+  return await client.models.DomainForm.delete({ id: formId })
+}
 
+// Mock Data
 
 // TO DO: implement 
 export const listProjectsByDomain = async (domainId: number) => {
@@ -99,7 +107,6 @@ export const listProjectsByDomain = async (domainId: number) => {
   ]
 }
 
-
 // TO DO: implement 
 export const getProject = async (projectId: number) => {
   return {
@@ -115,7 +122,6 @@ export const getProject = async (projectId: number) => {
     },
   }
 }
-
 
 // TO DO: implement 
 export const listServicesByProject = async (projectId?: number) => {
@@ -274,20 +280,18 @@ export const listServicesByProject = async (projectId?: number) => {
 
 }
 
-
 // TO DO: implement
 // ver como labels Language se transforma en language
-export const listProtocols = async (language?: string) => {
-  return [
-    { id: "1", name: "Monitoramento Satelital", language: "PT" },
-    { id: "2", name: "Digitalização de Estabelecimentos e Lotes", language: "PT" },
-    { id: "3", name: "Weed Control", language: "EN" },
-    { id: "4", name: "Variable rate recommendations & applications", language: "EN" },
-    { id: "5", name: "Protocolo Siembra y/o Fertilización Variable", language: "ES" },
-    { id: "6", name: "Monitoreo satelital y control de malezas", language: "ES" },
-  ]
-}
-
+// export const listProtocols = async (language?: string) => {
+//   return [
+//     { id: "1", name: "Monitoramento Satelital", language: "PT" },
+//     { id: "2", name: "Digitalização de Estabelecimentos e Lotes", language: "PT" },
+//     { id: "3", name: "Weed Control", language: "EN" },
+//     { id: "4", name: "Variable rate recommendations & applications", language: "EN" },
+//     { id: "5", name: "Protocolo Siembra y/o Fertilización Variable", language: "ES" },
+//     { id: "6", name: "Monitoreo satelital y control de malezas", language: "ES" },
+//   ]
+// }
 
 // TO DO: 
 export const listRoles = async (language?: string) => {
@@ -371,7 +375,6 @@ export const listRoles = async (language?: string) => {
 
 }
 
-
 // TO DO: 
 export const listForms = async (language?: string) => {
   return [
@@ -383,3 +386,4 @@ export const listForms = async (language?: string) => {
     { id: "6", name: "Plagas y Enfermedades", questions: 13 },
   ]
 }
+
