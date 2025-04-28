@@ -110,7 +110,8 @@ export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onS
   // Filter forms based on search term
   const filteredForms = allForms.filter(
     (form) =>
-      form.name.toLowerCase().includes(searchTerm.toLowerCase()) || form.questions.toString().includes(searchTerm),
+      form.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (form.questions && form.questions.toString().includes(searchTerm)),
   )
 
   return (
@@ -140,7 +141,7 @@ export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onS
           {filteredForms.length > 0 ? (
             filteredForms.map((form) => {
               // Check if this form is already in the domain forms list
-              const existingForm = forms.find((f) => f.name === form.name)
+              const existingForm = forms.find((f) => f.ktFormId === form.ktFormId)
 
               // If it exists, use its ID for checking selection
               const checkId = existingForm ? existingForm.id : form.id
@@ -149,7 +150,7 @@ export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onS
                 <div key={form.id} className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <div className="text-sm text-foreground">{form.name}</div>
-                    <div className="text-xs text-muted-foreground">{form.questions} preguntas</div>
+                    <div className="text-xs text-muted-foreground">{form.language || "es"}</div>
                   </div>
                   <Switch checked={localSelected.includes(checkId)} onCheckedChange={() => toggleForm(checkId)} />
                 </div>

@@ -3,22 +3,25 @@
 import { useFormContext } from "react-hook-form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Step3FormValues } from "./validation-schemas"
-
-// Datos de ejemplo para roles y usuarios
-const roles = ["Agrónomo", "Técnico", "Supervisor", "Administrador", "Operario"]
-
-const usersByRole = {
-  Agrónomo: ["Juan Pérez", "María González", "Carlos Rodríguez"],
-  Técnico: ["Ana Martínez", "Luis Sánchez", "Elena Díaz"],
-  Supervisor: ["Roberto Fernández", "Sofía López"],
-  Administrador: ["Miguel Torres", "Laura García"],
-  Operario: ["Pedro Ramírez", "Javier Morales", "Lucía Vega", "Valentina Castro"],
-}
+import { useServiceForm } from "@/lib/contexts/service-form-context"
 
 export default function Step3Tasks() {
   const form = useFormContext<Step3FormValues>()
+  const { roles, getUsersByRole, rolesLoading, usersLoading, updateFormValues } = useServiceForm()
   const taskAssignments = form.watch ? form.watch("taskAssignments") : []
   const errors = form.formState?.errors
+
+  // Función para verificar si hay un error en un campo específico
+  const getFieldError = (index: number, field: "role" | "assignedTo") => {
+    // Mostrar errores cuando existan, independientemente del estado touched
+    const fieldErrors = errors?.taskAssignments?.[index]?.[field]
+
+    if (fieldErrors) {
+      return fieldErrors.message
+    }
+
+    return null
+  }
 
   // Función para manejar la asignación de roles
   const handleRoleAssignment = (taskIndex: number, role: string) => {
@@ -28,7 +31,22 @@ export default function Step3Tasks() {
       role,
       assignedTo: "", // Resetear el usuario asignado cuando cambia el rol
     }
-    form.setValue("taskAssignments", updatedTasks, { shouldValidate: true })
+
+    // Marcar el campo como "touched"
+    form.setValue(`taskAssignments.${taskIndex}.role`, role, {
+      shouldValidate: true,
+      shouldTouch: true,
+    })
+
+    // Resetear el campo de usuario asignado
+    form.setValue(`taskAssignments.${taskIndex}.assignedTo`, "", {
+      shouldValidate: false,
+    })
+
+    // Update context
+    updateFormValues({
+      taskAssignments: updatedTasks,
+    })
   }
 
   // Función para manejar la asignación de usuarios
@@ -38,17 +56,22 @@ export default function Step3Tasks() {
       ...updatedTasks[taskIndex],
       assignedTo: user,
     }
-    form.setValue("taskAssignments", updatedTasks, { shouldValidate: true })
-  }
 
-  // Función para verificar si hay un error en un campo específico
-  const getFieldError = (index: number, field: "role" | "assignedTo") => {
-    return errors?.taskAssignments?.[index]?.[field]?.message
+    // Marcar el campo como "touched"
+    form.setValue(`taskAssignments.${taskIndex}.assignedTo`, user, {
+      shouldValidate: true,
+      shouldTouch: true,
+    })
+
+    // Update context
+    updateFormValues({
+      taskAssignments: updatedTasks,
+    })
   }
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-medium">Asignación de tareas</h3>
+      <h3 className="text-lg font-medium">Asigne roles y usuarios a cada tarea</h3>
       <div className="border rounded-md overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -79,14 +102,18 @@ export default function Step3Tasks() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{assignment.task}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <div className="space-y-1">
-                    <Select value={assignment.role || ""} onValueChange={(value) => handleRoleAssignment(index, value)}>
+                    <Select
+                      value={assignment.role || ""}
+                      onValueChange={(value) => handleRoleAssignment(index, value)}
+                      disabled={rolesLoading}
+                    >
                       <SelectTrigger className={`w-full ${getFieldError(index, "role") ? "border-red-500" : ""}`}>
-                        <SelectValue placeholder="Seleccionar rol" />
+                        <SelectValue placeholder={rolesLoading ? "Cargando..." : "Seleccionar rol"} />
                       </SelectTrigger>
                       <SelectContent>
                         {roles.map((role) => (
-                          <SelectItem key={role} value={role}>
-                            {role}
+                          <SelectItem key={role.id} value={role.id}>
+                            {role.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -101,16 +128,16 @@ export default function Step3Tasks() {
                     <Select
                       value={assignment.assignedTo || ""}
                       onValueChange={(value) => handleUserAssignment(index, value)}
-                      disabled={!assignment.role}
+                      disabled={!assignment.role || usersLoading}
                     >
                       <SelectTrigger className={`w-full ${getFieldError(index, "assignedTo") ? "border-red-500" : ""}`}>
-                        <SelectValue placeholder="Seleccionar usuario" />
+                        <SelectValue placeholder={usersLoading ? "Cargando..." : "Seleccionar usuario"} />
                       </SelectTrigger>
                       <SelectContent>
                         {assignment.role &&
-                          usersByRole[assignment.role as keyof typeof usersByRole]?.map((user) => (
-                            <SelectItem key={user} value={user}>
-                              {user}
+                          getUsersByRole(assignment.role).map((user) => (
+                            <SelectItem key={user.id} value={user.id}>
+                              {user.name}
                             </SelectItem>
                           ))}
                       </SelectContent>
@@ -125,8 +152,13 @@ export default function Step3Tasks() {
           </tbody>
         </table>
       </div>
+      {/* Mensaje de error general para tareas */}
       {errors?.taskAssignments && !Array.isArray(errors.taskAssignments) && (
         <p className="text-red-500 mt-2">{errors.taskAssignments.message}</p>
+      )}
+      {/* Mensaje adicional para guiar al usuario */}
+      {taskAssignments.some((task) => task.role && !task.assignedTo) && (
+        <p className="text-amber-500 mt-2">Debe asignar usuarios a todas las tareas con roles seleccionados</p>
       )}
     </div>
   )

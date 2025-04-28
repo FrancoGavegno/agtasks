@@ -5,66 +5,96 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { Step2FormValues } from "./validation-schemas"
-
-// Datos de ejemplo para los selectores
-const workspaces = ["Workspace 1", "Workspace 2", "Workspace 3"]
-const campaigns = {
-  "Workspace 1": ["Campaña 2023/24", "Campaña 2022/23"],
-  "Workspace 2": ["Campaña 2023/24", "Campaña 2021/22"],
-  "Workspace 3": ["Campaña 2023/24"],
-}
-const establishments = {
-  "Workspace 1-Campaña 2023/24": ["Establecimiento A", "Establecimiento B"],
-  "Workspace 1-Campaña 2022/23": ["Establecimiento C"],
-  "Workspace 2-Campaña 2023/24": ["Establecimiento D", "Establecimiento E"],
-  "Workspace 2-Campaña 2021/22": ["Establecimiento F"],
-  "Workspace 3-Campaña 2023/24": ["Establecimiento G"],
-}
-
-// Datos de ejemplo para los lotes
-const lots = {
-  "Establecimiento A": [
-    { id: "A001", name: "Lote Norte", crop: "Maíz / P1234", hectares: 45.5 },
-    { id: "A002", name: "Lote Sur", crop: "Soja / DM4615", hectares: 32.8 },
-    { id: "A003", name: "Lote Este", crop: "Trigo / Klein Serpiente", hectares: 28.3 },
-  ],
-  "Establecimiento B": [
-    { id: "B001", name: "Lote 1", crop: "Soja / DM4670", hectares: 50.2 },
-    { id: "B002", name: "Lote 2", crop: "Maíz / DK7210", hectares: 38.7 },
-  ],
-  "Establecimiento C": [{ id: "C001", name: "Lote Principal", crop: "Girasol / P102CL", hectares: 60.0 }],
-  "Establecimiento D": [
-    { id: "D001", name: "Lote A", crop: "Maíz / P1234", hectares: 42.1 },
-    { id: "D002", name: "Lote B", crop: "Soja / NS4309", hectares: 35.6 },
-  ],
-  "Establecimiento E": [{ id: "E001", name: "Lote Único", crop: "Trigo / Buck Meteoro", hectares: 75.3 }],
-  "Establecimiento F": [{ id: "F001", name: "Lote 1", crop: "Soja / DM4615", hectares: 48.9 }],
-  "Establecimiento G": [
-    { id: "G001", name: "Lote Norte", crop: "Maíz / DK7210", hectares: 55.0 },
-    { id: "G002", name: "Lote Sur", crop: "Soja / DM4670", hectares: 40.2 },
-  ],
-}
+import { useServiceForm } from "@/lib/contexts/service-form-context"
 
 export default function Step2Lots() {
   const form = useFormContext<Step2FormValues>()
+  const {
+    workspaces,
+    campaigns,
+    establishments,
+    lots,
+    workspacesLoading,
+    campaignsLoading,
+    establishmentsLoading,
+    lotsLoading,
+    updateFormValues,
+  } = useServiceForm()
+
   const workspace = form.watch ? form.watch("workspace") : ""
   const campaign = form.watch ? form.watch("campaign") : ""
   const establishment = form.watch ? form.watch("establishment") : ""
   const selectedLots = form.watch ? form.watch("selectedLots") : []
 
-  // Función para manejar la selección de lotes
+  // Filter campaigns by selected workspace
+  const filteredCampaigns = campaigns.filter((campaign) => campaign.workspaceId === workspace)
+
+  // Filter establishments by selected workspace and campaign
+  const filteredEstablishments = establishments.filter(
+    (establishment) => establishment.workspaceId === workspace && establishment.campaignId === campaign,
+  )
+
+  // Filter lots by selected establishment
+  const filteredLots = lots.filter((lot) => lot.establishmentId === establishment)
+
+  // Handle workspace selection
+  const handleWorkspaceChange = (value: string) => {
+    form.setValue("workspace", value, { shouldValidate: true })
+    form.setValue("campaign", "", { shouldValidate: true })
+    form.setValue("establishment", "", { shouldValidate: true })
+    form.setValue("selectedLots", [], { shouldValidate: true })
+
+    // Update context
+    updateFormValues({
+      workspace: value,
+      campaign: "",
+      establishment: "",
+      selectedLots: [],
+    })
+  }
+
+  // Handle campaign selection
+  const handleCampaignChange = (value: string) => {
+    form.setValue("campaign", value, { shouldValidate: true })
+    form.setValue("establishment", "", { shouldValidate: true })
+    form.setValue("selectedLots", [], { shouldValidate: true })
+
+    // Update context
+    updateFormValues({
+      campaign: value,
+      establishment: "",
+      selectedLots: [],
+    })
+  }
+
+  // Handle establishment selection
+  const handleEstablishmentChange = (value: string) => {
+    form.setValue("establishment", value, { shouldValidate: true })
+    form.setValue("selectedLots", [], { shouldValidate: true })
+
+    // Update context
+    updateFormValues({
+      establishment: value,
+      selectedLots: [],
+    })
+  }
+
+  // Handle lot selection
   const handleLotSelection = (lotId: string) => {
     const currentLots = form.getValues("selectedLots") || []
     const newLots = currentLots.includes(lotId) ? currentLots.filter((id) => id !== lotId) : [...currentLots, lotId]
 
     form.setValue("selectedLots", newLots, { shouldValidate: true })
-  }
 
-  // Obtener lotes disponibles basados en el establecimiento seleccionado
-  const availableLots = establishment ? lots[establishment as keyof typeof lots] || [] : []
+    // Update context
+    updateFormValues({
+      selectedLots: newLots,
+    })
+  }
 
   return (
     <div className="space-y-6">
+      <p className="text-lg font-medium">Seleccione uno o más lotes</p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <FormField
           control={form.control}
@@ -73,22 +103,14 @@ export default function Step2Lots() {
             <FormItem>
               <FormLabel>Espacio de trabajo</FormLabel>
               <FormControl>
-                <Select
-                  value={field.value}
-                  onValueChange={(value) => {
-                    field.onChange(value)
-                    form.setValue("campaign", "", { shouldValidate: true })
-                    form.setValue("establishment", "", { shouldValidate: true })
-                    form.setValue("selectedLots", [], { shouldValidate: true })
-                  }}
-                >
+                <Select value={field.value} onValueChange={handleWorkspaceChange} disabled={workspacesLoading}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar espacio" />
+                    <SelectValue placeholder={workspacesLoading ? "Cargando..." : "Seleccionar espacio"} />
                   </SelectTrigger>
                   <SelectContent>
                     {workspaces.map((workspace) => (
-                      <SelectItem key={workspace} value={workspace}>
-                        {workspace}
+                      <SelectItem key={workspace.id} value={workspace.id}>
+                        {workspace.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -108,23 +130,18 @@ export default function Step2Lots() {
               <FormControl>
                 <Select
                   value={field.value}
-                  onValueChange={(value) => {
-                    field.onChange(value)
-                    form.setValue("establishment", "", { shouldValidate: true })
-                    form.setValue("selectedLots", [], { shouldValidate: true })
-                  }}
-                  disabled={!workspace}
+                  onValueChange={handleCampaignChange}
+                  disabled={!workspace || campaignsLoading}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar campaña" />
+                    <SelectValue placeholder={campaignsLoading ? "Cargando..." : "Seleccionar campaña"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {workspace &&
-                      campaigns[workspace as keyof typeof campaigns]?.map((campaign) => (
-                        <SelectItem key={campaign} value={campaign}>
-                          {campaign}
-                        </SelectItem>
-                      ))}
+                    {filteredCampaigns.map((campaign) => (
+                      <SelectItem key={campaign.id} value={campaign.id}>
+                        {campaign.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </FormControl>
@@ -142,25 +159,18 @@ export default function Step2Lots() {
               <FormControl>
                 <Select
                   value={field.value}
-                  onValueChange={(value) => {
-                    field.onChange(value)
-                    form.setValue("selectedLots", [], { shouldValidate: true })
-                  }}
-                  disabled={!campaign}
+                  onValueChange={handleEstablishmentChange}
+                  disabled={!campaign || establishmentsLoading}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar establecimiento" />
+                    <SelectValue placeholder={establishmentsLoading ? "Cargando..." : "Seleccionar establecimiento"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {workspace &&
-                      campaign &&
-                      establishments[`${workspace}-${campaign}` as keyof typeof establishments]?.map(
-                        (establishment) => (
-                          <SelectItem key={establishment} value={establishment}>
-                            {establishment}
-                          </SelectItem>
-                        ),
-                      )}
+                    {filteredEstablishments.map((establishment) => (
+                      <SelectItem key={establishment.id} value={establishment.id}>
+                        {establishment.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </FormControl>
@@ -170,7 +180,7 @@ export default function Step2Lots() {
         />
       </div>
 
-      {establishment && (
+      {establishment && !lotsLoading && (
         <div className="mt-6">
           <h3 className="text-lg font-medium mb-4">Lotes disponibles</h3>
           <div className="border rounded-md overflow-hidden">
@@ -210,7 +220,7 @@ export default function Step2Lots() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {availableLots.map((lot) => (
+                {filteredLots.map((lot) => (
                   <tr key={lot.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Checkbox
@@ -231,9 +241,10 @@ export default function Step2Lots() {
           <FormField
             control={form.control}
             name="selectedLots"
-            render={() => (
+            render={({ fieldState }) => (
               <FormItem>
-                <FormMessage className="text-red-500 mt-2" />
+                {/* Mostrar el mensaje de error siempre que el campo sea inválido y se haya intentado validar */}
+                {fieldState.invalid && <p className="text-red-500 mt-2">Por favor, seleccione al menos un lote</p>}
               </FormItem>
             )}
           />

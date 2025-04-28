@@ -6,7 +6,7 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import CreateService from "@/components/services/create-service"
+import CreateService from "@/components/projects/create-service"
 
 export default function Page() {
     return (

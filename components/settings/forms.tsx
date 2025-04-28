@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2, Search } from "lucide-react"
 import { useSettings } from "@/lib/contexts/settings-context"
+import { Badge } from "@/components/ui/badge"
 
 export default function Forms() {
   const { forms, allForms, selectedForms, formsLoading, setSelectedForms, refreshForms } = useSettings()
@@ -71,7 +72,7 @@ export default function Forms() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[80%]">Name</TableHead>
-              <TableHead className="text-center">Questions</TableHead>
+              <TableHead className="text-center">Source</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -80,9 +81,7 @@ export default function Forms() {
                 <TableRow key={form.id}>
                   <TableCell className="font-medium">{form.name}</TableCell>
                   <TableCell className="text-center">
-                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-muted text-muted-foreground">
-                      {form.questions}
-                    </span>
+                    <Badge variant="outline">{form.ktFormId ? "KoboToolbox" : "Local"}</Badge>
                   </TableCell>
                 </TableRow>
               ))

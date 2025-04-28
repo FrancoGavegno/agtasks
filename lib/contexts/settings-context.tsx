@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import type { Protocol, Role, Form } from "@/lib/interfaces"
+import { listAssets } from "@/lib/integrations/kobotoolbox"
 
 // Interfaz genérica para el contexto de configuraciones
 interface SettingsContextType {
@@ -217,32 +218,32 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     fetchDomainForms()
   }, [shouldRefetchForms, forms.length])
 
-  // Fetch all forms (from service)
+  // Fetch all forms from KoboToolbox
   useEffect(() => {
     const fetchAllForms = async () => {
       if (allForms.length > 0) return
 
       try {
-        // Aquí usamos el servicio que devuelve todos los formularios disponibles
-        const data = await import("@/lib/services/agtasks").then((module) => module.listForms())
+        // Get forms from KoboToolbox
+        const koboForms = await listAssets()
 
-        // Mapear los datos y buscar el id correspondiente en forms
-        const newForms = data.map((form: any) => {
-          // Buscar el formulario en forms que coincida con nombre
-          const matchingForm = forms.find((f) => f.name === form.name)
+        // Map KoboToolbox assets to our Form interface
+        const newForms = koboForms.map((form: any) => {
+          // Find if this form already exists in our domain forms
+          const matchingForm = forms.find((f) => f.ktFormId === form.uid)
 
           return {
-            id: matchingForm ? matchingForm.id : form.id,
+            id: matchingForm ? matchingForm.id : form.uid,
             name: form.name,
-            questions: form.questions,
-            ktFormId: form.id,
-            language: "es", // Default language
+            questions: 0, // Default value as specified
+            ktFormId: form.uid,
+            language: "es", // Default language as specified
           }
         })
 
         setAllForms(newForms)
       } catch (error) {
-        console.error("Error fetching all forms:", error)
+        console.error("Error fetching KoboToolbox forms:", error)
       }
     }
 

@@ -294,83 +294,63 @@ export const listServicesByProject = async (projectId?: number) => {
 // }
 
 // TO DO: 
-export const listRoles = async (language?: string) => {
+export const listRoles = async (language?: string) => { 
   return [
     {
       "id": "1",
-      "name": "Agrónomo de precisión",
+      "name": "Sponsor",
       "language": "es"
     },
     {
       "id": "2",
-      "name": "Ingeniero agrónomo",
+      "name": "Referente interno",
       "language": "es"
     },
     {
       "id": "3",
-      "name": "Técnico en sensores y drones",
+      "name": "Soporte Agricultura Digital",
       "language": "es"
     },
     {
       "id": "4",
-      "name": "Especialista en SIG (Sistemas de Información Geográfica)",
+      "name": "Consultor Agronómico",
       "language": "es"
     },
     {
       "id": "5",
-      "name": "Analista de datos agrícolas",
+      "name": "Equipo Agtech",
       "language": "es"
     },
     {
       "id": "6",
-      "name": "Desarrollador de software agrícola",
+      "name": "Productor Cliente",
       "language": "es"
     },
     {
       "id": "7",
-      "name": "Operador de maquinaria inteligente",
+      "name": "Socio Regional",
       "language": "es"
     },
     {
       "id": "8",
-      "name": "Consultor en agricultura digital",
+      "name": "Consultor AgTech",
       "language": "es"
     },
     {
       "id": "9",
-      "name": "Especialista en teledetección",
+      "name": "Asesor Técnico Comercial",
       "language": "es"
     },
     {
       "id": "10",
-      "name": "Gerente de producción agrícola",
+      "name": "Líder Proyecto",
       "language": "es"
     },
     {
       "id": "11",
-      "name": "Investigador en ciencias agrícolas",
+      "name": "Coordinadora General",
       "language": "es"
-    },
-    {
-      "id": "12",
-      "name": "Especialista en IoT agrícola",
-      "language": "es"
-    },
-    {
-      "id": "13",
-      "name": "Bioinformático agropecuario",
-      "language": "es"
-    },
-    {
-      "id": "14",
-      "name": "Especialista en fertilización variable",
-      "language": "es"
-    },
-    {
-      "id": "15",
-      "name": "Capacitador agro-tecnológico",
-      "language": "es"
-    }
+    },  
   ]
 
 }

@@ -2,7 +2,7 @@ import { z } from "zod"
 
 // Esquema de validación para el paso 1 (selección de protocolo)
 export const step1Schema = z.object({
-  protocol: z.enum(["variable-seeding", "satellite-monitoring", ""], {
+  protocol: z.enum(["", "variable-seeding", "satellite-monitoring"], {
     required_error: "Por favor, seleccione un protocolo",
   }),
 })
@@ -47,9 +47,17 @@ export const taskAssignmentSchema = z.object({
 })
 
 export const step3Schema = z.object({
-  taskAssignments: z.array(taskAssignmentSchema).min(1, {
-    message: "Debe haber al menos una tarea asignada",
-  }),
+  taskAssignments: z.array(taskAssignmentSchema).refine(
+    (tasks) => {
+      // Solo validar tareas que tengan un rol seleccionado
+      const tasksWithRoles = tasks.filter((task) => task.role.length > 0)
+      return tasksWithRoles.every((task) => task.assignedTo.length > 0)
+    },
+    {
+      message: "Todas las tareas con rol asignado deben tener un usuario asignado",
+      path: ["taskAssignments"],
+    },
+  ),
 })
 
 export type Step3FormValues = z.infer<typeof step3Schema>
