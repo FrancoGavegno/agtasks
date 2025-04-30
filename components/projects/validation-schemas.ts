@@ -47,17 +47,9 @@ export const taskAssignmentSchema = z.object({
 })
 
 export const step3Schema = z.object({
-  taskAssignments: z.array(taskAssignmentSchema).refine(
-    (tasks) => {
-      // Solo validar tareas que tengan un rol seleccionado
-      const tasksWithRoles = tasks.filter((task) => task.role.length > 0)
-      return tasksWithRoles.every((task) => task.assignedTo.length > 0)
-    },
-    {
-      message: "Todas las tareas con rol asignado deben tener un usuario asignado",
-      path: ["taskAssignments"],
-    },
-  ),
+  taskAssignments: z.array(taskAssignmentSchema).min(1, {
+    message: "Debe haber al menos una tarea asignada",
+  }),
 })
 
 export type Step3FormValues = z.infer<typeof step3Schema>

@@ -16,8 +16,20 @@ import Step3Tasks from "./step3-tasks"
 // Importar los esquemas de validación
 import { createServiceSchema, type CreateServiceFormValues } from "./validation-schemas"
 
-// Importar el contexto del formulario
-import { ServiceFormProvider } from "@/lib/contexts/service-form-context"
+// Datos de ejemplo para los protocolos
+const protocolTasks = {
+  "variable-seeding": [
+    "Análisis de suelo y topografía",
+    "Generación de mapas de prescripción",
+    "Calibración de maquinaria",
+    "Seguimiento de aplicación",
+  ],
+  "satellite-monitoring": [
+    "Monitoreo de lotes utilizando imágenes satelitales",
+    "Zonificación del índice",
+    "Validación del mapa de zonas con recorrida a campo",
+  ],
+}
 
 // Valores iniciales del formulario
 const defaultValues: CreateServiceFormValues = {
@@ -50,6 +62,20 @@ export default function CreateService() {
     }
   }, [shouldScrollToTop])
 
+  // Función para actualizar las asignaciones de tareas cuando se selecciona un protocolo
+  const updateTaskAssignments = (protocol: string) => {
+    if (!protocol) return
+
+    const tasks = protocolTasks[protocol as keyof typeof protocolTasks]
+    const newAssignments = tasks.map((task) => ({
+      task,
+      role: "",
+      assignedTo: "",
+    }))
+
+    methods.setValue("taskAssignments", newAssignments)
+  }
+
   // Función para validar el paso actual y avanzar al siguiente
   const nextStep = async () => {
     let isValid = false
@@ -59,76 +85,15 @@ export default function CreateService() {
         isValid = await methods.trigger("protocol")
         break
       case 2:
-        // Marcar los campos como "touched" antes de validar
-        methods.setValue("selectedLots", methods.getValues("selectedLots"), {
-          shouldValidate: true,
-          shouldTouch: true,
-          shouldDirty: true,
-        })
-
         isValid = await methods.trigger(["workspace", "campaign", "establishment", "selectedLots"])
-
-        // Si no es válido y específicamente el error es en selectedLots, mostrar un toast
-        if (!isValid && methods.formState.errors.selectedLots) {
-          toast({
-            title: "Selección incompleta",
-            description: "Por favor, seleccione al menos un lote para continuar",
-            variant: "destructive",
-          })
-        }
         break
       case 3:
-        // Marcar todos los campos de tareas como "touched"
-        const taskAssignments = methods.getValues("taskAssignments")
-        taskAssignments.forEach((_, index) => {
-          methods.setValue(`taskAssignments.${index}.role`, methods.getValues(`taskAssignments.${index}.role`), {
-            shouldValidate: true,
-            shouldTouch: true,
-            shouldDirty: true,
-          })
-          methods.setValue(
-            `taskAssignments.${index}.assignedTo`,
-            methods.getValues(`taskAssignments.${index}.assignedTo`),
-            {
-              shouldValidate: true,
-              shouldTouch: true,
-              shouldDirty: true,
-            },
-          )
-        })
-
-        // Validar todas las tareas
+        // Validar específicamente cada tarea
         isValid = await methods.trigger("taskAssignments")
-
-        // Verificar si hay tareas con roles asignados
-        const tasksWithRoles = taskAssignments.filter((task) => task.role)
-
-        if (tasksWithRoles.length === 0) {
-          toast({
-            title: "Asignación incompleta",
-            description: "Por favor, asigne al menos un rol a una tarea",
-            variant: "destructive",
-          })
-          return
+        if (isValid) {
+          // Enviar el formulario
+          onSubmit(methods.getValues())
         }
-
-        // Verificar si todas las tareas con roles tienen usuarios asignados
-        const incompleteAssignments = tasksWithRoles.filter((task) => !task.assignedTo)
-
-        if (incompleteAssignments.length > 0) {
-          toast({
-            title: "Asignación incompleta",
-            description: "Por favor, asigne usuarios a todas las tareas con roles",
-            variant: "destructive",
-          })
-          return
-        }
-
-        // Si llegamos aquí, la validación es correcta
-        isValid = true
-
-        // Enviar el formulario
-        onSubmit(methods.getValues())
         return // Retornar aquí para evitar avanzar al siguiente paso
     }
 
@@ -171,7 +136,7 @@ export default function CreateService() {
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <Step1Protocol />
+        return <Step1Protocol updateTaskAssignments={updateTaskAssignments} />
       case 2:
         return <Step2Lots />
       case 3:
@@ -182,59 +147,57 @@ export default function CreateService() {
   }
 
   return (
-    <ServiceFormProvider>
-      <Card className="w-full max-w-6xl mx-auto border-none min-h-[600px]">
-        <CardHeader>
-          <CardTitle>Crear Nuevo Servicio</CardTitle>
-          <CardDescription>Complete los siguientes pasos para crear un nuevo servicio</CardDescription>
+    <Card className="w-full max-w-6xl mx-auto border-none min-h-[600px] mt-4 ml-0">
+      <CardHeader>
+        <CardTitle>Crear Nuevo Servicio</CardTitle>
+        <CardDescription>Complete los siguientes pasos para crear un nuevo servicio</CardDescription>
 
-          <div className="flex items-center justify-between mt-4">
-            <div className="flex items-center space-x-2">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 1 ? "bg-primary text-primary-foreground" : "bg-gray-200 text-gray-500"}`}
-              >
-                1
-              </div>
-              <div className={`w-16 h-1 ${currentStep >= 2 ? "bg-primary" : "bg-gray-200"}`}></div>
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 2 ? "bg-primary text-primary-foreground" : "bg-gray-200 text-gray-500"}`}
-              >
-                2
-              </div>
-              <div className={`w-16 h-1 ${currentStep >= 3 ? "bg-primary" : "bg-gray-200"}`}></div>
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 3 ? "bg-primary text-primary-foreground" : "bg-gray-200 text-gray-500"}`}
-              >
-                3
-              </div>
+        <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center space-x-2">
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 1 ? "bg-primary text-primary-foreground" : "bg-gray-200 text-gray-500"}`}
+            >
+              1
+            </div>
+            <div className={`w-16 h-1 ${currentStep >= 2 ? "bg-primary" : "bg-gray-200"}`}></div>
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 2 ? "bg-primary text-primary-foreground" : "bg-gray-200 text-gray-500"}`}
+            >
+              2
+            </div>
+            <div className={`w-16 h-1 ${currentStep >= 3 ? "bg-primary" : "bg-gray-200"}`}></div>
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 3 ? "bg-primary text-primary-foreground" : "bg-gray-200 text-gray-500"}`}
+            >
+              3
             </div>
           </div>
-        </CardHeader>
+        </div>
+      </CardHeader>
 
-        <CardContent>
-          <FormProvider {...methods}>{renderStep()}</FormProvider>
-        </CardContent>
+      <CardContent>
+        <FormProvider {...methods}>{renderStep()}</FormProvider>
+      </CardContent>
 
-        <CardFooter className="flex justify-between">
-          {currentStep > 1 ? (
-            <Button variant="outline" onClick={prevStep}>
-              <ChevronLeft className="mr-2 h-4 w-4" />
-              Atrás
-            </Button>
-          ) : (
-            <div></div>
-          )}
+      <CardFooter className="flex justify-between">
+        {currentStep > 1 ? (
+          <Button variant="outline" onClick={prevStep}>
+            <ChevronLeft className="mr-2 h-4 w-4" />
+            Atrás
+          </Button>
+        ) : (
+          <div></div>
+        )}
 
-          {currentStep < 3 ? (
-            <Button onClick={nextStep}>
-              Siguiente
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          ) : (
-            <Button onClick={nextStep}>Confirmar</Button>
-          )}
-        </CardFooter>
-      </Card>
-    </ServiceFormProvider>
+        {currentStep < 3 ? (
+          <Button onClick={nextStep}>
+            Siguiente
+            <ChevronRight className="ml-2 h-4 w-4" />
+          </Button>
+        ) : (
+          <Button onClick={nextStep}>Confirmar</Button>
+        )}
+      </CardFooter>
+    </Card>
   )
 }

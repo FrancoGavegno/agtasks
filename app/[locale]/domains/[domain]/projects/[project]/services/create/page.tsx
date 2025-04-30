@@ -35,13 +35,6 @@ export default function Page() {
                 </BreadcrumbList>
             </Breadcrumb>
 
-            <div className="flex justify-between items-center mt-5">
-                <div className="space-y-1.5">
-                    <h1 className="text-2xl font-semibold tracking-tight">Create Service</h1>
-                    <p className="text-muted-foreground">...</p>
-                </div>
-            </div>
-
             <CreateService />
         </div>
     )

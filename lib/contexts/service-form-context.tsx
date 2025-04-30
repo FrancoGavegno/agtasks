@@ -89,7 +89,7 @@ interface ServiceFormContextType {
 
 // Default form values
 const defaultFormValues: CreateServiceFormValues = {
-  protocol: undefined,
+  protocol: "",
   workspace: "",
   campaign: "",
   establishment: "",
