@@ -12,11 +12,10 @@ import type {
   JiraCustomerRequestData,
 } from "@/lib/interfaces"
 
-const JIRA_API_URL = process.env.NEXT_PUBLIC_JIRA_API_URL || "your_jira_username"
-const JIRA_API_TOKEN = process.env.NEXT_PUBLIC_JIRA_API_TOKEN || "your_jira_api_token"
+const JIRA_API_URL = process.env.NEXT_PUBLIC_JIRA_API_URL 
+const JIRA_API_TOKEN = process.env.NEXT_PUBLIC_JIRA_API_TOKEN 
 
 // 
-
 const JIRA_SD_ID = process.env.NEXT_PUBLIC_JIRA_SD_ID || "your_jira_sd_id"
 
 export const jiraApi = axios.create({
