@@ -1,9 +1,10 @@
-// import { Project, Service, Role } from "@/lib/core/interfaces"
 
 import { Amplify } from "aws-amplify"
 import outputs from "@/amplify_outputs.json"
-import { generateClient } from "aws-amplify/api";
-import { Schema } from "@/amplify/data/resource";
+import { generateClient } from "aws-amplify/api"
+import { Schema } from "@/amplify/data/resource"
+// import { Project, Service, Role } from "@/lib/interfaces"
+import { Project } from "@/lib/interfaces"
 
 // Amplify 
 
@@ -87,25 +88,58 @@ export async function deleteDomainForm(formId: string) {
   return await client.models.DomainForm.delete({ id: formId })
 }
 
-// Mock Data
 
-// TO DO: implement 
-export const listProjectsByDomain = async (domainId: number) => {
-  return [
+// Project
+
+export const listProjectsByDomain = async (domainId: number): Promise<Project[]> => {
+  const projects = [
     {
-      "id": 1,
-      "name": "01 - Tandil",
-      "domain": {
-        "id": 8644,
-        "languageId": 2,
-        "name": "Agrotecnología",
-        "hasLogo": false,
-        "domainUrl": "agrotecnologia.com",
-        "deleted": false
-      },
-    }
-  ]
-}
+      parentId: 1,
+      id: "TEM",
+      name: "PROTOCOLOS",
+      language: "ES",
+      queueId: 82,
+      deleted: false,
+    },
+    {
+      parentId: 1,
+      id: "TEM2",
+      name: "PROTOCOLOS 2",
+      language: "ES",
+      queueId: 83,
+      deleted: false,
+    },
+    {
+      parentId: 8644,
+      id: "TAN",
+      name: "01 - Tandil",
+      language: "ES",
+      queueId: 148,
+      deleted: false,
+    },
+  ];
+
+  // Filtrar proyectos cuyo parentId coincida con domainId
+  const matchingProjects = projects.filter((project) => project.parentId === domainId);
+
+  return matchingProjects;
+};
+
+
+  // return [
+  //   {
+  //     "id": 1,
+  //     "name": "01 - Tandil",
+  //     "domain": {
+  //       "id": 8644,
+  //       "languageId": 2,
+  //       "name": "Agrotecnología",
+  //       "hasLogo": false,
+  //       "domainUrl": "agrotecnologia.com",
+  //       "deleted": false
+  //     },
+  //   }
+  // ]
 
 // TO DO: implement 
 export const getProject = async (projectId: number) => {

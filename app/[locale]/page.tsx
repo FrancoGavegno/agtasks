@@ -1,12 +1,3 @@
-// export default function DashboardPage() {
-//   return (
-//     <div>
-//       <h1>Welcome</h1>
-//       <h2>Discover</h2>
-//     </div>
-//   )
-// }
-
 "use client"
 
 import { useState } from "react"
@@ -17,11 +8,11 @@ import { Link } from "@/i18n/routing"
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState(0)
 
-  const tabs = ["Configura Protocolos", "Gestiona Usuarios y Roles", "Añade Formularios", "Crea tu primer Servicio"]
+  const tabs = ["Seleeciona Protocolos", "Gestiona Usuarios y Roles", "Añade Formularios", "Crea tu primer Servicio"]
 
   const tabContent = [
     {
-      title: "Configura Protocolos",
+      title: "Selecciona Protocolos",
       description:
         "Los protocolos se usan para estandarizar tareas frecuentes en tus servicios agropecuarios. Elige cuales estarán disponibles para tus usuarios y agiliza así la creación de servicios.",
     },

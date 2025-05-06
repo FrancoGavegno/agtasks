@@ -15,8 +15,8 @@ export interface Domain {
   id: number
   languageId: number
   name: string
-  hasLogo: boolean
-  domainUrl: string
+  hasLogo?: boolean
+  domainUrl?: string
   deleted: boolean
 }
 
@@ -49,10 +49,19 @@ export interface Form {
 
 // Projects 
 
+// export interface Project {
+//   id: number
+//   name: string
+//   domain: Domain
+// }
+
 export interface Project {
-  id: number
-  name: string
-  domain: Domain
+  parentId: number;
+  id: string;
+  name: string;
+  language: string;
+  queueId: number;
+  deleted: boolean;
 }
 
 export interface Service {

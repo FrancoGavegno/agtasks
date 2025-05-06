@@ -14,13 +14,12 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-
-import { User, Project } from "@/lib/interfaces"
-import { listProjectsByDomain } from "@/lib/services/agtasks"
-
+import { Settings, FolderCheck, ClipboardCheck, Folder, LayoutList } from "lucide-react"
+// import { User, Project } from "@/lib/interfaces"
 import DomainSelector from "@/components/navbar/domain-selector"
 import ProjectSelector from "@/components/navbar/project-selector"
-import { Settings, FolderCheck, ClipboardCheck, Folder, LayoutList } from "lucide-react"
+import { Project } from "@/lib/interfaces"
+import { listProjectsByDomain } from "@/lib/services/agtasks"
 
 
 // const sidebarAdminNavItems = [
@@ -105,21 +104,36 @@ const projectNavItems = [
 // ]
 
 interface Props {
-  user: User
+  user: string
 }
 
 export function AppSidebar({ user }: Props) {
   //const pathname = usePathname()
-
   const [selectedDomain, setSelectedDomain] = useState<number | null>(null)
-  const [selectedProject, setSelectedProject] = useState<number | null>(null)
+  const [selectedProject, setSelectedProject] = useState<string | null>(null)
   const [projects, setProjects] = useState<Project[]>([])
 
-  useEffect(() => {
+  // useEffect(() => {
+  //   if (selectedDomain) {
+  //     listProjectsByDomain(selectedDomain).then(setProjects)
+  //   }
+  // }, [selectedDomain])
+
+  const handleDomainChange = (domainId: number) => {
+    console.log("handleDomainChange -> domainId: ", domainId)
+    setSelectedDomain(domainId);
+
     if (selectedDomain) {
+      console.log("handleDomainChange -> selectedDomain: ", selectedDomain)
       listProjectsByDomain(selectedDomain).then(setProjects)
     }
-  }, [selectedDomain])
+    // const domainProjects = listProjectsByDomain(domainId); 
+    // setProjects(domainProjects);
+  };
+
+  const handleProjectSelect = (projectId: string) => {
+    console.log("handleProjectSelect -> Selected project:", projectId);
+  };
 
   return (
     <Sidebar className="pt-12">
@@ -127,7 +141,11 @@ export function AppSidebar({ user }: Props) {
         <SidebarGroup>
           <SidebarGroupLabel>Platform</SidebarGroupLabel>
           <SidebarGroupContent>
-            <DomainSelector user={user} onDomainSelect={setSelectedDomain} />
+            <DomainSelector 
+              user={user} 
+              onDomainSelect={handleDomainChange} 
+              /* onDomainSelect={setSelectedDomain} */ 
+            />
             <SidebarMenu>
               {sidebarNavItems.map((item) => {
                 const Icon = item.icon 
@@ -148,7 +166,7 @@ export function AppSidebar({ user }: Props) {
         <SidebarGroup>
           <SidebarGroupLabel>Projects</SidebarGroupLabel>
           <SidebarGroupContent>
-            <ProjectSelector projects={projects} onProjectSelect={setSelectedProject} />
+            <ProjectSelector projects={projects} onProjectSelect={handleProjectSelect} /* onProjectSelect={setSelectedProject} */ />
             <SidebarMenu>
               {projectNavItems.map((item) => {
                 const Icon = item.icon 

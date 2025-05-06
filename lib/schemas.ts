@@ -56,9 +56,16 @@ export const deleteDomainFormSchema = z.object({
     formId: z.string().min(1, "formId is required"),
 });
 
-// Task Manager Protocol
+// Task Manager Protocol (GeoAgro Project)
 
 export const taskManagerProtocolQuerySchema = z.object({
+    projectId: z.string().min(1, "projectId is required"),
+    queueId: z.string().min(1, "queueId is required"),
+});
+
+// Task Manager Service (Client Project)
+
+export const serviceQuerySchema = z.object({
     projectId: z.string().min(1, "projectId is required"),
     queueId: z.string().min(1, "queueId is required"),
 });

@@ -74,6 +74,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
       try {
         setProtocolsLoading(true)
+        // d619afb4-8923-4e19-90db-89deff1b2ab5
         const res = await fetch("/api/domain-protocol?domainId=dd8ae98f-2231-444e-8daf-120a4c416d15")
         const data = await res.json()
         setProtocols(data.data)

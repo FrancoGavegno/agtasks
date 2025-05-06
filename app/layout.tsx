@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers';
 import type React from "react"
 import ReactQueryProvider from "@/components/react-query-provider"
 import { ClerkProvider } from '@clerk/nextjs'
@@ -17,9 +18,12 @@ export default async function RootLayout({
     children: React.ReactNode
     params: { locale: string }
 }) {
-    const { locale } = await params
+    const cookiesList = cookies();
+    const userEmail = cookiesList.get('user-email')?.value || null;
+    //console.log('Root Layout - userEmail:', userEmail);
 
     // Providing all messages to the client side
+    const { locale } = await params
     const messages = await getMessages({ locale })
 
     return (

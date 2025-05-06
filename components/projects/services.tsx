@@ -18,8 +18,10 @@ import {
   ArrowUpDown,
 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { listServicesByProject } from "@/lib/services/agtasks"
+
 import type { Service } from "@/lib/interfaces"
+//import { listServicesByProject } from "@/lib/services/agtasks"
+import { listServicesByProject } from "@/lib/integrations/jira"
 
 export function Services() {
   const [services, setServices] = useState<Service[]>([])
@@ -32,14 +34,14 @@ export function Services() {
   })
 
   // TO DO: Fetch services
-  useEffect(() => {
-    const fetchServices = async () => {
-      const servicesData = await listServicesByProject(1)
-      setServices(servicesData)
-    }
+  // useEffect(() => {
+  //   const fetchServices = async () => {
+  //     const servicesData = await listServicesByProject("TAN", "82")
+  //     setServices(servicesData)
+  //   }
 
-    fetchServices()
-  }, [])
+  //   fetchServices()
+  // }, [])
 
   // Handle sorting
   const requestSort = (key: keyof Service) => {

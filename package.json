@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.5.5",
+    "@clerk/clerk-sdk-node": "^4.13.23",
     "@clerk/nextjs": "^6.15.0",
     "@hookform/resolvers": "^3.10.0",
     "@parcel/watcher": "^2.5.0",

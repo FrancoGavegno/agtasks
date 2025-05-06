@@ -1,76 +1,102 @@
-// import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
-// import createIntlMiddleware from 'next-intl/middleware'
-// import { routing } from './i18n/routing'
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import createIntlMiddleware from 'next-intl/middleware';
+import { routing } from './i18n/routing';
+import { NextResponse } from 'next/server';
+import { Clerk } from '@clerk/clerk-sdk-node';
 
-// // Configuración de next-intl
-// const intlMiddleware = createIntlMiddleware(routing)
-
-// // Rutas protegidas: cualquier cosa dentro de /en/, /es/, /pt/
-// const isProtectedRoute = createRouteMatcher([
-//   '/(en|es|pt)(/.*)?'  // Protege todas las rutas como /en, /en/home, etc.
-// ])
-
-// // Middleware combinado
-// export default clerkMiddleware(async (auth, req) => {
-//   // Protege solo rutas internacionalizadas
-//   if (isProtectedRoute(req)) {
-//     await auth.protect()
-//   }
-
-//   // Siempre ejecuta el middleware de internacionalización
-//   return intlMiddleware(req)
-// })
-
-// // Matcher global para Clerk + next-intl
-// export const config = {
-//   matcher: [
-//     // Clerk internals y rutas protegidas
-//     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-//     '/(api|trpc)(.*)',
-
-//     // next-intl
-//     '/',
-//     '/(en|es|pt)/:path*'
-//   ]
-// }
-
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
-import createIntlMiddleware from 'next-intl/middleware'
-import { routing } from './i18n/routing'
-import { NextResponse } from 'next/server'
-
-const intlMiddleware = createIntlMiddleware(routing)
+const intlMiddleware = createIntlMiddleware(routing);
 
 // Rutas protegidas: solo las internacionalizadas
-const isProtectedRoute = createRouteMatcher([
-  '/(en|es|pt)(/.*)?'
-])
+const isProtectedRoute = createRouteMatcher(['/(en|es|pt)(/.*)?']);
+
+// Habilitar logs solo en desarrollo
+const isDebug = process.env.NODE_ENV === 'development';
 
 // Middleware combinado
 export default clerkMiddleware(async (auth, req) => {
-  const { pathname } = req.nextUrl
+  const { pathname } = req.nextUrl;
+
+  if (isDebug) console.log('Middleware - Executing for route:', pathname);
 
   // Excluir API routes del intlMiddleware
   if (pathname.startsWith('/api') || pathname.startsWith('/trpc')) {
-    return NextResponse.next()
+    if (isDebug) console.log('Middleware - Skipping for API route');
+    return NextResponse.next();
   }
 
-  // Protege rutas internacionalizadas
+  // Proteger rutas internacionalizadas y preparar el email del usuario
+  let userEmail: string | null = null;
   if (isProtectedRoute(req)) {
-    await auth.protect()
+    await auth.protect();
+    const { userId } = await auth();
+    if (isDebug) {
+      console.log('Middleware - Route:', pathname, 'Is Protected:', isProtectedRoute(req));
+      console.log('Middleware - User ID:', userId);
+    }
+
+    if (userId) {
+      try {
+        const clerkClient = Clerk({ secretKey: process.env.CLERK_SECRET_KEY });
+        const user = await clerkClient.users.getUser(userId);
+        userEmail = user?.emailAddresses[0]?.emailAddress;
+        if (isDebug) console.log('Middleware - User Email:', userEmail);
+
+        if (!userEmail) {
+          if (isDebug) console.log('Middleware - No email found for user');
+        }
+      } catch (error) {
+        if (isDebug) console.error('Middleware - Error fetching user from Clerk:', error);
+      }
+    } else {
+      if (isDebug) console.log('Middleware - No user ID, user not authenticated');
+    }
   }
 
-  // Ejecuta el middleware de internacionalización si corresponde
-  return intlMiddleware(req)
-})
+  // Ejecutar el middleware de internacionalización
+  const intlResponse = await intlMiddleware(req);
 
-// Solo aplicar middleware a rutas relevantes (excluye /api)
+  // Crear una nueva respuesta basada en intlResponse
+  const finalResponse = NextResponse.next({
+    request: req,
+    headers: intlResponse.headers,
+  });
+
+  // Establecer el email como cookie si existe
+  if (userEmail) {
+    finalResponse.cookies.set('user-email', userEmail, { path: '/', httpOnly: false });
+    if (isDebug) console.log('Middleware - Cookie Set: user-email =', userEmail);
+  }
+
+  // Copiar las cookies y el status de intlResponse
+  intlResponse.cookies.getAll().forEach((cookie) => {
+    finalResponse.cookies.set(cookie.name, cookie.value);
+  });
+
+  // Manejar status y redirecciones
+  if (intlResponse.status && intlResponse.status !== 200) {
+    const rewriteResponse = NextResponse.rewrite(req.nextUrl, { status: intlResponse.status });
+    if (userEmail) {
+      rewriteResponse.cookies.set('user-email', userEmail, { path: '/', httpOnly: false });
+      if (isDebug) console.log('Middleware - Cookie Set on Rewrite Response: user-email =', userEmail);
+    }
+    return rewriteResponse;
+  }
+
+  if (intlResponse.headers.get('location')) {
+    const redirectResponse = NextResponse.redirect(intlResponse.headers.get('location')!, {
+      status: intlResponse.status,
+    });
+    if (userEmail) {
+      redirectResponse.cookies.set('user-email', userEmail, { path: '/', httpOnly: false });
+      if (isDebug) console.log('Middleware - Cookie Set on Redirect Response: user-email =', userEmail);
+    }
+    return redirectResponse;
+  }
+
+  return finalResponse;
+});
+
+// Configuración del middleware
 export const config = {
-  matcher: [
-    // Rutas de frontend internacionalizadas
-    '/',
-    '/(en|es|pt)/:path*',
-  ]
-}
-
-
+  matcher: ['/', '/(en|es|pt)/:path*'],
+};

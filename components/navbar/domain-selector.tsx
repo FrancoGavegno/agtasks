@@ -12,11 +12,14 @@ import {
   CommandList
 } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { User, Domain } from "@/lib/interfaces"
-import { listDomains } from "@/lib/integrations/360"
+import { Domain } from "@/lib/interfaces"
+import { 
+  //  listDomains, 
+  listDomainsByUserEmail 
+} from "@/lib/integrations/360"
 
 interface Props {
-  user: User
+  user: string
   onDomainSelect: (domainId: number) => void 
 }
 
@@ -27,16 +30,17 @@ export default function DomainSelector({ user, onDomainSelect }: Props) {
 
   useEffect(() => {
     const fetchDomains = async () => {
-      const domainsData = await listDomains(user.id)
+      const domainsData = await listDomainsByUserEmail(user)
       setDomains(domainsData)
       setSelectedDomain(domainsData[0])
+      
       if (domainsData[0]) {
         onDomainSelect(domainsData[0].id) 
       }
     }
 
     fetchDomains()
-  }, [user.id, onDomainSelect])
+  }, [])
 
   return (
     <div className="w-full max-w-[260px] mx-auto mb-2">
