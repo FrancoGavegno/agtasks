@@ -1,46 +1,22 @@
-import { cookies } from 'next/headers';
-import type React from "react"
-import ReactQueryProvider from "@/components/react-query-provider"
-import { ClerkProvider } from '@clerk/nextjs'
-import { notFound } from "next/navigation"
-import { NextIntlClientProvider } from "next-intl"
-import { getMessages } from "next-intl/server"
-import { routing } from "@/i18n/routing"
-import { Toaster } from "@/components/ui/toaster"
-import { Navbar } from "@/components/navbar/navbar"
-import { Footer } from "@/components/footer"
-import "./globals.css"
+import type React from "react";
+import ReactQueryProvider from "@/components/react-query-provider";
+import { ClerkProvider } from '@clerk/nextjs';
+import "./globals.css";
 
-export default async function RootLayout({
-    children,
-    params,
+export default function RootLayout({
+  children,
 }: {
-    children: React.ReactNode
-    params: { locale: string }
+  children: React.ReactNode;
 }) {
-    const cookiesList = cookies();
-    const userEmail = cookiesList.get('user-email')?.value || null;
-    //console.log('Root Layout - userEmail:', userEmail);
-
-    // Providing all messages to the client side
-    const { locale } = await params
-    const messages = await getMessages({ locale })
-
-    return (
-        <ClerkProvider>
-            <html lang={locale} suppressHydrationWarning>
-                <body className={`antialiased flex flex-col`}>
-                    <NextIntlClientProvider locale={locale} messages={messages}>
-                        <ReactQueryProvider>
-                            {/* <Navbar user={user} /> */}
-                            <Navbar />
-                            {children}
-                            <Toaster />
-                            <Footer />
-                        </ReactQueryProvider>
-                    </NextIntlClientProvider>
-                </body>
-            </html>
-        </ClerkProvider>
-    )
+  return (
+    <ClerkProvider>
+      <html suppressHydrationWarning>
+        <body className="antialiased flex flex-col">
+          <ReactQueryProvider>
+            {children}
+          </ReactQueryProvider>
+        </body>
+      </html>
+    </ClerkProvider>
+  );
 }

@@ -2,7 +2,7 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 
 export function Footer() {
-  const t = useTranslations("footer")
+  const t = useTranslations("Footer")
 
   return (
     <footer className="w-full border-t bg-background">

@@ -1,50 +1,62 @@
 {
-  "DashPage": {
-    "title": "Dashboard"
+  "LandingPage": {
+    "benefits-title-1": "",
+    "benefits-description-1": "",
+    "benefits-title-2": "",
+    "benefits-description-2": "",
+    "benefits-title-3": "",
+    "benefits-description-3": "",
+    "title": "",
+    "subtitle": "",
+    "image-alt": ""
   },
-  "AccountsPage": {
-    "title": "Connected Account",
-    "subtitle": "Manage your connected task manager account",
-    "noAccountTitle": "No account connected",
-    "noAccountSubtitle": "Connect your task manager account to get started",
-    "noAccountButton": "Connect Account",
-    "connectedEmail": "Connected email",
-    "lastSynced": "Last synced",
-    "connected": "Connected"
+  "Navbar": {
+    "lang": "EN"
   },
-  "TemplatesPage": {
-    "title": "Template Repository",
-    "subtitle": "Browse and use project templates",
-    "addTemplate": "Create",
-    "useTemplate": "Use template",
-    "newTemplate": "Register template",
-    "dialogTitle": "Create a new project from template",
-    "dialogDescription": "Create a new project using ",
-    "dialogDescription2": "as a template. All tasks and structure will be copied.",
-    "dialogLabel": "Project name",
-    "dialogInput": "Enter project name",
-    "dialogLoader": "Creating...",
-    "dialogCheck": "Create Project",
-    "noTemplatesTitle": "No templates available",
-    "noTemplatesSubtitle": "No templates found matching your criteria."
+  "MainNav": {
+    "help-title": "Help & Support",
+    "help-description": "Get help and documentation"
   },
-  "ProtocolsPage": {
-    "title": "Protocols Repository",
-    "subtitle": "Browse and use protocols templates",
-    "addProtocol": "Create",
-    "useProtocol": "Use protocol",
-    "newProtocol": "Register protocol",
-    "dialogTitle": "Create a new service from protocol template",
-    "dialogDescription": "Create a new service using ",
-    "dialogDescription2": "as a template. All tasks and structure will be copied.",
-    "dialogLabel": "Service name",
-    "dialogInput": "Enter service name",
-    "dialogLoader": "Creating...",
-    "dialogCheck": "Create Service",
-    "noProtocolsTitle": "No protocols available",
-    "noProtocolsSubtitle": "No protocols found matching your criteria."
+  "AppSidebar": {
+    "SidebarGroupLabel-1": "Domains",
+    "SidebarGroupLabel-2": "Projects",
+    "sidebarNavItems-1-title": "Settings",
+    "sidebarNavItems-1-description": "Manage your domain settings",
+    "projectNavItems-1-title": "Project",
+    "projectNavItems-1-description": "Manage your project",
+    "projectNavItems-2-title": "Services",
+    "projectNavItems-2-description": "Manage your project services",
+    "projectNavItems-3-title": "",
+    "projectNavItems-3-description": ""
   },
-  "RegisterTemplateForm": {
+  "DashboardPage": {
+    "steps-1": "Choose which protocols will be available to your users and streamline service creation.",
+    "steps-2": "Invite your team to use Agtasks and clearly define who does what (roles).",
+    "steps-3": "Select which forms will be used to capture accurate data directly from the field.",
+    "steps-4": "Create services using predefined protocols, roles, users, and forms. Optimize your time and quickly get started with efficient management of your agricultural projects.",
+    "title": "Get started with Agtasks",
+    "subtitle": "Agtasks allows you to manage agricultural services and tasks with ease.",
+    "steps-title-1": "Initial Configuration",
+    "steps-title-2": "Creating Services",
+    "help-title": "Help and Support Resources",
+    "help-subtitle-1": "Next step",
+    "help-text-1": "Perform the initial setup before creating your first service.",
+    "help-subtitle-2": "Knowledge Base",
+    "help-text-2": "(Coming soon) To learn more about Agtasks.",
+    "help-subtitle-3": "Support",
+    "help-text-3": "Get real-time help from our support team."
+  },
+  "SettingsPage": {
+    "BreadcrumbLink": "Home",
+    "BreadcrumbPage": "Settings",
+    "title": "Settings",
+    "subtitle": "Manage your domain settings"
+  },
+  "SettingsTabsNavigation": {
+    "tab-1": "Protocols",
+    "tab-2": "Users",
+    "tab-3": "Roles",
+    "tab-4": "Forms"
   },
   "ProjectsPage": {
     "title": "Projects",
@@ -76,32 +88,7 @@
     "noTasksTitle": "No tasks available",
     "noTasksSubtitle": "There are no tasks available in this project yet."
   },
-  "KoboFormsPage": {
-    "title": "Collect Forms",
-    "subtitle": "Manage the list of your Kobo forms",
-    "filterPlaceholder": "Filter forms...",
-    "colForm": "Form",
-    "colStatus": "Status",
-    "colDate": "Date",
-    "dropdownLabel": "Actions",
-    "dropdownEdit":"Edit",
-    "dropdownDelete":"Delete",
-    "noFormsTitle": "No forms available",
-    "noFormsSubtitle": "There are no forms available in your workspace yet."
-  },
-  "nav": {
-    "dashboard": "Dashboard",
-    "accounts": "Accounts",
-    "projects": "Projects",
-    "templates": "Templates",
-    "team": "Team",
-    "subscriptions": "Subscriptions",
-    "notifications": "Notifications",
-    "support": "Help & Support",
-    "settings": "Settings",
-    "profile": "Profile"
-  },
-  "footer": {
+  "Footer": {
     "poweredBy": "Powered by"
   }
 }

@@ -1,7 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Check, ChevronDown } from "lucide-react"
+import { useEffect, useState } from "react"
+import { 
+  Check, 
+  ChevronDown 
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Command,
@@ -16,23 +19,13 @@ import { Project } from "@/lib/interfaces"
 
 interface Props {
   projects: Project[]
-  onProjectSelect: (projectId: string) => void 
+  selectedProject: Project
+  onProjectSelect: (project: Project) => void 
 }
 
-export default function ProjectSelector({ projects, onProjectSelect }: Props) {
+export default function ProjectSelector({ projects, selectedProject, onProjectSelect }: Props) {
   const [open, setOpen] = useState(false)
-  const [selectedProject, setSelectedProject] = useState<Project | undefined>(undefined)
-
-  // useEffect(() => {
-  //   if (projects.length > 0 && !selectedProject) {
-  //     setSelectedProject(projects[0])
-  //   }
-  //   if (selectedProject) {
-  //     onProjectSelect(selectedProject.id)
-  //   }
-  // }, [projects, selectedProject])
-  // // }, [projects, selectedProject, onProjectSelect])
-
+  
   return (
     <div className="w-full max-w-[260px] mx-auto mb-2">
       <Popover open={open} onOpenChange={setOpen}>
@@ -54,7 +47,7 @@ export default function ProjectSelector({ projects, onProjectSelect }: Props) {
                   <CommandItem
                     key={project.id}
                     onSelect={() => {
-                      setSelectedProject(project)
+                      onProjectSelect(project)
                       setOpen(false)
                     }}
                     className="flex items-center gap-2 px-2 py-1.5"

@@ -1,7 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Check, ChevronDown } from "lucide-react"
+import { useState } from "react"
+import { 
+  Check, 
+  ChevronDown 
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Command,
@@ -11,36 +14,21 @@ import {
   CommandItem,
   CommandList
 } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Domain } from "@/lib/interfaces"
 import { 
-  //  listDomains, 
-  listDomainsByUserEmail 
-} from "@/lib/integrations/360"
+  Popover, 
+  PopoverContent, 
+  PopoverTrigger 
+} from "@/components/ui/popover"
+import { Domain } from "@/lib/interfaces"
 
 interface Props {
-  user: string
-  onDomainSelect: (domainId: number) => void 
+  domains: Domain[]
+  selectedDomain: Domain
+  onDomainSelect: (domain: Domain) => void 
 }
 
-export default function DomainSelector({ user, onDomainSelect }: Props) {
+export default function DomainSelector({ domains, selectedDomain, onDomainSelect }: Props) {
   const [open, setOpen] = useState(false)
-  const [domains, setDomains] = useState<Domain[]>([])
-  const [selectedDomain, setSelectedDomain] = useState<Domain>()
-
-  useEffect(() => {
-    const fetchDomains = async () => {
-      const domainsData = await listDomainsByUserEmail(user)
-      setDomains(domainsData)
-      setSelectedDomain(domainsData[0])
-      
-      if (domainsData[0]) {
-        onDomainSelect(domainsData[0].id) 
-      }
-    }
-
-    fetchDomains()
-  }, [])
 
   return (
     <div className="w-full max-w-[260px] mx-auto mb-2">
@@ -48,7 +36,7 @@ export default function DomainSelector({ user, onDomainSelect }: Props) {
         <PopoverTrigger asChild>
           <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between px-3 py-6">
             <div className="flex items-center gap-2">
-              <span>{selectedDomain?.name}</span>
+              <span>{selectedDomain?.name ?? "Select domain"}</span>
             </div>
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -63,9 +51,8 @@ export default function DomainSelector({ user, onDomainSelect }: Props) {
                   <CommandItem
                     key={domain.id}
                     onSelect={() => {
-                      setSelectedDomain(domain)
                       setOpen(false)
-                      onDomainSelect(domain.id) 
+                      onDomainSelect(domain) 
                     }}
                     className="flex items-center gap-2 px-2 py-1.5"
                   >
@@ -81,6 +68,3 @@ export default function DomainSelector({ user, onDomainSelect }: Props) {
     </div>
   )
 }
-
-
-

@@ -55,6 +55,13 @@ export default clerkMiddleware(async (auth, req) => {
   // Ejecutar el middleware de internacionalización
   const intlResponse = await intlMiddleware(req);
 
+  // Log para depurar el idioma detectado por next-intl
+  if (isDebug) {
+    const detectedLocale = req.nextUrl.pathname.split('/')[1]; // Extraer el idioma de la URL (por ejemplo, "es" de "/es/...")
+    console.log('Middleware - Detected Locale from URL:', detectedLocale);
+    console.log('Middleware - Intl Response Headers:', Object.fromEntries(intlResponse.headers.entries()));
+  }
+
   // Crear una nueva respuesta basada en intlResponse
   const finalResponse = NextResponse.next({
     request: req,

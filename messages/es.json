@@ -1,70 +1,94 @@
 {
-  "DashPage": {
-    "title": "Dashboard"
+  "LandingPage": {
+    "benefits-title-1": "",
+    "benefits-description-1": "",
+    "benefits-title-2": "",
+    "benefits-description-2": "",
+    "benefits-title-3": "",
+    "benefits-description-3": "",
+    "title": "",
+    "subtitle": "",
+    "image-alt": ""
   },
-  "AccountsPage": {
-    "title": "Cuentas Conectadas",
-    "subtitle": "Administra tus cuentas de gestor de tareas conectadas",
-    "noAccountTitle": "No hay cuentas conectadas",
-    "noAccountSubtitle": "Conecta tu cuenta de gestor de tareas para comenzar",
-    "noAccountButton": "Conectar Cuenta",
-    "connectedEmail": "Conectado con email",
-    "lastSynced": "Última sincronización",
-    "connected": "Conectado"
+  "Navbar": {
+    "lang": "ES"
   },
-  "TemplatesPage": {
-    "title": "Plantillas",
-    "subtitle": "Crea nuevas plantillas a partir de plantillas preconfiguradas de su gestor de tareas",
-    "addTemplate": "Agregar Plantilla",
-    "useTemplate": "Usar Plantilla",
-    "dialogTitle": "Crea un nuevo proyecto desde una plantilla",
-    "dialogDescription": "Crea un nuevo proyecto usando",
-    "dialogDescription2": "como plantilla. Se copiarán todas las tareas y la estructura.",
-    "dialogLabel": "Nombre del proyecto",
-    "dialogInput": "Ingresa nombre del proyecto",
-    "dialogLoader": "Creando...",
-    "dialogCheck": "Crear Proyecto",
-    "noTemplatesTitle": "No hay plantillas disponibles",
-    "noTemplatesSubtitle": "Aún no hay plantillas disponibles en tu espacio de trabajo."
+  "MainNav": {
+    "help-title": "Ayuda & Soporte",
+    "help-description": "Obtén ayuda y documentación"
+  },
+  "AppSidebar": {
+    "SidebarGroupLabel-1": "Dominios",
+    "SidebarGroupLabel-2": "Proyectos",
+    "sidebarNavItems-1-title": "Configuración",
+    "sidebarNavItems-1-description": "Gestiona la configuración de tu dominio",
+    "projectNavItems-1-title": "Proyecto",
+    "projectNavItems-1-description": "Gestiona tu proyecto",
+    "projectNavItems-2-title": "Servicios",
+    "projectNavItems-2-description": "Gestiona tus servicios",
+    "projectNavItems-3-title": "",
+    "projectNavItems-3-description": ""
+  },
+  "DashboardPage": {
+    "steps-1": "Elige qué protocolos estarán disponibles para tus usuarios y agiliza así la creación de servicios.",
+    "steps-2": "Invita a tu equipo a usar Agtasks y define claramente quién hace qué (roles).",
+    "steps-3": "Selecciona qué formularios serán usados para capturar datos precisos directamente desde el campo.",
+    "steps-4": "Crea servicios usando los protocolos, roles, usuarios y formularios predefinidos. Optimiza tu tiempo y comienza rápidamente con la gestión eficiente de tus proyectos agropecuarios.",
+    "title": "Empieza a usar Agtasks",
+    "subtitle": "Agtasks te permite administrar servicios y tareas agrícolas con facilidad.",
+    "steps-title-1": "Configuración Inicial",
+    "steps-title-2": "Creación de Servicios",
+    "help-title": "Recursos de Ayuda y Soporte",
+    "help-subtitle-1": "Próximo paso",
+    "help-text-1": "Realiza la configuración inicial antes de crear tu primer servicio.",
+    "help-subtitle-2": "Base de conocimiento",
+    "help-text-2": "(Proximamente) Para aprender más acerca de Agtasks.",
+    "help-subtitle-3": "Soporte",
+    "help-text-3": "Obtén ayuda en tiempo real de nuestro equipo de soporte."
+  },
+  "SettingsPage": {
+    "BreadcrumbLink": "Inicio",
+    "BreadcrumbPage": "Configuración",
+    "title": "Configuración",
+    "subtitle": "Administra la configuración de tu dominio"
+  },
+  "SettingsTabsNavigation": {
+    "tab-1": "Protocols",
+    "tab-2": "Users",
+    "tab-3": "Roles",
+    "tab-4": "Forms"
   },
   "ProjectsPage": {
-    "title": "Proyectos",
-    "subtitle": "Aquí tienes una lista de tus proyectos",
-    "dropdownLabel": "Acciones",
-    "dropdownViewDetails": "Ver detalle",
-    "dropdownViewTasks": "Ver tareas",
-    "dropdownEdit": "Editar proyecto",
-    "dropdownDelete": "Borrar proyecto"
+    "title": "Projects",
+    "subtitle": "View and manage your projects",
+    "createButton": "Create",
+    "ddLabel": "Actions",
+    "ddGoTo": "Open ClickUp",
+    "ddTasks": "View tasks",
+    "ddEdit": "Edit project",
+    "ddDelete": "Delete project",
+    "noProjectsTitle": "No projects available",
+    "noProjectsSubtitle": "There are no projects available in your workspace yet."
   },
   "TasksPage": {
-    "title": "Tareas",
-    "subtitle": "Administra la lista de tareas del proyecto",
-    "filterPlaceholder": "Filtrar tareas...",
-    "statusSearch": "Estado",
-    "prioritySearch": "Prioridad",
-    "colTask": "Tareas",
-    "colKoboForm": "Form Kobo",
-    "colStatus": "Estado",
-    "colPriority": "Prioridad",
-    "dropdownLabel": "Acciones",
-    "dropdownEdit":"Editar",
-    "dropdownKobo":" Form",
-    "dropdownDelete":"Borrar"
+    "title": "Tasks",
+    "subtitle": "View and manage your project tasks",
+    "createButton": "Create",
+    "filterPlaceholder": "Filter tasks...",
+    "statusSearch": "Status",
+    "prioritySearch": "Priority",
+    "colTask": "Tasks",
+    "colKoboForm": "Kobo Form",
+    "colStatus": "Status",
+    "colPriority": "Priority",
+    "dropdownLabel": "Actions",
+    "ddEdit":"Edit",
+    "ddCollectForm":"Collect Form",
+    "ddDelete":"Delete",
+    "noTasksTitle": "No tasks available",
+    "noTasksSubtitle": "There are no tasks available in this project yet."
   },
-  "nav": {
-    "dashboard": "Panel",
-    "accounts": "Cuentas",
-    "projects": "Proyectos",
-    "templates": "Plantillas",
-    "team": "Equipo",
-    "subscriptions": "Suscripciones",
-    "notifications": "Notificaciones",
-    "support": "Ayuda y Soporte",
-    "settings": "Configuración",
-    "profile": "Perfil"
-  },
-  "footer": {
-    "poweredBy": "Desarrollado por"
+  "Footer": {
+    "poweredBy": "Desarrollador por"
   }
 }
-

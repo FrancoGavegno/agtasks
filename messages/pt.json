@@ -1,17 +1,94 @@
 {
-  "nav": {
-    "dashboard": "Painel",
-    "accounts": "Contas",
-    "projects": "Projetos",
-    "templates": "Modelos",
-    "team": "Equipe",
-    "subscriptions": "Assinaturas",
-    "notifications": "Notificações",
-    "support": "Ajuda e Suporte",
-    "settings": "Configurações"
+  "LandingPage": {
+    "benefits-title-1": "",
+    "benefits-description-1": "",
+    "benefits-title-2": "",
+    "benefits-description-2": "",
+    "benefits-title-3": "",
+    "benefits-description-3": "",
+    "title": "",
+    "subtitle": "",
+    "image-alt": ""
   },
-  "footer": {
+  "Navbar": {
+    "lang": "PT"
+  },
+  "MainNav": {
+    "help-title": "Ajuda e Suporte",
+    "help-description": "Obtenha ajuda e documentação"
+  },
+  "AppSidebar": {
+    "SidebarGroupLabel-1": "Domínio",
+    "SidebarGroupLabel-2": "Projetos",
+    "sidebarNavItems-1-title": "Configurações",
+    "sidebarNavItems-1-description": "Manage your domain settings",
+    "projectNavItems-1-title": "Projeto",
+    "projectNavItems-1-description": "Manage your project",
+    "projectNavItems-2-title": "Serviços",
+    "projectNavItems-2-description": "Manage your project services",
+    "projectNavItems-3-title": "",
+    "projectNavItems-3-description": ""
+  },
+  "DashboardPage": {
+    "steps-1": "Escolha quais protocolos estarão disponíveis para seus usuários, acelerando a criação de serviços.",
+    "steps-2": "Convide sua equipe a usar o Agtasks e defina claramente quem faz o quê (funções).",
+    "steps-3": "Selecione quais formulários serão usados ​​para capturar dados precisos diretamente do campo.",
+    "steps-4": "Crie serviços usando protocolos, funções, usuários e formulários predefinidos. Otimize seu tempo e comece rapidamente a gerenciar seus projetos agrícolas de forma eficiente.",
+    "title": "Comece a usar o Agtasks",
+    "subtitle": "O Agtasks permite que você gerencie serviços e tarefas agrícolas com facilidade.",
+    "steps-title-1": "Configuração inicial",
+    "steps-title-2": "Criando Serviços",
+    "help-title": "Recursos de ajuda e suporte",
+    "help-subtitle-1": "Próximo passo",
+    "help-text-1": "Execute a configuração inicial antes de criar seu primeiro serviço.",
+    "help-subtitle-2": "Base de conhecimento",
+    "help-text-2": "(Em breve) Para saber mais sobre o Agtasks.",
+    "help-subtitle-3": "Suporte",
+    "help-text-3": "Obtenha ajuda em tempo real da nossa equipe de suporte." 
+  },
+  "SettingsPage": {
+    "BreadcrumbLink": "Página Inicial",
+    "BreadcrumbPage": "Configurações",
+    "title": "Configurações",
+    "subtitle": "Gerencie as configurações do seu domínio"
+  },
+  "SettingsTabsNavigation": {
+   "tab-1": "Protocolos",
+    "tab-2": "Usuários",
+    "tab-3": "Funções",
+    "tab-4": "Formulários"
+  },
+  "ProjectsPage": {
+    "title": "Projects",
+    "subtitle": "View and manage your projects",
+    "createButton": "Create",
+    "ddLabel": "Actions",
+    "ddGoTo": "Open ClickUp",
+    "ddTasks": "View tasks",
+    "ddEdit": "Edit project",
+    "ddDelete": "Delete project",
+    "noProjectsTitle": "No projects available",
+    "noProjectsSubtitle": "There are no projects available in your workspace yet."
+  },
+  "TasksPage": {
+    "title": "Tasks",
+    "subtitle": "View and manage your project tasks",
+    "createButton": "Create",
+    "filterPlaceholder": "Filter tasks...",
+    "statusSearch": "Status",
+    "prioritySearch": "Priority",
+    "colTask": "Tasks",
+    "colKoboForm": "Kobo Form",
+    "colStatus": "Status",
+    "colPriority": "Priority",
+    "dropdownLabel": "Actions",
+    "ddEdit":"Edit",
+    "ddCollectForm":"Collect Form",
+    "ddDelete":"Delete",
+    "noTasksTitle": "No tasks available",
+    "noTasksSubtitle": "There are no tasks available in this project yet."
+  },
+  "Footer": {
     "poweredBy": "Desenvolvido por"
   }
 }
-
