@@ -58,17 +58,11 @@
     "tab-3": "Funções",
     "tab-4": "Formulários"
   },
-  "ProjectsPage": {
-    "title": "Projects",
-    "subtitle": "View and manage your projects",
-    "createButton": "Create",
-    "ddLabel": "Actions",
-    "ddGoTo": "Open ClickUp",
-    "ddTasks": "View tasks",
-    "ddEdit": "Edit project",
-    "ddDelete": "Delete project",
-    "noProjectsTitle": "No projects available",
-    "noProjectsSubtitle": "There are no projects available in your workspace yet."
+  "ProjectPage": {
+    "BreadcrumbLink": "Página Inicial",
+    "BreadcrumbPage": "Projeto",
+    "title": "Página do Projeto",
+    "subtitle": "Gerencie Seu Projeto"
   },
   "TasksPage": {
     "title": "Tasks",

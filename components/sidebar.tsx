@@ -6,6 +6,7 @@ import {
 } from "react"
 import { Link } from "@/i18n/routing"
 import { useTranslations } from 'next-intl'
+import { useParams } from 'next/navigation'
 import {
   Sidebar,
   SidebarContent,
@@ -42,6 +43,7 @@ interface Props {
 }
 
 export function AppSidebar({ user }: Props) {
+  const { domain } = useParams<{ domain: string }>();
   const t = useTranslations("AppSidebar")
 
   const sidebarNavItems = [
@@ -70,7 +72,6 @@ export function AppSidebar({ user }: Props) {
 
   const [domains, setDomains] = useState<Domain[]>([])
   const [selectedDomain, setSelectedDomain] = useState<Domain>()
-
   const [projects, setProjects] = useState<Project[]>([])
   const [selectedProject, setSelectedProject] = useState<Project>()
 
@@ -78,7 +79,14 @@ export function AppSidebar({ user }: Props) {
     const fetchDomains = async () => {
       const domainsData = await listDomainsByUserEmail(user)
       setDomains(domainsData)
-      setSelectedDomain(domainsData[0])
+
+      // setSelectedDomain(domainsData[0])
+      domainsData.forEach((d) => {
+        if (d.id === Number(domain)) { 
+          setSelectedDomain(d)
+        }
+      })
+      
     }
     fetchDomains()
   }, [])
@@ -88,6 +96,7 @@ export function AppSidebar({ user }: Props) {
       if (selectedDomain) {
         const projectsData = await listProjectsByDomain(selectedDomain.id)
         setProjects(projectsData)
+
         setSelectedProject(projectsData[0])
       }
     }

@@ -1,36 +1,41 @@
+import { Link } from "@/i18n/routing"
+import { useTranslations } from 'next-intl'
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { ProjectDetails } from "@/components/projects/project-page"
 
-export default function ProjectPage() {
+export default function ProjectPage(
+  {
+    params,
+  }: {
+    params: { domain: string; project: string};
+  }
+) {
+  const { domain, project } = params
+  const t = useTranslations("ProjectPage")
   return (
     <div className="container w-full pt-4 pb-4">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/">Home</BreadcrumbLink>
+            <Link href={`/domains/${domain}/settings`}>{t("BreadcrumbLink")}</Link>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink href="/en/domains/8644/projects">Projects</BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>01 - Tandil</BreadcrumbPage>
+            <BreadcrumbPage>{t("BreadcrumbPage")}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
       <div className="flex justify-between items-center mt-5 mb-5">
         <div className="space-y-1.5">
-          <h1 className="text-2xl font-semibold tracking-tight">Project Page</h1>
-          <p className="text-muted-foreground">Manage your project</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
       </div>
 

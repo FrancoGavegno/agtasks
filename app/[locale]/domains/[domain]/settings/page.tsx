@@ -1,7 +1,7 @@
+import { Link } from "@/i18n/routing"
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
@@ -9,7 +9,14 @@ import {
 import { useTranslations } from 'next-intl'
 import TabsNavigation from "@/components/settings/tabs-navigation"
 
-export default function SettingsPage() {
+export default function SettingsPage(
+  {
+    params,
+  }: {
+    params: { domain: string; };
+  }
+) {
+  const { domain } = params
   const t = useTranslations("SettingsPage")
 
   return (
@@ -17,7 +24,7 @@ export default function SettingsPage() {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/">{t("BreadcrumbLink")}</BreadcrumbLink>
+            <Link href={`/domains/${domain}/settings`}>{t("BreadcrumbLink")}</Link>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
