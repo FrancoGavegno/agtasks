@@ -10,7 +10,6 @@ import { Project } from "@/lib/interfaces"
 
 let clientInstance: ReturnType<typeof generateClient<Schema>> | null = null
 let configured = false
-
 export function getClient() {
   if (!configured) {
     Amplify.configure(outputs)
@@ -23,23 +22,21 @@ export function getClient() {
 
   return clientInstance
 }
-
 const client = getClient()
 
-// Domain
+// Domain DELETE
+// export async function createDomain(data: { name: string }) {  
+//   return await client.models.Domain.create({ name: data.name });
+// }
 
-export async function createDomain(data: { name: string }) {  
-  return await client.models.Domain.create({ name: data.name });
-}
+// Domain Protocols (amplify/data/resource.ts)
 
-// DomainProtocol
-
-export async function createDomainProtocol(data: { name: string; domainId: string, language: string, tmProtocolId: string }) {
+export async function createDomainProtocol(domainId: string, data: { tmProtocolId: string, name: string, language: string }) {
   return await client.models.DomainProtocol.create({
+    domainId,
+    tmProtocolId: data.tmProtocolId,
     name: data.name,
-    domainId: data.domainId,
-    language: data.language,
-    tmProtocolId: data.tmProtocolId
+    language: data.language
   });
 }
 
@@ -47,16 +44,16 @@ export async function listDomainProtocols(domainId: string) {
   return await client.models.DomainProtocol.list({ filter: { domainId: { eq: domainId } } });
 }
 
-export async function deleteDomainProtocol(protocolId: string) {
+export async function deleteDomainProtocol(domainId: string, protocolId: string) {
   return await client.models.DomainProtocol.delete({ id: protocolId })
 }
 
-// DomainRole
+// Domain Roles (amplify/data/resource.ts)
 
-export async function createDomainRole(data: { name: string; domainId: string, language: string }) {
+export async function createDomainRole(domainId: string, data: { name: string, language: string }) {
   return await client.models.DomainRole.create({
+    domainId,
     name: data.name,
-    domainId: data.domainId,
     language: data.language
   });
 }
@@ -65,16 +62,16 @@ export async function listDomainRoles(domainId: string) {
   return await client.models.DomainRole.list({ filter: { domainId: { eq: domainId } } });
 }
 
-export async function deleteDomainRole(roleId: string) {
+export async function deleteDomainRole(domainId: string, roleId: string) {
   return await client.models.DomainRole.delete({ id: roleId })
 }
 
-// DomainForm
+// Domain Forms (amplify/data/resource.ts)
 
-export async function createDomainForm(data: { name: string; domainId: string, language: string, ktFormId: string }) {
+export async function createDomainForm(domainId: string, data: { name: string, language: string, ktFormId: string }) {
   return await client.models.DomainForm.create({
+    domainId,
     name: data.name,
-    domainId: data.domainId,
     language: data.language,
     ktFormId: data.ktFormId
   });
@@ -84,13 +81,75 @@ export async function listDomainForms(domainId: string) {
   return await client.models.DomainForm.list({ filter: { domainId: { eq: domainId } } });
 }
 
-export async function deleteDomainForm(formId: string) {
+export async function deleteDomainForm(domainId: string, formId: string) {
   return await client.models.DomainForm.delete({ id: formId })
 }
 
+// TO DO: implement 
+export const listRoles = async (language?: string) => { 
+  return [
+    {
+      "id": "1",
+      "name": "Sponsor",
+      "language": "ES"
+    },
+    {
+      "id": "2",
+      "name": "Referente interno",
+      "language": "ES"
+    },
+    {
+      "id": "3",
+      "name": "Soporte Agricultura Digital",
+      "language": "ES"
+    },
+    {
+      "id": "4",
+      "name": "Consultor Agronómico",
+      "language": "ES"
+    },
+    {
+      "id": "5",
+      "name": "Equipo Agtech",
+      "language": "ES"
+    },
+    {
+      "id": "6",
+      "name": "Productor Cliente",
+      "language": "ES"
+    },
+    {
+      "id": "7",
+      "name": "Socio Regional",
+      "language": "ES"
+    },
+    {
+      "id": "8",
+      "name": "Consultor AgTech",
+      "language": "ES"
+    },
+    {
+      "id": "9",
+      "name": "Asesor Técnico Comercial",
+      "language": "ES"
+    },
+    {
+      "id": "10",
+      "name": "Líder Proyecto",
+      "language": "ES"
+    },
+    {
+      "id": "11",
+      "name": "Coordinadora General",
+      "language": "ES"
+    },  
+  ]
 
-// Project
+}
 
+// Projects
+
+// TO DO: implement
 export const listProjectsByDomain = async (domainId: number): Promise<Project[]> => {
   const projects = [
     {
@@ -125,22 +184,6 @@ export const listProjectsByDomain = async (domainId: number): Promise<Project[]>
   return matchingProjects;
 };
 
-
-  // return [
-  //   {
-  //     "id": 1,
-  //     "name": "01 - Tandil",
-  //     "domain": {
-  //       "id": 8644,
-  //       "languageId": 2,
-  //       "name": "Agrotecnología",
-  //       "hasLogo": false,
-  //       "domainUrl": "agrotecnologia.com",
-  //       "deleted": false
-  //     },
-  //   }
-  // ]
-
 // TO DO: implement 
 export const getProject = async (projectId: number) => {
   return {
@@ -156,6 +199,8 @@ export const getProject = async (projectId: number) => {
     },
   }
 }
+
+// Services
 
 // TO DO: implement 
 export const listServicesByProject = async (projectId?: number) => {
@@ -314,90 +359,5 @@ export const listServicesByProject = async (projectId?: number) => {
 
 }
 
-// TO DO: implement
-// ver como labels Language se transforma en language
-// export const listProtocols = async (language?: string) => {
-//   return [
-//     { id: "1", name: "Monitoramento Satelital", language: "PT" },
-//     { id: "2", name: "Digitalização de Estabelecimentos e Lotes", language: "PT" },
-//     { id: "3", name: "Weed Control", language: "EN" },
-//     { id: "4", name: "Variable rate recommendations & applications", language: "EN" },
-//     { id: "5", name: "Protocolo Siembra y/o Fertilización Variable", language: "ES" },
-//     { id: "6", name: "Monitoreo satelital y control de malezas", language: "ES" },
-//   ]
-// }
 
-// TO DO: 
-export const listRoles = async (language?: string) => { 
-  return [
-    {
-      "id": "1",
-      "name": "Sponsor",
-      "language": "es"
-    },
-    {
-      "id": "2",
-      "name": "Referente interno",
-      "language": "es"
-    },
-    {
-      "id": "3",
-      "name": "Soporte Agricultura Digital",
-      "language": "es"
-    },
-    {
-      "id": "4",
-      "name": "Consultor Agronómico",
-      "language": "es"
-    },
-    {
-      "id": "5",
-      "name": "Equipo Agtech",
-      "language": "es"
-    },
-    {
-      "id": "6",
-      "name": "Productor Cliente",
-      "language": "es"
-    },
-    {
-      "id": "7",
-      "name": "Socio Regional",
-      "language": "es"
-    },
-    {
-      "id": "8",
-      "name": "Consultor AgTech",
-      "language": "es"
-    },
-    {
-      "id": "9",
-      "name": "Asesor Técnico Comercial",
-      "language": "es"
-    },
-    {
-      "id": "10",
-      "name": "Líder Proyecto",
-      "language": "es"
-    },
-    {
-      "id": "11",
-      "name": "Coordinadora General",
-      "language": "es"
-    },  
-  ]
-
-}
-
-// TO DO: 
-export const listForms = async (language?: string) => {
-  return [
-    { id: "1", name: "Control de Cosecha", questions: 14 },
-    { id: "2", name: "Control de Emergencia", questions: 10 },
-    { id: "3", name: "Estado de Cultivos", questions: 10 },
-    { id: "4", name: "Estimacion de Rindes", questions: 12 },
-    { id: "5", name: "Muestreos Simplificado", questions: 8 },
-    { id: "6", name: "Plagas y Enfermedades", questions: 13 },
-  ]
-}
 

@@ -72,6 +72,7 @@ export default function Forms() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[80%]">Name</TableHead>
+              <TableHead className="text-center">Language</TableHead>
               <TableHead className="text-center">Source</TableHead>
             </TableRow>
           </TableHeader>
@@ -80,6 +81,7 @@ export default function Forms() {
               paginatedForms.map((form) => (
                 <TableRow key={form.id}>
                   <TableCell className="font-medium">{form.name}</TableCell>
+                  <TableCell className="font-medium text-center">{form.language}</TableCell>
                   <TableCell className="text-center">
                     <Badge variant="outline">{form.ktFormId ? "KoboToolbox" : "Local"}</Badge>
                   </TableCell>

@@ -1,8 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useParams } from 'next/navigation'
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription 
+} from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
@@ -25,6 +32,7 @@ export function ModalProtocols({
   selectedProtocols,
   onSave,
 }: ModalProtocolsProps) {
+  const { domain } = useParams<{ domain: string }>();
   const [localSelected, setLocalSelected] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isSaving, setIsSaving] = useState(false)
@@ -72,7 +80,8 @@ export function ModalProtocols({
 
       // 3. Eliminar protocolos deseleccionados usando el id del DomainProtocol
       const deletePromises = protocolsToDelete.map(async ({ tmProtocolId, id }) => {
-        const response = await fetch(`/api/domain-protocol?protocolId=${id}`, {
+        //const response = await fetch(`/api/domain-protocol?protocolId=${id}`, {
+        const response = await fetch(`/api/v1/agtasks/domains/${domain}/protocols/${id}`, {
           method: "DELETE",
         })
 
@@ -94,7 +103,8 @@ export function ModalProtocols({
           throw new Error(`Protocol data not found for tmProtocolId ${protocolId}`)
         }
 
-        const response = await fetch("/api/domain-protocol", {
+        //const response = await fetch("/api/domain-protocol", {
+        const response = await fetch(`/api/v1/agtasks/domains/${domain}/protocols`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

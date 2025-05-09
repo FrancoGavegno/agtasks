@@ -16,11 +16,11 @@ const isDebug = process.env.NODE_ENV === 'development';
 export default clerkMiddleware(async (auth, req) => {
   const { pathname } = req.nextUrl;
 
-  if (isDebug) console.log('Middleware - Executing for route:', pathname);
+  //if (isDebug) console.log('Middleware - Executing for route:', pathname);
 
   // Excluir API routes del intlMiddleware
   if (pathname.startsWith('/api') || pathname.startsWith('/trpc')) {
-    if (isDebug) console.log('Middleware - Skipping for API route');
+    // if (isDebug) console.log('Middleware - Skipping for API route');
     return NextResponse.next();
   }
 
@@ -29,21 +29,21 @@ export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
     await auth.protect();
     const { userId } = await auth();
-    if (isDebug) {
-      console.log('Middleware - Route:', pathname, 'Is Protected:', isProtectedRoute(req));
-      console.log('Middleware - User ID:', userId);
-    }
+    // if (isDebug) {
+    //   console.log('Middleware - Route:', pathname, 'Is Protected:', isProtectedRoute(req));
+    //   console.log('Middleware - User ID:', userId);
+    // }
 
     if (userId) {
       try {
         const clerkClient = Clerk({ secretKey: process.env.CLERK_SECRET_KEY });
         const user = await clerkClient.users.getUser(userId);
         userEmail = user?.emailAddresses[0]?.emailAddress;
-        if (isDebug) console.log('Middleware - User Email:', userEmail);
+        // if (isDebug) console.log('Middleware - User Email:', userEmail);
 
-        if (!userEmail) {
-          if (isDebug) console.log('Middleware - No email found for user');
-        }
+        // if (!userEmail) {
+        //   if (isDebug) console.log('Middleware - No email found for user');
+        // }
       } catch (error) {
         if (isDebug) console.error('Middleware - Error fetching user from Clerk:', error);
       }
@@ -56,11 +56,11 @@ export default clerkMiddleware(async (auth, req) => {
   const intlResponse = await intlMiddleware(req);
 
   // Log para depurar el idioma detectado por next-intl
-  if (isDebug) {
-    const detectedLocale = req.nextUrl.pathname.split('/')[1]; // Extraer el idioma de la URL (por ejemplo, "es" de "/es/...")
-    console.log('Middleware - Detected Locale from URL:', detectedLocale);
-    console.log('Middleware - Intl Response Headers:', Object.fromEntries(intlResponse.headers.entries()));
-  }
+  // if (isDebug) {
+  //   const detectedLocale = req.nextUrl.pathname.split('/')[1]; // Extraer el idioma de la URL (por ejemplo, "es" de "/es/...")
+  //   console.log('Middleware - Detected Locale from URL:', detectedLocale);
+  //   console.log('Middleware - Intl Response Headers:', Object.fromEntries(intlResponse.headers.entries()));
+  // }
 
   // Crear una nueva respuesta basada en intlResponse
   const finalResponse = NextResponse.next({
@@ -71,7 +71,7 @@ export default clerkMiddleware(async (auth, req) => {
   // Establecer el email como cookie si existe
   if (userEmail) {
     finalResponse.cookies.set('user-email', userEmail, { path: '/', httpOnly: false });
-    if (isDebug) console.log('Middleware - Cookie Set: user-email =', userEmail);
+    //if (isDebug) console.log('Middleware - Cookie Set: user-email =', userEmail);
   }
 
   // Copiar las cookies y el status de intlResponse
@@ -84,7 +84,7 @@ export default clerkMiddleware(async (auth, req) => {
     const rewriteResponse = NextResponse.rewrite(req.nextUrl, { status: intlResponse.status });
     if (userEmail) {
       rewriteResponse.cookies.set('user-email', userEmail, { path: '/', httpOnly: false });
-      if (isDebug) console.log('Middleware - Cookie Set on Rewrite Response: user-email =', userEmail);
+      //if (isDebug) console.log('Middleware - Cookie Set on Rewrite Response: user-email =', userEmail);
     }
     return rewriteResponse;
   }
@@ -95,7 +95,7 @@ export default clerkMiddleware(async (auth, req) => {
     });
     if (userEmail) {
       redirectResponse.cookies.set('user-email', userEmail, { path: '/', httpOnly: false });
-      if (isDebug) console.log('Middleware - Cookie Set on Redirect Response: user-email =', userEmail);
+      //if (isDebug) console.log('Middleware - Cookie Set on Redirect Response: user-email =', userEmail);
     }
     return redirectResponse;
   }

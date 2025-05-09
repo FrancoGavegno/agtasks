@@ -6,8 +6,8 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import TabsNavigation from "@/components/settings/tabs-navigation"
 import { useTranslations } from 'next-intl'
+import TabsNavigation from "@/components/settings/tabs-navigation"
 
 export default function SettingsPage() {
   const t = useTranslations("SettingsPage")

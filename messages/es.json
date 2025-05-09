@@ -53,10 +53,10 @@
     "subtitle": "Administra la configuración de tu dominio"
   },
   "SettingsTabsNavigation": {
-    "tab-1": "Protocols",
-    "tab-2": "Users",
+    "tab-1": "Protocolos",
+    "tab-2": "Usuarios",
     "tab-3": "Roles",
-    "tab-4": "Forms"
+    "tab-4": "Formularios"
   },
   "ProjectsPage": {
     "title": "Projects",

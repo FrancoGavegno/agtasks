@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useParams } from 'next/navigation'
 import { Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
@@ -18,6 +19,7 @@ interface RoleModalProps {
 }
 
 export function RoleModal({ isOpen, onClose, roles, allRoles, selectedRoles, onSave }: RoleModalProps) {
+  const { domain } = useParams<{ domain: string }>();
   const [localSelected, setLocalSelected] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isSaving, setIsSaving] = useState(false)
@@ -49,7 +51,7 @@ export function RoleModal({ isOpen, onClose, roles, allRoles, selectedRoles, onS
 
       // 3. Eliminar roles deseleccionados usando el id del DomainRole
       const deletePromises = rolesToDeleteIds.map(async (roleId) => {
-        const response = await fetch(`/api/domain-role?roleId=${roleId}`, {
+        const response = await fetch(`/api/v1/agtasks/domains/${domain}/roles/${roleId}`, {
           method: "DELETE",
         })
 
@@ -71,13 +73,12 @@ export function RoleModal({ isOpen, onClose, roles, allRoles, selectedRoles, onS
           throw new Error(`Role data not found for id ${roleId}`)
         }
 
-        const response = await fetch("/api/domain-role", {
+        const response = await fetch(`/api/v1/agtasks/domains/${domain}/roles`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            domainId: "dd8ae98f-2231-444e-8daf-120a4c416d15",
             name: roleData.name,
             language: roleData.language,
           }),

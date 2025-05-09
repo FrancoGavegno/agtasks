@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useParams } from 'next/navigation'
 import { Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
@@ -18,6 +19,7 @@ interface FormModalProps {
 }
 
 export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onSave }: FormModalProps) {
+  const { domain } = useParams<{ domain: string }>();
   const [localSelected, setLocalSelected] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isSaving, setIsSaving] = useState(false)
@@ -49,7 +51,7 @@ export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onS
 
       // 3. Eliminar formularios deseleccionados usando el id del DomainForm
       const deletePromises = formsToDeleteIds.map(async (formId) => {
-        const response = await fetch(`/api/domain-form?formId=${formId}`, {
+        const response = await fetch(`/api/v1/agtasks/domains/${domain}/forms/${formId}`, {
           method: "DELETE",
         })
 
@@ -71,15 +73,14 @@ export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onS
           throw new Error(`Form data not found for id ${formId}`)
         }
 
-        const response = await fetch("/api/domain-form", {
+        const response = await fetch(`/api/v1/agtasks/domains/${domain}/forms`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            domainId: "dd8ae98f-2231-444e-8daf-120a4c416d15",
             name: formData.name,
-            language: formData.language || "es",
+            language: formData.language || "ES",
             ktFormId: formData.ktFormId || formData.id,
           }),
         })
@@ -109,9 +110,7 @@ export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onS
 
   // Filter forms based on search term
   const filteredForms = allForms.filter(
-    (form) =>
-      form.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (form.questions && form.questions.toString().includes(searchTerm)),
+    (form) => form.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   return (

@@ -23,37 +23,32 @@ export interface Domain {
 // Settings
 
 export interface Protocol {
+  domainId: string
   id: string
+  tmProtocolId: string 
   name: string
-  language: string // "PT" | "EN" | "ES"
-  tmProtocolId: string // The ID or Key of the customer request
-  domainId?: string
-  domain?: Domain
+  language: string 
+  //domain?: Domain
   createdAt?: string
   updatedAt?: string
 }
 
 export interface Role {
+  domainId: string
   id: string
-  name: string
   language: string
+  name: string
 }
 
 export interface Form {
+  domainId: string
   id: string
+  ktFormId: string
   name: string
   language: string
-  ktFormId: string
-  questions: number
 }
 
-// Projects 
-
-// export interface Project {
-//   id: number
-//   name: string
-//   domain: Domain
-// }
+// Projects & Services
 
 export interface Project {
   parentId: number;
@@ -75,7 +70,7 @@ export interface Service {
   status: string
 }
 
-// TM / Jira 
+//  Jira  
 
 export interface JiraCustomerData {
   displayName: string

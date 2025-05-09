@@ -1,24 +1,20 @@
 import { NextResponse } from "next/server";
-
 import { serviceQuerySchema } from "@/lib/schemas";
 import { listServicesByProject } from "@/lib/integrations/jira";
 
-export async function GET(req: Request) {
+export async function GET(req: Request, { params }: { 
+    params: { domainId: string, projectId: string, queueId: string } 
+}) {
     try {
-        const { searchParams } = new URL(req.url);
-        const projectId = searchParams.get("projectId");
-        const queueId = searchParams.get("queueId")
-
-        const parsed = serviceQuerySchema.safeParse({ projectId, queueId });
-
+        const { domainId, projectId, queueId } = params;
+        const parsed = serviceQuerySchema.safeParse({ domainId, projectId, queueId });
         if (!parsed.success) {
             return NextResponse.json(
                 { error: "Validation error", issues: parsed.error.format() },
                 { status: 400 }
             );
         }
-
-        const result = await listServicesByProject(parsed.data.projectId, parsed.data.queueId);
+        const result = await listServicesByProject(parsed.data.domainId, parsed.data.projectId, parsed.data.queueId);
         return NextResponse.json(result, { status: 200 });
     } catch (error) {
         console.error("Error fetching domain protocol:", error);

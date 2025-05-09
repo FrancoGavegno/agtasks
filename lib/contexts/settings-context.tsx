@@ -1,8 +1,22 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import type { Protocol, Role, Form } from "@/lib/interfaces"
+import { 
+  createContext, 
+  useContext, 
+  useState, 
+  useEffect, 
+  type ReactNode 
+} from "react"
+import { useParams } from 'next/navigation'
+import type { 
+  Protocol, 
+  Role, 
+  Form 
+} from "@/lib/interfaces"
 import { listAssets } from "@/lib/integrations/kobotoolbox"
+
+const projectId = process.env.NEXT_PUBLIC_JIRA_PROTOCOLS_PROJECT_ID
+const queueId = process.env.NEXT_PUBLIC_JIRA_PROTOCOLS_QUEUE_ID
 
 // Interfaz genérica para el contexto de configuraciones
 interface SettingsContextType {
@@ -43,6 +57,8 @@ interface SettingsContextType {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined)
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
+  const { domain } = useParams<{ domain: string }>();
+  
   // Estado para protocolos
   const [protocols, setProtocols] = useState<Protocol[]>([])
   const [allProtocols, setAllProtocols] = useState<Protocol[]>([])
@@ -67,15 +83,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [isRefreshingForms, setIsRefreshingForms] = useState(false)
   const [shouldRefetchForms, setShouldRefetchForms] = useState(true)
 
-  // Fetch domain protocols
+  // Fetch Domain Protocols
   useEffect(() => {
     const fetchDomainProtocols = async () => {
       if (!shouldRefetchProtocols && protocols.length > 0) return
-
+      
       try {
         setProtocolsLoading(true)
-        // d619afb4-8923-4e19-90db-89deff1b2ab5
-        const res = await fetch("/api/domain-protocol?domainId=dd8ae98f-2231-444e-8daf-120a4c416d15")
+        const res = await fetch(`/api/v1/agtasks/domains/${domain}/protocols`)
         const data = await res.json()
         setProtocols(data.data)
         setSelectedProtocols(data.data.map((p: Protocol) => p.tmProtocolId))
@@ -90,13 +105,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     fetchDomainProtocols()
   }, [shouldRefetchProtocols, protocols.length])
 
-  // Fetch all protocols
+  // Fetch Jira Protocols
   useEffect(() => {
     const fetchAllProtocols = async () => {
-      if (allProtocols.length > 0 || protocols.length === 0) return
+      //if (allProtocols.length > 0 || protocols.length === 0) return
 
       try {
-        const res = await fetch("/api/tm-protocol?projectId=TEM&queueId=82")
+        const res = await fetch(`/api/v1/integrations/jira/domains/${domain}/projects/${projectId}/services/${queueId}`)
         const data = await res.json()
 
         // Mapear los datos de tm-protocol y buscar el id correspondiente en protocols
@@ -105,6 +120,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           const matchingProtocol = protocols.find((p) => p.tmProtocolId === protocol.key)
 
           return {
+            domainId: domain,
             id: matchingProtocol ? matchingProtocol.id : protocol.id,
             name: protocol.fields.summary,
             language: protocol.fields.labels[0] || "N/A",
@@ -121,14 +137,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     fetchAllProtocols()
   }, [protocols, allProtocols.length])
 
-  // Fetch domain roles
+  // Fetch Domain Roles
   useEffect(() => {
     const fetchDomainRoles = async () => {
       if (!shouldRefetchRoles && roles.length > 0) return
 
       try {
         setRolesLoading(true)
-        const res = await fetch("/api/domain-role?domainId=dd8ae98f-2231-444e-8daf-120a4c416d15")
+        const res = await fetch(`/api/v1/agtasks/domains/${domain}/roles`)
         const data = await res.json()
 
         // Ensure we have unique roles (no duplicates with same name and language)
@@ -155,14 +171,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     fetchDomainRoles()
   }, [shouldRefetchRoles, roles.length])
 
-  // Fetch all roles (from service)
+  // Fetch All Agtasks Roles 
   useEffect(() => {
     const fetchAllRoles = async () => {
-      if (allRoles.length > 0) return
+      // if (allRoles.length > 0) return
 
       try {
         // Aquí usamos el servicio que devuelve todos los roles disponibles
-        const data = await import("@/lib/services/agtasks").then((module) => module.listRoles())
+        const data = await import("@/lib/services/agtasks")
+          .then((module) => module.listRoles())
 
         // Mapear los datos y buscar el id correspondiente en roles
         const newRoles = data.map((role: any) => {
@@ -172,6 +189,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           )
 
           return {
+            domainId: domain,
             id: matchingRole ? matchingRole.id : role.id,
             name: role.name,
             language: role.language,
@@ -187,14 +205,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     fetchAllRoles()
   }, [roles, allRoles.length])
 
-  // Fetch domain forms
+  // Fetch Domain Forms
   useEffect(() => {
     const fetchDomainForms = async () => {
       if (!shouldRefetchForms && forms.length > 0) return
 
       try {
         setFormsLoading(true)
-        const res = await fetch("/api/domain-form?domainId=dd8ae98f-2231-444e-8daf-120a4c416d15")
+        const res = await fetch(`/api/v1/agtasks/domains/${domain}/forms`)
         const data = await res.json()
 
         // Ensure we have unique forms (no duplicates with same name)
@@ -219,10 +237,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     fetchDomainForms()
   }, [shouldRefetchForms, forms.length])
 
-  // Fetch all forms from KoboToolbox
+  // Fetch All Kobo Toolbox Forms
   useEffect(() => {
     const fetchAllForms = async () => {
-      if (allForms.length > 0) return
+      // if (allForms.length > 0) return
 
       try {
         // Get forms from KoboToolbox
@@ -234,11 +252,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           const matchingForm = forms.find((f) => f.ktFormId === form.uid)
 
           return {
+            domainId: domain,
             id: matchingForm ? matchingForm.id : form.uid,
-            name: form.name,
-            questions: 0, // Default value as specified
             ktFormId: form.uid,
-            language: "es", // Default language as specified
+            name: form.name,
+            language: "ES", // Default language as specified
           }
         })
 

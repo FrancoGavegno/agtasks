@@ -1,6 +1,6 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
 // import { Visibility } from "aws-cdk-lib/aws-appsync";
-import { parseISO } from 'date-fns';
+// import { parseISO } from 'date-fns';
 
 /*== STEP 1 ===============================================================
 The section below creates a Todo database table with a "content" field. Try
@@ -12,89 +12,29 @@ const schema = a
   .schema({
     Role: a.model({
       name: a.string().required(),
-    }),
-
-    Domain: a.model({
-      name: a.string().required(),
-      protocols: a.hasMany('DomainProtocol', 'domainId'),
-      roles: a.hasMany('DomainRole', 'domainId'),
-      forms: a.hasMany('DomainForm', 'domainId'),
+      language: a.string()
     }),
 
     DomainProtocol: a.model({
+      domainId: a.string().required(),
+      tmProtocolId: a.string().required(), // The Customer Request Key  
       name: a.string().required(),
       language: a.string().required(),
-      tmProtocolId: a.string().required(), // The ID or Key of the customer request 
-      domainId: a.id(),
-      domain: a.belongsTo('Domain', 'domainId')
     }),
 
     DomainRole: a.model({
+      domainId: a.string().required(),
       name: a.string().required(),    
       language: a.string().required(),
-      domainId: a.id(),
-      domain: a.belongsTo('Domain', 'domainId')
     }),
 
     DomainForm: a.model({
+      domainId: a.string().required(),
+      ktFormId: a.string().required(),
       name: a.string().required(),
       language: a.string().required(),
-      ktFormId: a.string().required(),
-      domainId: a.id(),
-      domain: a.belongsTo('Domain', 'domainId')
     }),
     
-    
-    // Todo: a.model({
-    //   content: a.string(),
-    //   isDone: a.boolean().default(true),
-    // }),
-
-    // Visibility: a.enum([
-    //   "COMMUNITY",
-    //   "PRIVATE"
-    // ]),
-
-    // Scope: a.enum([
-    //   "NONE",
-    //   "INHERITED",
-    //   "DOMAIN",
-    //   "AREA",
-    //   "WORKSPACE",
-    //   "FARM",
-    //   "FIELD"
-    // ]),
-
-    // Template: a.model({
-    //   id: a.id().required(),
-    //   templateUrl: a.url().required(),
-    //   name: a.string().required(),
-    //   description: a.string(),
-    //   taskCount: a.integer(),
-    //   space: a.string(),
-    //   tags: a.string().array(),
-    //   visibility: a.ref("Visibility").required(),
-    //   thumbnail: a.string(),
-    //   scope: a.ref("Scope"),
-    // }),
-
-    // ProjectRole: a.model({
-    //   id: a.id().required(),
-    //   projectId: a.string(),
-    //   projectName: a.string(),
-    //   userId: a.string().required(),
-    //   userName: a.string(),
-    //   userEmail: a.email(),
-    //   roleId: a.string(),
-    //   roleName: a.string().required(),
-    //   status: a.string().default("ACTIVE"),
-    // }),
-
-    // TaskManagerConfig: a.model({
-    //   apiKey: a.string(),
-    //   teamId: a.string(),
-    // })
-
   })
   .authorization((allow) => [allow.publicApiKey()]);
 
