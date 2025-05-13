@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { serviceQuerySchema } from "@/lib/schemas";
+import { jiraServiceQuerySchema } from "@/lib/schemas";
 import { listServicesByProject } from "@/lib/integrations/jira";
 
 export async function GET(req: Request, { params }: { 
@@ -7,7 +7,7 @@ export async function GET(req: Request, { params }: {
 }) {
     try {
         const { domainId, projectId, queueId } = params;
-        const parsed = serviceQuerySchema.safeParse({ domainId, projectId, queueId });
+        const parsed = jiraServiceQuerySchema.safeParse({ domainId, projectId, queueId });
         if (!parsed.success) {
             return NextResponse.json(
                 { error: "Validation error", issues: parsed.error.format() },

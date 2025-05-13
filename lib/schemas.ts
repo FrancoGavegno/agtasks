@@ -56,10 +56,49 @@ export const deleteDomainFormSchema = z.object({
 
 export type DomainFormInput = z.infer<typeof domainFormSchema>;
 
-// Jira > Services 
+// Projects
+
+export const projectSchema = z.object({
+    name: z.string().min(1, "name is required"),
+    language: z.string().min(1, "language is required"),
+    queueId: z.number().min(1, "queueId is required")
+})
+
+export const projectQuerySchema = z.object({
+    domainId: z.string().min(1, "domainId is required"),
+});
+
+export type ProjectInput = z.infer<typeof projectSchema>;
+
+// Services (amplify/data/resource.ts)
+
+export const serviceSchema = z.object({
+    serviceName: z.string().min(1, "serviceName is required"), // Nombre interno en Agtasks
+    externalServiceKey: z.string().min(1, "externalServiceKey is required"), // ID en el task manager (ej. issueKey de Jira)
+    sourceSystem: z.string().min(1, "sourceSystem  is required"), // Ej.: "jira", "clickup", etc.
+    externalTemplateId: z.string().min(1, "externalTemplateId is required"), // ID del template usado en el task manager
+    workspaceId: z.string().min(1, "workspaceId is required"),
+    campaignId: z.string().min(1, "campaignId is required"),
+    farmId: z.string().min(1, "farmId is required"),
+    totalArea: z.number().min(1, "totalArea is required"),
+    startDate: z.string().min(1, "startDate is required"),
+});
 
 export const serviceQuerySchema = z.object({
+    projectId: z.string().min(1, "projectId is required"),
+});
+
+export type ServiceInput = z.infer<typeof serviceSchema>;
+
+// Jira Services (Requests) & Tasks 
+
+export const jiraServiceQuerySchema = z.object({
     domainId: z.string().min(1, "domainId is required"),
     projectId: z.string().min(1, "projectId is required"),
     queueId: z.string().min(1, "queueId is required"),
+});
+
+
+export const jiraTaskQuerySchema = z.object({
+    serviceId: z.string().min(1, "serviceId is required"),
 });

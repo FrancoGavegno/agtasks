@@ -31,24 +31,22 @@ const schema = a.schema({
     id: a.string().required(), // "TEM"
     name: a.string().required(), // "PROTOCOLOS"
     language: a.string().required(), // "ES"
-    queueId: a.integer(), // 82   
-    deleted: a.boolean().default(false), 
+    queueId: a.integer().required(), // 82   
+    deleted: a.boolean().default(false).required(), 
   }),
 
   Service: a.model({
+    projectId: a.string().required(),
     serviceName: a.string().required(), // Nombre interno en Agtasks
-    externalServiceKey: a.string(), // ID en el task manager (ej. issueKey de Jira)
+    externalServiceKey: a.string().required(), // ID en el task manager (ej. issueKey de Jira)
     sourceSystem: a.string().required(), // Ej.: "jira", "clickup", etc.
     externalTemplateId: a.string().required(), // ID del template usado en el task manager
-
-    // Referencias externas a 360 
     workspaceId: a.string().required(),
     campaignId: a.string().required(),
     farmId: a.string().required(),
-
-    totalArea: a.float(),
-    startDate: a.date(),
-    endDate: a.date(),
+    totalArea: a.float().required(),
+    startDate: a.string().required(), // Fecha de inicio del servicio
+    endDate: a.string(),
   }),
 
   ServiceField: a.model({
@@ -68,6 +66,11 @@ const schema = a.schema({
     name: a.string().required(),
     language: a.string(),
   }),
+
+  User: a.model({
+    name: a.string().required(),
+    email: a.string().required()
+  })
 
 }).authorization((allow) => [allow.publicApiKey()]);
 

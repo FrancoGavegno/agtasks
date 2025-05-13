@@ -3,11 +3,16 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertTriangle, CheckCircle, Clock, Wrench } from "lucide-react"
-import { listServicesByProject } from "@/lib/services/agtasks"
+import { useParams } from "next/navigation"
 import type { Service } from "@/lib/interfaces"
 
 export function ProjectDetails() {
+  const params = useParams()
+  const projectId = params.project as string
+
   const [services, setServices] = useState<Service[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [kpis, setKpis] = useState({
     activeServices: 0,
     completedPercentage: 0,
@@ -17,53 +22,101 @@ export function ProjectDetails() {
 
   useEffect(() => {
     const fetchServices = async () => {
-      const servicesData = await listServicesByProject(1) // Assuming project ID 1
-      setServices(servicesData)
+      try {
+        setLoading(true)
+        const response = await fetch(`/api/v1/agtasks/domains/8644/projects/${projectId}/services`)
 
-      // Calculate KPIs
-      const totalServices = servicesData.length
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`)
+        }
 
-      // Active services (En progreso or Planificado)
-      const activeServices = servicesData.filter(
-        (service) => service.status === "En progreso" || service.status === "Planificado",
-      ).length
+        const servicesData = await response.json()
+        setServices(servicesData)
 
-      // Completed services percentage
-      const completedServices = servicesData.filter((service) => service.status === "Finalizado").length
-      const completedPercentage = totalServices > 0 ? Math.round((completedServices / totalServices) * 100) : 0
+        // Si no hay servicios, establecer KPIs en cero y terminar
+        if (!servicesData || servicesData.length === 0) {
+          setKpis({
+            activeServices: 0,
+            completedPercentage: 0,
+            blockedServices: 0,
+            averageTime: 0,
+          })
+          setLoading(false)
+          return
+        }
 
-      // Blocked services (services with progress < 50% that are not Planificado)
-      const blockedServices = servicesData.filter(
-        (service) => service.progress < 50 && service.status === "En progreso",
-      ).length
+        // Calculate KPIs
+        const totalServices = servicesData.length
 
-      // Average time (days since start date for completed services)
-      const today = new Date()
-      const completedServicesWithDates = servicesData.filter(
-        (service) => service.status === "Finalizado" && service.startDate,
-      )
+        // Active services (En progreso or Planificado)
+        const activeServices = servicesData.filter(
+          (service: Service) => service.status === "En progreso" || service.status === "Planificado",
+        ).length
 
-      let totalDays = 0
-      completedServicesWithDates.forEach((service) => {
-        const startDate = new Date(service.startDate)
-        const diffTime = Math.abs(today.getTime() - startDate.getTime())
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-        totalDays += diffDays
-      })
+        // Completed services percentage
+        const completedServices = servicesData.filter((service: Service) => service.status === "Finalizado").length
+        const completedPercentage = totalServices > 0 ? Math.round((completedServices / totalServices) * 100) : 0
 
-      const averageTime =
-        completedServicesWithDates.length > 0 ? Math.round(totalDays / completedServicesWithDates.length) : 0
+        // Blocked services (services with progress < 50% that are not Planificado)
+        const blockedServices = servicesData.filter(
+          (service: Service) => (service.progress ?? 0) < 50 && service.status === "En progreso",
+        ).length
 
-      setKpis({
-        activeServices,
-        completedPercentage,
-        blockedServices,
-        averageTime,
-      })
+        // Average time (days since start date for completed services)
+        const today = new Date()
+        const completedServicesWithDates = servicesData.filter(
+          (service: Service) => service.status === "Finalizado" && service.startDate,
+        )
+
+        let totalDays = 0
+        completedServicesWithDates.forEach((service: Service) => {
+          const startDate = new Date(service.startDate)
+          const diffTime = Math.abs(today.getTime() - startDate.getTime())
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+          totalDays += diffDays
+        })
+
+        const averageTime =
+          completedServicesWithDates.length > 0 ? Math.round(totalDays / completedServicesWithDates.length) : 0
+
+        setKpis({
+          activeServices,
+          completedPercentage,
+          blockedServices,
+          averageTime,
+        })
+
+        setError(null)
+      } catch (err) {
+        console.error("Failed to fetch services:", err)
+        setError("Failed to load services. Please try again later.")
+        setServices([])
+      } finally {
+        setLoading(false)
+      }
     }
 
-    fetchServices()
-  }, [])
+    if (projectId) {
+      fetchServices()
+    }
+  }, [projectId])
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64">Cargando datos del proyecto...</div>
+  }
+
+  if (error) {
+    return <div className="text-red-500 text-center h-64 flex items-center justify-center">{error}</div>
+  }
+
+  if (services.length === 0) {
+    return (
+      <div className="text-center h-64 flex flex-col items-center justify-center">
+        <p className="text-lg text-muted-foreground mb-2">No hay servicios disponibles</p>
+        <p className="text-sm text-muted-foreground">Cree servicios para ver los indicadores del proyecto</p>
+      </div>
+    )
+  }
 
   return (
     <div className="w-full">
@@ -79,7 +132,7 @@ export function ProjectDetails() {
             <p className="text-xs text-muted-foreground">
               {services.length > 0
                 ? `${Math.round((kpis.activeServices / services.length) * 100)}% del total`
-                : "Cargando..."}
+                : "Sin servicios"}
             </p>
           </CardContent>
         </Card>

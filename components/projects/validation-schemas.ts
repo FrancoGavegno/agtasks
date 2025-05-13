@@ -5,6 +5,13 @@ export const step1Schema = z.object({
   protocol: z.enum(["", "variable-seeding", "satellite-monitoring"], {
     required_error: "Por favor, seleccione un protocolo",
   }),
+  taskAssignments: z.array(
+    z.object({
+      task: z.string(),
+      role: z.string(),
+      assignedTo: z.string(),
+    })
+  )
 })
 
 export type Step1FormValues = z.infer<typeof step1Schema>

@@ -1,4 +1,4 @@
-// Organization & Users
+// 360
 
 export interface User {
   email: string
@@ -23,27 +23,26 @@ export interface Domain {
 // Settings
 
 export interface Protocol {
-  domainId: string
+  domainId: string // FK a 360 Domain
   id: string
-  tmProtocolId: string 
+  tmProtocolId: string // FK a Jira Request Template ID
   name: string
-  language: string 
-  //domain?: Domain
+  language: string
   createdAt?: string
   updatedAt?: string
 }
 
 export interface Role {
-  domainId: string
+  domainId?: string // FK a 360 Domain
   id: string
   language: string
   name: string
 }
 
 export interface Form {
-  domainId: string
+  domainId: string // FK a 360 Domain
   id: string
-  ktFormId: string
+  ktFormId: string // FK a Kobo Toolbox Template ID
   name: string
   language: string
 }
@@ -51,26 +50,45 @@ export interface Form {
 // Projects & Services
 
 export interface Project {
-  parentId: number;
-  id: string;
-  name: string;
-  language: string;
-  queueId: number;
-  deleted: boolean;
+  domainId: string // FK a 360 Domain
+  id: string
+  name: string
+  language: string
+  queueId: number
+  deleted: boolean
 }
 
 export interface Service {
+  projectId: string // FK local a Project
   id: string
-  name: string
-  establishment: string
-  lots: string
-  totalHectares: number
-  progress: number
+  serviceName: string
+  externalServiceKey: string // ID en el task manager (ej. issueKey de Jira)
+  sourceSystem: string // Ej.: "jira", "clickup", etc.
+  externalTemplateId: string // ID del template usado en el task manager
+  workspaceId: string
+  campaignId: string
+  farmId: string
+  totalArea: number
   startDate: string
-  status: string
+  endDate?: string
+  status?: string
+  progress?: number
 }
 
-//  Jira  
+export interface ServiceField {
+  serviceId: string // FK local a Service
+  fieldId: string // ID del Field en 360 (referencia externa)
+}
+
+export interface ServiceTask {
+  serviceId: string // FK local a Service
+  externalTemplateId: string // Referencia al sub-template del task manager (opcional, si existen)
+  sourceSystem: string // Ej.: "jira"
+  roleId: string // FK local a Role (asignado manualmente)
+  userId: string // FK local a 360 User (asignado manualmente)
+}
+
+//  Jira
 
 export interface JiraCustomerData {
   displayName: string
@@ -222,7 +240,7 @@ export interface JiraIssue {
   }
 }
 
-// Nueva interfaz para la creación de solicitudes de 
+// Nueva interfaz para la creación de solicitudes de
 // cliente según la API de Jira Service Desk
 export interface JiraCustomerRequestData {
   serviceDeskId: string

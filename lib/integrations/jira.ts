@@ -16,7 +16,6 @@ const JIRA_API_URL = process.env.NEXT_PUBLIC_JIRA_API_URL
 const JIRA_API_TOKEN = process.env.NEXT_PUBLIC_JIRA_API_TOKEN 
 
 // Jira Service Desk ID  
-
 const JIRA_SD_ID = process.env.NEXT_PUBLIC_JIRA_SD_ID || "your_jira_sd_id"
 
 export const jiraApi = axios.create({
@@ -64,41 +63,69 @@ export async function listServicesByProject(domainId: string, serviceDeskId: str
   }
 }
 
-// Función para formatear datos (simplificada sin fields y monitors)
-const formatDataToJiraPost = (data: JiraRequestData, lang: string): string => {
-  // Implementa la lógica de formateo aquí (puedes ajustarla según tu necesidad)
-  return JSON.stringify({ data, lang })
-}
-
-// Función para obtener issues de una queue específica
-export async function getQueueIssues(serviceDeskId: string, queueId: number): Promise<JiraResponse> {
+export async function listTasksbyService(
+  issueIdOrKey: string,
+  // projectKey: string,
+  // includeRelatedIssues: boolean = false
+): Promise<JiraResponse> {
   try {
-    const endpoint = `/rest/servicedeskapi/servicedesk/${serviceDeskId}/queue/${queueId}/issue`
-    const response = await jiraApi.get<QueueIssueResponse>(endpoint)
+    // 1. Obtener detalles del Customer Request
+    const issueEndpoint = `/rest/api/3/issue/${issueIdOrKey}`
+    const issueResponse = await jiraApi.get(issueEndpoint)
+    const issueData = issueResponse.data
 
-    // console.log(response.data.values);
-    // console.log('Jira queue issues retrieved successfully:', response.status);
+    // 2. Extraer subtareas
+    const subtasks = issueData.fields?.subtasks || []
+    const result = {
+      issueKey: issueData.key,
+      issueSummary: issueData.fields?.summary,
+      subtasks: subtasks.map((subtask: { key: string; fields: { summary: string; status: { name: string } } }) => ({
+        key: subtask.key,
+        summary: subtask.fields.summary,
+        status: subtask.fields.status.name,
+      })),
+    }
+
+    // // 3. Opcional: Buscar tareas relacionadas usando JQL
+    // if (includeRelatedIssues) {
+    //   const jql = `project = "${projectKey}" AND parent = "${issueIdOrKey}"`
+    //   const searchEndpoint = `/rest/api/3/search`
+    //   const searchResponse = await jiraApi.get(searchEndpoint, {
+    //     params: {
+    //       jql,
+    //       fields: "key,summary,status",
+    //     },
+    //   })
+    //   result.relatedIssues = searchResponse.data.issues.map((issue: { key: string; fields: { summary: string; status: { name: string } } }) => ({
+    //     key: issue.key,
+    //     summary: issue.fields.summary,
+    //     status: issue.fields.status.name,
+    //   }))
+    // }
+
     return {
       success: true,
-      data: response.data,
+      data: result,
     }
   } catch (error) {
     let errorMessage: string
 
     if (axios.isAxiosError(error)) {
-      // Manejo específico de errores de Axios
       errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
     } else {
-      // Manejo de errores genéricos
-      errorMessage = "Unknown error occurred while fetching Jira queue issues"
+      errorMessage = "Unknown error occurred while fetching Jira request tasks"
     }
-
-    // console.error('Error fetching Jira queue issues:', errorMessage);
     return {
       success: false,
       error: errorMessage,
     }
   }
+}
+
+// Función para formatear datos (simplificada sin fields y monitors)
+const formatDataToJiraPost = (data: JiraRequestData, lang: string): string => {
+  // Implementa la lógica de formateo aquí (puedes ajustarla según tu necesidad)
+  return JSON.stringify({ data, lang })
 }
 
 // Nueva función para obtener un issue específico (adaptada del código node-fetch)

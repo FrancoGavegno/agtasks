@@ -7,7 +7,6 @@ import { Progress } from "@/components/ui/progress"
 import {
   Edit,
   Play,
-  Plus,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -16,15 +15,21 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
+  PlusCircle,
 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
+import { useParams } from "next/navigation"
+import { Link } from "@/i18n/routing"
 import type { Service } from "@/lib/interfaces"
-//import { listServicesByProject } from "@/lib/services/agtasks"
-import { listServicesByProject } from "@/lib/integrations/jira"
 
 export function Services() {
+  const params = useParams()
+  const projectId = params.project as string
+  const domainId = "8644" // Hardcoded for now, could be extracted from params or context
+
   const [services, setServices] = useState<Service[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(10)
@@ -33,15 +38,33 @@ export function Services() {
     direction: "none",
   })
 
-  // TO DO: Fetch services
-  // useEffect(() => {
-  //   const fetchServices = async () => {
-  //     const servicesData = await listServicesByProject("TAN", "82")
-  //     setServices(servicesData)
-  //   }
+  // Fetch services
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch(`/api/v1/agtasks/domains/${domainId}/projects/${projectId}/services`)
 
-  //   fetchServices()
-  // }, [])
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`)
+        }
+
+        const data = await response.json()
+        setServices(data)
+        setError(null)
+      } catch (err) {
+        console.error("Failed to fetch services:", err)
+        setError("Failed to load services. Please try again later.")
+        setServices([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (projectId) {
+      fetchServices()
+    }
+  }, [projectId, domainId])
 
   // Handle sorting
   const requestSort = (key: keyof Service) => {
@@ -76,9 +99,7 @@ export function Services() {
   // Filter services based on search query
   const filteredServices = services.filter(
     (service) =>
-      service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      service.establishment.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      service.lots.toLowerCase().includes(searchQuery.toLowerCase()),
+      service.serviceName?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   // Sort services based on sort config
@@ -100,11 +121,14 @@ export function Services() {
     }
 
     // Handle numeric sorting
-    if (sortConfig.key === "totalHectares" || sortConfig.key === "progress") {
+    if (sortConfig.key === "totalArea" || sortConfig.key === "progress") {
+      const valueA = a[sortConfig.key] || 0
+      const valueB = b[sortConfig.key] || 0
+
       if (sortConfig.direction === "asc") {
-        return a[sortConfig.key] - b[sortConfig.key]
+        return valueA - valueB
       } else {
-        return b[sortConfig.key] - a[sortConfig.key]
+        return valueB - valueA
       }
     }
 
@@ -151,15 +175,35 @@ export function Services() {
     </TableHead>
   )
 
+  if (loading) {
+    return <div className="flex justify-center items-center h-64">Cargando servicios...</div>
+  }
+
+  if (error) {
+    return <div className="text-red-500 text-center h-64 flex items-center justify-center">{error}</div>
+  }
+
+  if (services.length === 0) {
+    return (
+      <div className="text-center h-64 flex flex-col items-center justify-center">
+        <p className="text-lg text-muted-foreground mb-4">No hay servicios disponibles</p>
+        <Link href={`/domains/${domainId}/projects/${projectId}/services/create`}>
+          <Button>
+            <PlusCircle className="mr-2 h-4 w-4" /> Crear Primer Servicio
+          </Button>
+        </Link>
+      </div>
+    )
+  }
+
   return (
     <div className="w-full">
-
       <div className="mb-4">
         <div className="relative">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search services..."
+            placeholder="Buscar servicios..."
             className="pl-8"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -171,29 +215,27 @@ export function Services() {
         <Table>
           <TableHeader>
             <TableRow>
-              <SortableHeader column="name" label="Servicio" />
-              <SortableHeader column="establishment" label="Establecimiento" />
-              <SortableHeader column="lots" label="Lotes" />
-              <SortableHeader column="totalHectares" label="Tot. Has" />
+              <SortableHeader column="serviceName" label="Servicio" />
+              <SortableHeader column="farmId" label="Establecimiento" />
+              <SortableHeader column="totalArea" label="Tot. Has" />
               <SortableHeader column="progress" label="Progreso" />
               <SortableHeader column="startDate" label="Fecha Inicio" />
-              {/* <TableHead>Acciones</TableHead> */}
+              <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {currentItems.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
-                  No se encontraron servicios
+                <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                  No se encontraron servicios que coincidan con la búsqueda
                 </TableCell>
               </TableRow>
             ) : (
               currentItems.map((service) => (
                 <TableRow key={service.id}>
-                  <TableCell className="font-medium">{service.name}</TableCell>
-                  <TableCell>{service.establishment}</TableCell>
-                  <TableCell>{service.lots}</TableCell>
-                  <TableCell>{service.totalHectares}</TableCell>
+                  <TableCell className="font-medium">{service.serviceName}</TableCell>
+                  <TableCell>{service.farmId}</TableCell>
+                  <TableCell>{service.totalArea}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Progress value={service.progress} className="h-2 w-[60px]" />
@@ -201,9 +243,9 @@ export function Services() {
                     </div>
                   </TableCell>
                   <TableCell>{service.startDate ? new Date(service.startDate).toLocaleDateString() : "-"}</TableCell>
-                  {/* <TableCell>
+                  <TableCell>
                     <div className="flex gap-2">
-                      {service.status === "pending" && (
+                      {service.status === "Planificado" && (
                         <Button variant="outline" size="icon" className="h-8 w-8">
                           <Play className="h-4 w-4" />
                         </Button>
@@ -212,7 +254,7 @@ export function Services() {
                         <Edit className="h-4 w-4" />
                       </Button>
                     </div>
-                  </TableCell> */}
+                  </TableCell>
                 </TableRow>
               ))
             )}
