@@ -94,7 +94,7 @@ export function AppSidebar({ user }: Props) {
   useEffect(() => {
     const fetchProjects = async () => {
       if (selectedDomain) {
-        const projectsData = await listProjectsByDomain(selectedDomain.id)
+        const projectsData = await listProjectsByDomain(selectedDomain.id.toString())
         setProjects(projectsData)
 
         setSelectedProject(projectsData[0])
