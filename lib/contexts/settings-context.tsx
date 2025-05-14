@@ -177,7 +177,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       // if (allRoles.length > 0) return
 
       try {
-        const res = await fetch(`/api/v1/agtasks/roles/${locale}`)
+        const res = await fetch(`/api/v1/agtasks/roles/EN`)
         //console.log(`/api/v1/agtasks/roles/${locale}`)
         const data = await res.json()
 

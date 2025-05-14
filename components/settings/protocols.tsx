@@ -73,7 +73,7 @@ export default function Protocols() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[80%]">Protocol</TableHead>
-              <TableHead className="text-center">Language</TableHead>
+              {/* <TableHead className="text-center">Language</TableHead> */}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -81,9 +81,9 @@ export default function Protocols() {
               paginatedProtocols.map((protocol) => (
                 <TableRow key={protocol.id}>
                   <TableCell className="font-medium">{protocol.name}</TableCell>
-                  <TableCell className="text-center">
+                  {/* <TableCell className="text-center">
                     <Badge variant="outline">{protocol.language}</Badge>
-                  </TableCell>
+                  </TableCell> */}
                 </TableRow>
               ))
             ) : (

@@ -149,7 +149,7 @@ export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onS
                 <div key={form.id} className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <div className="text-sm text-foreground">{form.name}</div>
-                    <div className="text-xs text-muted-foreground">{form.language || "es"}</div>
+                    {/* <div className="text-xs text-muted-foreground">{form.language || "es"}</div> */}
                   </div>
                   <Switch checked={localSelected.includes(checkId)} onCheckedChange={() => toggleForm(checkId)} />
                 </div>

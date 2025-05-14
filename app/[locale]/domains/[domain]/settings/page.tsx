@@ -1,4 +1,8 @@
+"use client"
+
 import { Link } from "@/i18n/routing"
+import { useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -6,17 +10,17 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { useTranslations } from 'next-intl'
 import TabsNavigation from "@/components/settings/tabs-navigation"
 
 export default function SettingsPage(
-  {
-    params,
-  }: {
-    params: { domain: string; };
-  }
+  // {
+  //   params,
+  // }: {
+  //   params: { domain: string; };
+  // }
 ) {
-  const { domain } = params
+  const { domain } = useParams<{ domain: string }>();
+  // const { domain } = params
   const t = useTranslations("SettingsPage")
 
   return (

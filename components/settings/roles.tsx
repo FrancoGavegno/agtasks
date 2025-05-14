@@ -86,7 +86,7 @@ export default function Roles() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[80%]">Role</TableHead>
-              <TableHead className="text-center">Language</TableHead>
+              {/* <TableHead className="text-center">Language</TableHead> */}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -94,9 +94,9 @@ export default function Roles() {
               paginatedRoles.map((role) => (
                 <TableRow key={role.id}>
                   <TableCell className="font-medium">{role.name}</TableCell>
-                  <TableCell className="text-center">
+                  {/* <TableCell className="text-center">
                     <Badge variant="outline">{role.language}</Badge>
-                  </TableCell>
+                  </TableCell> */}
                 </TableRow>
               ))
             ) : (

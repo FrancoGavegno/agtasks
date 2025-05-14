@@ -152,7 +152,7 @@ export function RoleModal({ isOpen, onClose, roles, allRoles, selectedRoles, onS
                 <div key={role.id} className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <div className="text-sm text-foreground">{role.name}</div>
-                    <div className="text-xs text-muted-foreground">{role.language}</div>
+                    {/* <div className="text-xs text-muted-foreground">{role.language}</div> */}
                   </div>
                   <Switch checked={localSelected.includes(checkId)} onCheckedChange={() => toggleRole(checkId)} />
                 </div>

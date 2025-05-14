@@ -33,7 +33,7 @@ const defaultValues: CreateServiceFormValues = {
 export default function CreateService() {
   const router = useRouter()
   const params = useParams()
-  const { locale, projectId, domainId } = params
+  const { locale, project, domain } = params
   // const projectId = params.project as string
   // const domainId = "8644" // TODO: Get domainId from params
 
@@ -43,6 +43,8 @@ export default function CreateService() {
   const [shouldScrollToTop, setShouldScrollToTop] = useState(false)
   // Estado para controlar si se está enviando el formulario
   const [isSubmitting, setIsSubmitting] = useState(false)
+  // Añadir un nuevo estado para controlar si se muestra el mensaje de éxito
+  const [isSuccess, setIsSuccess] = useState(false)
 
   // Configurar el formulario con react-hook-form y zod
   const methods = useForm<CreateServiceFormValues>({
@@ -128,14 +130,14 @@ export default function CreateService() {
     setShouldScrollToTop(true)
   }
 
-  // Función para manejar el envío del formulario
+  // Modificar la función onSubmit para manejar el éxito y ofrecer opciones al usuario
   const onSubmit = async (data: CreateServiceFormValues) => {
     try {
       setIsSubmitting(true)
 
       // Preparar los datos para enviar al API
       const serviceData = {
-        projectId: projectId,
+        projectId: project,
         serviceName: `Servicio de ${data.protocol === "variable-seeding" ? "Siembra Variable" : "Monitoreo Satelital"}`,
         externalServiceKey: "", // Se generará en el backend
         sourceSystem: "jira",
@@ -157,7 +159,7 @@ export default function CreateService() {
       }
 
       // Enviar los datos al API
-      const response = await fetch(`/api/v1/agtasks/domains/${domainId}/projects/${projectId}/services`, {
+      const response = await fetch(`/api/v1/agtasks/domains/${domain}/projects/${project}/services`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -177,8 +179,11 @@ export default function CreateService() {
         duration: 5000,
       })
 
-      // Redirigir a la página de servicios
-      router.push(`${locale}/domains/${domainId}/projects/${projectId}/services`)
+      // Marcar como exitoso y permitir crear otro
+      setIsSuccess(true)
+
+      // No redirigir automáticamente para permitir crear otro servicio
+      // router.push(`${locale}/domains/${domain}/projects/${project}/services`)
     } catch (error) {
       console.error("Error creating service:", error)
       toast({
@@ -190,6 +195,21 @@ export default function CreateService() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // Añadir una función para crear un nuevo servicio
+  const createNewService = () => {
+    // Reiniciar el formulario
+    methods.reset(defaultValues)
+    // Reiniciar el paso
+    setCurrentStep(1)
+    // Ocultar el mensaje de éxito
+    setIsSuccess(false)
+  }
+
+  // Añadir una función para volver a la lista de servicios
+  const goToServicesList = () => {
+    router.push(`/${locale}/domains/${domain}/projects/${project}/services`)
   }
 
   // Renderizar el paso actual del wizard
@@ -237,28 +257,58 @@ export default function CreateService() {
         </CardHeader>
 
         <CardContent>
-          <FormProvider {...methods}>{renderStep()}</FormProvider>
+          {isSuccess ? (
+            <div className="flex flex-col items-center justify-center py-12 space-y-6">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-8 w-8 text-green-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-medium text-center">¡Servicio creado exitosamente!</h3>
+              <p className="text-center text-muted-foreground">
+                El servicio ha sido creado correctamente. ¿Qué deseas hacer ahora?
+              </p>
+              <div className="flex space-x-4">
+                <Button variant="outline" onClick={goToServicesList}>
+                  Ver lista de servicios
+                </Button>
+                <Button onClick={createNewService}>Crear otro servicio</Button>
+              </div>
+            </div>
+          ) : (
+            <FormProvider {...methods}>{renderStep()}</FormProvider>
+          )}
         </CardContent>
 
         <CardFooter className="flex justify-between">
-          {currentStep > 1 ? (
-            <Button variant="outline" onClick={prevStep} disabled={isSubmitting}>
-              <ChevronLeft className="mr-2 h-4 w-4" />
-              Atrás
-            </Button>
-          ) : (
-            <div></div>
-          )}
+          {!isSuccess && (
+            <>
+              {currentStep > 1 ? (
+                <Button variant="outline" onClick={prevStep} disabled={isSubmitting}>
+                  <ChevronLeft className="mr-2 h-4 w-4" />
+                  Atrás
+                </Button>
+              ) : (
+                <div></div>
+              )}
 
-          {currentStep < 3 ? (
-            <Button onClick={nextStep} disabled={isSubmitting}>
-              Siguiente
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          ) : (
-            <Button onClick={nextStep} disabled={isSubmitting}>
-              {isSubmitting ? "Creando..." : "Confirmar"}
-            </Button>
+              {currentStep < 3 ? (
+                <Button onClick={nextStep} disabled={isSubmitting}>
+                  Siguiente
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              ) : (
+                <Button onClick={nextStep} disabled={isSubmitting}>
+                  {isSubmitting ? "Creando..." : "Confirmar"}
+                </Button>
+              )}
+            </>
           )}
         </CardFooter>
       </Card>

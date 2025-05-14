@@ -61,8 +61,30 @@
   "ProjectPage": {
     "BreadcrumbLink": "Inicio",
     "BreadcrumbPage": "Proyecto",
-    "title": "Página de Proyecto",
+    "title": "Proyecto",
     "subtitle": "Administra tu proyecto"
+  },
+  "ProjectPageDetails": {
+  "loadingData": "Cargando datos del proyecto...",
+  "notFoundTitle": "No hay servicios disponibles",
+  "notFoundSubtitle": "Crear servicios para ver los indicadores del proyecto",
+  "active": "Servicios activos",
+  "completed": "Servicios completados",
+  "blocked": "Servicios bloqueados",
+  "averageTime": "Tiempo promedio"
+  },
+  "ServicesPage": {
+  "BreadcrumbItem-1": "Inicio",
+  "BreadcrumbItem-2": "Proyecto",
+  "BreadcrumbPage": "Servicios",
+  "title": "Servicios",
+  "subtitle": "Administra los servicios del proyecto",
+  "buttonCreateService": "Crear servicio"
+  },
+  "ServicesPageDetails": {
+  "loadingData": "Cargando datos de los servicios...",
+  "notFoundTitle": "No hay servicios disponibles",
+  "notFoundSubtitle": "Crear servicios para ver los indicadores del proyecto"
   },
   "TasksPage": {
     "title": "Tasks",

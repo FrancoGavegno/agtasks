@@ -1,4 +1,7 @@
+"use client"
+
 import { Link } from "@/i18n/routing"
+import { useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import {
   Breadcrumb,
@@ -9,12 +12,15 @@ import {
 } from "@/components/ui/breadcrumb"
 import { ProjectPageDetails } from "@/components/projects/project-page"
 
-export default function ProjectPage({
-    params,
-  }: {
-    params: { domain: string; project: string};
-  }) {
-  const { domain, project } = params
+export default function ProjectPage(
+  // {
+  //   params,
+  // }: {
+  //   params: { domain: string; project: string};
+  // }
+) {
+  const { domain, project } = useParams<{ domain: string, project: string }>();  
+  // const { domain, project } = params
   const t = useTranslations("ProjectPage")
 
   return (
