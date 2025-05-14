@@ -7,17 +7,16 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { ProjectDetails } from "@/components/projects/project-page"
+import { ProjectPageDetails } from "@/components/projects/project-page"
 
-export default function ProjectPage(
-  {
+export default function ProjectPage({
     params,
   }: {
     params: { domain: string; project: string};
-  }
-) {
+  }) {
   const { domain, project } = params
   const t = useTranslations("ProjectPage")
+
   return (
     <div className="container w-full pt-4 pb-4">
       <Breadcrumb>
@@ -39,7 +38,7 @@ export default function ProjectPage(
         </div>
       </div>
 
-      <ProjectDetails />
+      <ProjectPageDetails />
     </div>
   )
 }

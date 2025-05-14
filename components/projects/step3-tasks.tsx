@@ -2,23 +2,111 @@
 
 import { useFormContext } from "react-hook-form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useState, useEffect } from "react"
+import { useParams } from "next/navigation"
 import type { Step3FormValues } from "./validation-schemas"
-
-// Datos de ejemplo para roles y usuarios
-const roles = ["Agrónomo", "Técnico", "Supervisor", "Administrador", "Operario"]
-
-const usersByRole = {
-  Agrónomo: ["Juan Pérez", "María González", "Carlos Rodríguez"],
-  Técnico: ["Ana Martínez", "Luis Sánchez", "Elena Díaz"],
-  Supervisor: ["Roberto Fernández", "Sofía López"],
-  Administrador: ["Miguel Torres", "Laura García"],
-  Operario: ["Pedro Ramírez", "Javier Morales", "Lucía Vega", "Valentina Castro"],
-}
+import { useServiceForm } from "@/lib/contexts/service-form-context"
+import type { Role } from "@/lib/interfaces"
+import { listUsersByDomain } from "@/lib/integrations/360"
 
 export default function Step3Tasks() {
   const form = useFormContext<Step3FormValues>()
+  const { updateFormValues } = useServiceForm()
   const taskAssignments = form.watch ? form.watch("taskAssignments") : []
   const errors = form.formState?.errors
+
+  const { domain } = useParams<{ domain: string }>()
+  const domainId = domain || "8644" // Fallback to "8644" if domain is not in URL
+
+  // Estado para roles y usuarios
+  const [roles, setRoles] = useState<Role[]>([])
+  const [users, setUsers] = useState<any[]>([])
+
+  // Estados de carga
+  const [rolesLoading, setRolesLoading] = useState(true)
+  const [usersLoading, setUsersLoading] = useState(true)
+
+  // Estados de error
+  const [rolesError, setRolesError] = useState<string | null>(null)
+  const [usersError, setUsersError] = useState<string | null>(null)
+
+  // Cargar roles desde la API
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        setRolesLoading(true)
+        const response = await fetch(`/api/v1/agtasks/domains/${domainId}/roles`)
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`)
+        }
+
+        const data = await response.json()
+        if (data && data.data) {
+          // Ordenar roles alfabéticamente
+          const sortedRoles = [...data.data].sort((a, b) => a.name.localeCompare(b.name))
+          setRoles(sortedRoles)
+        } else {
+          setRoles([])
+        }
+        setRolesError(null)
+      } catch (error) {
+        console.error("Error fetching roles:", error)
+        setRolesError("Failed to load roles. Please try again later.")
+        setRoles([])
+      } finally {
+        setRolesLoading(false)
+      }
+    }
+
+    fetchRoles()
+  }, [domainId])
+
+  // Cargar usuarios desde la API
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setUsersLoading(true)
+        // Usar la función listUsersByDomain de /lib/integrations/360.ts
+        const domainIdNumber = Number.parseInt(domainId, 10)
+        const usersData = await listUsersByDomain(domainIdNumber)
+
+        if (usersData && usersData.length > 0) {
+          // Ordenar usuarios alfabéticamente por nombre completo
+          const sortedUsers = [...usersData].sort((a, b) => {
+            const fullNameA = `${a.firstName} ${a.lastName}`.trim()
+            const fullNameB = `${b.firstName} ${b.lastName}`.trim()
+            return fullNameA.localeCompare(fullNameB)
+          })
+          setUsers(sortedUsers)
+        } else {
+          setUsers([])
+        }
+        setUsersError(null)
+      } catch (error) {
+        console.error("Error fetching users:", error)
+        setUsersError("Failed to load users. Please try again later.")
+        setUsers([])
+      } finally {
+        setUsersLoading(false)
+      }
+    }
+
+    fetchUsers()
+  }, [domainId])
+
+  // Función para verificar si hay un error en un campo específico
+  const getFieldError = (index: number, field: "role" | "assignedTo") => {
+    // Solo mostrar errores si el campo ha sido tocado o si se ha intentado enviar el formulario
+    const fieldErrors = errors?.taskAssignments?.[index]?.[field]
+    const isTouched = form.formState.touchedFields.taskAssignments?.[index]?.[field]
+
+    if (fieldErrors && (isTouched || form.formState.isSubmitted)) {
+      return fieldErrors.message
+    }
+
+    return null
+  }
 
   // Función para manejar la asignación de roles
   const handleRoleAssignment = (taskIndex: number, role: string) => {
@@ -28,7 +116,22 @@ export default function Step3Tasks() {
       role,
       assignedTo: "", // Resetear el usuario asignado cuando cambia el rol
     }
-    form.setValue("taskAssignments", updatedTasks, { shouldValidate: true })
+
+    // Marcar el campo como "touched"
+    form.setValue(`taskAssignments.${taskIndex}.role`, role, {
+      shouldValidate: true,
+      shouldTouch: true,
+    })
+
+    // Resetear el campo de usuario asignado
+    form.setValue(`taskAssignments.${taskIndex}.assignedTo`, "", {
+      shouldValidate: false,
+    })
+
+    // Update context
+    updateFormValues({
+      taskAssignments: updatedTasks,
+    })
   }
 
   // Función para manejar la asignación de usuarios
@@ -38,12 +141,38 @@ export default function Step3Tasks() {
       ...updatedTasks[taskIndex],
       assignedTo: user,
     }
-    form.setValue("taskAssignments", updatedTasks, { shouldValidate: true })
+
+    // Marcar el campo como "touched"
+    form.setValue(`taskAssignments.${taskIndex}.assignedTo`, user, {
+      shouldValidate: true,
+      shouldTouch: true,
+    })
+
+    // Update context
+    updateFormValues({
+      taskAssignments: updatedTasks,
+    })
   }
 
-  // Función para verificar si hay un error en un campo específico
-  const getFieldError = (index: number, field: "role" | "assignedTo") => {
-    return errors?.taskAssignments?.[index]?.[field]?.message
+  // Función para obtener usuarios por rol
+  const getUsersByRole = (roleId: string) => {
+    // En este caso, no filtramos por rol ya que no tenemos esa relación en los datos
+    // Simplemente devolvemos todos los usuarios disponibles
+    return users
+  }
+
+  console.log("taskAssignments en step3:", taskAssignments)
+
+  // Si no hay tareas asignadas, mostrar mensaje
+  if (!taskAssignments || taskAssignments.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <p>No hay tareas disponibles. Por favor, seleccione un protocolo en el paso 1.</p>
+        <p className="mt-2 text-sm">
+          Si ya seleccionó un protocolo, intente volver al paso 1 y seleccionarlo nuevamente.
+        </p>
+      </div>
+    )
   }
 
   return (
@@ -79,16 +208,26 @@ export default function Step3Tasks() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{assignment.task}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <div className="space-y-1">
-                    <Select value={assignment.role || ""} onValueChange={(value) => handleRoleAssignment(index, value)}>
+                    <Select
+                      value={assignment.role || ""}
+                      onValueChange={(value) => handleRoleAssignment(index, value)}
+                      disabled={rolesLoading}
+                    >
                       <SelectTrigger className={`w-full ${getFieldError(index, "role") ? "border-red-500" : ""}`}>
-                        <SelectValue placeholder="Seleccionar rol" />
+                        <SelectValue placeholder={rolesLoading ? "Cargando..." : "Seleccionar rol"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {roles.map((role) => (
-                          <SelectItem key={role} value={role}>
-                            {role}
-                          </SelectItem>
-                        ))}
+                        {rolesError ? (
+                          <div className="p-2 text-red-500 text-sm">{rolesError}</div>
+                        ) : roles.length === 0 ? (
+                          <div className="p-2 text-muted-foreground text-sm">No hay roles disponibles</div>
+                        ) : (
+                          roles.map((role) => (
+                            <SelectItem key={role.id} value={role.id}>
+                              {role.name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     {getFieldError(index, "role") && (
@@ -101,18 +240,23 @@ export default function Step3Tasks() {
                     <Select
                       value={assignment.assignedTo || ""}
                       onValueChange={(value) => handleUserAssignment(index, value)}
-                      disabled={!assignment.role}
+                      disabled={!assignment.role || usersLoading}
                     >
                       <SelectTrigger className={`w-full ${getFieldError(index, "assignedTo") ? "border-red-500" : ""}`}>
-                        <SelectValue placeholder="Seleccionar usuario" />
+                        <SelectValue placeholder={usersLoading ? "Cargando..." : "Seleccionar usuario"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {assignment.role &&
-                          usersByRole[assignment.role as keyof typeof usersByRole]?.map((user) => (
-                            <SelectItem key={user} value={user}>
-                              {user}
+                        {usersError ? (
+                          <div className="p-2 text-red-500 text-sm">{usersError}</div>
+                        ) : users.length === 0 ? (
+                          <div className="p-2 text-muted-foreground text-sm">No hay usuarios disponibles</div>
+                        ) : (
+                          getUsersByRole(assignment.role).map((user) => (
+                            <SelectItem key={user.email} value={user.email}>
+                              {`${user.firstName} ${user.lastName}`.trim()}
                             </SelectItem>
-                          ))}
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     {getFieldError(index, "assignedTo") && (

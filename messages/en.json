@@ -64,6 +64,29 @@
     "title": "Project Page",
     "subtitle": "Manage your project"
   },
+  "ProjectPageDetails": {
+    "loadingData": "Loading project data...",
+    "notFoundTitle": "No services available",
+    "notFoundSubtitle": "Create services to view project indicators",
+    "active": "Active Services",
+    "completed": "Completed Services",
+    "blocked": "Blocked Services",
+    "averageTime": "Average Time"
+  },
+  "ServicesPage": {
+    "BreadcrumbItem-1": "Home",
+    "BreadcrumbItem-2": "Project",
+    "BreadcrumbPage": "Services",
+    "title": "Services",
+    "subtitle": "Manage your project services",
+    "buttonCreateService": "Create Service"
+  },
+  "ServicesPageDetails": {
+    "loadingData": "Loading services data...",
+    "notFoundTitle": "No services available",
+    "notFoundSubtitle": "Create services to view project indicators"
+  },
+
   "TasksPage": {
     "title": "Tasks",
     "subtitle": "View and manage your project tasks",

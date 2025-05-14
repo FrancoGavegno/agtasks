@@ -94,7 +94,7 @@ const defaultFormValues: CreateServiceFormValues = {
   campaign: "",
   establishment: "",
   selectedLots: [],
-  taskAssignments: [],
+  taskAssignments: [], // Asegurarse de que esto esté inicializado como un array vacío
 }
 
 // Create the context

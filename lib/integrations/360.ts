@@ -1,32 +1,8 @@
 import axios from 'axios';
-import { Domain } from "@/lib/interfaces"
+import { Domain, Workspace, Season, Farm, LotField } from "@/lib/interfaces"
 
 const apiUrl = process.env.NEXT_PUBLIC_FMS_API_URL || '';
 const apiKey = process.env.NEXT_PUBLIC_FMS_API_KEY || '';
-
-// export const getUser = async (email: string): Promise<User> => {
-//   return {
-//     "email": "agoni@geoagro.com",
-//     "firstName": "Agustina",
-//     "id": "70541ba6-ab22-4b49-a6ff-1fd5ddb73e1a",
-//     "lastName": "Goñi"
-//   }
-// }
-
-// export const listDomains = async (userId: string, lang?: string): Promise<Domain[]> => {
-export const listDomains = async (userId: string, lang?: string) => {
-    return [
-        {
-            "id": 8644,
-            "languageId": 2,
-            "name": "Agrotecnología",
-            "hasLogo": false,
-            "domainUrl": "agrotecnologia.com",
-            "deleted": false
-        },
-    ]
-}
-
 
 export const listDomainsByUserEmail = async (user: string, lang?: string): Promise<Domain[]> => {
     const query = `
@@ -66,10 +42,160 @@ export const listDomainsByUserEmail = async (user: string, lang?: string): Promi
 
 };
 
+export const listWorkspaces = async (email: string, parentId?: string): Promise<Workspace[]> => {
+    const query = `
+      query ($email: String!, $domainId: Int, $lang: String, $parentId: Int) {
+        list_workspaces(email: $email, domainId: $domainId, lang: $lang, parentId: $parentId) {
+            deleted
+            hasLogo
+            id
+            languageId
+            name
+            note
+            parentId
+            permission
+        }
+    }`;
 
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+            },
+            body: JSON.stringify({ query, variables: { email: email, parentId: parentId } }),
+        });
 
-// TO DO: implement
-// tener en cuenta que lastLogin viene null a veces y lo convertí en "" para avanzar
+        const result = await response.json();
+
+        if (!response.ok || result.errors) {
+            throw new Error(result.errors ? JSON.stringify(result.errors) : `HTTP ${response.status}`);
+        }
+
+        return result.data?.list_workspaces ?? [];
+    } catch (error) {
+        console.error('Error fetching workspaces:', error);
+        return [];
+    }
+}
+
+export const listSeasons = async (workspaceId: string): Promise<Season[]> => {
+    const query = `
+      query ($workspaceId: Int!){
+        list_seasons(workspaceId: $workspaceId) {
+            deleted
+            id
+            name
+            startDate
+            endDate
+            workspaceId
+        }
+        }`;
+
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+            },
+            body: JSON.stringify({ query, variables: { workspaceId: workspaceId } }),
+        });
+
+        const result = await response.json();
+        // console.log("result: ", result)
+
+        if (!response.ok || result.errors) {
+            throw new Error(result.errors ? JSON.stringify(result.errors) : `HTTP ${response.status}`);
+        }
+
+        return result.data?.list_seasons ?? [];
+    } catch (error) {
+        console.error('Error fetching seasons:', error);
+        return [];
+    }
+}
+
+export const listFarms = async (workspaceId: string, seasonId: string): Promise<Farm[]> => {
+    const query = `
+      query ($workspaceId: Int!, $seasonId: Int, $userId: String, $lang: String, $includeGeoJson: Boolean) {
+        list_farms(workspaceId: $workspaceId, seasonId: $seasonId, userId: $userId, lang: $lang, includeGeoJson: $includeGeoJson) {
+            id
+            name
+            permission
+            seasonId
+            workspaceId
+            deleted
+        }
+        }`;
+
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+            },
+            body: JSON.stringify({ query, variables: { workspaceId: workspaceId, seasonId: seasonId } }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || result.errors) {
+            throw new Error(result.errors ? JSON.stringify(result.errors) : `HTTP ${response.status}`);
+        }
+
+        return result.data?.list_farms ?? [];
+    } catch (error) {
+        console.error('Error fetching farms:', error);
+        return [];
+    }
+}
+
+export const listFields = async (workspaceId: string, seasonId: string, farmId: string): Promise<LotField[]> => {
+    const query = `
+      query ($farmId: Int!, $seasonId: Int!, $workspaceId: Int!, $lang: String) {
+        list_fields(farmId: $farmId, seasonId: $seasonId, workspaceId: $workspaceId, lang: $lang) {
+            cropDate
+            cropId
+            cropName
+            farmId
+            hectares
+            hybridId
+            hybridName
+            id
+            layerId
+            name
+            seasonId
+            workspaceId
+        }
+    }`;
+
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+            },
+            body: JSON.stringify({ query, variables: { workspaceId: workspaceId, seasonId: seasonId, farmId: farmId } }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || result.errors) {
+            throw new Error(result.errors ? JSON.stringify(result.errors) : `HTTP ${response.status}`);
+        }
+
+        return result.data?.list_fields ?? [];
+    } catch (error) {
+        console.error('Error fetching fields:', error);
+        return [];
+    }
+}
+
+// TO DO: implement // tener en cuenta que lastLogin viene null a veces y lo convertí en "" para avanzar
 export const listUsersByDomain = async (domainId: number) => {
     return [
         {

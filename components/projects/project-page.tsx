@@ -1,15 +1,16 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useParams } from "next/navigation"
+import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertTriangle, CheckCircle, Clock, Wrench } from "lucide-react"
-import { useParams } from "next/navigation"
 import type { Service } from "@/lib/interfaces"
 
-export function ProjectDetails() {
+export function ProjectPageDetails() {
   const params = useParams()
-  const projectId = params.project as string
-
+  const {domain, project} = params
+  const t = useTranslations("ProjectPageDetails")
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -24,7 +25,7 @@ export function ProjectDetails() {
     const fetchServices = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`/api/v1/agtasks/domains/8644/projects/${projectId}/services`)
+        const response = await fetch(`/api/v1/agtasks/domains/${domain}/projects/${project}/services`)
 
         if (!response.ok) {
           throw new Error(`Error: ${response.status}`)
@@ -96,13 +97,13 @@ export function ProjectDetails() {
       }
     }
 
-    if (projectId) {
+    if (project) {
       fetchServices()
     }
-  }, [projectId])
+  }, [project])
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64">Cargando datos del proyecto...</div>
+    return <div className="flex justify-center items-center h-64">{t("loadingData")}</div>
   }
 
   if (error) {
@@ -112,8 +113,8 @@ export function ProjectDetails() {
   if (services.length === 0) {
     return (
       <div className="text-center h-64 flex flex-col items-center justify-center">
-        <p className="text-lg text-muted-foreground mb-2">No hay servicios disponibles</p>
-        <p className="text-sm text-muted-foreground">Cree servicios para ver los indicadores del proyecto</p>
+        <p className="text-lg text-muted-foreground mb-2">{t("notFoundTitle")}</p>
+        <p className="text-sm text-muted-foreground">{t("notFoundSubtitle")}</p>
       </div>
     )
   }
@@ -124,7 +125,7 @@ export function ProjectDetails() {
         {/* Card 1: Servicios Activos */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Servicios Activos</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("active")}</CardTitle>
             <Wrench className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -140,7 +141,7 @@ export function ProjectDetails() {
         {/* Card 2: Servicios Completados */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Servicios Completados</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("completed")}</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -154,7 +155,7 @@ export function ProjectDetails() {
         {/* Card 3: Servicios Bloqueados */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Servicios Bloqueados</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("blocked")}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -166,7 +167,7 @@ export function ProjectDetails() {
         {/* Card 4: Tiempo Promedio */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tiempo Promedio</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("averageTime")}</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>

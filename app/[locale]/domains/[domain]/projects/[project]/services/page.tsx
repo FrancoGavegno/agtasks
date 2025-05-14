@@ -1,55 +1,53 @@
 'use client'
+import { Link } from "@/i18n/routing"
+import { useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
-import { Link } from "@/i18n/routing"
-import { Services } from "@/components/projects/services"
+import { ServicesPageDetails } from "@/components/projects/services"
 
 export default function ServicesPage() {
+  const { domain, project } = useParams<{ domain: string, project: string }>();
+  const t = useTranslations("ServicesPage")
+
   return (
     <div className="container w-full pt-4 pb-4">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/">Home</BreadcrumbLink>
+            <Link href={`/domains/${domain}/settings`}>{t("BreadcrumbItem-1")}</Link>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink href="/en/domains/8644/projects">Projects</BreadcrumbLink>
+            <Link href={`/domains/${domain}/projects/${project}`}>{t("BreadcrumbItem-2")}</Link>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink href="/en/domains/8644/projects/1">01 - Tandil</BreadcrumbLink>
+            <BreadcrumbPage>{t("BreadcrumbPage")}</BreadcrumbPage>
           </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Services</BreadcrumbPage>
-          </BreadcrumbItem>
-          
         </BreadcrumbList>
       </Breadcrumb>
 
       <div className="flex justify-between items-center mt-5 mb-5">
       <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Services</h2>
-          <p className="text-muted-foreground">Manage your project services</p>
+          <h2 className="text-2xl font-semibold tracking-tight">{t("title")}</h2>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Link href={`/domains/8644/projects/1/services/create`} >
+        <Link href={`/domains/${domain}/projects/${project}/services/create`} >
             <Button>
-            <Plus className="mr-2 h-4 w-4" /> Crear Servicio
+            <Plus className="mr-2 h-4 w-4" /> {t("buttonCreateService")}
             </Button>
           </Link>
-        
       </div>
 
-      <Services />
+      <ServicesPageDetails />
     </div>
     
   )

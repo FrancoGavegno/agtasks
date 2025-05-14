@@ -49,66 +49,116 @@ export default function Step1Protocol() {
     fetchProtocols()
   }, [domainId])
 
+  // Definir la función fetchProtocolTasks fuera de los useEffect
+  const fetchProtocolTasks = async (protocolId: string) => {
+    try {
+      // This is a placeholder - you'll need to adjust the actual endpoint
+      const response = await fetch(
+        `/api/v1/integrations/jira/domains/${domainId}/projects/${projectId}/services/${protocolId}/tasks`,
+      )
+
+      if (!response.ok) {
+        throw new Error(`Error fetching tasks: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      // Assuming the API returns data in a format that includes tasks
+      // You might need to adjust this based on the actual response structure
+      if (data && data.success && data.data) {
+        // Extract task names from the response
+        const tasks = data.data.subtasks?.map((task: any) => task.summary) || []
+
+        // Update the protocol tasks state
+        setProtocolTasks((prev) => ({
+          ...prev,
+          [protocolId]: tasks,
+        }))
+
+        return tasks
+      }
+      return []
+    } catch (err) {
+      console.error(`Failed to fetch tasks for protocol ${protocolId}:`, err)
+      // If API fails, use default tasks as fallback
+      const defaultTasks =
+        protocolId === "variable-seeding"
+          ? [
+              "Análisis de suelo y topografía",
+              "Generación de mapas de prescripción",
+              "Calibración de maquinaria",
+              "Seguimiento de aplicación",
+            ]
+          : [
+              "Monitoreo de lotes utilizando imágenes satelitales",
+              "Zonificación del índice",
+              "Validación del mapa de zonas con recorrida a campo",
+            ]
+
+      setProtocolTasks((prev) => ({
+        ...prev,
+        [protocolId]: defaultTasks,
+      }))
+
+      return defaultTasks
+    }
+  }
+
   // Fetch tasks for the selected protocol
   useEffect(() => {
-    const fetchProtocolTasks = async (protocolId: string) => {
-      try {
-        // This is a placeholder - you'll need to adjust the actual endpoint
-        const response = await fetch(
-          `/api/v1/integrations/jira/domains/${domainId}/projects/${projectId}/services/${protocolId}/tasks`,
-        )
-
-        if (!response.ok) {
-          throw new Error(`Error fetching tasks: ${response.status}`)
-        }
-
-        const data = await response.json()
-
-        // Assuming the API returns data in a format that includes tasks
-        // You might need to adjust this based on the actual response structure
-        if (data && data.success && data.data) {
-          // Extract task names from the response
-          const tasks = data.data.subtasks?.map((task: any) => task.summary) || []
-
-          // Update the protocol tasks state
-          setProtocolTasks((prev) => ({
-            ...prev,
-            [protocolId]: tasks,
-          }))
-        }
-      } catch (err) {
-        console.error(`Failed to fetch tasks for protocol ${protocolId}:`, err)
-      }
-    }
-
     if (protocol) {
       // Only fetch if we don't already have the tasks for this protocol
       if (!protocolTasks[protocol]) {
         fetchProtocolTasks(protocol)
       }
     }
-  }, [protocol, domainId, projectId, protocolTasks])
+  }, [protocol, domainId, projectId])
 
   // Update form values in context and task assignments when protocol changes
-  const handleProtocolChange = (value: string) => {
+  const handleProtocolChange = async (value: string) => {
     form.setValue("protocol", value as any)
 
-    // Update task assignments based on selected protocol
-    if (value && protocolTasks[value]) {
-      const tasks = protocolTasks[value]
-      const newAssignments = tasks.map((task) => ({
-        task,
-        role: "",
-        assignedTo: "",
-      }))
+    // Actualizar task assignments basado en el protocolo seleccionado
+    if (value) {
+      // Si ya tenemos las tareas para este protocolo, usarlas inmediatamente
+      if (protocolTasks[value]) {
+        const tasks = protocolTasks[value]
+        const newAssignments = tasks.map((task) => ({
+          task,
+          role: "",
+          assignedTo: "",
+        }))
 
-      form.setValue("taskAssignments", newAssignments)
+        form.setValue("taskAssignments", newAssignments)
 
-      // Update context
-      updateFormValues({
-        protocol: value as any,
-        taskAssignments: newAssignments,
-      })
+        // Update context
+        updateFormValues({
+          protocol: value as any,
+          taskAssignments: newAssignments,
+        })
+      } else {
+        // Si no tenemos las tareas, hacer la petición y luego actualizar
+        const tasks = await fetchProtocolTasks(value)
+        if (tasks && tasks.length > 0) {
+            const newAssignments: Array<{
+            task: string
+            role: string
+            assignedTo: string
+            }> = tasks.map((task: string) => ({
+            task,
+            role: "",
+            assignedTo: "",
+            }))
+
+          form.setValue("taskAssignments", newAssignments)
+
+          // Update context
+          updateFormValues({
+            protocol: value as any,
+            taskAssignments: newAssignments,
+          })
+        }
+      }
     }
   }
 

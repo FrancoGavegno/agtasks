@@ -33,7 +33,9 @@ const defaultValues: CreateServiceFormValues = {
 export default function CreateService() {
   const router = useRouter()
   const params = useParams()
-  const projectId = params.project as string
+  const { locale, projectId, domainId } = params
+  // const projectId = params.project as string
+  // const domainId = "8644" // TODO: Get domainId from params
 
   // Estado para controlar el paso actual del wizard
   const [currentStep, setCurrentStep] = useState(1)
@@ -55,7 +57,14 @@ export default function CreateService() {
 
     switch (currentStep) {
       case 1:
+        console.log("Validando paso 1, taskAssignments:", methods.getValues("taskAssignments"))
         isValid = await methods.trigger("protocol")
+        if (isValid) {
+          // Asegurarse de que taskAssignments esté disponible para el siguiente paso
+          const protocol = methods.getValues("protocol")
+          const taskAssignments = methods.getValues("taskAssignments")
+          console.log("Protocolo seleccionado:", protocol, "Tareas:", taskAssignments)
+        }
         break
       case 2:
         // Marcar los campos como "touched" antes de validar
@@ -137,16 +146,18 @@ export default function CreateService() {
         totalArea: 0, // Se calculará en base a los lotes seleccionados
         startDate: new Date().toISOString(),
         fields: data.selectedLots,
-        tasks: data.taskAssignments.map((task) => ({
-          externalTemplateId: data.protocol,
-          sourceSystem: "jira",
-          roleId: task.role,
-          userId: task.assignedTo,
-        })),
+        tasks: data.taskAssignments
+          .filter((task) => task.role && task.assignedTo) // Solo incluir tareas con rol y usuario asignados
+          .map((task) => ({
+            externalTemplateId: data.protocol,
+            sourceSystem: "jira",
+            roleId: task.role,
+            userId: task.assignedTo,
+          })),
       }
 
       // Enviar los datos al API
-      const response = await fetch(`/api/v1/agtasks/domains/8644/projects/${projectId}/services`, {
+      const response = await fetch(`/api/v1/agtasks/domains/${domainId}/projects/${projectId}/services`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -155,7 +166,8 @@ export default function CreateService() {
       })
 
       if (!response.ok) {
-        throw new Error(`Error: ${response.status}`)
+        const errorData = await response.json()
+        throw new Error(errorData.error || `Error: ${response.status}`)
       }
 
       // Mostrar mensaje de confirmación
@@ -166,12 +178,12 @@ export default function CreateService() {
       })
 
       // Redirigir a la página de servicios
-      router.push(`/projects/${projectId}/services`)
+      router.push(`${locale}/domains/${domainId}/projects/${projectId}/services`)
     } catch (error) {
       console.error("Error creating service:", error)
       toast({
         title: "Error al crear el servicio",
-        description: "Ha ocurrido un error al crear el servicio. Por favor, inténtelo de nuevo.",
+        description: `Ha ocurrido un error al crear el servicio: ${error instanceof Error ? error.message : "Error desconocido"}`,
         variant: "destructive",
         duration: 5000,
       })

@@ -31,6 +31,8 @@ export async function POST(req: Request) {
         const json = await req.json();
         const parsed = serviceSchema.safeParse(json);
         if (!parsed.success) {
+            console.log("Validation error", parsed.error.format() )
+            
             return NextResponse.json(
                 { error: "Validation error", issues: parsed.error.format() },
                 { status: 400 }

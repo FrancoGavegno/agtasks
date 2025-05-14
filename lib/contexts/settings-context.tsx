@@ -57,7 +57,7 @@ interface SettingsContextType {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined)
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const { domain } = useParams<{ domain: string }>();
+  const { locale, domain } = useParams<{ locale: string, domain: string }>();
   
   // Estado para protocolos
   const [protocols, setProtocols] = useState<Protocol[]>([])
@@ -111,7 +111,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       //if (allProtocols.length > 0 || protocols.length === 0) return
 
       try {
-        const res = await fetch(`/api/v1/integrations/jira/domains/${domain}/projects/${projectId}/services/${queueId}`)
+        const res = await fetch(`/api/v1/integrations/jira/domains/${domain}/projects/${projectId}/services/queues/${queueId}`)
         const data = await res.json()
 
         // Mapear los datos de tm-protocol y buscar el id correspondiente en protocols
@@ -171,15 +171,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     fetchDomainRoles()
   }, [shouldRefetchRoles, roles.length])
 
-  // Fetch All Agtasks Roles 
+  // Fetch All Agtasks Roles (Amplify/data/resource.ts)
   useEffect(() => {
     const fetchAllRoles = async () => {
       // if (allRoles.length > 0) return
 
       try {
-        // Aquí usamos el servicio que devuelve todos los roles disponibles
-        const data = await import("@/lib/services/agtasks")
-          .then((module) => module.listRoles())
+        const res = await fetch(`/api/v1/agtasks/roles/${locale}`)
+        //console.log(`/api/v1/agtasks/roles/${locale}`)
+        const data = await res.json()
 
         // Mapear los datos y buscar el id correspondiente en roles
         const newRoles = data.map((role: any) => {

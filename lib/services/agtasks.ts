@@ -105,6 +105,28 @@ export const listRoles = async (language?: string): Promise<Role[]> => {
   }
 }
 
+export const createRole = async (language: string, data: { name: string }) => {
+  try { 
+    // Get the Amplify client
+    const client = getClient()
+
+    // Create the role
+    const response = await client.models.Role.create({
+      language: language,
+      name: data.name,  
+    })
+
+    // If role creation fails, throw error
+    if (!response.data) { 
+      throw new Error(`Failed to create role`)
+    }
+    return response.data
+  } catch (error) {
+    console.error("Error creating role in Amplify:", error)
+    throw new Error(`Failed to create role: ${error instanceof Error ? error.message : String(error)}`)
+  }
+}
+
 // Projects
 
 export const listProjectsByDomain = async (domainId: string): Promise<Project[]> => {

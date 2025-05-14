@@ -72,16 +72,28 @@ export type ProjectInput = z.infer<typeof projectSchema>;
 
 // Services (amplify/data/resource.ts)
 
+// const fieldSchema = z.object({
+
+// })
+
+const taskSchema = z.object({
+    externalTemplateId: z.string(),
+    sourceSystem: z.string(),
+    roleId: z.string(),
+    userId: z.string()
+})
+
 export const serviceSchema = z.object({
+    projectId: z.string().min(1, "projectId is required"),
     serviceName: z.string().min(1, "serviceName is required"), // Nombre interno en Agtasks
-    externalServiceKey: z.string().min(1, "externalServiceKey is required"), // ID en el task manager (ej. issueKey de Jira)
     sourceSystem: z.string().min(1, "sourceSystem  is required"), // Ej.: "jira", "clickup", etc.
     externalTemplateId: z.string().min(1, "externalTemplateId is required"), // ID del template usado en el task manager
     workspaceId: z.string().min(1, "workspaceId is required"),
     campaignId: z.string().min(1, "campaignId is required"),
     farmId: z.string().min(1, "farmId is required"),
-    totalArea: z.number().min(1, "totalArea is required"),
+    totalArea: z.number(),
     startDate: z.string().min(1, "startDate is required"),
+    tasks: z.array(taskSchema)
 });
 
 export const serviceQuerySchema = z.object({
@@ -102,3 +114,16 @@ export const jiraServiceQuerySchema = z.object({
 export const jiraTaskQuerySchema = z.object({
     serviceId: z.string().min(1, "serviceId is required"),
 });
+
+
+// Roles (amplify/data/resource.ts)
+
+export const roleSchema = z.object({
+    name: z.string().min(1, "name is required"),
+});
+
+export const roleQuerySchema = z.object({
+    language: z.string().min(1, "language is required"),
+});
+
+export type RoleInput = z.infer<typeof roleSchema>;

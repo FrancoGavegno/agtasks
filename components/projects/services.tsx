@@ -1,5 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
+import { Link } from "@/i18n/routing"
+import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -16,17 +18,22 @@ import {
   ArrowUp,
   ArrowUpDown,
   PlusCircle,
+  Plus,
 } from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useParams } from "next/navigation"
-import { Link } from "@/i18n/routing"
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select"
 import type { Service } from "@/lib/interfaces"
+import { useTranslations } from "next-intl"
 
-export function Services() {
+export function ServicesPageDetails() {
   const params = useParams()
-  const projectId = params.project as string
-  const domainId = "8644" // Hardcoded for now, could be extracted from params or context
-
+  const {domain, project} = params
+  const t = useTranslations("ServicesPageDetails")
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -43,7 +50,7 @@ export function Services() {
     const fetchServices = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`/api/v1/agtasks/domains/${domainId}/projects/${projectId}/services`)
+        const response = await fetch(`/api/v1/agtasks/domains/${domain}/projects/${project}/services`)
 
         if (!response.ok) {
           throw new Error(`Error: ${response.status}`)
@@ -61,10 +68,10 @@ export function Services() {
       }
     }
 
-    if (projectId) {
+    if (project) {
       fetchServices()
     }
-  }, [projectId, domainId])
+  }, [domain, project])
 
   // Handle sorting
   const requestSort = (key: keyof Service) => {
@@ -176,7 +183,7 @@ export function Services() {
   )
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64">Cargando servicios...</div>
+    return <div className="flex justify-center items-center h-64">{t("loadingData")}</div>
   }
 
   if (error) {
@@ -186,12 +193,13 @@ export function Services() {
   if (services.length === 0) {
     return (
       <div className="text-center h-64 flex flex-col items-center justify-center">
-        <p className="text-lg text-muted-foreground mb-4">No hay servicios disponibles</p>
-        <Link href={`/domains/${domainId}/projects/${projectId}/services/create`}>
+        <p className="text-lg text-muted-foreground mb-4">{t("notFoundTitle")}</p>
+        <p className="text-sm text-muted-foreground">{t("notFoundSubtitle")}</p>
+        {/* <Link href={`/domains/${domain}/projects/${project}/services/create`}>
           <Button>
-            <PlusCircle className="mr-2 h-4 w-4" /> Crear Primer Servicio
+            <Plus className="mr-2 h-4 w-4" /> {t("buttonCreateService")}
           </Button>
-        </Link>
+        </Link>*/}
       </div>
     )
   }
