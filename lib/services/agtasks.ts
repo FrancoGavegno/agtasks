@@ -1,420 +1,555 @@
-import { Amplify } from "aws-amplify"
-import outputs from "@/amplify_outputs.json"
-import { generateClient } from "aws-amplify/api"
-import type { Schema } from "@/amplify/data/resource"
-import type { Project, Service, Role } from "@/lib/interfaces"
+import { Amplify } from "aws-amplify";
+import outputs from "@/amplify_outputs.json";
+import { generateClient } from "aws-amplify/api";
+import type { Schema } from "@/amplify/data/resource";
+import type { Project, Service, Role } from "@/lib/interfaces";
+import { listFields } from "@/lib/integrations/360";
 
-// Amplify configuration
-let clientInstance: ReturnType<typeof generateClient<Schema>> | null = null
-let configured = false
+// Amplify configuration - Singleton Client
+let clientInstance: ReturnType<typeof generateClient<Schema>> | null = null;
+let configured = false;
+
 export function getClient() {
   if (!configured) {
-    Amplify.configure(outputs)
-    configured = true
+    Amplify.configure(outputs);
+    configured = true;
   }
 
   if (!clientInstance) {
-    clientInstance = generateClient<Schema>()
+    clientInstance = generateClient<Schema>();
   }
 
-  return clientInstance
+  return clientInstance;
 }
-const client = getClient()
 
-// Domain Protocols (amplify/data/resource.ts)
+// Domain Protocols 
 export async function createDomainProtocol(
   domainId: string,
   data: { tmProtocolId: string; name: string; language: string },
 ) {
-  return await client.models.DomainProtocol.create({
-    domainId,
-    tmProtocolId: data.tmProtocolId,
-    name: data.name,
-    language: data.language,
-  })
-}
+  try {
+    const client = getClient();
+    const response: { data: Schema["DomainProtocol"]["type"] | null; errors?: any[] } = await client.models.DomainProtocol.create({
+      domainId,
+      tmProtocolId: data.tmProtocolId,
+      name: data.name,
+      language: data.language,
+    });
 
-export async function listDomainProtocols(domainId: string) {
-  return await client.models.DomainProtocol.list({ filter: { domainId: { eq: domainId } } })
+    if (!response.data) {
+      throw new Error("Failed to create domain protocol");
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error("Error creating domain protocol in Amplify:", error);
+    throw new Error(`Failed to create domain protocol: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 export async function deleteDomainProtocol(domainId: string, protocolId: string) {
-  return await client.models.DomainProtocol.delete({ id: protocolId })
+  try {
+    const client = getClient();
+    const response: { data: Schema["DomainProtocol"]["type"] | null; errors?: any[] } = await client.models.DomainProtocol.delete({ id: protocolId });
+
+    if (!response.data) {
+      throw new Error(`Failed to delete domain protocol with ID ${protocolId}`);
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting domain protocol from Amplify:", error);
+    throw new Error(`Failed to delete domain protocol: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
-// Domain Roles (amplify/data/resource.ts)
+export async function listDomainProtocols(domainId: string) {
+  try {
+    const client = getClient();
+    const response: { data: Schema["DomainProtocol"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.DomainProtocol.list({
+      filter: { domainId: { eq: domainId } },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching domain protocols from Amplify:", error);
+    throw new Error(`Failed to fetch domain protocols: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+// Domain Roles 
 export async function createDomainRole(domainId: string, data: { name: string; language: string }) {
-  return await client.models.DomainRole.create({
-    domainId,
-    name: data.name,
-    language: data.language,
-  })
-}
+  try {
+    const client = getClient();
+    const response: { data: Schema["DomainRole"]["type"] | null; errors?: any[] } = await client.models.DomainRole.create({
+      domainId,
+      name: data.name,
+      language: data.language,
+    });
 
-export async function listDomainRoles(domainId: string) {
-  return await client.models.DomainRole.list({ filter: { domainId: { eq: domainId } } })
+    if (!response.data) {
+      throw new Error("Failed to create domain role");
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error("Error creating domain role in Amplify:", error);
+    throw new Error(`Failed to create domain role: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 export async function deleteDomainRole(domainId: string, roleId: string) {
-  return await client.models.DomainRole.delete({ id: roleId })
+  try {
+    const client = getClient();
+    const response: { data: Schema["DomainRole"]["type"] | null; errors?: any[] } = await client.models.DomainRole.delete({ id: roleId });
+
+    if (!response.data) {
+      throw new Error(`Failed to delete domain role with ID ${roleId}`);
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting domain role from Amplify:", error);
+    throw new Error(`Failed to delete domain role: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
-// Domain Forms (amplify/data/resource.ts)
+export async function listDomainRoles(domainId: string) {
+  try {
+    const client = getClient();
+    const response: { data: Schema["DomainRole"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.DomainRole.list({
+      filter: { domainId: { eq: domainId } },
+    });
 
-export async function createDomainForm(domainId: string, data: { name: string; language: string; ktFormId: string }) {
-  return await client.models.DomainForm.create({
-    domainId,
-    name: data.name,
-    language: data.language,
-    ktFormId: data.ktFormId,
-  })
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching domain roles from Amplify:", error);
+    throw new Error(`Failed to fetch domain roles: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
-export async function listDomainForms(domainId: string) {
-  return await client.models.DomainForm.list({ filter: { domainId: { eq: domainId } } })
+// Domain Forms 
+export async function createDomainForm(
+  domainId: string,
+  data: { name: string; language: string; ktFormId: string },
+) {
+  try {
+    const client = getClient();
+    const response: { data: Schema["DomainForm"]["type"] | null; errors?: any[] } = await client.models.DomainForm.create({
+      domainId,
+      name: data.name,
+      language: data.language,
+      ktFormId: data.ktFormId,
+    });
+
+    if (!response.data) {
+      throw new Error("Failed to create domain form");
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error("Error creating domain form in Amplify:", error);
+    throw new Error(`Failed to create domain form: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 export async function deleteDomainForm(domainId: string, formId: string) {
-  return await client.models.DomainForm.delete({ id: formId })
+  try {
+    const client = getClient();
+    const response: { data: Schema["DomainForm"]["type"] | null; errors?: any[] } = await client.models.DomainForm.delete({ id: formId });
+
+    if (!response.data) {
+      throw new Error(`Failed to delete domain form with ID ${formId}`);
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting domain form from Amplify:", error);
+    throw new Error(`Failed to delete domain form: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+export async function listDomainForms(domainId: string) {
+  try {
+    const client = getClient();
+    const response: { data: Schema["DomainForm"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.DomainForm.list({
+      filter: { domainId: { eq: domainId } },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching domain forms from Amplify:", error);
+    throw new Error(`Failed to fetch domain forms: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 // Roles
-
 export const listRoles = async (language?: string): Promise<Role[]> => {
   try {
-    // Get the Amplify client
-    const client = getClient()
+    const client = getClient();
+    const filter = language ? { language: { eq: language } } : undefined;
+    const response: { data: Schema["Role"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.Role.list({ filter });
 
-    // Prepare filter - if language is provided, filter by it
-    const filter = language ? { language: { eq: language } } : undefined
-
-    // Query for roles
-    const response = await client.models.Role.list({ filter })
-
-    // Map the response to the Role interface
-    const roles = response.data.map((item) => ({
+    return response.data.map((item) => ({
       id: item.id,
       name: item.name,
-      language: item.language || "ES", // Default to ES if language is not provided
-    }))
-
-    return roles
+      language: item.language || "ES",
+    }));
   } catch (error) {
-    console.error("Error fetching roles from Amplify:", error)
-    throw new Error(`Failed to fetch roles: ${error instanceof Error ? error.message : String(error)}`)
+    console.error("Error fetching roles from Amplify:", error);
+    throw new Error(`Failed to fetch roles: ${error instanceof Error ? error.message : String(error)}`);
   }
-}
-
-export const createRole = async (language: string, data: { name: string }) => {
-  try { 
-    // Get the Amplify client
-    const client = getClient()
-
-    // Create the role
-    const response = await client.models.Role.create({
-      language: language,
-      name: data.name,  
-    })
-
-    // If role creation fails, throw error
-    if (!response.data) { 
-      throw new Error(`Failed to create role`)
-    }
-    return response.data
-  } catch (error) {
-    console.error("Error creating role in Amplify:", error)
-    throw new Error(`Failed to create role: ${error instanceof Error ? error.message : String(error)}`)
-  }
-}
+};
 
 // Projects
-
-export const listProjectsByDomain = async (domainId: string): Promise<Project[]> => {
+export const createProject = async (
+  domainId: string,
+  data: { name: string; language: string; queueId: number },
+) => {
   try {
-    // Get the Amplify client
-    const client = getClient()
-
-    // Query for projects with matching domainId and not deleted
-    const response = await client.models.Project.list({
-      filter: {
-        domainId: { eq: domainId },
-        deleted: { ne: true }, // Filter out deleted projects
-      },
-    })
-
-    return response.data
-  } catch (error) {
-    console.error("Error fetching projects from Amplify:", error)
-    throw new Error(`Failed to fetch projects: ${error instanceof Error ? error.message : String(error)}`)
-  }
-}
-
-export const getProject = async (projectId: string): Promise<Project> => {
-  try {
-    // Get the Amplify client
-    const client = getClient()
-
-    // Query for the specific project
-    const response = await client.models.Project.get({ id: projectId })
-
-    // If project not found, throw error
-    if (!response.data) {
-      throw new Error(`Project with ID ${projectId} not found`)
-    }
-
-    return response.data
-  } catch (error) {
-    console.error("Error fetching project from Amplify:", error)
-    throw new Error(`Failed to fetch project: ${error instanceof Error ? error.message : String(error)}`)
-  }
-}
-
-// To Do: en Etapa 2 se guardará el projecto en el task manager, usando un template de projecto
-// y una vez creado guardar una referencia en Agtasks.
-export const createProject = async (domainId: string, data: { name: string; language: string; queueId: number }) => {
-  try {
-    // Get the Amplify client
-    const client = getClient()
-    // Create the project
-    const response = await client.models.Project.create({
+    const client = getClient();
+    const response: { data: Schema["Project"]["type"] | null; errors?: any[] } = await client.models.Project.create({
       domainId,
       name: data.name,
       language: data.language,
       queueId: data.queueId,
-      deleted: false, // Default value for deleted
-    })
-    // If project creation fails, throw error
+      deleted: false,
+    });
+
     if (!response.data) {
-      throw new Error(`Failed to create project`)
+      throw new Error(`Failed to create project`);
     }
-    return response.data
+
+    return response.data;
   } catch (error) {
-    console.error("Error creating project in Amplify:", error)
-    throw new Error(`Failed to create project: ${error instanceof Error ? error.message : String(error)}`)
+    console.error("Error creating project in Amplify:", error);
+    throw new Error(`Failed to create project: ${error instanceof Error ? error.message : String(error)}`);
   }
-}
+};
+
+export const getProject = async (projectId: string): Promise<Project> => {
+  try {
+    const client = getClient();
+    const response: { data: Schema["Project"]["type"] | null; errors?: any[] } = await client.models.Project.get({ id: projectId });
+
+    if (!response.data) {
+      throw new Error(`Project with ID ${projectId} not found`);
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching project from Amplify:", error);
+    throw new Error(`Failed to fetch project: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+
+export const listProjectsByDomain = async (domainId: string): Promise<Project[]> => {
+  try {
+    const client = getClient();
+    const response: { data: Schema["Project"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.Project.list({
+      filter: {
+        domainId: { eq: domainId },
+        deleted: { ne: true },
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching projects from Amplify:", error);
+    throw new Error(`Failed to fetch projects: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
 
 // Services
 export const createService = async (data: any) => {
   try {
-    // Get the Amplify client
-    const client = getClient()
+    const client = getClient();
+    let totalArea = data.totalArea || 0;
 
-    // Create the service
-    const serviceResponse = await client.models.Service.create({
+    // Calcular el área total si hay campos seleccionados
+    if (data.fields && Array.isArray(data.fields) && data.fields.length > 0) {
+      try {
+        const fieldsData = await listFields(data.workspaceId, data.campaignId, data.farmId);
+        const fieldIds = data.fields.map((field: any) => field.fieldId);
+        const selectedFields = fieldsData.filter((field) => fieldIds.includes(field.id.toString()));
+        totalArea = selectedFields.reduce((sum: number, field: any) => sum + (field.hectares || 0), 0);
+      } catch (error) {
+        console.error("Error fetching field data for area calculation:", error);
+      }
+    }
+
+    // Crear el servicio
+    const serviceData = {
       projectId: data.projectId,
       serviceName: data.serviceName,
       externalServiceKey: data.externalServiceKey || `SRV-${Date.now()}`,
       sourceSystem: data.sourceSystem,
       externalTemplateId: data.externalTemplateId,
       workspaceId: data.workspaceId,
+      workspaceName: data.workspaceName,
       campaignId: data.campaignId,
+      campaignName: data.campaignName,
       farmId: data.farmId,
-      totalArea: data.totalArea || 0,
+      farmName: data.farmName,
+      totalArea,
       startDate: data.startDate,
       endDate: data.endDate,
-    })
+    };
+
+    const serviceResponse: { data: Schema["Service"]["type"] | null; errors?: any[] } = await client.models.Service.create(serviceData);
 
     if (!serviceResponse.data) {
-      throw new Error("Failed to create service")
+      throw new Error("Failed to create service");
     }
 
-    const serviceId = serviceResponse.data.id
+    const serviceId = serviceResponse.data.id;
 
-    // Create service fields if provided
+    // Crear los campos del servicio
     if (data.fields && Array.isArray(data.fields) && data.fields.length > 0) {
-      for (const fieldId of data.fields) {
-        await client.models.ServiceField.create({
-          serviceId,
-          fieldId,
-        })
-      }
+      await Promise.all(
+        data.fields.map((field: any) =>
+          client.models.ServiceField.create({
+            serviceId,
+            fieldId: field.fieldId,
+            fieldName: field.fieldName,
+          }),
+        ),
+      );
     }
 
-    // Create service tasks if provided
+    // Crear las tareas del servicio
     if (data.tasks && Array.isArray(data.tasks) && data.tasks.length > 0) {
-      for (const task of data.tasks) {
-        await client.models.ServiceTask.create({
-          serviceId,
-          externalTemplateId: task.externalTemplateId,
-          sourceSystem: task.sourceSystem,
-          roleId: task.roleId,
-          userId: task.userId,
-        })
-      }
+      await Promise.all(
+        data.tasks.map((task: any) =>
+          client.models.ServiceTask.create({
+            serviceId,
+            externalTemplateId: task.externalTemplateId,
+            sourceSystem: task.sourceSystem,
+            roleId: task.roleId,
+            userId: task.userId,
+            taskName: task.taskName,
+          }),
+        ),
+      );
     }
 
-    return serviceResponse.data
+    return serviceResponse.data;
   } catch (error) {
-    console.error("Error creating service in Amplify:", error)
-    throw new Error(`Failed to create service: ${error instanceof Error ? error.message : String(error)}`)
+    console.error("Error creating service in Amplify:", error);
+    throw new Error(`Failed to create service: ${error instanceof Error ? error.message : String(error)}`);
   }
-}
+};
 
-export const listServicesByProject = async (projectId: string): Promise<Service[]> => {
+export const getServiceDetail = async (serviceId: string) => {
   try {
-    // Get the Amplify client
-    const client = getClient()
+    const client = getClient();
+    const serviceResponse: { data: Schema["Service"]["type"] | null; errors?: any[] } = await client.models.Service.get({ id: serviceId });
 
-    // Query for services related to this project
-    const servicesResponse = await client.models.Service.list({
-      filter: {
-        projectId: { eq: projectId },
-      },
-    })
-
-    if (!servicesResponse.data.length) {
-      console.log(`No services found for project ${projectId}`)
-      return []
+    if (!serviceResponse.data) {
+      throw new Error(`Service with ID ${serviceId} not found`);
     }
 
-    // Create a map to store service data with their fields and tasks
-    const serviceMap = new Map()
+    const service = serviceResponse.data;
 
-    // 2. For each service, get its fields
-    for (const service of servicesResponse.data) {
-      // Store basic service info
-      serviceMap.set(service.id, {
-        projectId: service.projectId,
-        id: service.id,
-        serviceName: service.serviceName,
-        externalServiceKey: service.externalServiceKey,
-        sourceSystem: service.sourceSystem,
-        externalTemplateId: service.externalTemplateId,
-        workspaceId: service.workspaceId,
-        campaignId: service.campaignId,
-        farmId: service.farmId,
-        lots: [], // Will be populated with field data
-        totalArea: service.totalArea,
-        startDate: service.startDate,
-        tasks: [], // Will be populated with task data
-      })
-    }
+    // Cargar los campos (fields) usando la relación
+    const fieldsResponse = await service.fields();
+    let enrichedFields: Schema["ServiceField"]["type"][] = fieldsResponse.data;
 
-    // Get all service IDs for batch queries
-    const serviceIds = servicesResponse.data.map((service) => service.id)
-
-    // 3. Query for all fields related to these services
-    const fieldsResponse = await client.models.ServiceField.list({
-      filter: {
-        or: serviceIds.map((id) => ({ serviceId: { eq: id } })),
-      },
-    })
-
-    // Process fields and add them to their respective services
-    for (const field of fieldsResponse.data) {
-      const service = serviceMap.get(field.serviceId)
-      if (service) {
-        service.lots.push(field.fieldId)
+    // Enriquecer los datos de los campos con información de la API de 360
+    try {
+      if (service.workspaceId && service.campaignId && service.farmId && fieldsResponse.data.length > 0) {
+        const fieldsData = await listFields(service.workspaceId, service.campaignId, service.farmId);
+        enrichedFields = fieldsResponse.data.map((field) => {
+          const fieldData = fieldsData.find((f) => f.id.toString() === field.fieldId);
+          if (fieldData) {
+            return {
+              ...field,
+              name: fieldData.name,
+              hectares: fieldData.hectares,
+              crop: fieldData.cropName,
+              hybrid: fieldData.hybridName,
+            };
+          }
+          return field;
+        });
       }
+    } catch (error) {
+      console.error("Error fetching detailed field information:", error);
     }
 
-    // 4. Query for all tasks related to these services
-    const tasksResponse = await client.models.ServiceTask.list({
-      filter: {
-        or: serviceIds.map((id) => ({ serviceId: { eq: id } })),
-      },
-    })
-
-    // Get all role IDs and user IDs for batch queries
-    const roleIds = Array.from(new Set(tasksResponse.data.map((task) => task.roleId)))
-    const userIds = Array.from(new Set(tasksResponse.data.map((task) => task.userId)))
-
-    // 5. Query for all roles and users in one batch
-    const [rolesResponse, usersResponse] = await Promise.all([
-      client.models.Role.list({
-        filter: {
-          or: roleIds.map((roleId) => ({ id: { eq: roleId } })),
-        },
-      }),
-      client.models.User.list({
-        filter: {
-          or: userIds.map((userId) => ({ id: { eq: userId } })),
-        },
-      }),
-    ])
-
-    // Create maps for quick lookup
-    const roleMap = new Map(rolesResponse.data.map((role) => [role.id, role]))
-    const userMap = new Map(usersResponse.data.map((user) => [user.id, user]))
-
-    // Process tasks and add them to their respective services
-    for (const task of tasksResponse.data) {
-      const service = serviceMap.get(task.serviceId)
-      if (service) {
-        const role = roleMap.get(task.roleId)
-        const user = userMap.get(task.userId)
-
-        service.tasks.push({
+    // Cargar las tareas (tasks) usando la relación
+    const tasksResponse = await service.tasks();
+    const tasks = await Promise.all(
+      tasksResponse.data.map(async (task) => {
+        const role = await task.role();
+        const user = await task.user();
+        return {
           id: task.id,
           externalTemplateId: task.externalTemplateId,
           sourceSystem: task.sourceSystem,
-          role: role ? { id: role.id, name: role.name } : { id: task.roleId, name: "Unknown Role" },
-          user: user
-            ? { id: user.id, name: user.name, email: user.email }
+          taskName: task.taskName,
+          role: role?.data
+            ? { id: role.data.id, name: role.data.name }
+            : { id: task.roleId, name: "Unknown Role" },
+          user: user?.data
+            ? { id: user.data.id, name: user.data.name, email: user.data.email }
             : { id: task.userId, name: "Unknown User", email: "" },
-        })
-      }
-    }
+        };
+      }),
+    );
 
-    // 6. Calculate progress and determine status for each service
-    for (const service of Array.from(serviceMap.values())) {
-      // Convert lots array to string for interface compatibility
-      service.lots = service.lots.length > 0 ? service.lots.join(", ") : "Sin lotes asignados"
+    // Calcular el progreso (simplificado)
+    const totalTasks = tasks.length;
+    const completedTasks = 0; // Esto debería venir de un estado real de las tareas
+    const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-      // Calculate progress based on tasks (simplified example)
-      // In a real scenario, you might have task completion status to calculate this
-      const totalTasks = service.tasks.length
-      const completedTasks = 0 // This would come from task status in a real scenario
-
-      if (totalTasks > 0) {
-        service.progress = Math.round((completedTasks / totalTasks) * 100)
-      }
-
-      // Determine status based on dates and progress
-      const now = new Date()
-      const startDate = service.startDate ? new Date(service.startDate) : null
-      const endDate = service.endDate ? new Date(service.endDate) : null
-
-      if (service.progress === 100) {
-        service.status = "Finalizado"
-      } else if (startDate && now >= startDate) {
-        service.status = "En progreso"
-      } else {
-        service.status = "Planificado"
-      }
-
-      // Remove tasks array as it's not part of the Service interface
-      delete service.tasks
-    }
-
-    // Convert map to array for return
-    return Array.from(serviceMap.values())
-  } catch (error) {
-    console.error("Error fetching services from Amplify:", error)
-    throw new Error(`Failed to fetch services: ${error instanceof Error ? error.message : String(error)}`)
-  }
-}
-
-export const getService = async (serviceId: string): Promise<Service> => {
-  try {
-    // Get the Amplify client
-    const client = getClient()
-
-    // Query for the specific service
-    const response = await client.models.Service.get({ id: serviceId })
-
-    // If service not found, throw error
-    if (!response.data) {
-      throw new Error(`Service with ID ${serviceId} not found`)
+    // Determinar el estado del servicio
+    const now = new Date();
+    const startDate = service.startDate ? new Date(service.startDate) : null;
+    const endDate = service.endDate ? new Date(service.endDate) : null;
+    let status = "Planificado";
+    if (progress === 100) {
+      status = "Finalizado";
+    } else if (startDate && now >= startDate) {
+      status = "En progreso";
     }
 
     return {
-      ...response.data,
-      endDate: undefined,
-    }
+      ...service,
+      fields: enrichedFields,
+      tasks,
+      progress,
+      status,
+    };
   } catch (error) {
-    console.error("Error fetching service from Amplify:", error)
-    throw new Error(`Failed to fetch service: ${error instanceof Error ? error.message : String(error)}`)
+    console.error("Error fetching service detail from Amplify:", error);
+    throw new Error(`Failed to fetch service detail: ${error instanceof Error ? error.message : String(error)}`);
   }
-}
+};
+
+export const listServicesByProject = async (
+  projectId: string,
+  options: {
+    page: number;
+    pageSize: number;
+    searchQuery?: string;
+    sortBy?: keyof Service;
+    sortDirection?: "asc" | "desc";
+  },
+): Promise<{ services: Service[]; total: number }> => {
+  try {
+    const client = getClient();
+    const { page, pageSize, searchQuery = "", sortBy = "serviceName", sortDirection = "asc" } = options;
+
+    const filter: any = { projectId: { eq: projectId } };
+    if (searchQuery) {
+      filter.serviceName = { contains: searchQuery.toLowerCase() };
+    }
+
+    const totalResponse: { data: Schema["Service"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.Service.list({ filter });
+    const total = totalResponse.data.length;
+
+    let currentToken: string | null | undefined = undefined;
+    let currentPage = 1;
+    let services: Schema["Service"]["type"][] = [];
+
+    while (currentPage <= page) {
+      const servicesResponse: { data: Schema["Service"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.Service.list({
+        filter,
+        limit: pageSize,
+        ...(currentToken && { nextToken: currentToken }),
+      });
+
+      if (!servicesResponse.data.length) {
+        console.log(`No services found for project ${projectId}`);
+        return { services: [], total: 0 };
+      }
+
+      if (currentPage === page) {
+        services = servicesResponse.data;
+        break;
+      }
+
+      currentToken = servicesResponse.nextToken;
+      currentPage++;
+
+      if (!currentToken) {
+        return { services: [], total };
+      }
+    }
+
+    const servicesWithRelations = await Promise.all(
+      services.map(async (service) => {
+        const fieldsResponse = await service.fields();
+        const lots = fieldsResponse.data.map((field) => field.fieldId).join(", ") || "Sin lotes asignados";
+
+        const tasksResponse = await service.tasks();
+        const tasks = await Promise.all(
+          tasksResponse.data.map(async (task) => {
+            const role = await task.role();
+            const user = await task.user();
+            return {
+              id: task.id,
+              externalTemplateId: task.externalTemplateId,
+              sourceSystem: task.sourceSystem,
+              taskName: task.taskName,
+              role: role?.data
+                ? { id: role.data.id, name: role.data.name }
+                : { id: task.roleId, name: "Unknown Role" },
+              user: user?.data
+                ? { id: user.data.id, name: user.data.name, email: user.data.email }
+                : { id: task.userId, name: "Unknown User", email: "" },
+            };
+          }),
+        );
+
+        const totalTasks = tasks.length;
+        const completedTasks = 0;
+        const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+        const now = new Date();
+        const startDate = service.startDate ? new Date(service.startDate) : null;
+        const endDate = service.endDate ? new Date(service.endDate) : null;
+        let status = "Planificado";
+        if (progress === 100) {
+          status = "Finalizado";
+        } else if (startDate && now >= startDate) {
+          status = "En progreso";
+        }
+
+        return {
+          projectId: service.projectId,
+          id: service.id,
+          serviceName: service.serviceName,
+          externalServiceKey: service.externalServiceKey,
+          sourceSystem: service.sourceSystem,
+          externalTemplateId: service.externalTemplateId,
+          workspaceId: service.workspaceId,
+          workspaceName: service.workspaceName,
+          campaignId: service.campaignId,
+          campaignName: service.campaignName,
+          farmId: service.farmId,
+          farmName: service.farmName,
+          lots,
+          totalArea: service.totalArea,
+          startDate: service.startDate,
+          endDate: service.endDate,
+          progress,
+          status,
+        } as Service;
+      }),
+    );
+
+    const sortedServices = servicesWithRelations.sort((a, b) => {
+      const valueA = a[sortBy]?.toString().toLowerCase() || "";
+      const valueB = b[sortBy]?.toString().toLowerCase() || "";
+      return sortDirection === "asc" ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+    });
+
+    return { services: sortedServices, total };
+  } catch (error) {
+    console.error("Error fetching services from Amplify:", error);
+    throw new Error(`Failed to fetch services: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+

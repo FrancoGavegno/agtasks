@@ -198,12 +198,16 @@ export default function Step2Lots() {
     const currentLots = form.getValues("selectedLots") || []
     const newLots = currentLots.includes(lotId) ? currentLots.filter((id) => id !== lotId) : [...currentLots, lotId]
 
-    form.setValue("selectedLots", newLots, { shouldValidate: true })
+    // Asegurar que se actualice el valor en el formulario
+    form.setValue("selectedLots", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
 
-    // Update context
+    // Actualizar el contexto
     updateFormValues({
       selectedLots: newLots,
     })
+
+    // Añadir un log para depuración
+    console.log("Lotes seleccionados actualizados:", newLots)
   }
 
   return (

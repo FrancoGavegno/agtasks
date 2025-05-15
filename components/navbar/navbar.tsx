@@ -10,7 +10,7 @@ import {
 import { Link } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
 import { LanguageSelector } from "@/components/language-selector"
-import { MainNav } from "@/components/navbar/main-nav"
+// import { MainNav } from "@/components/navbar/main-nav"
 
 export function Navbar() {
   const t = useTranslations("Navbar")
@@ -34,7 +34,7 @@ export function Navbar() {
                   <span className="sr-only">{t("notifications")}</span>
                 </Button> */}
                 <LanguageSelector />
-                <MainNav />
+                {/* <MainNav /> */}
                 <UserButton />
               </SignedIn>
             </div>

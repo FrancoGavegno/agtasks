@@ -1,0 +1,54 @@
+"use client"
+
+import { useParams } from "next/navigation"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import { ServiceDetail } from "@/components/projects/service-detail"
+
+export default function ServiceDetailPage() {
+  const params = useParams()
+  const { domain, project, serviceId } = params
+
+  return (
+    <div className="container w-full pt-4 pb-4">
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/">Home</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink href={`/domains/${domain}/projects`}>Projects</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink href={`/domains/${domain}/projects/${project}`}>Project</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink href={`/domains/${domain}/projects/${project}/services`}>Services</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Service Details</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
+      <div className="flex justify-between items-center mt-5 mb-5">
+        <div className="space-y-1.5">
+          <h1 className="text-2xl font-semibold tracking-tight">Service Details</h1>
+          <p className="text-muted-foreground">View detailed information about this service</p>
+        </div>
+      </div>
+
+      <ServiceDetail serviceId={serviceId as string} />
+    </div>
+  )
+}

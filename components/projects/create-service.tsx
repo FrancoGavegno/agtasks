@@ -134,29 +134,36 @@ export default function CreateService() {
   const onSubmit = async (data: CreateServiceFormValues) => {
     try {
       setIsSubmitting(true)
+      console.log("Form data to submit:", data)
+
+      // Filtrar solo las tareas que tienen rol y usuario asignados
+      const validTasks = data.taskAssignments.filter((task) => task.role && task.assignedTo)
 
       // Preparar los datos para enviar al API
       const serviceData = {
-        projectId: project,
+        projectId: project as string,
         serviceName: `Servicio de ${data.protocol === "variable-seeding" ? "Siembra Variable" : "Monitoreo Satelital"}`,
-        externalServiceKey: "", // Se generará en el backend
+        externalServiceKey: `SRV-${Date.now()}`, // Generar un ID único
         sourceSystem: "jira",
         externalTemplateId: data.protocol,
         workspaceId: data.workspace,
         campaignId: data.campaign,
         farmId: data.establishment,
-        totalArea: 0, // Se calculará en base a los lotes seleccionados
+        totalArea: 0, // Se calculará en el backend basado en los lotes seleccionados
         startDate: new Date().toISOString(),
-        fields: data.selectedLots,
-        tasks: data.taskAssignments
-          .filter((task) => task.role && task.assignedTo) // Solo incluir tareas con rol y usuario asignados
-          .map((task) => ({
-            externalTemplateId: data.protocol,
-            sourceSystem: "jira",
-            roleId: task.role,
-            userId: task.assignedTo,
-          })),
+        // Enviar los lotes seleccionados en el formato correcto
+        fields: data.selectedLots.map((lotId) => ({ fieldId: lotId })),
+        // Enviar las tareas en el formato correcto
+        tasks: validTasks.map((task) => ({
+          externalTemplateId: data.protocol,
+          sourceSystem: "jira",
+          roleId: task.role,
+          userId: task.assignedTo,
+          taskName: task.task,
+        })),
       }
+
+      console.log("Service data to send:", serviceData)
 
       // Enviar los datos al API
       const response = await fetch(`/api/v1/agtasks/domains/${domain}/projects/${project}/services`, {
@@ -169,7 +176,8 @@ export default function CreateService() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || `Error: ${response.status}`)
+        console.error("API error response:", errorData)
+        throw new Error(errorData.error || errorData.message || `Error: ${response.status}`)
       }
 
       // Mostrar mensaje de confirmación

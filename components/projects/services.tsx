@@ -224,7 +224,10 @@ export function ServicesPageDetails() {
           <TableHeader>
             <TableRow>
               <SortableHeader column="serviceName" label="Servicio" />
+              <SortableHeader column="farmId" label="Espacio de trabajo" />
+              <SortableHeader column="farmId" label="Campaña" />
               <SortableHeader column="farmId" label="Establecimiento" />
+              <SortableHeader column="farmId" label="Lotes" />
               <SortableHeader column="totalArea" label="Tot. Has" />
               <SortableHeader column="progress" label="Progreso" />
               <SortableHeader column="startDate" label="Fecha Inicio" />
@@ -242,7 +245,10 @@ export function ServicesPageDetails() {
               currentItems.map((service) => (
                 <TableRow key={service.id}>
                   <TableCell className="font-medium">{service.serviceName}</TableCell>
+                  <TableCell>{service.workspaceId}</TableCell>
+                  <TableCell>{service.campaignId}</TableCell>
                   <TableCell>{service.farmId}</TableCell>
+                  <TableCell>Lotes</TableCell>
                   <TableCell>{service.totalArea}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -258,9 +264,12 @@ export function ServicesPageDetails() {
                           <Play className="h-4 w-4" />
                         </Button>
                       )}
-                      <Button variant="outline" size="icon" className="h-8 w-8">
+                      <Link href={`/domains/${domain}/projects/${project}/services/${service.id}`} >
                         <Edit className="h-4 w-4" />
-                      </Button>
+                      </Link>
+                      {/* <Button size="icon" className="h-8 w-8">
+                        <Edit className="h-4 w-4" />
+                      </Button> */}
                     </div>
                   </TableCell>
                 </TableRow>

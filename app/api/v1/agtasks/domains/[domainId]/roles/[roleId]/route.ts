@@ -1,31 +1,35 @@
 import { NextResponse } from "next/server";
-import { 
-    deleteDomainRole 
-} from "@/lib/services/agtasks";
-import { 
-    deleteDomainRoleSchema 
-} from "@/lib/schemas";
+import { z } from "zod";
+import { deleteDomainRole } from "@/lib/services/agtasks";
 
-export async function DELETE(req: Request, { params }: { params: { domainId: string, roleId: string } }) {
-    try {
-        const { domainId, roleId } = params;
-        const parsed = deleteDomainRoleSchema.safeParse({ domainId, roleId });
-        if (!parsed.success) {
-            return NextResponse.json(
-                { error: "Validation error", issues: parsed.error.format() },
-                { status: 400 }
-            );
-        }
-        const result = await deleteDomainRole(parsed.data.domainId, parsed.data.roleId);
-        if (!result) {
-            return NextResponse.json(
-                { error: "Role not found or could not be deleted" },
-                { status: 404 }
-            );
-        }
-        return NextResponse.json({ message: "Role deleted successfully" }, { status: 200 });
-    } catch (error) {
-        console.error("Error deleting role:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+// Esquema de validación para los parámetros de la ruta (DELETE)
+const deleteDomainRoleParamsSchema = z.object({
+  domainId: z.string(),
+  roleId: z.string(),
+});
+
+export async function DELETE(req: Request, { params }: { params: { domainId: string; roleId: string } }) {
+  try {
+    const { domainId, roleId } = params;
+
+    // Validar los parámetros
+    const parsedParams = deleteDomainRoleParamsSchema.safeParse(params);
+    if (!parsedParams.success) {
+      return NextResponse.json(
+        { error: "Validation error", issues: parsedParams.error.format() },
+        { status: 400 },
+      );
     }
+
+    // Eliminar el rol de dominio
+    const deletedRole = await deleteDomainRole(domainId, roleId);
+
+    return NextResponse.json(deletedRole, { status: 200 });
+  } catch (error) {
+    console.error("Error deleting domain role:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error", message: error instanceof Error ? error.message : String(error) },
+      { status: 500 },
+    );
+  }
 }

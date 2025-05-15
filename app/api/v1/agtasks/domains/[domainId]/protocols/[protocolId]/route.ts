@@ -1,31 +1,35 @@
 import { NextResponse } from "next/server";
-import {
-    deleteDomainProtocol
-} from "@/lib/services/agtasks";
-import {
-    deleteDomainProtocolSchema
-} from "@/lib/schemas";
+import { z } from "zod";
+import { deleteDomainProtocol } from "@/lib/services/agtasks";
 
-export async function DELETE(req: Request, { params }: { params: { domainId: string, protocolId: string } }) {
-    try {
-        const { domainId, protocolId } = params;
-        const parsed = deleteDomainProtocolSchema.safeParse({ domainId, protocolId });
-        if (!parsed.success) {
-            return NextResponse.json(
-                { error: "Validation error", issues: parsed.error.format() },
-                { status: 400 }
-            );
-        }
-        const result = await deleteDomainProtocol(parsed.data.domainId, parsed.data.protocolId);
-        if (!result) {
-            return NextResponse.json(
-                { error: "Protocol not found or could not be deleted" },
-                { status: 404 }
-            );
-        }
-        return NextResponse.json({ message: "Protocol deleted successfully" }, { status: 200 });
-    } catch (error) {
-        console.error("Error deleting protocol:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+// Esquema de validación para los parámetros de la ruta (DELETE)
+const deleteProtocolParamsSchema = z.object({
+  domainId: z.string(),
+  protocolId: z.string(),
+});
+
+export async function DELETE(req: Request, { params }: { params: { domainId: string; protocolId: string } }) {
+  try {
+    const { domainId, protocolId } = params;
+
+    // Validar los parámetros
+    const parsedParams = deleteProtocolParamsSchema.safeParse(params);
+    if (!parsedParams.success) {
+      return NextResponse.json(
+        { error: "Validation error", issues: parsedParams.error.format() },
+        { status: 400 },
+      );
     }
+
+    // Eliminar el protocolo
+    const deletedProtocol = await deleteDomainProtocol(domainId, protocolId);
+
+    return NextResponse.json(deletedProtocol, { status: 200 });
+  } catch (error) {
+    console.error("Error deleting domain protocol:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error", message: error instanceof Error ? error.message : String(error) },
+      { status: 500 },
+    );
+  }
 }

@@ -1,31 +1,35 @@
 import { NextResponse } from "next/server";
-import { 
-    deleteDomainForm 
-} from "@/lib/services/agtasks";
-import { 
-    deleteDomainFormSchema 
-} from "@/lib/schemas";
+import { z } from "zod";
+import { deleteDomainForm } from "@/lib/services/agtasks";
 
-export async function DELETE(req: Request, { params }: { params: { domainId: string, formId: string } }) {
-    try {
-        const { domainId, formId } = params;
-        const parsed = deleteDomainFormSchema.safeParse({ domainId, formId });
-        if (!parsed.success) {
-            return NextResponse.json(
-                { error: "Validation error", issues: parsed.error.format() },
-                { status: 400 }
-            );
-        }
-        const result = await deleteDomainForm(parsed.data.domainId, parsed.data.formId);
-        if (!result) {
-            return NextResponse.json(
-                { error: "Form not found or could not be deleted" },
-                { status: 404 }
-            );
-        }
-        return NextResponse.json({ message: "Form deleted successfully" }, { status: 200 });
-    } catch (error) {
-        console.error("Error deleting form:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+// Esquema de validación para los parámetros de la ruta (DELETE)
+const deleteFormParamsSchema = z.object({
+  domainId: z.string(),
+  formId: z.string(),
+});
+
+export async function DELETE(req: Request, { params }: { params: { domainId: string; formId: string } }) {
+  try {
+    const { domainId, formId } = params;
+
+    // Validar los parámetros
+    const parsedParams = deleteFormParamsSchema.safeParse(params);
+    if (!parsedParams.success) {
+      return NextResponse.json(
+        { error: "Validation error", issues: parsedParams.error.format() },
+        { status: 400 },
+      );
     }
+
+    // Eliminar el formulario de dominio
+    const deletedForm = await deleteDomainForm(domainId, formId);
+
+    return NextResponse.json(deletedForm, { status: 200 });
+  } catch (error) {
+    console.error("Error deleting domain form:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error", message: error instanceof Error ? error.message : String(error) },
+      { status: 500 },
+    );
+  }
 }

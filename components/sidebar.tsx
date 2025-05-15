@@ -79,7 +79,6 @@ export function AppSidebar({ user }: Props) {
     const fetchDomains = async () => {
       const domainsData = await listDomainsByUserEmail(user)
       setDomains(domainsData)
-
       // setSelectedDomain(domainsData[0])
       domainsData.forEach((d) => {
         if (d.id === Number(domain)) { 
@@ -96,7 +95,6 @@ export function AppSidebar({ user }: Props) {
       if (selectedDomain) {
         const projectsData = await listProjectsByDomain(selectedDomain.id.toString())
         setProjects(projectsData)
-
         setSelectedProject(projectsData[0])
       }
     }

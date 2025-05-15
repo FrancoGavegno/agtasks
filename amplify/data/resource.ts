@@ -1,79 +1,89 @@
-import { 
-  type ClientSchema, 
-  a, 
-  defineData 
-} from "@aws-amplify/backend";
+import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
 
-const schema = a.schema({
+const schema = a
+  .schema({
+    DomainProtocol: a.model({
+      domainId: a.string().required(),
+      tmProtocolId: a.string().required(),
+      name: a.string().required(),
+      language: a.string().required(),
+    }),
 
-  DomainProtocol: a.model({
-    domainId: a.string().required(),
-    tmProtocolId: a.string().required(),
-    name: a.string().required(),
-    language: a.string().required(),
-  }),
+    DomainRole: a.model({
+      domainId: a.string().required(),
+      name: a.string().required(),
+      language: a.string().required(),
+    }),
 
-  DomainRole: a.model({
-    domainId: a.string().required(),
-    name: a.string().required(),
-    language: a.string().required(),
-  }),
+    DomainForm: a.model({
+      domainId: a.string().required(),
+      ktFormId: a.string().required(),
+      name: a.string().required(),
+      language: a.string().required(),
+    }),
 
-  DomainForm: a.model({
-    domainId: a.string().required(),
-    ktFormId: a.string().required(),
-    name: a.string().required(),
-    language: a.string().required(),
-  }),
+    Role: a.model({
+      name: a.string().required(),
+      language: a.string(),
+      tasks: a.hasMany("ServiceTask", "roleId"),
+    }),
 
-  Project: a.model({
-    domainId: a.string().required(), 
-    id: a.string().required(), // "TEM"
-    name: a.string().required(), // "PROTOCOLOS"
-    language: a.string().required(), // "ES"
-    queueId: a.integer().required(), // 82   
-    deleted: a.boolean().default(false).required(), 
-  }),
+    User: a.model({
+      name: a.string().required(),
+      email: a.string().required(),
+      tasks: a.hasMany("ServiceTask", "userId"),
+    }),
 
-  Service: a.model({
-    projectId: a.string().required(),
-    serviceName: a.string().required(), // Nombre interno en Agtasks
-    externalServiceKey: a.string().required(), // ID en el task manager (ej. issueKey de Jira)
-    sourceSystem: a.string().required(), // Ej.: "jira", "clickup", etc.
-    externalTemplateId: a.string().required(), // ID del template usado en el task manager
-    workspaceId: a.string().required(),
-    campaignId: a.string().required(),
-    farmId: a.string().required(),
-    totalArea: a.float().required(),
-    startDate: a.string().required(), // Fecha de inicio del servicio
-    endDate: a.string(),
-  }),
+    Project: a.model({
+      domainId: a.string().required(),
+      id: a.string().required(),
+      name: a.string().required(),
+      language: a.string().required(),
+      queueId: a.integer().required(),
+      deleted: a.boolean().default(false).required(),
+      services: a.hasMany("Service", "projectId"),
+    }),
 
-  ServiceField: a.model({
-    serviceId: a.string().required(), // FK local
-    fieldId: a.string().required(),   // ID del Field en 360 (referencia externa)
-  }),
+    Service: a.model({
+      projectId: a.string().required(),
+      project: a.belongsTo("Project", "projectId"),
+      serviceName: a.string().required(),
+      externalServiceKey: a.string().required(),
+      sourceSystem: a.string().required(),
+      externalTemplateId: a.string().required(),
+      workspaceId: a.string().required(),
+      workspaceName: a.string(),
+      campaignId: a.string().required(),
+      campaignName: a.string(),
+      farmId: a.string().required(),
+      farmName: a.string(),
+      totalArea: a.float().required(),
+      startDate: a.string().required(),
+      endDate: a.string(),
+      fields: a.hasMany("ServiceField", "serviceId"),
+      tasks: a.hasMany("ServiceTask", "serviceId"),
+    }),
 
-  ServiceTask: a.model({
-    serviceId: a.string().required(),       // FK local
-    externalTemplateId: a.string().required(), // Referencia al sub-template del task manager (opcional, si existen)
-    sourceSystem: a.string().required(),    // Ej.: "jira"
-    roleId: a.string().required(),          // FK local a Role (asignado manualmente)
-    userId: a.string().required(),          // FK local a 360 User (asignado manualmente)
-  }),
+    ServiceField: a.model({
+      serviceId: a.string().required(),
+      fieldId: a.string().required(),
+      fieldName: a.string(),
+      service: a.belongsTo("Service", "serviceId"),
+    }),
 
-  Role: a.model({
-    name: a.string().required(),
-    language: a.string(),
-  }),
-
-  User: a.model({
-    name: a.string().required(),
-    email: a.string().required()
+    ServiceTask: a.model({
+      serviceId: a.string().required(),
+      externalTemplateId: a.string().required(),
+      sourceSystem: a.string().required(),
+      roleId: a.string().required(),
+      userId: a.string().required(),
+      taskName: a.string(),
+      service: a.belongsTo("Service", "serviceId"),
+      role: a.belongsTo("Role", "roleId"),
+      user: a.belongsTo("User", "userId"),
+    })
   })
-
-}).authorization((allow) => [allow.publicApiKey()]);
-
+  .authorization((allow) => [allow.publicApiKey()]);
 
 export type Schema = ClientSchema<typeof schema>;
 

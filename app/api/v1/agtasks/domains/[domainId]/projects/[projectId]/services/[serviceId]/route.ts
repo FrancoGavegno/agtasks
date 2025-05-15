@@ -1,18 +1,36 @@
-import { NextResponse } from "next/server"
-import { getService } from "@/lib/services/agtasks"
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { getServiceDetail } from "@/lib/services/agtasks";
 
-export async function GET(req: Request, { params }: { params: { serviceId: string } }) {
+// Esquema de validación para los parámetros de la ruta
+const serviceParamsSchema = z.object({
+  domainId: z.string(),
+  projectId: z.string(),
+  serviceId: z.string(),
+});
+
+export async function GET(req: Request, { params }: { params: { domainId: string; projectId: string; serviceId: string } }) {
   try {
-    const { serviceId } = params
+    const { serviceId } = params;
 
-    if (!serviceId) {
-      return NextResponse.json({ error: "Service ID is required" }, { status: 400 })
+    // Validar los parámetros
+    const parsedParams = serviceParamsSchema.safeParse(params);
+    if (!parsedParams.success) {
+      return NextResponse.json(
+        { error: "Validation error", issues: parsedParams.error.format() },
+        { status: 400 },
+      );
     }
 
-    const result = await getService(serviceId)
-    return NextResponse.json(result, { status: 200 })
+    // Obtener los detalles del servicio
+    const serviceDetail = await getServiceDetail(serviceId);
+
+    return NextResponse.json(serviceDetail, { status: 200 });
   } catch (error) {
-    console.error("Error fetching service:", error)
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
+    console.error("Error fetching service detail:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error", message: error instanceof Error ? error.message : String(error) },
+      { status: 500 },
+    );
   }
 }

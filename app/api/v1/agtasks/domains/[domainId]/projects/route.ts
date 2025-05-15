@@ -1,47 +1,70 @@
 import { NextResponse } from "next/server";
-import {
-    listProjectsByDomain,
-    createProject
-} from "@/lib/services/agtasks";
-import {
-    projectQuerySchema,
-    projectSchema
-} from "@/lib/schemas";
+import { z } from "zod";
+import { listProjectsByDomain, createProject } from "@/lib/services/agtasks";
+
+// Esquema de validación para los parámetros de la query (GET)
+const listProjectsQuerySchema = z.object({
+  domainId: z.string(),
+});
+
+// Esquema de validación para el cuerpo de la solicitud (POST)
+const createProjectBodySchema = z.object({
+  domainId: z.string(),
+  name: z.string(),
+  language: z.string(),
+  queueId: z.number(),
+});
 
 export async function GET(req: Request, { params }: { params: { domainId: string } }) {
-    try {
-        const { domainId } = params;
-        const parsed = projectQuerySchema.safeParse({ domainId });
-        if (!parsed.success) {
-            return NextResponse.json(
-                { error: "Validation error", issues: parsed.error.format() },
-                { status: 400 }
-            );
-        }
-        const result = await listProjectsByDomain(parsed.data.domainId);
-        return NextResponse.json(result, { status: 200 });
-    } catch (error) {
-        console.error("Error fetching projects by domain:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  try {
+    const { domainId } = params;
+
+    // Validar los parámetros
+    const parsedParams = listProjectsQuerySchema.safeParse(params);
+    if (!parsedParams.success) {
+      return NextResponse.json(
+        { error: "Validation error", issues: parsedParams.error.format() },
+        { status: 400 },
+      );
     }
+
+    // Listar proyectos
+    const projects = await listProjectsByDomain(domainId);
+
+    return NextResponse.json(projects, { status: 200 });
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error", message: error instanceof Error ? error.message : String(error) },
+      { status: 500 },
+    );
+  }
 }
 
 export async function POST(req: Request, { params }: { params: { domainId: string } }) {
-    try {
-        const { domainId } = params
-        const json = await req.json();
-        const parsed = projectSchema.safeParse(json);
-        if (!parsed.success) {
-            return NextResponse.json(
-                { error: "Validation error", issues: parsed.error.format() },
-                { status: 400 }
-            );
-        }
-        // console.log("json: ", json)
-        const result = await createProject(domainId, parsed.data);
-        return NextResponse.json(result, { status: 201 });
-    } catch (error) {
-        console.error("Error creating domain protocol:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  try {
+    const { domainId } = params;
+
+    // Parsear el cuerpo de la solicitud
+    const body = await req.json();
+    const parsedBody = createProjectBodySchema.safeParse({ ...body, domainId });
+
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { error: "Validation error", issues: parsedBody.error.format() },
+        { status: 400 },
+      );
     }
+
+    // Crear el proyecto
+    const newProject = await createProject(domainId, parsedBody.data);
+
+    return NextResponse.json(newProject, { status: 201 });
+  } catch (error) {
+    console.error("Error creating project:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error", message: error instanceof Error ? error.message : String(error) },
+      { status: 500 },
+    );
+  }
 }
