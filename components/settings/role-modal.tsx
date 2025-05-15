@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from 'next/navigation'
+import { useParams } from "next/navigation"
 import { Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
+import { toast } from "@/hooks/use-toast"
 import type { Role } from "@/lib/interfaces"
 
 interface RoleModalProps {
@@ -19,7 +20,7 @@ interface RoleModalProps {
 }
 
 export function RoleModal({ isOpen, onClose, roles, allRoles, selectedRoles, onSave }: RoleModalProps) {
-  const { domain } = useParams<{ domain: string }>();
+  const { domain } = useParams<{ domain: string }>()
   const [localSelected, setLocalSelected] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isSaving, setIsSaving] = useState(false)
@@ -32,78 +33,107 @@ export function RoleModal({ isOpen, onClose, roles, allRoles, selectedRoles, onS
     }
   }, [isOpen, selectedRoles])
 
-  const toggleRole = (id: string) => {
+  const toggleRole = (role: Role) => {
+    // Buscar si el rol ya existe en el dominio
+    const existingRole = roles.find(
+      (r) => r.name === role.name && (r.language || "ES").toLowerCase() === (role.language || "ES").toLowerCase(),
+    )
+
+    // Usar el ID del rol existente si existe, o el ID del rol de allRoles si no
+    const roleId = existingRole ? existingRole.id : role.id
+
     setLocalSelected((prev) => {
-      const newSelected = prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+      const newSelected = prev.includes(roleId) ? prev.filter((id) => id !== roleId) : [...prev, roleId]
       return newSelected
     })
   }
 
   const handleSave = async () => {
-    setIsSaving(true) // Deshabilitar el botón mientras se ejecuta
+    setIsSaving(true)
     try {
-      // 1. Identificar roles que deben eliminarse
-      // (id que ya no están seleccionados)
-      const rolesToDeleteIds = selectedRoles.filter((roleId) => !localSelected.includes(roleId))
+      // 1. Identificar roles que deben eliminarse (roles que están en el dominio pero no en localSelected)
+      const rolesToDelete = roles.filter((role) => !localSelected.includes(role.id))
 
-      // 2. Identificar roles que deben crearse (id que no están en roles)
-      const rolesToCreate = localSelected.filter((roleId) => !roles.some((role) => role.id === roleId))
+      // 2. Identificar roles que deben crearse (IDs en localSelected que no corresponden a roles existentes)
+      const rolesToCreateIds = localSelected.filter((id) => !roles.some((role) => role.id === id))
 
-      // 3. Eliminar roles deseleccionados usando el id del DomainRole
-      const deletePromises = rolesToDeleteIds.map(async (roleId) => {
-        const response = await fetch(`/api/v1/agtasks/domains/${domain}/roles/${roleId}`, {
-          method: "DELETE",
-        })
+      // 3. Eliminar roles deseleccionados
+      for (const role of rolesToDelete) {
+        try {
+          const response = await fetch(`/api/v1/agtasks/domains/${domain}/roles/${role.id}`, {
+            method: "DELETE",
+          })
 
-        if (!response.ok) {
-          const errorData = await response.json()
-          console.error(`Error en DELETE para id ${roleId}:`, errorData)
-          throw new Error(`Failed to delete role with id ${roleId}`)
+          if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(`Error al eliminar rol: ${errorData.message || response.statusText}`)
+          }
+
+          await response.json()
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: `No se pudo eliminar el rol: ${(error as Error).message}`,
+            variant: "destructive",
+          })
+          throw error
         }
-
-        const data = await response.json()
-        return data
-      })
+      }
 
       // 4. Crear nuevos roles
-      const createPromises = rolesToCreate.map(async (roleId) => {
+      for (const roleId of rolesToCreateIds) {
+        // Buscar el rol en allRoles
         const roleData = allRoles.find((role) => role.id === roleId)
 
         if (!roleData) {
-          throw new Error(`Role data not found for id ${roleId}`)
+          throw new Error(`No se encontraron datos para el rol ${roleId}`)
         }
 
-        const response = await fetch(`/api/v1/agtasks/domains/${domain}/roles`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: roleData.name,
-            language: roleData.language,
-          }),
-        })
+        try {
+          const response = await fetch(`/api/v1/agtasks/domains/${domain}/roles`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              domainId: domain,
+              name: roleData.name,
+              language: roleData.language || "ES",
+            }),
+          })
 
-        if (!response.ok) {
-          const errorData = await response.json()
-          console.error(`Error en POST para id ${roleId}:`, errorData)
-          throw new Error(`Failed to create role with id ${roleId}`)
+          if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(`Error al crear rol: ${errorData.message || response.statusText}`)
+          }
+
+          await response.json()
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: `No se pudo crear el rol: ${(error as Error).message}`,
+            variant: "destructive",
+          })
+          throw error
         }
+      }
 
-        const data = await response.json()
-        return data
+      // 5. Notificar éxito y cerrar modal
+      toast({
+        title: "Éxito",
+        description: "Preferencias de roles guardadas correctamente",
       })
 
-      // 5. Ejecutar todas las operaciones (DELETE y POST) en paralelo
-      await Promise.all([...deletePromises, ...createPromises])
-
-      // 6. Llamar a onSave y cerrar el modal si todo sale bien
       onSave(localSelected)
       onClose()
     } catch (error) {
-      console.error("Error processing roles:", error)
+      toast({
+        title: "Error",
+        description: "Hubo un problema al guardar las preferencias de roles",
+        variant: "destructive",
+      })
     } finally {
-      setIsSaving(false) // Rehabilitar el botón cuando termine (incluso si hay error)
+      setIsSaving(false)
     }
   }
 
@@ -111,7 +141,7 @@ export function RoleModal({ isOpen, onClose, roles, allRoles, selectedRoles, onS
   const filteredRoles = allRoles.filter(
     (role) =>
       role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      role.language.toLowerCase().includes(searchTerm.toLowerCase()),
+      (role.language && role.language.toLowerCase().includes(searchTerm.toLowerCase())),
   )
 
   return (
@@ -140,21 +170,25 @@ export function RoleModal({ isOpen, onClose, roles, allRoles, selectedRoles, onS
         <div className="space-y-4 py-2 max-h-[300px] overflow-y-auto pr-2">
           {filteredRoles.length > 0 ? (
             filteredRoles.map((role) => {
-              // Check if this role is already in the domain roles list
+              // Buscar si el rol ya existe en el dominio
               const existingRole = roles.find(
-                (r) => r.name === role.name && r.language.toLowerCase() === role.language.toLowerCase(),
+                (r) =>
+                  r.name === role.name && (r.language || "ES").toLowerCase() === (role.language || "ES").toLowerCase(),
               )
 
-              // If it exists, use its ID for checking selection
-              const checkId = existingRole ? existingRole.id : role.id
+              // Usar el ID del rol existente si existe, o el ID del rol de allRoles si no
+              const roleId = existingRole ? existingRole.id : role.id
+
+              // Verificar si el rol está seleccionado
+              const isSelected = localSelected.includes(roleId)
 
               return (
                 <div key={role.id} className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <div className="text-sm text-foreground">{role.name}</div>
-                    {/* <div className="text-xs text-muted-foreground">{role.language}</div> */}
+                    <div className="text-xs text-muted-foreground">{role.language || "ES"}</div>
                   </div>
-                  <Switch checked={localSelected.includes(checkId)} onCheckedChange={() => toggleRole(checkId)} />
+                  <Switch checked={isSelected} onCheckedChange={() => toggleRole(role)} />
                 </div>
               )
             })

@@ -40,7 +40,10 @@ export async function createDomainProtocol(
       throw new Error("Failed to create domain protocol");
     }
 
-    return response.data;
+    return {
+      ...response.data,
+      language: response.data.language || "ES", // Default to "ES" if language is undefined
+    };
   } catch (error) {
     console.error("Error creating domain protocol in Amplify:", error);
     throw new Error(`Failed to create domain protocol: ${error instanceof Error ? error.message : String(error)}`);
@@ -184,16 +187,52 @@ export async function listDomainForms(domainId: string) {
 }
 
 // Roles
-export const listRoles = async (language?: string): Promise<Role[]> => {
+export const createRole = async (data: { name: string; language: string }): Promise<Role> => {
   try {
     const client = getClient();
-    const filter = language ? { language: { eq: language } } : undefined;
-    const response: { data: Schema["Role"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.Role.list({ filter });
+    const response: { data: Schema["Role"]["type"] | null; errors?: any[] } = await client.models.Role.create({
+      name: data.name,
+      language: data.language,
+    });
+    if (!response.data) {
+      throw new Error("Failed to create role");
+    }
+    return {
+      ...response.data,
+      language: response.data.language || "ES", // Default to "ES" if language is undefined
+    };
+  } catch (error) {
+    console.error("Error creating role in Amplify:", error);
+    throw new Error(`Failed to create role: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
 
-    return response.data.map((item) => ({
-      id: item.id,
-      name: item.name,
-      language: item.language || "ES",
+export const deleteRole = async (roleId: string) => {
+  try {
+    const client = getClient();
+    const response: { data: Schema["Role"]["type"] | null; errors?: any[] } = await client.models.Role.delete({ id: roleId });
+    if (!response.data) {
+      throw new Error(`Failed to delete role with ID ${roleId}`);
+    }
+    return response.data;
+  }
+  catch (error) {
+    console.error("Error deleting role from Amplify:", error);
+    throw new Error(`Failed to delete role: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+
+export const listRoles = async (language: string): Promise<Role[]> => {
+  try {
+    const client = getClient();
+    const response: { data: Schema["Role"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.Role.list({
+      filter: {
+        language: { eq: language }
+      },
+    });
+    return response.data.map(role => ({
+      ...role,
+      language: role.language || "ES", // Default to "ES" if language is undefined
     }));
   } catch (error) {
     console.error("Error fetching roles from Amplify:", error);

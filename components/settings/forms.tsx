@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { FormModal } from "./form-modal"
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2, Search } from "lucide-react"
 import { useSettings } from "@/lib/contexts/settings-context"
 import { Badge } from "@/components/ui/badge"
+import type { Form } from "@/lib/interfaces"
 
 export default function Forms() {
   const { forms, allForms, selectedForms, formsLoading, setSelectedForms, refreshForms } = useSettings()
@@ -17,18 +18,41 @@ export default function Forms() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [page, setPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [displayedForms, setDisplayedForms] = useState<Form[]>([])
 
-  // Filter forms by name and only show selected ones
-  const filteredForms = forms
-    .filter((form) => selectedForms.includes(form.id))
-    .filter((form) => form.name.toLowerCase().includes(filter.toLowerCase()))
+  console.log("Forms component:", { forms, allForms, selectedForms, displayedForms })
+
+  // Actualizar displayedForms cuando cambien forms o selectedForms
+  useEffect(() => {
+    // Combinar los formularios del dominio con los formularios seleccionados de allForms
+    const domainFormIds = forms.map((form) => form.id)
+
+    // 1. Primero, incluir todos los formularios del dominio que están seleccionados
+    let combined: Form[] = forms.filter((form) => selectedForms.includes(form.id))
+
+    // 2. Luego, añadir formularios de allForms que están seleccionados pero no están en el dominio
+    const additionalForms = allForms.filter((form) => {
+      // Si el ID está seleccionado pero no está en los formularios del dominio
+      return selectedForms.includes(form.id) && !domainFormIds.includes(form.id)
+    })
+
+    combined = [...combined, ...additionalForms]
+
+    console.log("Combined forms:", combined)
+
+    // Filtrar por término de búsqueda
+    const filtered = combined.filter((form) => form.name.toLowerCase().includes(filter.toLowerCase()))
+
+    setDisplayedForms(filtered)
+  }, [forms, allForms, selectedForms, filter])
 
   // Calculate pagination
-  const totalPages = Math.ceil(filteredForms.length / rowsPerPage)
+  const totalPages = Math.ceil(displayedForms.length / rowsPerPage)
   const startIndex = (page - 1) * rowsPerPage
-  const paginatedForms = filteredForms.slice(startIndex, startIndex + rowsPerPage)
+  const paginatedForms = displayedForms.slice(startIndex, startIndex + rowsPerPage)
 
   const handleSavePreferences = async (selectedIds: string[]) => {
+    console.log("Guardando preferencias de formularios:", selectedIds)
     setSelectedForms(selectedIds)
     refreshForms()
   }
@@ -37,7 +61,7 @@ export default function Forms() {
     return (
       <div className="flex h-[400px] w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Loading forms...</span>
+        <span className="ml-2 text-muted-foreground">Cargando formularios...</span>
       </div>
     )
   }
@@ -46,11 +70,11 @@ export default function Forms() {
     <div className="w-full space-y-4">
       <div className="flex justify-between items-center">
         <div className="space-y-1">
-          <h2 className="text-xl font-semibold tracking-tight">Forms</h2>
-          <p className="text-sm text-muted-foreground">Manage data collection forms</p>
+          <h2 className="text-xl font-semibold tracking-tight">Formularios</h2>
+          <p className="text-sm text-muted-foreground">Administra los formularios de recolección de datos</p>
         </div>
         <Button size="sm" onClick={() => setIsModalOpen(true)}>
-          Edit
+          Editar
         </Button>
       </div>
 
@@ -59,7 +83,7 @@ export default function Forms() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Filter forms..."
+            placeholder="Filtrar formularios..."
             className="pl-8"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -71,9 +95,9 @@ export default function Forms() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[80%]">Name</TableHead>
-              {/* <TableHead className="text-center">Language</TableHead> */}
-              <TableHead className="text-center">Source</TableHead>
+              <TableHead className="w-[70%]">Nombre</TableHead>
+              <TableHead className="text-center">Idioma</TableHead>
+              <TableHead className="text-center">Origen</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -81,7 +105,9 @@ export default function Forms() {
               paginatedForms.map((form) => (
                 <TableRow key={form.id}>
                   <TableCell className="font-medium">{form.name}</TableCell>
-                  {/* <TableCell className="font-medium text-center">{form.language}</TableCell> */}
+                  <TableCell className="text-center">
+                    <Badge variant="outline">{form.language || "ES"}</Badge>
+                  </TableCell>
                   <TableCell className="text-center">
                     <Badge variant="outline">{form.ktFormId ? "KoboToolbox" : "Local"}</Badge>
                   </TableCell>
@@ -89,8 +115,8 @@ export default function Forms() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={2} className="h-24 text-center">
-                  No forms found.
+                <TableCell colSpan={3} className="h-24 text-center">
+                  No se encontraron formularios.
                 </TableCell>
               </TableRow>
             )}
@@ -100,15 +126,15 @@ export default function Forms() {
 
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          {filteredForms.length > 0
-            ? `Showing ${startIndex + 1} to ${Math.min(startIndex + rowsPerPage, filteredForms.length)} of ${
-                filteredForms.length
-              } forms`
-            : "No forms found"}
+          {displayedForms.length > 0
+            ? `Mostrando ${startIndex + 1} a ${Math.min(startIndex + rowsPerPage, displayedForms.length)} de ${
+                displayedForms.length
+              } formularios`
+            : "No se encontraron formularios"}
         </div>
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Rows per page</p>
+            <p className="text-sm font-medium">Filas por página</p>
             <Select
               value={rowsPerPage.toString()}
               onValueChange={(value) => {
@@ -131,7 +157,7 @@ export default function Forms() {
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPage(1)} disabled={page === 1}>
               <ChevronsLeft className="h-4 w-4" />
-              <span className="sr-only">First page</span>
+              <span className="sr-only">Primera página</span>
             </Button>
             <Button
               variant="outline"
@@ -141,10 +167,10 @@ export default function Forms() {
               disabled={page === 1}
             >
               <ChevronLeft className="h-4 w-4" />
-              <span className="sr-only">Previous page</span>
+              <span className="sr-only">Página anterior</span>
             </Button>
             <span className="text-sm">
-              Page {page} of {totalPages || 1}
+              Página {page} de {totalPages || 1}
             </span>
             <Button
               variant="outline"
@@ -154,7 +180,7 @@ export default function Forms() {
               disabled={page === totalPages || totalPages === 0}
             >
               <ChevronRight className="h-4 w-4" />
-              <span className="sr-only">Next page</span>
+              <span className="sr-only">Página siguiente</span>
             </Button>
             <Button
               variant="outline"
@@ -164,7 +190,7 @@ export default function Forms() {
               disabled={page === totalPages || totalPages === 0}
             >
               <ChevronsRight className="h-4 w-4" />
-              <span className="sr-only">Last page</span>
+              <span className="sr-only">Última página</span>
             </Button>
           </div>
         </div>

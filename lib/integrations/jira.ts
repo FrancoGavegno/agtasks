@@ -25,7 +25,7 @@ export const jiraApi = axios.create({
     Accept: "application/json",
     "Content-Type": "application/json",
   },
-  timeout: 10000, // Timeout de 10 segundos para evitar solicitudes eternas
+  timeout: 3600000, // Timeout de 3600 segundos para evitar solicitudes eternas
 })
 
 // Interceptor opcional para manejar errores globalmente o añadir logging

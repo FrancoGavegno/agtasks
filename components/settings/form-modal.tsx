@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from 'next/navigation'
+import { useParams } from "next/navigation"
 import { Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
+import { toast } from "@/hooks/use-toast"
 import type { Form } from "@/lib/interfaces"
 
 interface FormModalProps {
@@ -19,7 +20,7 @@ interface FormModalProps {
 }
 
 export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onSave }: FormModalProps) {
-  const { domain } = useParams<{ domain: string }>();
+  const { domain } = useParams<{ domain: string }>()
   const [localSelected, setLocalSelected] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isSaving, setIsSaving] = useState(false)
@@ -40,29 +41,43 @@ export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onS
   }
 
   const handleSave = async () => {
-    setIsSaving(true) // Deshabilitar el botón mientras se ejecuta
+    setIsSaving(true)
     try {
+      console.log("Guardando preferencias de formularios:", { localSelected, selectedForms })
+
       // 1. Identificar formularios que deben eliminarse
-      // (id que ya no están seleccionados)
       const formsToDeleteIds = selectedForms.filter((formId) => !localSelected.includes(formId))
 
-      // 2. Identificar formularios que deben crearse (id que no están en forms)
+      // 2. Identificar formularios que deben crearse
       const formsToCreate = localSelected.filter((formId) => !forms.some((form) => form.id === formId))
 
-      // 3. Eliminar formularios deseleccionados usando el id del DomainForm
+      console.log("Formularios a eliminar:", formsToDeleteIds)
+      console.log("Formularios a crear:", formsToCreate)
+
+      // 3. Eliminar formularios deseleccionados
       const deletePromises = formsToDeleteIds.map(async (formId) => {
-        const response = await fetch(`/api/v1/agtasks/domains/${domain}/forms/${formId}`, {
-          method: "DELETE",
-        })
+        try {
+          console.log(`Eliminando formulario con ID ${formId}`)
+          const response = await fetch(`/api/v1/agtasks/domains/${domain}/forms/${formId}`, {
+            method: "DELETE",
+          })
 
-        if (!response.ok) {
-          const errorData = await response.json()
-          console.error(`Error en DELETE para id ${formId}:`, errorData)
-          throw new Error(`Failed to delete form with id ${formId}`)
+          if (!response.ok) {
+            const errorData = await response.json()
+            console.error(`Error al eliminar formulario ${formId}:`, errorData)
+            throw new Error(`Error al eliminar formulario: ${errorData.message || response.statusText}`)
+          }
+
+          return await response.json()
+        } catch (error) {
+          console.error(`Error al eliminar formulario ${formId}:`, error)
+          toast({
+            title: "Error",
+            description: `No se pudo eliminar el formulario: ${(error as Error).message}`,
+            variant: "destructive",
+          })
+          throw error
         }
-
-        const data = await response.json()
-        return data
       })
 
       // 4. Crear nuevos formularios
@@ -70,48 +85,67 @@ export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onS
         const formData = allForms.find((form) => form.id === formId)
 
         if (!formData) {
-          throw new Error(`Form data not found for id ${formId}`)
+          throw new Error(`No se encontraron datos para el formulario ${formId}`)
         }
 
-        const response = await fetch(`/api/v1/agtasks/domains/${domain}/forms`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: formData.name,
-            language: formData.language || "ES",
-            ktFormId: formData.ktFormId || formData.id,
-          }),
-        })
+        try {
+          console.log(`Creando formulario: ${JSON.stringify(formData)}`)
+          const response = await fetch(`/api/v1/agtasks/domains/${domain}/forms`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              domainId: domain,
+              name: formData.name,
+              language: formData.language || "ES",
+              ktFormId: formData.ktFormId || formData.id,
+            }),
+          })
 
-        if (!response.ok) {
-          const errorData = await response.json()
-          console.error(`Error en POST para id ${formId}:`, errorData)
-          throw new Error(`Failed to create form with id ${formId}`)
+          if (!response.ok) {
+            const errorData = await response.json()
+            console.error(`Error al crear formulario ${formId}:`, errorData)
+            throw new Error(`Error al crear formulario: ${errorData.message || response.statusText}`)
+          }
+
+          return await response.json()
+        } catch (error) {
+          console.error(`Error al crear formulario ${formId}:`, error)
+          toast({
+            title: "Error",
+            description: `No se pudo crear el formulario: ${(error as Error).message}`,
+            variant: "destructive",
+          })
+          throw error
         }
-
-        const data = await response.json()
-        return data
       })
 
-      // 5. Ejecutar todas las operaciones (DELETE y POST) en paralelo
+      // 5. Ejecutar todas las operaciones en paralelo
       await Promise.all([...deletePromises, ...createPromises])
 
-      // 6. Llamar a onSave y cerrar el modal si todo sale bien
+      // 6. Notificar éxito y cerrar modal
+      toast({
+        title: "Éxito",
+        description: "Preferencias de formularios guardadas correctamente",
+      })
+
       onSave(localSelected)
       onClose()
     } catch (error) {
-      console.error("Error processing forms:", error)
+      console.error("Error al procesar formularios:", error)
+      toast({
+        title: "Error",
+        description: "Hubo un problema al guardar las preferencias de formularios",
+        variant: "destructive",
+      })
     } finally {
-      setIsSaving(false) // Rehabilitar el botón cuando termine (incluso si hay error)
+      setIsSaving(false)
     }
   }
 
   // Filter forms based on search term
-  const filteredForms = allForms.filter(
-    (form) => form.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredForms = allForms.filter((form) => form.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -140,7 +174,7 @@ export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onS
           {filteredForms.length > 0 ? (
             filteredForms.map((form) => {
               // Check if this form is already in the domain forms list
-              const existingForm = forms.find((f) => f.ktFormId === form.ktFormId)
+              const existingForm = forms.find((f) => f.ktFormId === form.ktFormId || f.ktFormId === form.id)
 
               // If it exists, use its ID for checking selection
               const checkId = existingForm ? existingForm.id : form.id
@@ -149,7 +183,7 @@ export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onS
                 <div key={form.id} className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <div className="text-sm text-foreground">{form.name}</div>
-                    {/* <div className="text-xs text-muted-foreground">{form.language || "es"}</div> */}
+                    {form.language && <div className="text-xs text-muted-foreground">{form.language}</div>}
                   </div>
                   <Switch checked={localSelected.includes(checkId)} onCheckedChange={() => toggleForm(checkId)} />
                 </div>

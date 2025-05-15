@@ -188,25 +188,24 @@ export const listFields = async (workspaceId: string, seasonId: string, farmId: 
 // Listar usuarios
 export const listUsersByDomain = async (domainId: number): Promise<User[]> => {
   const query = `
-    query ($domainId: Int!) {
-      list_users_by_domain(domainId: $domainId) {
-        id
+    query ($domainId: Int) {
+      list_users(domainId: $domainId) {
+        created
         email
         firstName
-        lastName
-        invitationStatus
         isoLanguages
-        created
         lastLogin
+        lastName
       }
-    }
-  `;
+    }`;
 
   const users = await graphqlRequest<User[]>(
     query,
     { domainId },
-    'list_users_by_domain',
+    'list_users',
   );
+
+  //console.log(`Users fetched for domainId ${domainId}:`, users);
 
   // Convertir lastLogin null a string vacío para mantener compatibilidad
   return users.map(user => ({

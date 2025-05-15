@@ -7,6 +7,7 @@ export async function GET(req: Request, { params }: {
 }) {
     try {
         const { domainId, projectId, queueId } = params;
+        
         const parsed = jiraServiceQuerySchema.safeParse({ domainId, projectId, queueId });
         if (!parsed.success) {
             return NextResponse.json(

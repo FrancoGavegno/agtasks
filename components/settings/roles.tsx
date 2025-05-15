@@ -18,6 +18,8 @@ export default function Roles() {
   const [page, setPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(10)
 
+  console.log("Roles component:", { roles, allRoles, selectedRoles })
+
   // Filter roles by name and only show selected ones
   const filteredRoles = roles
     .filter((role) => selectedRoles.includes(role.id))
@@ -27,7 +29,9 @@ export default function Roles() {
   const uniqueRoles = filteredRoles.reduce(
     (acc, current) => {
       const isDuplicate = acc.find(
-        (item) => item.name === current.name && item.language.toLowerCase() === current.language.toLowerCase(),
+        (item) =>
+          item.name === current.name &&
+          (item.language || "ES").toLowerCase() === (current.language || "ES").toLowerCase(),
       )
       if (!isDuplicate) {
         return acc.concat([current])
@@ -43,6 +47,7 @@ export default function Roles() {
   const paginatedRoles = uniqueRoles.slice(startIndex, startIndex + rowsPerPage)
 
   const handleSavePreferences = async (selectedIds: string[]) => {
+    console.log("Guardando preferencias de roles:", selectedIds)
     setSelectedRoles(selectedIds)
     refreshRoles()
   }
@@ -51,7 +56,7 @@ export default function Roles() {
     return (
       <div className="flex h-[400px] w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Loading roles...</span>
+        <span className="ml-2 text-muted-foreground">Cargando roles...</span>
       </div>
     )
   }
@@ -61,10 +66,10 @@ export default function Roles() {
       <div className="flex justify-between items-center">
         <div className="space-y-1">
           <h2 className="text-xl font-semibold tracking-tight">Roles</h2>
-          <p className="text-sm text-muted-foreground">Manage user roles and permissions</p>
+          <p className="text-sm text-muted-foreground">Administra los roles de usuario</p>
         </div>
         <Button size="sm" onClick={() => setIsModalOpen(true)}>
-          Edit
+          Editar
         </Button>
       </div>
 
@@ -73,7 +78,7 @@ export default function Roles() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Filter roles..."
+            placeholder="Filtrar roles..."
             className="pl-8"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -85,8 +90,8 @@ export default function Roles() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[80%]">Role</TableHead>
-              {/* <TableHead className="text-center">Language</TableHead> */}
+              <TableHead className="w-[80%]">Rol</TableHead>
+              <TableHead className="text-center">Idioma</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -94,15 +99,15 @@ export default function Roles() {
               paginatedRoles.map((role) => (
                 <TableRow key={role.id}>
                   <TableCell className="font-medium">{role.name}</TableCell>
-                  {/* <TableCell className="text-center">
-                    <Badge variant="outline">{role.language}</Badge>
-                  </TableCell> */}
+                  <TableCell className="text-center">
+                    <Badge variant="outline">{role.language || "ES"}</Badge>
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
                 <TableCell colSpan={2} className="h-24 text-center">
-                  No roles found.
+                  No se encontraron roles.
                 </TableCell>
               </TableRow>
             )}
@@ -113,14 +118,14 @@ export default function Roles() {
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
           {uniqueRoles.length > 0
-            ? `Showing ${startIndex + 1} to ${Math.min(startIndex + rowsPerPage, uniqueRoles.length)} of ${
+            ? `Mostrando ${startIndex + 1} a ${Math.min(startIndex + rowsPerPage, uniqueRoles.length)} de ${
                 uniqueRoles.length
               } roles`
-            : "No roles found"}
+            : "No se encontraron roles"}
         </div>
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Rows per page</p>
+            <p className="text-sm font-medium">Filas por página</p>
             <Select
               value={rowsPerPage.toString()}
               onValueChange={(value) => {
@@ -143,7 +148,7 @@ export default function Roles() {
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPage(1)} disabled={page === 1}>
               <ChevronsLeft className="h-4 w-4" />
-              <span className="sr-only">First page</span>
+              <span className="sr-only">Primera página</span>
             </Button>
             <Button
               variant="outline"
@@ -153,10 +158,10 @@ export default function Roles() {
               disabled={page === 1}
             >
               <ChevronLeft className="h-4 w-4" />
-              <span className="sr-only">Previous page</span>
+              <span className="sr-only">Página anterior</span>
             </Button>
             <span className="text-sm">
-              Page {page} of {totalPages || 1}
+              Página {page} de {totalPages || 1}
             </span>
             <Button
               variant="outline"
@@ -166,7 +171,7 @@ export default function Roles() {
               disabled={page === totalPages || totalPages === 0}
             >
               <ChevronRight className="h-4 w-4" />
-              <span className="sr-only">Next page</span>
+              <span className="sr-only">Página siguiente</span>
             </Button>
             <Button
               variant="outline"
@@ -176,7 +181,7 @@ export default function Roles() {
               disabled={page === totalPages || totalPages === 0}
             >
               <ChevronsRight className="h-4 w-4" />
-              <span className="sr-only">Last page</span>
+              <span className="sr-only">Última página</span>
             </Button>
           </div>
         </div>

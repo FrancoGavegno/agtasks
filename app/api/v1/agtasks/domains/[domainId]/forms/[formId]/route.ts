@@ -13,7 +13,7 @@ export async function DELETE(req: Request, { params }: { params: { domainId: str
     const { domainId, formId } = params;
 
     // Validar los parámetros
-    const parsedParams = deleteFormParamsSchema.safeParse(params);
+    const parsedParams = deleteFormParamsSchema.safeParse({domainId, formId});
     if (!parsedParams.success) {
       return NextResponse.json(
         { error: "Validation error", issues: parsedParams.error.format() },

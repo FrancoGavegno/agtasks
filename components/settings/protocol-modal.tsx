@@ -1,18 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from 'next/navigation'
+import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription 
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
 import type { Protocol } from "@/lib/interfaces"
 
 interface ModalProtocolsProps {
@@ -32,7 +27,7 @@ export function ModalProtocols({
   selectedProtocols,
   onSave,
 }: ModalProtocolsProps) {
-  const { domain } = useParams<{ domain: string }>();
+  const { domain } = useParams<{ domain: string }>()
   const [localSelected, setLocalSelected] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isSaving, setIsSaving] = useState(false)
@@ -40,6 +35,7 @@ export function ModalProtocols({
   // Initialize local state when modal opens
   useEffect(() => {
     if (isOpen) {
+      console.log("Modal opened with selected protocols:", selectedProtocols)
       setLocalSelected([...selectedProtocols])
       setSearchTerm("")
     }
@@ -48,18 +44,22 @@ export function ModalProtocols({
   const toggleProtocol = (id: string) => {
     setLocalSelected((prev) => {
       const newSelected = prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+      console.log(`Toggled protocol ${id}, new selection:`, newSelected)
       return newSelected
     })
   }
 
   const handleSave = async () => {
-    setIsSaving(true) // Deshabilitar el botón mientras se ejecuta
+    setIsSaving(true)
     try {
+      console.log("Saving protocols with local selection:", localSelected)
+      console.log("Current protocols:", protocols)
+
       // 1. Identificar protocolos que deben eliminarse
-      // (tmProtocolId que ya no están seleccionados)
       const protocolsToDeleteTmProtocolIds = selectedProtocols.filter(
         (protocolId) => !localSelected.includes(protocolId),
       )
+      console.log("Protocols to delete:", protocolsToDeleteTmProtocolIds)
 
       // Mapear tmProtocolId a id usando protocols (los DomainProtocol asociados)
       const protocolsToDelete = protocolsToDeleteTmProtocolIds
@@ -73,26 +73,38 @@ export function ModalProtocols({
         })
         .filter((item): item is { tmProtocolId: string; id: string } => item !== null)
 
-      // 2. Identificar protocolos que deben crearse (tmProtocolId que no están en protocols)
+      console.log("Mapped protocols to delete:", protocolsToDelete)
+
+      // 2. Identificar protocolos que deben crearse
       const protocolsToCreate = localSelected.filter(
         (protocolId) => !protocols.some((protocol) => protocol.tmProtocolId === protocolId),
       )
+      console.log("Protocols to create:", protocolsToCreate)
 
-      // 3. Eliminar protocolos deseleccionados usando el id del DomainProtocol
-      const deletePromises = protocolsToDelete.map(async ({ tmProtocolId, id }) => {
-        //const response = await fetch(`/api/domain-protocol?protocolId=${id}`, {
-        const response = await fetch(`/api/v1/agtasks/domains/${domain}/protocols/${id}`, {
-          method: "DELETE",
-        })
+      // 3. Eliminar protocolos deseleccionados
+      const deletePromises = protocolsToDelete.map(async ({ id }) => {
+        try {
+          console.log(`Deleting protocol with id ${id}`)
+          const response = await fetch(`/api/v1/agtasks/domains/${domain}/protocols/${id}`, {
+            method: "DELETE",
+          })
 
-        if (!response.ok) {
-          const errorData = await response.json()
-          console.error(`Error en DELETE para id ${id}:`, errorData)
-          throw new Error(`Failed to delete protocol with id ${id}`)
+          if (!response.ok) {
+            const errorData = await response.json()
+            console.error(`Error al eliminar protocolo ${id}:`, errorData)
+            throw new Error(`Error al eliminar protocolo: ${errorData.message || response.statusText}`)
+          }
+
+          return await response.json()
+        } catch (error) {
+          console.error(`Error al eliminar protocolo ${id}:`, error)
+          toast({
+            title: "Error",
+            description: `No se pudo eliminar el protocolo: ${(error as Error).message}`,
+            variant: "destructive",
+          })
+          throw error
         }
-
-        const data = await response.json()
-        return data
       })
 
       // 4. Crear nuevos protocolos
@@ -100,43 +112,66 @@ export function ModalProtocols({
         const protocolData = allProtocols.find((protocol) => protocol.tmProtocolId === protocolId)
 
         if (!protocolData) {
-          throw new Error(`Protocol data not found for tmProtocolId ${protocolId}`)
+          throw new Error(`No se encontraron datos para el protocolo ${protocolId}`)
         }
 
-        //const response = await fetch("/api/domain-protocol", {
-        const response = await fetch(`/api/v1/agtasks/domains/${domain}/protocols`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            domainId: "dd8ae98f-2231-444e-8daf-120a4c416d15",
-            tmProtocolId: protocolData.tmProtocolId,
-            name: protocolData.name,
-            language: protocolData.language,
-          }),
-        })
+        try {
+          console.log(`Creating protocol with tmProtocolId ${protocolId}`, protocolData)
+          const response = await fetch(`/api/v1/agtasks/domains/${domain}/protocols`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              domainId: domain,
+              tmProtocolId: protocolData.tmProtocolId,
+              name: protocolData.name,
+              language: protocolData.language || "ES",
+            }),
+          })
 
-        if (!response.ok) {
-          const errorData = await response.json()
-          console.error(`Error en POST para tmProtocolId ${protocolId}:`, errorData)
-          throw new Error(`Failed to create protocol with tmProtocolId ${protocolId}`)
+          if (!response.ok) {
+            const errorData = await response.json()
+            console.error(`Error al crear protocolo ${protocolId}:`, errorData)
+            throw new Error(`Error al crear protocolo: ${errorData.message || response.statusText}`)
+          }
+
+          const result = await response.json()
+          console.log(`Protocol created successfully:`, result)
+          return result
+        } catch (error) {
+          console.error(`Error al crear protocolo ${protocolId}:`, error)
+          toast({
+            title: "Error",
+            description: `No se pudo crear el protocolo: ${(error as Error).message}`,
+            variant: "destructive",
+          })
+          throw error
         }
-
-        const data = await response.json()
-        return data
       })
 
-      // 5. Ejecutar todas las operaciones (DELETE y POST) en paralelo
+      // 5. Ejecutar todas las operaciones en paralelo
       await Promise.all([...deletePromises, ...createPromises])
 
-      // 6. Llamar a onSave y cerrar el modal si todo sale bien
+      // 6. Notificar éxito y cerrar modal
+      toast({
+        title: "Éxito",
+        description: "Preferencias de protocolos guardadas correctamente",
+      })
+
+      // Llamar a onSave con los IDs seleccionados
+      console.log("Calling onSave with:", localSelected)
       onSave(localSelected)
       onClose()
     } catch (error) {
-      console.error("Error processing protocols:", error)
+      console.error("Error al procesar protocolos:", error)
+      toast({
+        title: "Error",
+        description: "Hubo un problema al guardar las preferencias de protocolos",
+        variant: "destructive",
+      })
     } finally {
-      setIsSaving(false) // Rehabilitar el botón cuando termine (incluso si hay error)
+      setIsSaving(false)
     }
   }
 
@@ -144,7 +179,7 @@ export function ModalProtocols({
   const filteredProtocols = allProtocols.filter(
     (protocol) =>
       protocol.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      protocol.language.toLowerCase().includes(searchTerm.toLowerCase()),
+      (protocol.language && protocol.language.toLowerCase().includes(searchTerm.toLowerCase())),
   )
 
   return (
