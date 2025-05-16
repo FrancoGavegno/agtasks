@@ -20,19 +20,18 @@ export type Step1FormValues = z.infer<typeof step1Schema>
 // Actualizar el esquema de validación para el paso 2 (selección de lotes)
 // Modificar el step2Schema para usar strings en lugar de números para los IDs
 
+// Añadir los nuevos campos al esquema de validación para Step2FormValues
+
+// Buscar la definición de Step2FormValues y modificarla para incluir los nuevos campos
 export const step2Schema = z.object({
-  workspace: z.string({
-    required_error: "Por favor, seleccione un espacio de trabajo",
-  }),
-  campaign: z.string({
-    required_error: "Por favor, seleccione una campaña",
-  }),
-  establishment: z.string({
-    required_error: "Por favor, seleccione un establecimiento",
-  }),
-  selectedLots: z.array(z.string()).min(1, {
-    message: "Por favor, seleccione al menos un lote",
-  }),
+  workspace: z.string().min(1, "Debe seleccionar un espacio de trabajo"),
+  workspaceName: z.string().optional(),
+  campaign: z.string().min(1, "Debe seleccionar una campaña"),
+  campaignName: z.string().optional(),
+  establishment: z.string().min(1, "Debe seleccionar un establecimiento"),
+  establishmentName: z.string().optional(),
+  selectedLots: z.array(z.string()).min(1, "Debe seleccionar al menos un lote"),
+  selectedLotsNames: z.record(z.string()).optional(),
 })
 
 export type Step2FormValues = z.infer<typeof step2Schema>
@@ -82,4 +81,5 @@ export const createServiceSchema = z.object({
   taskAssignments: step3Schema.shape.taskAssignments,
 })
 
-export type CreateServiceFormValues = z.infer<typeof createServiceSchema>
+// Asegurarse de que CreateServiceFormValues incluya los nuevos campos
+export type CreateServiceFormValues = Step1FormValues & Step2FormValues & Step3FormValues

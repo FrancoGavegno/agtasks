@@ -151,63 +151,123 @@ export default function Step2Lots() {
     fetchFields()
   }, [workspace, campaign, establishment])
 
-  // Handle workspace selection
+  // Modificar los manejadores de eventos para guardar también los nombres
+
+  // Modificar handleWorkspaceChange para guardar el nombre del workspace
   const handleWorkspaceChange = (value: string) => {
+    // Encontrar el workspace seleccionado para obtener su nombre
+    const selectedWorkspace = workspaces.find((workspace) => workspace.id.toString() === value)
+    const workspaceName = selectedWorkspace ? selectedWorkspace.name : ""
+
     form.setValue("workspace", value, { shouldValidate: true })
+    form.setValue("workspaceName", workspaceName, { shouldValidate: true })
     form.setValue("campaign", "", { shouldValidate: true })
+    form.setValue("campaignName", "", { shouldValidate: true })
     form.setValue("establishment", "", { shouldValidate: true })
+    form.setValue("establishmentName", "", { shouldValidate: true })
     form.setValue("selectedLots", [], { shouldValidate: true })
+    form.setValue("selectedLotsNames", {}, { shouldValidate: true })
 
     // Update context
     updateFormValues({
       workspace: value,
+      workspaceName,
       campaign: "",
+      campaignName: "",
       establishment: "",
+      establishmentName: "",
       selectedLots: [],
+      selectedLotsNames: {},
     })
   }
 
-  // Handle season (campaign) selection
+  // Modificar handleCampaignChange para guardar el nombre de la campaña
   const handleCampaignChange = (value: string) => {
+    // Encontrar la campaña seleccionada para obtener su nombre
+    const selectedCampaign = seasons.find((season) => season.id.toString() === value)
+    const campaignName = selectedCampaign ? selectedCampaign.name : ""
+
     form.setValue("campaign", value, { shouldValidate: true })
+    form.setValue("campaignName", campaignName, { shouldValidate: true })
     form.setValue("establishment", "", { shouldValidate: true })
+    form.setValue("establishmentName", "", { shouldValidate: true })
     form.setValue("selectedLots", [], { shouldValidate: true })
+    form.setValue("selectedLotsNames", {}, { shouldValidate: true })
 
     // Update context
     updateFormValues({
       campaign: value,
+      campaignName,
       establishment: "",
+      establishmentName: "",
       selectedLots: [],
+      selectedLotsNames: {},
     })
   }
 
-  // Handle farm (establishment) selection
+  // Modificar handleEstablishmentChange para guardar el nombre del establecimiento
   const handleEstablishmentChange = (value: string) => {
+    // Encontrar el establecimiento seleccionado para obtener su nombre
+    const selectedFarm = farms.find((farm) => farm.id.toString() === value)
+    const establishmentName = selectedFarm ? selectedFarm.name : ""
+
     form.setValue("establishment", value, { shouldValidate: true })
+    form.setValue("establishmentName", establishmentName, { shouldValidate: true })
     form.setValue("selectedLots", [], { shouldValidate: true })
+    form.setValue("selectedLotsNames", {}, { shouldValidate: true })
 
     // Update context
     updateFormValues({
       establishment: value,
+      establishmentName,
       selectedLots: [],
+      selectedLotsNames: {},
     })
   }
 
-  // Handle lot (field) selection
+  // Modificar handleLotSelection para guardar también los nombres de los lotes
   const handleLotSelection = (lotId: string) => {
     const currentLots = form.getValues("selectedLots") || []
-    const newLots = currentLots.includes(lotId) ? currentLots.filter((id) => id !== lotId) : [...currentLots, lotId]
+    const currentLotsNames = form.getValues("selectedLotsNames") || {}
 
-    // Asegurar que se actualice el valor en el formulario
-    form.setValue("selectedLots", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
+    // Encontrar el lote seleccionado para obtener su nombre
+    const selectedField = fields.find((field) => field.id.toString() === lotId)
 
-    // Actualizar el contexto
-    updateFormValues({
-      selectedLots: newLots,
-    })
+    if (currentLots.includes(lotId)) {
+      // Si ya está seleccionado, lo quitamos
+      const newLots = currentLots.filter((id) => id !== lotId)
+      const newLotsNames = { ...currentLotsNames }
+      delete newLotsNames[lotId]
+
+      form.setValue("selectedLots", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
+      form.setValue("selectedLotsNames", newLotsNames, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
+
+      // Actualizar el contexto
+      updateFormValues({
+        selectedLots: newLots,
+        selectedLotsNames: newLotsNames,
+      })
+    } else {
+      // Si no está seleccionado, lo añadimos
+      const newLots = [...currentLots, lotId]
+      const newLotsNames = {
+        ...currentLotsNames,
+        [lotId]: selectedField ? selectedField.name : "",
+      }
+
+      form.setValue("selectedLots", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
+      form.setValue("selectedLotsNames", newLotsNames, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
+
+      // Actualizar el contexto
+      updateFormValues({
+        selectedLots: newLots,
+        selectedLotsNames: newLotsNames,
+      })
+    }
 
     // Añadir un log para depuración
-    console.log("Lotes seleccionados actualizados:", newLots)
+    console.log("Lotes seleccionados actualizados:", form.getValues("selectedLots"))
+    console.log("Nombres de lotes seleccionados:", form.getValues("selectedLotsNames"))
   }
 
   return (

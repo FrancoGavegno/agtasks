@@ -25,10 +25,10 @@ export default function ServicesPage() {
             <Link href={`/domains/${domain}/settings`}>{t("BreadcrumbItem-1")}</Link>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
-          <BreadcrumbItem>
+          {/* <BreadcrumbItem>
             <Link href={`/domains/${domain}/projects/${project}`}>{t("BreadcrumbItem-2")}</Link>
           </BreadcrumbItem>
-          <BreadcrumbSeparator />
+          <BreadcrumbSeparator /> */}
           <BreadcrumbItem>
             <BreadcrumbPage>{t("BreadcrumbPage")}</BreadcrumbPage>
           </BreadcrumbItem>
@@ -40,11 +40,11 @@ export default function ServicesPage() {
           <h2 className="text-2xl font-semibold tracking-tight">{t("title")}</h2>
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Link href={`/domains/${domain}/projects/${project}/services/create`} >
+        {/* <Link href={`/domains/${domain}/projects/${project}/services/create`} >
             <Button>
             <Plus className="mr-2 h-4 w-4" /> {t("buttonCreateService")}
             </Button>
-          </Link>
+          </Link> */}
       </div>
 
       <ServicesPageDetails />

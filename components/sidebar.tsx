@@ -56,12 +56,12 @@ export function AppSidebar({ user }: Props) {
   ]
 
   const projectNavItems = [
-    {
-      title: t("projectNavItems-1-title"),
-      href: "",
-      icon: Folder,
-      description: t("projectNavItems-1-description")
-    },
+    // {
+    //   title: t("projectNavItems-1-title"),
+    //   href: "",
+    //   icon: Folder,
+    //   description: t("projectNavItems-1-description")
+    // },
     {
       title: t("projectNavItems-2-title"),
       href: "/services",
@@ -80,6 +80,7 @@ export function AppSidebar({ user }: Props) {
       const domainsData = await listDomainsByUserEmail(user)
       setDomains(domainsData)
       // setSelectedDomain(domainsData[0])
+
       domainsData.forEach((d) => {
         if (d.id === Number(domain)) { 
           setSelectedDomain(d)

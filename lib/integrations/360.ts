@@ -16,7 +16,7 @@ const graphqlClient: AxiosInstance = axios.create({
     'Content-Type': 'application/json',
     'x-api-key': apiKey,
   },
-  timeout: 30000, // Aumentamos el timeout a 30 segundos
+  timeout: 300000, // Aumentamos el timeout a 300 segundos
 });
 
 // Interfaz genérica para las respuestas de GraphQL
@@ -32,7 +32,6 @@ const graphqlRequest = async <T>(
   dataKey: string,
 ): Promise<T> => {
   try {
-    console.log(`Making GraphQL request for ${dataKey}:`, { query, variables }); // Añadimos log para depuración
     const response = await graphqlClient.post<GraphQLResponse<T>>('', {
       query,
       variables,
@@ -41,8 +40,6 @@ const graphqlRequest = async <T>(
     if (response.data.errors) {
       throw new Error(JSON.stringify(response.data.errors));
     }
-
-    console.log(`Response data for ${dataKey}:`, response.data.data);
     return response.data.data?.[dataKey] ?? ([] as unknown as T);
   } catch (error) {
     if (error instanceof AxiosError) {
@@ -204,8 +201,6 @@ export const listUsersByDomain = async (domainId: number): Promise<User[]> => {
     { domainId },
     'list_users',
   );
-
-  //console.log(`Users fetched for domainId ${domainId}:`, users);
 
   // Convertir lastLogin null a string vacío para mantener compatibilidad
   return users.map(user => ({

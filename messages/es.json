@@ -31,13 +31,13 @@
   },
   "DashboardPage": {
     "steps-1": "Elige qué protocolos estarán disponibles para tus usuarios y agiliza así la creación de servicios.",
-    "steps-2": "Invita a tu equipo a usar Agtasks y define claramente quién hace qué (roles).",
+    "steps-2": "Invita a tu equipo y define claramente quién hace qué (roles).",
     "steps-3": "Selecciona qué formularios serán usados para capturar datos precisos directamente desde el campo.",
     "steps-4": "Crea servicios usando los protocolos, roles, usuarios y formularios predefinidos. Optimiza tu tiempo y comienza rápidamente con la gestión eficiente de tus proyectos agropecuarios.",
     "title": "Empieza a usar Agtasks",
     "subtitle": "Agtasks te permite administrar servicios y tareas agrícolas con facilidad.",
-    "steps-title-1": "Configuración Inicial",
-    "steps-title-2": "Creación de Servicios",
+    "steps-title-1": "Configuración",
+    "steps-title-2": "Servicios",
     "help-title": "Recursos de Ayuda y Soporte",
     "help-subtitle-1": "Próximo paso",
     "help-text-1": "Realiza la configuración inicial antes de crear tu primer servicio.",
@@ -85,6 +85,10 @@
   "loadingData": "Cargando datos de los servicios...",
   "notFoundTitle": "No hay servicios disponibles",
   "notFoundSubtitle": "Crear servicios para ver los indicadores del proyecto"
+  },
+  "ServiceDetail": {
+    "title": "",
+    "subtitle": ""
   },
   "TasksPage": {
     "title": "Tasks",

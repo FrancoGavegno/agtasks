@@ -51,11 +51,23 @@ interface User {
   roleIds: string[]
 }
 
-// Define the context type
+// Actualizar el contexto para incluir los nuevos campos
+
+// Buscar la interfaz ServiceFormContextType y actualizarla
 interface ServiceFormContextType {
-  // Form values
-  formValues: CreateServiceFormValues
-  updateFormValues: (values: Partial<CreateServiceFormValues>) => void
+  formValues: {
+    protocol?: string
+    taskAssignments?: any[]
+    workspace?: string
+    workspaceName?: string
+    campaign?: string
+    campaignName?: string
+    establishment?: string
+    establishmentName?: string
+    selectedLots?: string[]
+    selectedLotsNames?: Record<string, string>
+  }
+  updateFormValues: (values: Partial<ServiceFormContextType["formValues"]>) => void
   resetForm: () => void
 
   // Protocol data
@@ -85,6 +97,38 @@ interface ServiceFormContextType {
   users: User[]
   usersLoading: boolean
   getUsersByRole: (roleId: string) => User[]
+}
+
+// Actualizar el valor inicial del contexto
+const initialContext: ServiceFormContextType = {
+  formValues: {
+    protocol: "",
+    taskAssignments: [],
+    workspace: "",
+    workspaceName: "",
+    campaign: "",
+    campaignName: "",
+    establishment: "",
+    establishmentName: "",
+    selectedLots: [],
+    selectedLotsNames: {},
+  },
+  updateFormValues: () => {},
+  resetForm: () => {},
+  protocolTasks: {},
+  workspaces: [],
+  workspacesLoading: false,
+  campaigns: [],
+  campaignsLoading: false,
+  establishments: [],
+  establishmentsLoading: false,
+  lots: [],
+  lotsLoading: false,
+  roles: [],
+  rolesLoading: false,
+  users: [],
+  usersLoading: false,
+  getUsersByRole: () => [],
 }
 
 // Default form values
@@ -188,7 +232,7 @@ const sampleUsers: User[] = [
 // Create the provider component
 export function ServiceFormProvider({ children }: { children: ReactNode }) {
   // Form values state
-  const [formValues, setFormValues] = useState<CreateServiceFormValues>(defaultFormValues)
+  const [formValues, setFormValues] = useState<ServiceFormContextType["formValues"]>(initialContext.formValues)
 
   // Data loading states
   const [workspacesLoading, setWorkspacesLoading] = useState(true)
@@ -214,13 +258,13 @@ export function ServiceFormProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // Update form values
-  const updateFormValues = (values: Partial<CreateServiceFormValues>) => {
+  const updateFormValues = (values: Partial<ServiceFormContextType["formValues"]>) => {
     setFormValues((prev) => ({ ...prev, ...values }))
   }
 
   // Reset form
   const resetForm = () => {
-    setFormValues(defaultFormValues)
+    setFormValues(initialContext.formValues)
   }
 
   // Get users by role

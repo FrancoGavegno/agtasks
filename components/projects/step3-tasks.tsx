@@ -35,20 +35,14 @@ export default function Step3Tasks() {
     const fetchRoles = async () => {
       try {
         setRolesLoading(true)
-        const response = await fetch(`/api/v1/agtasks/domains/${domainId}/roles`)
-
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status}`)
+        const res = await fetch(`/api/v1/agtasks/domains/${domainId}/roles`)
+        if (!res.ok) {
+          throw new Error(`Error fetching roles: ${res.status}`)
         }
-
-        const data = await response.json()
-        if (data && data.data) {
-          // Ordenar roles alfabéticamente
-          const sortedRoles = [...data.data].sort((a, b) => a.name.localeCompare(b.name))
-          setRoles(sortedRoles)
-        } else {
-          setRoles([])
-        }
+        const data = await res.json()
+        const rolesData = Array.isArray(data) ? data : []
+        const sortedRoles = [...rolesData].sort((a, b) => a.name.localeCompare(b.name))
+        setRoles(sortedRoles)
         setRolesError(null)
       } catch (error) {
         console.error("Error fetching roles:", error)

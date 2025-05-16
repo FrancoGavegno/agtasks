@@ -4,12 +4,12 @@ import { useParams } from "next/navigation"
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { ServiceDetail } from "@/components/projects/service-detail"
+import { Link } from "@/i18n/routing"
 
 export default function ServiceDetailPage() {
   const params = useParams()
@@ -20,19 +20,19 @@ export default function ServiceDetailPage() {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/">Home</BreadcrumbLink>
+            <Link href="/">Home</Link>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
-          <BreadcrumbItem>
+          {/* <BreadcrumbItem>
             <BreadcrumbLink href={`/domains/${domain}/projects`}>Projects</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink href={`/domains/${domain}/projects/${project}`}>Project</BreadcrumbLink>
           </BreadcrumbItem>
-          <BreadcrumbSeparator />
+          <BreadcrumbSeparator /> */}
           <BreadcrumbItem>
-            <BreadcrumbLink href={`/domains/${domain}/projects/${project}/services`}>Services</BreadcrumbLink>
+            <Link href={`/domains/${domain}/projects/${project}/services`}>Services</Link>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>

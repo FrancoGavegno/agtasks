@@ -1,7 +1,5 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Link } from "@/i18n/routing"
-import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -18,143 +16,128 @@ import {
   ArrowUp,
   ArrowUpDown,
   PlusCircle,
+  RefreshCw,
   Plus,
 } from "lucide-react"
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useParams } from "next/navigation"
+import { Link } from "@/i18n/routing"
 import type { Service } from "@/lib/interfaces"
-import { useTranslations } from "next-intl"
+import { useToast } from "@/hooks/use-toast"
+
+interface PaginatedResponse {
+  services: Service[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
 
 export function ServicesPageDetails() {
   const params = useParams()
-  const {domain, project} = params
-  const t = useTranslations("ServicesPageDetails")
+  const projectId = params.project as string
+  const domainId = (params.domain as string) || "8644" // Obtener del parámetro o usar valor por defecto
+  const { toast } = useToast()
+
+  // Estado para los servicios y la paginación
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(10)
-  const [sortConfig, setSortConfig] = useState<{ key: keyof Service | null; direction: "asc" | "desc" | "none" }>({
-    key: null,
-    direction: "none",
-  })
+  const [totalItems, setTotalItems] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [sortBy, setSortBy] = useState<keyof Service>("serviceName")
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
+  const [refreshing, setRefreshing] = useState(false)
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("")
 
-  // Fetch services
+  // Debounce search query
   useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch(`/api/v1/agtasks/domains/${domain}/projects/${project}/services`)
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status}`)
-        }
+  // Reset to first page when search query or rows per page changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [debouncedSearchQuery, rowsPerPage])
 
-        const data = await response.json()
-        setServices(data)
-        setError(null)
-      } catch (err) {
-        console.error("Failed to fetch services:", err)
-        setError("Failed to load services. Please try again later.")
-        setServices([])
-      } finally {
-        setLoading(false)
+  // Fetch services with pagination
+  const fetchServices = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // Construir la URL con los parámetros de paginación y ordenación
+      const url = new URL(`/api/v1/agtasks/domains/${domainId}/projects/${projectId}/services`, window.location.origin)
+      url.searchParams.append("page", currentPage.toString())
+      url.searchParams.append("pageSize", rowsPerPage.toString())
+      url.searchParams.append("search", debouncedSearchQuery)
+      url.searchParams.append("sortBy", sortBy.toString())
+      url.searchParams.append("sortDirection", sortDirection)
+
+      const response = await fetch(url.toString())
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error("API Error:", errorData)
+        throw new Error(`Error: ${response.status} - ${errorData.error || "Unknown error"}`)
       }
-    }
 
-    if (project) {
+      const data: PaginatedResponse = await response.json()
+
+      setServices(data.services)
+      setTotalItems(data.total)
+      setTotalPages(data.totalPages)
+    } catch (err) {
+      console.error("Failed to fetch services:", err)
+      setError(`Error al cargar servicios: ${err instanceof Error ? err.message : "Error desconocido"}`)
+      setServices([])
+      setTotalItems(0)
+      setTotalPages(1)
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
+  // Refresh services
+  const handleRefresh = () => {
+    setRefreshing(true)
+    fetchServices()
+  }
+
+  // Load services when parameters change
+  useEffect(() => {
+    if (projectId) {
       fetchServices()
     }
-  }, [domain, project])
+  }, [projectId, domainId, currentPage, rowsPerPage, debouncedSearchQuery, sortBy, sortDirection])
 
   // Handle sorting
   const requestSort = (key: keyof Service) => {
-    let direction: "asc" | "desc" | "none" = "asc"
-    if (sortConfig.key === key) {
-      if (sortConfig.direction === "asc") {
-        direction = "desc"
-      } else if (sortConfig.direction === "desc") {
-        direction = "none"
-      }
+    if (sortBy === key) {
+      // Toggle direction if same column
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+    } else {
+      // Set new column and default to ascending
+      setSortBy(key)
+      setSortDirection("asc")
     }
-    setSortConfig({ key, direction })
   }
 
   // Get sort icon based on current sort state
   const getSortIcon = (key: keyof Service) => {
-    if (sortConfig.key !== key) {
+    if (sortBy !== key) {
       return <ArrowUpDown className="ml-2 h-4 w-4" />
     }
 
-    if (sortConfig.direction === "asc") {
-      return <ArrowUp className="ml-2 h-4 w-4" />
-    }
-
-    if (sortConfig.direction === "desc") {
-      return <ArrowDown className="ml-2 h-4 w-4" />
-    }
-
-    return <ArrowUpDown className="ml-2 h-4 w-4" />
+    return sortDirection === "asc" ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />
   }
-
-  // Filter services based on search query
-  const filteredServices = services.filter(
-    (service) =>
-      service.serviceName?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-
-  // Sort services based on sort config
-  const sortedServices = [...filteredServices].sort((a, b) => {
-    if (sortConfig.direction === "none" || sortConfig.key === null) {
-      return 0
-    }
-
-    // Handle date sorting
-    if (sortConfig.key === "startDate") {
-      const dateA = a.startDate ? new Date(a.startDate).getTime() : 0
-      const dateB = b.startDate ? new Date(b.startDate).getTime() : 0
-
-      if (sortConfig.direction === "asc") {
-        return dateA - dateB
-      } else {
-        return dateB - dateA
-      }
-    }
-
-    // Handle numeric sorting
-    if (sortConfig.key === "totalArea" || sortConfig.key === "progress") {
-      const valueA = a[sortConfig.key] || 0
-      const valueB = b[sortConfig.key] || 0
-
-      if (sortConfig.direction === "asc") {
-        return valueA - valueB
-      } else {
-        return valueB - valueA
-      }
-    }
-
-    // Handle string sorting
-    const valueA = a[sortConfig.key]?.toString().toLowerCase() || ""
-    const valueB = b[sortConfig.key]?.toString().toLowerCase() || ""
-
-    if (sortConfig.direction === "asc") {
-      return valueA.localeCompare(valueB)
-    } else {
-      return valueB.localeCompare(valueA)
-    }
-  })
-
-  // Calculate pagination
-  const totalPages = Math.ceil(sortedServices.length / rowsPerPage)
-  const indexOfLastItem = currentPage * rowsPerPage
-  const indexOfFirstItem = indexOfLastItem - rowsPerPage
-  const currentItems = sortedServices.slice(indexOfFirstItem, indexOfLastItem)
 
   // Handle page change
   const goToPage = (page: number) => {
@@ -182,32 +165,56 @@ export function ServicesPageDetails() {
     </TableHead>
   )
 
-  if (loading) {
-    return <div className="flex justify-center items-center h-64">{t("loadingData")}</div>
+  // Handle service status change
+  const handleStatusChange = async (serviceId: string, newStatus: string) => {
+    try {
+      // Implementar en el futuro
+      toast({
+        title: "Cambio de estado",
+        description: `Esta funcionalidad será implementada en una versión futura.`,
+      })
+    } catch (err) {
+      console.error("Failed to update service status:", err)
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el estado del servicio.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  if (loading && !refreshing) {
+    return <div className="flex justify-center items-center h-64">Cargando servicios...</div>
   }
 
   if (error) {
-    return <div className="text-red-500 text-center h-64 flex items-center justify-center">{error}</div>
+    return (
+      <div className="text-red-500 text-center h-64 flex flex-col items-center justify-center">
+        <p className="mb-4">{error}</p>
+        <Button onClick={handleRefresh} variant="outline">
+          <RefreshCw className="mr-2 h-4 w-4" /> Intentar de nuevo
+        </Button>
+      </div>
+    )
   }
 
-  if (services.length === 0) {
+  if (services.length === 0 && !debouncedSearchQuery) {
     return (
       <div className="text-center h-64 flex flex-col items-center justify-center">
-        <p className="text-lg text-muted-foreground mb-4">{t("notFoundTitle")}</p>
-        <p className="text-sm text-muted-foreground">{t("notFoundSubtitle")}</p>
-        {/* <Link href={`/domains/${domain}/projects/${project}/services/create`}>
+        <p className="text-lg text-muted-foreground mb-4">No hay servicios disponibles</p>
+        <Link href={`/domains/${domainId}/projects/${projectId}/services/create`}>
           <Button>
-            <Plus className="mr-2 h-4 w-4" /> {t("buttonCreateService")}
+            <PlusCircle className="mr-2 h-4 w-4" /> Crear Primer Servicio
           </Button>
-        </Link>*/}
+        </Link>
       </div>
     )
   }
 
   return (
     <div className="w-full">
-      <div className="mb-4">
-        <div className="relative">
+      <div className="mb-4 flex justify-between items-center">
+        <div className="relative flex-1 mr-4">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
@@ -217,6 +224,17 @@ export function ServicesPageDetails() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
+        <div className="flex gap-2">
+          <Button onClick={handleRefresh} variant="outline" disabled={refreshing}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+            Actualizar
+          </Button>
+          <Link href={`/domains/${domainId}/projects/${projectId}/services/create`}>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> Crear Servicio
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="rounded-md border">
@@ -224,32 +242,31 @@ export function ServicesPageDetails() {
           <TableHeader>
             <TableRow>
               <SortableHeader column="serviceName" label="Servicio" />
-              <SortableHeader column="farmId" label="Espacio de trabajo" />
-              <SortableHeader column="farmId" label="Campaña" />
-              <SortableHeader column="farmId" label="Establecimiento" />
-              <SortableHeader column="farmId" label="Lotes" />
+              <SortableHeader column="workspaceName" label="Espacio de trabajo" />
+              <SortableHeader column="campaignName" label="Campaña" />
+              <SortableHeader column="farmName" label="Establecimiento" />
               <SortableHeader column="totalArea" label="Tot. Has" />
               <SortableHeader column="progress" label="Progreso" />
               <SortableHeader column="startDate" label="Fecha Inicio" />
+              <SortableHeader column="status" label="Estado" />
               <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentItems.length === 0 ? (
+            {services.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                <TableCell colSpan={9} className="text-center py-6 text-muted-foreground">
                   No se encontraron servicios que coincidan con la búsqueda
                 </TableCell>
               </TableRow>
             ) : (
-              currentItems.map((service) => (
+              services.map((service) => (
                 <TableRow key={service.id}>
                   <TableCell className="font-medium">{service.serviceName}</TableCell>
-                  <TableCell>{service.workspaceId}</TableCell>
-                  <TableCell>{service.campaignId}</TableCell>
-                  <TableCell>{service.farmId}</TableCell>
-                  <TableCell>Lotes</TableCell>
-                  <TableCell>{service.totalArea}</TableCell>
+                  <TableCell>{service.workspaceName || "-"}</TableCell>
+                  <TableCell>{service.campaignName || "-"}</TableCell>
+                  <TableCell>{service.farmName || service.farmId}</TableCell>
+                  <TableCell>{service.totalArea} ha</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Progress value={service.progress} className="h-2 w-[60px]" />
@@ -258,18 +275,36 @@ export function ServicesPageDetails() {
                   </TableCell>
                   <TableCell>{service.startDate ? new Date(service.startDate).toLocaleDateString() : "-"}</TableCell>
                   <TableCell>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        service.status === "Finalizado"
+                          ? "bg-green-100 text-green-800"
+                          : service.status === "En progreso"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {service.status}
+                    </span>
+                  </TableCell>
+                  <TableCell>
                     <div className="flex gap-2">
                       {service.status === "Planificado" && (
-                        <Button variant="outline" size="icon" className="h-8 w-8">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleStatusChange(service.id, "En progreso")}
+                          title="Iniciar servicio"
+                        >
                           <Play className="h-4 w-4" />
                         </Button>
                       )}
-                      <Link href={`/domains/${domain}/projects/${project}/services/${service.id}`} >
-                        <Edit className="h-4 w-4" />
+                      <Link href={`/domains/${domainId}/projects/${projectId}/services/${service.id}`}>
+                        <Button variant="outline" size="icon" className="h-8 w-8" title="Editar servicio">
+                          <Edit className="h-4 w-4" />
+                        </Button>
                       </Link>
-                      {/* <Button size="icon" className="h-8 w-8">
-                        <Edit className="h-4 w-4" />
-                      </Button> */}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -281,11 +316,18 @@ export function ServicesPageDetails() {
 
       <div className="flex items-center justify-between space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
-          {sortedServices.length > 0 ? <p>0 of {sortedServices.length} row(s) selected.</p> : <p>No results.</p>}
+          {totalItems > 0 ? (
+            <p>
+              Mostrando {(currentPage - 1) * rowsPerPage + 1}-{Math.min(currentPage * rowsPerPage, totalItems)} de{" "}
+              {totalItems} servicios
+            </p>
+          ) : (
+            <p>No hay resultados.</p>
+          )}
         </div>
         <div className="flex items-center space-x-6 lg:space-x-8">
           <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Rows per page</p>
+            <p className="text-sm font-medium">Filas por página</p>
             <Select value={rowsPerPage.toString()} onValueChange={handleRowsPerPageChange}>
               <SelectTrigger className="h-8 w-[70px]">
                 <SelectValue placeholder={rowsPerPage} />
@@ -300,38 +342,43 @@ export function ServicesPageDetails() {
             </Select>
           </div>
           <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-            Page {currentPage} of {totalPages}
+            Página {currentPage} de {totalPages || 1}
           </div>
           <div className="flex items-center space-x-2">
             <Button
               variant="outline"
               className="hidden h-8 w-8 p-0 lg:flex"
               onClick={goToFirstPage}
-              disabled={currentPage === 1}
+              disabled={currentPage === 1 || totalPages === 0}
             >
-              <span className="sr-only">Go to first page</span>
+              <span className="sr-only">Ir a la primera página</span>
               <ChevronsLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" className="h-8 w-8 p-0" onClick={goToPreviousPage} disabled={currentPage === 1}>
-              <span className="sr-only">Go to previous page</span>
+            <Button
+              variant="outline"
+              className="h-8 w-8 p-0"
+              onClick={goToPreviousPage}
+              disabled={currentPage === 1 || totalPages === 0}
+            >
+              <span className="sr-only">Ir a la página anterior</span>
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
               className="h-8 w-8 p-0"
               onClick={goToNextPage}
-              disabled={currentPage === totalPages}
+              disabled={currentPage === totalPages || totalPages === 0}
             >
-              <span className="sr-only">Go to next page</span>
+              <span className="sr-only">Ir a la página siguiente</span>
               <ChevronRight className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
               className="hidden h-8 w-8 p-0 lg:flex"
               onClick={goToLastPage}
-              disabled={currentPage === totalPages}
+              disabled={currentPage === totalPages || totalPages === 0}
             >
-              <span className="sr-only">Go to last page</span>
+              <span className="sr-only">Ir a la última página</span>
               <ChevronsRight className="h-4 w-4" />
             </Button>
           </div>

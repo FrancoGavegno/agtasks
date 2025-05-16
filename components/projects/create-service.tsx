@@ -130,7 +130,9 @@ export default function CreateService() {
     setShouldScrollToTop(true)
   }
 
-  // Modificar la función onSubmit para manejar el éxito y ofrecer opciones al usuario
+  // Modificar la función onSubmit para incluir los nombres en los datos enviados
+
+  // Buscar la función onSubmit y modificarla para incluir los nombres
   const onSubmit = async (data: CreateServiceFormValues) => {
     try {
       setIsSubmitting(true)
@@ -147,12 +149,18 @@ export default function CreateService() {
         sourceSystem: "jira",
         externalTemplateId: data.protocol,
         workspaceId: data.workspace,
+        workspaceName: data.workspaceName || "", // Incluir el nombre del workspace
         campaignId: data.campaign,
+        campaignName: data.campaignName || "", // Incluir el nombre de la campaña
         farmId: data.establishment,
+        farmName: data.establishmentName || "", // Incluir el nombre del establecimiento
         totalArea: 0, // Se calculará en el backend basado en los lotes seleccionados
         startDate: new Date().toISOString(),
-        // Enviar los lotes seleccionados en el formato correcto
-        fields: data.selectedLots.map((lotId) => ({ fieldId: lotId })),
+        // Enviar los lotes seleccionados en el formato correcto con sus nombres
+        fields: data.selectedLots.map((lotId) => ({
+          fieldId: lotId,
+          fieldName: data.selectedLotsNames?.[lotId] || "",
+        })),
         // Enviar las tareas en el formato correcto
         tasks: validTasks.map((task) => ({
           externalTemplateId: data.protocol,
@@ -236,7 +244,7 @@ export default function CreateService() {
 
   return (
     <ServiceFormProvider>
-      <Card className="w-full max-w-6xl mx-auto border-none min-h-[600px]">
+       <Card className="w-full max-w-6xl mx-auto border-none shadow-none min-h-[600px]">
         <CardHeader>
           <CardTitle>Crear Nuevo Servicio</CardTitle>
           <CardDescription>Complete los siguientes pasos para crear un nuevo servicio</CardDescription>

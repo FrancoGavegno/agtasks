@@ -254,8 +254,6 @@ export const listAllRoles = async (): Promise<Role[]> => {
   }
 };
 
-
-
 // Projects
 export const createProject = async (
   domainId: string,
