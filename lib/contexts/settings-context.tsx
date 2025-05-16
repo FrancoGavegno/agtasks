@@ -2,8 +2,9 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useParams } from "next/navigation"
-import type { Protocol, Role, Form } from "@/lib/interfaces"
+import type { Protocol, Role, Form, User } from "@/lib/interfaces"
 import { listAssets } from "@/lib/integrations/kobotoolbox"
+import { listUsersByDomain } from "@/lib/integrations/360"
 
 const projectId = process.env.NEXT_PUBLIC_JIRA_PROTOCOLS_PROJECT_ID || "TEM"
 const queueId = process.env.NEXT_PUBLIC_JIRA_PROTOCOLS_QUEUE_ID || "82"
@@ -39,12 +40,20 @@ interface SettingsContextType {
   setSelectedForms: (ids: string[]) => void
   refreshForms: () => void
   isRefreshingForms: boolean
+
+  users: User[]
+  usersLoading: boolean
+  setUsers: (users: User[]) => void
+  refreshUsers: () => void
+  isRefreshingUsers: boolean
+  sentInvitationEmails: Set<string>
+  setSentInvitationEmails: (emails: Set<string>) => void
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined)
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const { locale, domain } = useParams<{ locale: string; domain: string }>()
+  const { domain } = useParams<{ domain: string }>()
 
   // Estado para protocolos
   const [protocols, setProtocols] = useState<Protocol[]>([])
@@ -70,6 +79,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [isRefreshingForms, setIsRefreshingForms] = useState(false)
   const [shouldRefetchForms, setShouldRefetchForms] = useState(true)
 
+  // Estado para usuarios
+  const [users, setUsers] = useState<User[]>([])
+  const [usersLoading, setUsersLoading] = useState(true)
+  const [isRefreshingUsers, setIsRefreshingUsers] = useState(false)
+  const [shouldRefetchUsers, setShouldRefetchUsers] = useState(true)
+  const [sentInvitationEmails, setSentInvitationEmails] = useState<Set<string>>(new Set())
+
   // Fetch Domain Protocols
   useEffect(() => {
     const fetchDomainProtocols = async () => {
@@ -81,12 +97,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         if (!res.ok) {
           throw new Error(`Failed to fetch protocols: ${res.statusText}`)
         }
-
         const data = await res.json()
-
-        // La API devuelve directamente un array, no un objeto con propiedad data
         const protocolsData = Array.isArray(data) ? data : []
-
         setProtocols(protocolsData)
         setSelectedProtocols(protocolsData.map((p: Protocol) => p.tmProtocolId))
         setShouldRefetchProtocols(false)
@@ -102,7 +114,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     fetchDomainProtocols()
   }, [shouldRefetchProtocols, domain])
 
-  // Fetch Jira Protocols
+  // Fetch All Jira Protocols
   useEffect(() => {
     const fetchAllProtocols = async () => {
       if (!domain || !projectId || !queueId) return
@@ -116,7 +128,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         }
 
         const data = await res.json()
-
         // Asegurarse de que data.data.values sea un array
         const values = data.data && Array.isArray(data.data.values) ? data.data.values : []
 
@@ -154,38 +165,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         if (!res.ok) {
           throw new Error(`Failed to fetch domain roles: ${res.statusText}`)
         }
-
         const data = await res.json()
-
-        // Convertir la respuesta a un array, ya que puede ser un array directamente o un objeto con propiedad data
-        let rolesData: any[] = []
-
-        if (Array.isArray(data)) {
-          // Si data es un array directamente, usarlo
-          rolesData = data
-        } else if (data.data) {
-          // Si data.data es un array, usarlo
-          if (Array.isArray(data.data)) {
-            rolesData = data.data
-          }
-          // Si data.data es un objeto (un solo rol), convertirlo a array
-          else if (typeof data.data === "object" && data.data !== null) {
-            rolesData = [data.data]
-          }
-        }
-
-        const uniqueRoles = rolesData.reduce((acc: Role[], current: Role) => {
-          const isDuplicate = acc.find(
-            (item) => item.name === current.name && item.language.toLowerCase() === current.language.toLowerCase(),
-          )
-          if (!isDuplicate) {
-            return acc.concat([current])
-          }
-          return acc
-        }, [])
-
-        setRoles(uniqueRoles)
-        setSelectedRoles(uniqueRoles.map((r: Role) => r.id))
+        const rolesData = Array.isArray(data) ? data : []
+        setRoles(rolesData)
+        setSelectedRoles(rolesData.map((r: Role) => r.id))
         setShouldRefetchRoles(false)
       } catch (error) {
         console.error("Error fetching domain roles:", error)
@@ -202,56 +185,42 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   // Fetch All Agtasks Roles
   useEffect(() => {
     const fetchAllRoles = async () => {
-      if (!locale) return
-
       try {
-        const language = locale.toUpperCase()
-        const res = await fetch(`/api/v1/agtasks/roles/${language}`)
+        const res = await fetch(`/api/v1/agtasks/roles`);
         if (!res.ok) {
-          throw new Error(`Failed to fetch all roles: ${res.statusText}`)
+          throw new Error(`Failed to fetch all roles: ${res.statusText}`);
         }
 
         const data = await res.json()
+        // Aseguramos que data sea un array y filtramos los elementos null
+        const rolesData = Array.isArray(data) ? data.filter((role: any) => role !== null) : [];
 
-        // Convertir la respuesta a un array, ya que puede ser un objeto con una propiedad data
-        let rolesData: any[] = []
+        console.log("rolesData: ", rolesData)
+        // Si no hay roles válidos después de filtrar, establecemos allRoles como vacío
 
-        if (Array.isArray(data)) {
-          // Si data es un array directamente, usarlo
-          rolesData = data
-        } else if (data.data) {
-          // Si data.data es un array, usarlo directamente
-          if (Array.isArray(data.data)) {
-            rolesData = data.data
-          }
-          // Si data.data es un objeto (un solo rol), convertirlo a array
-          else if (typeof data.data === "object" && data.data !== null) {
-            rolesData = [data.data]
-          }
-        }
-
+        // Mapeamos los roles válidos
         const newRoles = rolesData.map((role: any) => {
           const matchingRole = roles.find(
             (r) => r.name === role.name && r.language.toLowerCase() === role.language.toLowerCase(),
-          )
+          );
 
           return {
             domainId: domain,
             id: matchingRole ? matchingRole.id : role.id.toString(),
             name: role.name,
-            language: role.language || language,
-          } as Role
-        })
+            language: role.language,
+          } as Role;
+        });
 
-        setAllRoles(newRoles)
+        setAllRoles(newRoles);
       } catch (error) {
-        console.error("Error fetching all roles:", error)
-        setAllRoles([])
+        console.error("Error fetching all roles:", error);
+        setAllRoles([]);
       }
-    }
+    };
 
-    fetchAllRoles()
-  }, [roles, domain, locale])
+    fetchAllRoles();
+  }, [roles, domain]);
 
   // Fetch Domain Forms
   useEffect(() => {
@@ -264,36 +233,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         if (!res.ok) {
           throw new Error(`Failed to fetch domain forms: ${res.statusText}`)
         }
-
         const data = await res.json()
-
-        // Convertir la respuesta a un array, ya que puede ser un array directamente o un objeto con propiedad data
-        let formsData: any[] = []
-
-        if (Array.isArray(data)) {
-          // Si data es un array directamente, usarlo
-          formsData = data
-        } else if (data.data) {
-          // Si data.data es un array, usarlo
-          if (Array.isArray(data.data)) {
-            formsData = data.data
-          }
-          // Si data.data es un objeto (un solo formulario), convertirlo a array
-          else if (typeof data.data === "object" && data.data !== null) {
-            formsData = [data.data]
-          }
-        }
-
-        const uniqueForms = formsData.reduce((acc: Form[], current: Form) => {
-          const isDuplicate = acc.find((item) => item.name === current.name)
-          if (!isDuplicate) {
-            return acc.concat([current])
-          }
-          return acc
-        }, [])
-
-        setForms(uniqueForms)
-        setSelectedForms(uniqueForms.map((f: Form) => f.id))
+        const formsData = Array.isArray(data) ? data : []
+        setForms(formsData)
+        setSelectedForms(formsData.map((f: Form) => f.id))
         setShouldRefetchForms(false)
       } catch (error) {
         console.error("Error fetching domain forms:", error)
@@ -337,6 +280,43 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     fetchAllForms()
   }, [forms, domain])
 
+  // Fetch Domain Users
+  useEffect(() => {
+    const fetchDomainUsers = async () => {
+      if (!shouldRefetchUsers || !domain) return
+
+      try {
+        setUsersLoading(true)
+        const domainId = Number.parseInt(domain, 10)
+        if (isNaN(domainId)) {
+          throw new Error(`Invalid domain ID: ${domain}`)
+        }
+
+        const fetchedUsers = await listUsersByDomain(domainId)
+
+        // Inicializar sentInvitationEmails con usuarios que ya tienen "Sent" status
+        const sentEmails = new Set<string>()
+        fetchedUsers.forEach((user) => {
+          if (user.invitationStatus === "Sent") {
+            sentEmails.add(user.email)
+          }
+        })
+
+        setSentInvitationEmails(sentEmails)
+        setUsers(fetchedUsers)
+        setShouldRefetchUsers(false)
+      } catch (error) {
+        console.error("Error fetching domain users:", error)
+        setUsers([])
+      } finally {
+        setUsersLoading(false)
+      }
+    }
+
+    fetchDomainUsers()
+  }, [shouldRefetchUsers, domain])
+
+
   const refreshProtocols = () => {
     setIsRefreshingProtocols(true)
     setShouldRefetchProtocols(true)
@@ -353,6 +333,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setIsRefreshingForms(true)
     setShouldRefetchForms(true)
     setIsRefreshingForms(false)
+  }
+
+  const refreshUsers = () => {
+    setIsRefreshingUsers(true)
+    setShouldRefetchUsers(true)
+    setIsRefreshingUsers(false)
   }
 
   return (
@@ -387,6 +373,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setSelectedForms,
         refreshForms,
         isRefreshingForms,
+
+        users,
+        usersLoading,
+        setUsers,
+        refreshUsers,
+        isRefreshingUsers,
+        sentInvitationEmails,
+        setSentInvitationEmails,
       }}
     >
       {children}

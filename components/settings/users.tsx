@@ -1,62 +1,23 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "@/hooks/use-toast"
-import type { User } from "@/lib/interfaces"
-import { listUsersByDomain } from "@/lib/integrations/360"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2, Search } from "lucide-react"
+import { useSettings } from "@/lib/contexts/settings-context"
+import type { User } from "@/lib/interfaces"
 
 export default function Users() {
-  const { domain } = useParams<{ domain: string }>()
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { users, usersLoading, refreshUsers, sentInvitationEmails, setSentInvitationEmails } = useSettings()
+
   const [filter, setFilter] = useState("")
   const [page, setPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(10)
-
-  // Fetch users on component mount
-  useEffect(() => {
-    const fetchUsers = async () => {
-      if (!domain) return
-
-      try {
-        setLoading(true)
-        console.log(`Fetching users for domain: ${domain}`)
-
-        const domainId = Number.parseInt(domain, 10)
-        if (isNaN(domainId)) {
-          throw new Error(`Invalid domain ID: ${domain}`)
-        }
-
-        const fetchedUsers = await listUsersByDomain(domainId)
-        // const fetchedUsers = await listUsersByDomain(8644)
-        console.log(`Fetched ${fetchedUsers.length} users:`, fetchedUsers)
-
-        setUsers(fetchedUsers)
-        setError(null)
-      } catch (err) {
-        console.error("Error fetching users:", err)
-        setError("No se pudieron cargar los usuarios. Por favor, inténtalo de nuevo más tarde.")
-        toast({
-          title: "Error",
-          description: "No se pudieron cargar los usuarios. Por favor, inténtalo de nuevo más tarde.",
-          variant: "destructive",
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchUsers()
-  }, [domain])
 
   // Filter users based on search term
   const filteredUsers = users.filter(
@@ -70,6 +31,11 @@ export default function Users() {
   const startIndex = (page - 1) * rowsPerPage
   const paginatedUsers = filteredUsers.slice(startIndex, startIndex + rowsPerPage)
 
+  // Reset pagination when filter changes
+  useEffect(() => {
+    setPage(1)
+  }, [filter])
+
   function getFullName(user: User): string {
     return `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Usuario sin nombre"
   }
@@ -80,18 +46,28 @@ export default function Users() {
     return (first + last).toUpperCase() || "U"
   }
 
+  // Check if an invitation has been sent for a user
+  function hasInvitationBeenSent(userEmail: string): boolean {
+    return sentInvitationEmails.has(userEmail)
+  }
+
   // Send invitation for a specific user
   async function sendInvitation(user: User) {
     try {
       // Aquí iría la llamada a la API para enviar la invitación
-      // Por ahora, simulamos el envío con un toast
+      // Por ahora, simulamos el envío
+
+      // Add this user email to the set of sent invitations
+      setSentInvitationEmails(new Set(sentInvitationEmails).add(user.email))
+
+      // Update the user's invitation status
+      const updatedUsers = users.map((u) => (u.id === user.id ? { ...u, invitationStatus: "Sent" } : u))
+
+      // Show a toast notification
       toast({
         title: "Invitación enviada",
         description: `Se ha enviado un correo de invitación a ${user.email}`,
       })
-
-      // Actualizar el estado del usuario localmente
-      setUsers(users.map((u) => (u.id === user.id ? { ...u, invitationStatus: "Sent" } : u)))
     } catch (error) {
       console.error("Error sending invitation:", error)
       toast({
@@ -102,22 +78,11 @@ export default function Users() {
     }
   }
 
-  if (loading) {
+  if (usersLoading) {
     return (
       <div className="flex h-[400px] w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         <span className="ml-2 text-muted-foreground">Cargando usuarios...</span>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex h-[400px] w-full flex-col items-center justify-center">
-        <p className="text-destructive">{error}</p>
-        <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
-          Intentar de nuevo
-        </Button>
       </div>
     )
   }
@@ -129,6 +94,9 @@ export default function Users() {
           <h2 className="text-xl font-semibold tracking-tight">Usuarios</h2>
           <p className="text-sm text-muted-foreground">Gestiona los usuarios del sistema y envía invitaciones</p>
         </div>
+        <Button variant="outline" size="sm" onClick={refreshUsers}>
+          Actualizar
+        </Button>
       </div>
 
       <div className="flex items-center">
@@ -156,36 +124,35 @@ export default function Users() {
           </TableHeader>
           <TableBody>
             {paginatedUsers.length > 0 ? (
-              paginatedUsers.map((user) => (
-                <TableRow key={user.id || user.email}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-muted text-muted-foreground text-xs">
-                          {getInitials(user)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span>{getFullName(user)}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <Badge variant={user.invitationStatus === "Sent" ? "default" : "secondary"} className="font-normal">
-                      {user.invitationStatus === "Sent" ? "Enviada" : "No enviada"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => sendInvitation(user)}
-                      disabled={user.invitationStatus === "Sent"}
-                    >
-                      {user.invitationStatus === "Sent" ? "Invitación enviada" : "Enviar invitación"}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
+              paginatedUsers.map((user) => {
+                const isSent = hasInvitationBeenSent(user.email) || user.invitationStatus === "Sent"
+
+                return (
+                  <TableRow key={user.id || user.email}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="bg-muted text-muted-foreground text-xs">
+                            {getInitials(user)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{getFullName(user)}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={isSent ? "default" : "secondary"} className="font-normal">
+                        {isSent ? "Enviada" : "No enviada"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="outline" size="sm" onClick={() => sendInvitation(user)} disabled={isSent}>
+                        {isSent ? "Invitación enviada" : "Enviar invitación"}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
             ) : (
               <TableRow>
                 <TableCell colSpan={4} className="h-24 text-center">

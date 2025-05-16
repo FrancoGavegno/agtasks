@@ -210,7 +210,9 @@ export const createRole = async (data: { name: string; language: string }): Prom
 export const deleteRole = async (roleId: string) => {
   try {
     const client = getClient();
-    const response: { data: Schema["Role"]["type"] | null; errors?: any[] } = await client.models.Role.delete({ id: roleId });
+    const response: { 
+      data: Schema["Role"]["type"] | null; errors?: any[] 
+    } = await client.models.Role.delete({ id: roleId });
     if (!response.data) {
       throw new Error(`Failed to delete role with ID ${roleId}`);
     }
@@ -225,20 +227,34 @@ export const deleteRole = async (roleId: string) => {
 export const listRoles = async (language: string): Promise<Role[]> => {
   try {
     const client = getClient();
-    const response: { data: Schema["Role"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.Role.list({
-      filter: {
-        language: { eq: language }
-      },
+     
+    const response: { data: Schema["Role"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.Role.list({ 
+      filter: { language: { eq: language } }, 
     });
-    return response.data.map(role => ({
-      ...role,
-      language: role.language || "ES", // Default to "ES" if language is undefined
-    }));
+    
+    return response.data;
   } catch (error) {
     console.error("Error fetching roles from Amplify:", error);
     throw new Error(`Failed to fetch roles: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
+
+export const listAllRoles = async (): Promise<Role[]> => {
+  try {
+    const client = getClient();
+    
+    const response: { 
+      data: Schema["Role"]["type"][]; nextToken?: string | null; errors?: any[] 
+    } = await client.models.Role.list()
+    
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching roles from Amplify:", error);
+    throw new Error(`Failed to fetch roles: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+
+
 
 // Projects
 export const createProject = async (
@@ -500,7 +516,7 @@ export const listServicesByProject = async (
       });
 
       if (!servicesResponse.data.length) {
-        console.log(`No services found for project ${projectId}`);
+        console.error(`No services found for project ${projectId}`);
         return { services: [], total: 0 };
       }
 

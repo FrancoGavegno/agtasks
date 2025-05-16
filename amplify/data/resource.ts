@@ -24,7 +24,7 @@ const schema = a
 
     Role: a.model({
       name: a.string().required(),
-      language: a.string(),
+      language: a.string().required(),
       tasks: a.hasMany("ServiceTask", "roleId"),
     }),
 
