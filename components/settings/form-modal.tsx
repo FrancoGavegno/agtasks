@@ -43,7 +43,7 @@ export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onS
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      console.log("Guardando preferencias de formularios:", { localSelected, selectedForms })
+      // console.log("Guardando preferencias de formularios:", { localSelected, selectedForms })
 
       // 1. Identificar formularios que deben eliminarse
       const formsToDeleteIds = selectedForms.filter((formId) => !localSelected.includes(formId))
@@ -51,13 +51,13 @@ export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onS
       // 2. Identificar formularios que deben crearse
       const formsToCreate = localSelected.filter((formId) => !forms.some((form) => form.id === formId))
 
-      console.log("Formularios a eliminar:", formsToDeleteIds)
-      console.log("Formularios a crear:", formsToCreate)
+      // console.log("Formularios a eliminar:", formsToDeleteIds)
+      // console.log("Formularios a crear:", formsToCreate)
 
       // 3. Eliminar formularios deseleccionados
       const deletePromises = formsToDeleteIds.map(async (formId) => {
         try {
-          console.log(`Eliminando formulario con ID ${formId}`)
+          // console.log(`Eliminando formulario con ID ${formId}`)
           const response = await fetch(`/api/v1/agtasks/domains/${domain}/forms/${formId}`, {
             method: "DELETE",
           })
@@ -89,7 +89,7 @@ export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onS
         }
 
         try {
-          console.log(`Creando formulario: ${JSON.stringify(formData)}`)
+          // console.log(`Creando formulario: ${JSON.stringify(formData)}`)
           const response = await fetch(`/api/v1/agtasks/domains/${domain}/forms`, {
             method: "POST",
             headers: {

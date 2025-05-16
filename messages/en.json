@@ -86,24 +86,12 @@
     "notFoundTitle": "No services available",
     "notFoundSubtitle": "Create services to view project indicators"
   },
-
-  "TasksPage": {
-    "title": "Tasks",
-    "subtitle": "View and manage your project tasks",
-    "createButton": "Create",
-    "filterPlaceholder": "Filter tasks...",
-    "statusSearch": "Status",
-    "prioritySearch": "Priority",
-    "colTask": "Tasks",
-    "colKoboForm": "Kobo Form",
-    "colStatus": "Status",
-    "colPriority": "Priority",
-    "dropdownLabel": "Actions",
-    "ddEdit":"Edit",
-    "ddCollectForm":"Collect Form",
-    "ddDelete":"Delete",
-    "noTasksTitle": "No tasks available",
-    "noTasksSubtitle": "There are no tasks available in this project yet."
+  "ServiceDetailPage": {
+    "BreadcrumbItem-1": "Home",
+    "BreadcrumbItem-2": "Services",
+    "BreadcrumbPage": "Service Details",
+    "title": "Service Details",
+    "subtitle": "View detailed information about this service"
   },
   "Footer": {
     "poweredBy": "Powered by"

@@ -204,7 +204,7 @@ export function ServicesPageDetails() {
         <p className="text-lg text-muted-foreground mb-4">No hay servicios disponibles</p>
         <Link href={`/domains/${domainId}/projects/${projectId}/services/create`}>
           <Button>
-            <PlusCircle className="mr-2 h-4 w-4" /> Crear Primer Servicio
+            <Plus className="mr-2 h-4 w-4" /> Crear Servicio
           </Button>
         </Link>
       </div>

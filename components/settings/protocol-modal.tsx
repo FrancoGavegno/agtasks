@@ -35,7 +35,7 @@ export function ModalProtocols({
   // Initialize local state when modal opens
   useEffect(() => {
     if (isOpen) {
-      console.log("Modal opened with selected protocols:", selectedProtocols)
+      // console.log("Modal opened with selected protocols:", selectedProtocols)
       setLocalSelected([...selectedProtocols])
       setSearchTerm("")
     }
@@ -44,7 +44,7 @@ export function ModalProtocols({
   const toggleProtocol = (id: string) => {
     setLocalSelected((prev) => {
       const newSelected = prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
-      console.log(`Toggled protocol ${id}, new selection:`, newSelected)
+      // console.log(`Toggled protocol ${id}, new selection:`, newSelected)
       return newSelected
     })
   }
@@ -52,14 +52,14 @@ export function ModalProtocols({
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      console.log("Saving protocols with local selection:", localSelected)
-      console.log("Current protocols:", protocols)
+      // console.log("Saving protocols with local selection:", localSelected)
+      // console.log("Current protocols:", protocols)
 
       // 1. Identificar protocolos que deben eliminarse
       const protocolsToDeleteTmProtocolIds = selectedProtocols.filter(
         (protocolId) => !localSelected.includes(protocolId),
       )
-      console.log("Protocols to delete:", protocolsToDeleteTmProtocolIds)
+      // console.log("Protocols to delete:", protocolsToDeleteTmProtocolIds)
 
       // Mapear tmProtocolId a id usando protocols (los DomainProtocol asociados)
       const protocolsToDelete = protocolsToDeleteTmProtocolIds
@@ -73,18 +73,18 @@ export function ModalProtocols({
         })
         .filter((item): item is { tmProtocolId: string; id: string } => item !== null)
 
-      console.log("Mapped protocols to delete:", protocolsToDelete)
+      // console.log("Mapped protocols to delete:", protocolsToDelete)
 
       // 2. Identificar protocolos que deben crearse
       const protocolsToCreate = localSelected.filter(
         (protocolId) => !protocols.some((protocol) => protocol.tmProtocolId === protocolId),
       )
-      console.log("Protocols to create:", protocolsToCreate)
+      // console.log("Protocols to create:", protocolsToCreate)
 
       // 3. Eliminar protocolos deseleccionados
       const deletePromises = protocolsToDelete.map(async ({ id }) => {
         try {
-          console.log(`Deleting protocol with id ${id}`)
+          // console.log(`Deleting protocol with id ${id}`)
           const response = await fetch(`/api/v1/agtasks/domains/${domain}/protocols/${id}`, {
             method: "DELETE",
           })
@@ -116,7 +116,7 @@ export function ModalProtocols({
         }
 
         try {
-          console.log(`Creating protocol with tmProtocolId ${protocolId}`, protocolData)
+          // console.log(`Creating protocol with tmProtocolId ${protocolId}`, protocolData)
           const response = await fetch(`/api/v1/agtasks/domains/${domain}/protocols`, {
             method: "POST",
             headers: {
@@ -137,7 +137,7 @@ export function ModalProtocols({
           }
 
           const result = await response.json()
-          console.log(`Protocol created successfully:`, result)
+          // console.log(`Protocol created successfully:`, result)
           return result
         } catch (error) {
           console.error(`Error al crear protocolo ${protocolId}:`, error)
@@ -160,7 +160,7 @@ export function ModalProtocols({
       })
 
       // Llamar a onSave con los IDs seleccionados
-      console.log("Calling onSave with:", localSelected)
+      // console.log("Calling onSave with:", localSelected)
       onSave(localSelected)
       onClose()
     } catch (error) {

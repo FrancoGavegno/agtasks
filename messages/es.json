@@ -86,9 +86,12 @@
   "notFoundTitle": "No hay servicios disponibles",
   "notFoundSubtitle": "Crear servicios para ver los indicadores del proyecto"
   },
-  "ServiceDetail": {
-    "title": "",
-    "subtitle": ""
+  "ServiceDetailPage": {
+  "BreadcrumbItem-1": "Inicio",
+  "BreadcrumbItem-2": "Servicios",
+  "BreadcrumbPage": "Detalles del servicio",
+  "title": "Detalles del servicio",
+  "subtitle": "Ver información detallada sobre este servicio"
   },
   "TasksPage": {
     "title": "Tasks",

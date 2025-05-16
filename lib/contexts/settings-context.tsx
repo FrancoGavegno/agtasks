@@ -99,8 +99,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         }
         const data = await res.json()
         const protocolsData = Array.isArray(data) ? data : []
-        setProtocols(protocolsData)
-        setSelectedProtocols(protocolsData.map((p: Protocol) => p.tmProtocolId))
+
+        // Ordenar alfabéticamente 
+        const sortedValues = protocolsData.sort((a: any, b: any) =>
+          a.name.localeCompare(b.name)
+        );
+
+        setProtocols(sortedValues)
+        setSelectedProtocols(sortedValues.map((p: Protocol) => p.tmProtocolId))
         setShouldRefetchProtocols(false)
       } catch (error) {
         console.error("Error fetching protocols:", error)
@@ -117,22 +123,27 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   // Fetch All Jira Protocols
   useEffect(() => {
     const fetchAllProtocols = async () => {
-      if (!domain || !projectId || !queueId) return
+      if (!domain || !projectId || !queueId) return;
 
       try {
         const res = await fetch(
           `/api/v1/integrations/jira/domains/${domain}/projects/${projectId}/services/queues/${queueId}`,
-        )
+        );
         if (!res.ok) {
-          throw new Error(`Failed to fetch Jira protocols: ${res.statusText}`)
+          throw new Error(`Failed to fetch Jira protocols: ${res.statusText}`);
         }
 
-        const data = await res.json()
+        const data = await res.json();
         // Asegurarse de que data.data.values sea un array
-        const values = data.data && Array.isArray(data.data.values) ? data.data.values : []
+        const values = data.data && Array.isArray(data.data.values) ? data.data.values : [];
 
-        const newProtocols = values.map((protocol: any) => {
-          const matchingProtocol = protocols.find((p) => p.tmProtocolId === protocol.key)
+        // Ordenar alfabéticamente por el campo name (protocol.fields.summary)
+        const sortedValues = values.sort((a: any, b: any) =>
+          a.fields.summary.localeCompare(b.fields.summary)
+        );
+
+        const newProtocols = sortedValues.map((protocol: any) => {
+          const matchingProtocol = protocols.find((p) => p.tmProtocolId === protocol.key);
           return {
             domainId: domain,
             id: matchingProtocol ? matchingProtocol.id : protocol.id.toString(),
@@ -141,18 +152,18 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             tmProtocolId: protocol.key,
             createdAt: protocol.created || new Date().toISOString(),
             updatedAt: protocol.updated || new Date().toISOString(),
-          } as Protocol
-        })
+          } as Protocol;
+        });
 
-        setAllProtocols(newProtocols)
+        setAllProtocols(newProtocols);
       } catch (error) {
-        console.error("Error fetching task manager protocols:", error)
-        setAllProtocols([])
+        console.error("Error fetching task manager protocols:", error);
+        setAllProtocols([]);
       }
-    }
+    };
 
-    fetchAllProtocols()
-  }, [protocols, domain, projectId, queueId])
+    fetchAllProtocols();
+  }, [protocols, domain, projectId, queueId]);
 
   // Fetch Domain Roles
   useEffect(() => {
@@ -167,8 +178,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         }
         const data = await res.json()
         const rolesData = Array.isArray(data) ? data : []
-        setRoles(rolesData)
-        setSelectedRoles(rolesData.map((r: Role) => r.id))
+        // Ordenar alfabéticamente 
+        const sortedValues = rolesData.sort((a: any, b: any) =>
+          a.name.localeCompare(b.name)
+        );
+        setRoles(sortedValues)
+        setSelectedRoles(sortedValues.map((r: Role) => r.id))
         setShouldRefetchRoles(false)
       } catch (error) {
         console.error("Error fetching domain roles:", error)
@@ -190,20 +205,18 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         if (!res.ok) {
           throw new Error(`Failed to fetch all roles: ${res.statusText}`);
         }
-
         const data = await res.json()
         // Aseguramos que data sea un array y filtramos los elementos null
         const rolesData = Array.isArray(data) ? data.filter((role: any) => role !== null) : [];
-
-        console.log("rolesData: ", rolesData)
-        // Si no hay roles válidos después de filtrar, establecemos allRoles como vacío
-
+        // Ordenar alfabéticamente 
+        const sortedValues = rolesData.sort((a: any, b: any) =>
+          a.name.localeCompare(b.name)
+        );
         // Mapeamos los roles válidos
-        const newRoles = rolesData.map((role: any) => {
+        const newRoles = sortedValues.map((role: any) => {
           const matchingRole = roles.find(
             (r) => r.name === role.name && r.language.toLowerCase() === role.language.toLowerCase(),
           );
-
           return {
             domainId: domain,
             id: matchingRole ? matchingRole.id : role.id.toString(),
@@ -211,7 +224,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             language: role.language,
           } as Role;
         });
-
         setAllRoles(newRoles);
       } catch (error) {
         console.error("Error fetching all roles:", error);
@@ -235,8 +247,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         }
         const data = await res.json()
         const formsData = Array.isArray(data) ? data : []
-        setForms(formsData)
-        setSelectedForms(formsData.map((f: Form) => f.id))
+        // Ordenar alfabéticamente 
+        const sortedValues = formsData.sort((a: any, b: any) =>
+          a.name.localeCompare(b.name)
+        );
+        setForms(sortedValues)
+        setSelectedForms(sortedValues.map((f: Form) => f.id))
         setShouldRefetchForms(false)
       } catch (error) {
         console.error("Error fetching domain forms:", error)
@@ -257,10 +273,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
       try {
         const koboForms = await listAssets()
-
-        const newForms = koboForms.map((form: any) => {
+        // Ordenar alfabéticamente 
+        const sortedValues = koboForms.sort((a: any, b: any) =>
+          a.name.localeCompare(b.name)
+        );
+        const newForms = sortedValues.map((form: any) => {
           const matchingForm = forms.find((f) => f.ktFormId === form.uid)
-
           return {
             domainId: domain,
             id: matchingForm ? matchingForm.id : form.uid,
@@ -269,7 +287,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             language: "ES",
           } as Form
         })
-
         setAllForms(newForms)
       } catch (error) {
         console.error("Error fetching KoboToolbox forms:", error)
@@ -291,9 +308,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         if (isNaN(domainId)) {
           throw new Error(`Invalid domain ID: ${domain}`)
         }
-
         const fetchedUsers = await listUsersByDomain(domainId)
-
         // Inicializar sentInvitationEmails con usuarios que ya tienen "Sent" status
         const sentEmails = new Set<string>()
         fetchedUsers.forEach((user) => {
@@ -301,7 +316,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             sentEmails.add(user.email)
           }
         })
-
         setSentInvitationEmails(sentEmails)
         setUsers(fetchedUsers)
         setShouldRefetchUsers(false)
