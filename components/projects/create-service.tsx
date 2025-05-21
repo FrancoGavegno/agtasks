@@ -8,17 +8,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { useRouter, useParams } from "next/navigation"
-
-// Importar los componentes de los pasos
 import Step1Protocol from "./step1-protocol"
 import Step2Lots from "./step2-lots"
 import Step3Tasks from "./step3-tasks"
-
-// Importar los esquemas de validación
 import { createServiceSchema, type CreateServiceFormValues } from "./validation-schemas"
-
-// Importar el contexto del formulario
 import { ServiceFormProvider } from "@/lib/contexts/service-form-context"
+import { useTranslations } from "next-intl"
 
 // Valores iniciales del formulario
 const defaultValues: CreateServiceFormValues = {
@@ -34,8 +29,7 @@ export default function CreateService() {
   const router = useRouter()
   const params = useParams()
   const { locale, project, domain } = params
-  // const projectId = params.project as string
-  // const domainId = "8644" // TODO: Get domainId from params
+  const t = useTranslations("CreateService")
 
   // Estado para controlar el paso actual del wizard
   const [currentStep, setCurrentStep] = useState(1)
@@ -45,6 +39,10 @@ export default function CreateService() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   // Añadir un nuevo estado para controlar si se muestra el mensaje de éxito
   const [isSuccess, setIsSuccess] = useState(false)
+
+  // state to capture the selected protocol
+  const [selectedProtocol, setSelectedProtocol] = useState<string>("")
+  const [selectedProtocolName, setSelectedProtocolName] = useState<string>("")
 
   // Configurar el formulario con react-hook-form y zod
   const methods = useForm<CreateServiceFormValues>({
@@ -130,13 +128,11 @@ export default function CreateService() {
     setShouldScrollToTop(true)
   }
 
-  // Modificar la función onSubmit para incluir los nombres en los datos enviados
-
-  // Buscar la función onSubmit y modificarla para incluir los nombres
+  // Envío del formulario
   const onSubmit = async (data: CreateServiceFormValues) => {
     try {
       setIsSubmitting(true)
-      console.log("Form data to submit:", data)
+      // console.log("Form data to submit:", data)
 
       // Filtrar solo las tareas que tienen rol y usuario asignados
       const validTasks = data.taskAssignments.filter((task) => task.role && task.assignedTo)
@@ -144,7 +140,7 @@ export default function CreateService() {
       // Preparar los datos para enviar al API
       const serviceData = {
         projectId: project as string,
-        serviceName: `Servicio de ${data.protocol === "variable-seeding" ? "Siembra Variable" : "Monitoreo Satelital"}`,
+        serviceName: `Servicio de ${selectedProtocol}`, 
         externalServiceKey: `SRV-${Date.now()}`, // Generar un ID único
         sourceSystem: "jira",
         externalTemplateId: data.protocol,
@@ -171,7 +167,7 @@ export default function CreateService() {
         })),
       }
 
-      console.log("Service data to send:", serviceData)
+      // console.log("Service data to send:", serviceData)
 
       // Enviar los datos al API
       const response = await fetch(`/api/v1/agtasks/domains/${domain}/projects/${project}/services`, {
@@ -213,7 +209,7 @@ export default function CreateService() {
     }
   }
 
-  // Añadir una función para crear un nuevo servicio
+  // Función para reiniciar el formulario 
   const createNewService = () => {
     // Reiniciar el formulario
     methods.reset(defaultValues)
@@ -232,7 +228,11 @@ export default function CreateService() {
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <Step1Protocol />
+        return <Step1Protocol 
+          selectedProtocol={selectedProtocol} 
+          onSelectProtocol={setSelectedProtocol}
+          selectedProtocolName={selectedProtocolName}
+          onSelectProtocolName={setSelectedProtocolName} />
       case 2:
         return <Step2Lots />
       case 3:
@@ -246,8 +246,8 @@ export default function CreateService() {
     <ServiceFormProvider>
        <Card className="w-full max-w-6xl mx-auto border-none shadow-none min-h-[600px]">
         <CardHeader>
-          <CardTitle>Crear Nuevo Servicio</CardTitle>
-          <CardDescription>Complete los siguientes pasos para crear un nuevo servicio</CardDescription>
+          <CardTitle>{t("CardTitle")}</CardTitle>
+          <CardDescription>{t("CardDescription")}</CardDescription>
 
           <div className="flex items-center justify-between mt-4">
             <div className="flex items-center space-x-2">
@@ -286,15 +286,15 @@ export default function CreateService() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="text-xl font-medium text-center">¡Servicio creado exitosamente!</h3>
-              <p className="text-center text-muted-foreground">
-                El servicio ha sido creado correctamente. ¿Qué deseas hacer ahora?
-              </p>
+              <h3 className="text-xl font-medium text-center">{t("title")}</h3>
+              <p className="text-center text-muted-foreground">{t("subtitle")}</p>
               <div className="flex space-x-4">
                 <Button variant="outline" onClick={goToServicesList}>
-                  Ver lista de servicios
+                  {t("Button-1")}
                 </Button>
-                <Button onClick={createNewService}>Crear otro servicio</Button>
+                <Button onClick={createNewService}>
+                  {t("Button-2")}
+                </Button>
               </div>
             </div>
           ) : (
@@ -308,7 +308,7 @@ export default function CreateService() {
               {currentStep > 1 ? (
                 <Button variant="outline" onClick={prevStep} disabled={isSubmitting}>
                   <ChevronLeft className="mr-2 h-4 w-4" />
-                  Atrás
+                  {t("Button-3")}
                 </Button>
               ) : (
                 <div></div>
@@ -316,12 +316,12 @@ export default function CreateService() {
 
               {currentStep < 3 ? (
                 <Button onClick={nextStep} disabled={isSubmitting}>
-                  Siguiente
+                  {t("Button-4")}
                   <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
               ) : (
                 <Button onClick={nextStep} disabled={isSubmitting}>
-                  {isSubmitting ? "Creando..." : "Confirmar"}
+                  {isSubmitting ? t("isSubmitting") : t("isSubmitting-2")}
                 </Button>
               )}
             </>

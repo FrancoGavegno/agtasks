@@ -93,23 +93,17 @@
   "title": "Detalles del servicio",
   "subtitle": "Ver información detallada sobre este servicio"
   },
-  "TasksPage": {
-    "title": "Tasks",
-    "subtitle": "View and manage your project tasks",
-    "createButton": "Create",
-    "filterPlaceholder": "Filter tasks...",
-    "statusSearch": "Status",
-    "prioritySearch": "Priority",
-    "colTask": "Tasks",
-    "colKoboForm": "Kobo Form",
-    "colStatus": "Status",
-    "colPriority": "Priority",
-    "dropdownLabel": "Actions",
-    "ddEdit":"Edit",
-    "ddCollectForm":"Collect Form",
-    "ddDelete":"Delete",
-    "noTasksTitle": "No tasks available",
-    "noTasksSubtitle": "There are no tasks available in this project yet."
+  "CreateService": {
+    "CardTitle": "Crear Nuevo Servicio",
+    "CardDescription": "Complete los siguientes pasos para crear un nuevo servicio",
+    "title": "¡Servicio creado exitosamente!",
+    "subtitle": "El servicio ha sido creado correctamente. ¿Qué deseas hacer ahora?",
+    "Button-1": "Ver lista de servicios",
+    "Button-2": "Crear otro servicio",
+    "Button-3": "Atrás",
+    "Button-4": "Siguiente",
+    "isSubmitting": "Creando...",
+    "isSubmitting-2": "Confirmar"
   },
   "Footer": {
     "poweredBy": "Desarrollador por"

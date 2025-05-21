@@ -93,6 +93,18 @@
     "title": "Service Details",
     "subtitle": "View detailed information about this service"
   },
+  "CreateService": {
+  "CardTitle": "Create New Service",
+  "CardDescription": "Complete the following steps to create a new service",
+  "title": "Service created successfully!",
+  "subtitle": "The service has been created successfully. What do you want to do now?",
+  "Button-1": "View list of services",
+  "Button-2": "Create another service",
+  "Button-3": "Back",
+  "Button-4": "Next",
+  "isSubmitting": "Creating...",
+  "isSubmitting-2": "Confirm"
+  },
   "Footer": {
     "poweredBy": "Powered by"
   }

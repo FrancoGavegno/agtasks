@@ -2,9 +2,8 @@ import { z } from "zod"
 
 // Esquema de validación para el paso 1 (selección de protocolo)
 export const step1Schema = z.object({
-  protocol: z.string({
-    required_error: "Por favor, seleccione un protocolo",
-  }),
+  protocol: z.string({ required_error: "Por favor, seleccione un protocolo" }),
+  protocolName: z.string().optional(),
   taskAssignments: z.array(
     z.object({
       task: z.string(),
@@ -17,12 +16,6 @@ export const step1Schema = z.object({
 export type Step1FormValues = z.infer<typeof step1Schema>
 
 // Esquema de validación para el paso 2 (selección de lotes)
-// Actualizar el esquema de validación para el paso 2 (selección de lotes)
-// Modificar el step2Schema para usar strings en lugar de números para los IDs
-
-// Añadir los nuevos campos al esquema de validación para Step2FormValues
-
-// Buscar la definición de Step2FormValues y modificarla para incluir los nuevos campos
 export const step2Schema = z.object({
   workspace: z.string().min(1, "Debe seleccionar un espacio de trabajo"),
   workspaceName: z.string().optional(),
@@ -39,20 +32,8 @@ export type Step2FormValues = z.infer<typeof step2Schema>
 // Esquema de validación para el paso 3 (asignación de tareas)
 export const taskAssignmentSchema = z.object({
   task: z.string(),
-  role: z
-    .string({
-      required_error: "Por favor, seleccione un rol",
-    })
-    .min(1, {
-      message: "Por favor, seleccione un rol",
-    }),
-  assignedTo: z
-    .string({
-      required_error: "Por favor, seleccione un usuario",
-    })
-    .min(1, {
-      message: "Por favor, seleccione un usuario",
-    }),
+  role: z.string({ required_error: "Por favor, seleccione un rol" }).min(1, { message: "Por favor, seleccione un rol" }),
+  assignedTo: z.string({ required_error: "Por favor, seleccione un usuario" }).min(1, { message: "Por favor, seleccione un usuario" }),
 })
 
 export const step3Schema = z.object({

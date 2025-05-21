@@ -53,45 +53,57 @@
     "subtitle": "Gerencie as configurações do seu domínio"
   },
   "SettingsTabsNavigation": {
-   "tab-1": "Protocolos",
+    "tab-1": "Protocolos",
     "tab-2": "Usuários",
     "tab-3": "Funções",
     "tab-4": "Formulários"
   },
   "ProjectPage": {
-  "BreadcrumbLink": "Página Inicial",
-  "BreadcrumbPage": "Projeto",
-  "title": "Página do Projeto",
-  "subtitle": "Gerencie seu projeto"
+    "BreadcrumbLink": "Página Inicial",
+    "BreadcrumbPage": "Projeto",
+    "title": "Página do Projeto",
+    "subtitle": "Gerencie seu projeto"
   },
   "ProjectPageDetails": {
-  "loadingData": "Carregando dados do projeto...",
-  "notFoundTitle": "Nenhum serviço disponível",
-  "notFoundSubtitle": "Criar serviços para visualizar indicadores do projeto",
-  "active": "Serviços Ativos",
-  "completed": "Serviços Concluídos",
-  "blocked": "Serviços Bloqueados",
-  "averageTime": "Tempo Médio"
+    "loadingData": "Carregando dados do projeto...",
+    "notFoundTitle": "Nenhum serviço disponível",
+    "notFoundSubtitle": "Criar serviços para visualizar indicadores do projeto",
+    "active": "Serviços Ativos",
+    "completed": "Serviços Concluídos",
+    "blocked": "Serviços Bloqueados",
+    "averageTime": "Tempo Médio"
   },
   "ServicesPage": {
-  "BreadcrumbItem-1": "Página Inicial",
-  "BreadcrumbItem-2": "Projeto",
-  "BreadcrumbPage": "Serviços",
-  "title": "Serviços",
-  "subtitle": "Gerencie os serviços do seu projeto",
-  "buttonCreateService": "Criar Serviço"
+    "BreadcrumbItem-1": "Página Inicial",
+    "BreadcrumbItem-2": "Projeto",
+    "BreadcrumbPage": "Serviços",
+    "title": "Serviços",
+    "subtitle": "Gerencie os serviços do seu projeto",
+    "buttonCreateService": "Criar Serviço"
   },
   "ServicesPageDetails": {
-  "loadingData": "Carregando dados dos serviços...",
-  "notFoundTitle": "Nenhum serviço disponível",
-  "notFoundSubtitle": "Criar serviços para visualizar indicadores do projeto"
+    "loadingData": "Carregando dados dos serviços...",
+    "notFoundTitle": "Nenhum serviço disponível",
+    "notFoundSubtitle": "Criar serviços para visualizar indicadores do projeto"
   },
   "ServiceDetailPage": {
-  "BreadcrumbItem-1": "Página Inicial",
-  "BreadcrumbItem-2": "Serviços",
-  "BreadcrumbPage": "Detalhes do Serviço",
-  "title": "Detalhes do Serviço",
-  "subtitle": "Ver informações detalhadas sobre este serviço"
+    "BreadcrumbItem-1": "Página Inicial",
+    "BreadcrumbItem-2": "Serviços",
+    "BreadcrumbPage": "Detalhes do Serviço",
+    "title": "Detalhes do Serviço",
+    "subtitle": "Ver informações detalhadas sobre este serviço"
+  },
+  "CreateService": {
+    "CardTitle": "Criar Novo Serviço",
+    "CardDescription": "Conclua os seguintes passos para criar um novo serviço",
+    "title": "Serviço criado com sucesso!",
+    "subtitle": "O serviço foi criado com sucesso. O que você deseja fazer agora?",
+    "Button-1": "Ver lista de serviços",
+    "Button-2": "Criar outro serviço",
+    "Button-3": "Voltar",
+    "Button-4": "Próximo",
+    "isSubmitting": "Criando...",
+    "isSubmitting-2": "Confirmar"
   },
   "Footer": {
     "poweredBy": "Desenvolvido por"

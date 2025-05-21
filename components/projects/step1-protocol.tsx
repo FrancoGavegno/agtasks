@@ -8,27 +8,37 @@ import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import type { Step1FormValues } from "./validation-schemas"
 import { useServiceForm } from "@/lib/contexts/service-form-context"
-import type { Protocol } from "@/lib/interfaces"
+import { Protocol, TaskAssignment } from "@/lib/interfaces"
 
-// Define la interfaz TaskAssignment
-interface TaskAssignment {
-  task: string
-  role: string
-  assignedTo: string
+interface Props {
+  selectedProtocol: string
+  onSelectProtocol: (protocol: string) => void
+  selectedProtocolName: string
+  onSelectProtocolName: (protocolName: string) => void
 }
 
-export default function Step1Protocol() {
+export default function Step1Protocol({
+  selectedProtocol,
+  onSelectProtocol,
+  selectedProtocolName,
+  onSelectProtocolName
+}: Props) {
   const form = useFormContext<Step1FormValues>()
   const { updateFormValues } = useServiceForm()
-  const protocol = form.watch ? form.watch("protocol") : undefined
   const params = useParams()
   const projectId = params.project as string
   const domainId = params.domain as string
-
   const [protocols, setProtocols] = useState<Protocol[]>([])
   const [protocolTasks, setProtocolTasks] = useState<Record<string, string[]>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  //const protocol = form.watch ? form.watch("protocol") : undefined
+
+  // Sync selectedProtocol with form.watch("protocol")
+  useEffect(() => {
+    const protocol = form.watch("protocol")
+    onSelectProtocol(protocol) // Update state when protocol changes
+  }, [form.watch("protocol")])
 
   // Fetch protocols from the domain
   useEffect(() => {
@@ -55,7 +65,7 @@ export default function Step1Protocol() {
     }
   }, [domainId])
 
-  // Definir la función fetchProtocolTasks fuera de los useEffect
+  // Define fetchProtocolTasks function 
   const fetchProtocolTasks = async (protocolId: string) => {
     try {
       // Use the correct API endpoint with parameters from the URL
@@ -92,21 +102,23 @@ export default function Step1Protocol() {
 
   // Fetch tasks for the selected protocol
   useEffect(() => {
-    if (protocol && domainId && projectId) {
-      // Only fetch if we don't already have the tasks for this protocol
-      if (!protocolTasks[protocol]) {
-        fetchProtocolTasks(protocol)
+    if (selectedProtocol && domainId && projectId) {
+      if (!protocolTasks[selectedProtocol]) {
+        fetchProtocolTasks(selectedProtocol)
       }
     }
-  }, [protocol, domainId, projectId, protocolTasks])
+  }, [selectedProtocol, domainId, projectId, protocolTasks])
 
-  // Update form values in context and task assignments when protocol changes
+  // Update form values and task assignments when protocol changes
   const handleProtocolChange = async (value: string) => {
+    onSelectProtocol(value) // Update local state
     form.setValue("protocol", value as any)
 
-    // Actualizar task assignments basado en el protocolo seleccionado
+    // Find the protocol object to get the name
+    const selectedProtocolObj = protocols.find((p) => p.tmProtocolId === value)
+    onSelectProtocolName(selectedProtocolObj?.name ?? "") // Update protocol name state
+
     if (value) {
-      // Si ya tenemos las tareas para este protocolo, usarlas inmediatamente
       if (protocolTasks[value]) {
         const tasks = protocolTasks[value]
         const newAssignments: TaskAssignment[] = tasks.map((task: string) => ({
@@ -114,16 +126,12 @@ export default function Step1Protocol() {
           role: "",
           assignedTo: "",
         }))
-
         form.setValue("taskAssignments", newAssignments)
-
-        // Update context
         updateFormValues({
           protocol: value as any,
           taskAssignments: newAssignments,
         })
       } else {
-        // Si no tenemos las tareas, hacer la petición y luego actualizar
         const tasks = await fetchProtocolTasks(value)
         if (tasks && tasks.length > 0) {
           const newAssignments: TaskAssignment[] = tasks.map((task: string) => ({
@@ -131,10 +139,7 @@ export default function Step1Protocol() {
             role: "",
             assignedTo: "",
           }))
-
           form.setValue("taskAssignments", newAssignments)
-
-          // Update context
           updateFormValues({
             protocol: value as any,
             taskAssignments: newAssignments,
@@ -153,7 +158,11 @@ export default function Step1Protocol() {
           <FormItem>
             <FormLabel className="text-lg font-medium">Seleccione un protocolo</FormLabel>
             <FormControl>
-              <Select value={field.value} onValueChange={handleProtocolChange} disabled={loading}>
+              <Select
+                value={selectedProtocol || field.value}
+                onValueChange={handleProtocolChange}
+                disabled={loading}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder={loading ? "Cargando protocolos..." : "Seleccionar protocolo"} />
                 </SelectTrigger>
@@ -178,11 +187,13 @@ export default function Step1Protocol() {
         )}
       />
 
-      {protocol && protocolTasks[protocol] && protocolTasks[protocol].length > 0 ? (
+      {selectedProtocol && protocolTasks[selectedProtocol] && protocolTasks[selectedProtocol].length > 0 ? (
         <div className="mt-6 border rounded-md p-4">
-          <h4 className="text-sm font-medium mb-2">Tareas que incluye este protocolo</h4>
+          <h4 className="text-sm font-medium mb-2">
+            Tareas que incluye el protocolo: {selectedProtocolName || "Cargando..."}
+          </h4>
           <ul className="space-y-2">
-            {protocolTasks[protocol]?.map((task, index) => (
+            {protocolTasks[selectedProtocol]?.map((task, index) => (
               <li key={index} className="flex items-start space-x-2">
                 <Check className="h-5 w-5 text-green-500 mt-0.5" />
                 <span>{task}</span>
@@ -191,12 +202,14 @@ export default function Step1Protocol() {
           </ul>
         </div>
       ) : (
-        protocol && (
+        selectedProtocol && (
           <div className="mt-6 border rounded-md p-4 text-center text-gray-500">
-            <p>No hay tareas disponibles para este protocolo</p>
+            <p>No hay tareas disponibles para el protocolo {selectedProtocolName || "seleccionado"}</p>
           </div>
         )
       )}
     </div>
   )
 }
+
+

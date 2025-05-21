@@ -153,6 +153,12 @@ export interface ServiceTask {
   }; // Objeto user devuelto por listServicesByProject y getServiceDetail
 }
 
+export interface TaskAssignment {
+  task: string
+  role: string
+  assignedTo: string
+}
+
 //  Jira
 
 export interface JiraCustomerData {
