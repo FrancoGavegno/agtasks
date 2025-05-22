@@ -1,12 +1,19 @@
 # Agtasks
 
-Agtasks es un sistema de gestión de tareas agrícolas construido con Next.js 15, React 19, TypeScript y React Query. Esta aplicación consume la API de ClickUp para gestionar listas y tareas.
+Agtasks es un sistema de gestión de tareas agrícolas que permite administrar servicios y tareas agrícolas con facilidad.
+
+Esta aplicación consume diferentes APIs para gestionar servicios, tareas, usuarios, formularios de Kobo Toolbox, entre otros.
 
 ## Características
 
-- Gestión de listas y tareas consumiendo la API de ClickUp con React Query.
-- Internacionalización con `next-intl`.
-- UI basada en ui.shadcn/tailwind CSS.
+App Agtasks versión funcional básica, destinada al “Administrador”, ej. Implementador de GeoAgro y Coordinador de Servicios del Agroservicio.
+
+Esta App permitirá:
+- Seleccionar protocolos de servicio: seleccionar protocolos de servicio por lenguaje del repositorio de protocolos de GeoAgro de acuerdo a idioma. 
+- Seleccionar roles de usuario: seleccionar distintos tipos de roles de usuarios (ej. operadores, supervisores, etc.).
+- Seleccionar  formularios de Kobo Toolbox: seleccionar templates de formularios del Public Collection de GeoAgro.
+- Administrar un proyecto: se incluirá un proyecto inicial de muestra donde se podrá aplicar y validar toda la configuración hecha.
+- Crear servicios a partir de protocolos: se incluirá una sección Servicios dentro del proyecto inicial. El usuario podrá instanciar protocolos en el proyecto de prueba siguiendo un wizard sencillo.
 
 ## Tecnologías
 
@@ -17,16 +24,16 @@ Agtasks es un sistema de gestión de tareas agrícolas construido con Next.js 15
 - [React Query](https://tanstack.com/query/latest/docs/framework/react/overview)
 - [shadcn/ui](https://ui.shadcn.com/docs)
 - [Lucide React Icons](https://lucide.dev/icons/)
-- [ClickUp API](https://developer.clickup.com/)
 - [Amplify Gen2](https://docs.amplify.aws/nextjs/start/quickstart/nextjs-app-router-client-components/)
+- [Clerk](https://clerk.com/) -> de forma temporal
 
 
 ## Instalación
 
 1. Clona el repositorio:
 ```
-git clone https://github.com/FrancoGavegno/agtasks-app.git 
-cd agtasks-app
+git clone https://github.com/FrancoGavegno/agtasks.git 
+cd agtasks
 ```
 
 2. Instala las dependencias:
@@ -35,17 +42,19 @@ npm install
 ```
 
 3. Configura las variables de entorno: 
-Crea un archivo .env.local en la raíz del proyecto y añade tu clave de API de ClickUp.
+Crea un archivo .env.local en la raíz del proyecto. Solicitar a fgavegno@geoagro.com las claves de desarrollo.
 
 ```
 // file env.local
 
-NEXT_PUBLIC_API_URL=https://api.clickup.com/api/v2
-NEXT_PUBLIC_API_KEY=clickup-api-key
-NEXT_PUBLIC_TEAM_ID=clickup-team-id
-NEXT_PUBLIC_FMS_API_URL=360-api-url
-NEXT_PUBLIC_FMS_API_KEY=360-api-key
-NEXT_PUBLIC_FMS_WK_ID=360-workspace-id
+CLERK_SECRET_KEY=
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+NEXT_PUBLIC_JIRA_API_URL=https://geoagro1.atlassian.net
+NEXT_PUBLIC_JIRA_API_TOKEN=
+NEXT_PUBLIC_JIRA_PROTOCOLS_PROJECT_ID=TEM
+NEXT_PUBLIC_JIRA_PROTOCOLS_QUEUE_ID=82
+NEXT_PUBLIC_FMS_API_URL=
+NEXT_PUBLIC_FMS_API_KEY=
 
 ```
 
