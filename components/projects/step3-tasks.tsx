@@ -16,7 +16,7 @@ export default function Step3Tasks() {
   const errors = form.formState?.errors
 
   const { domain } = useParams<{ domain: string }>()
-  const domainId = domain || "8644" // Fallback to "8644" if domain is not in URL
+  const domainId = domain
 
   // Estado para roles y usuarios
   const [roles, setRoles] = useState<Role[]>([])

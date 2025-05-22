@@ -57,13 +57,13 @@ export default function CreateService() {
 
     switch (currentStep) {
       case 1:
-        console.log("Validando paso 1, taskAssignments:", methods.getValues("taskAssignments"))
+        // console.log("Validando paso 1, taskAssignments:", methods.getValues("taskAssignments"))
         isValid = await methods.trigger("protocol")
         if (isValid) {
           // Asegurarse de que taskAssignments esté disponible para el siguiente paso
           const protocol = methods.getValues("protocol")
           const taskAssignments = methods.getValues("taskAssignments")
-          console.log("Protocolo seleccionado:", protocol, "Tareas:", taskAssignments)
+          // console.log("Protocolo seleccionado:", protocol, "Tareas:", taskAssignments)
         }
         break
       case 2:
@@ -122,11 +122,11 @@ export default function CreateService() {
   }
 
   // Función para reiniciar el formulario
-  const resetForm = () => {
-    methods.reset(defaultValues)
-    setCurrentStep(1)
-    setShouldScrollToTop(true)
-  }
+  // const resetForm = () => {
+  //   methods.reset(defaultValues)
+  //   setCurrentStep(1)
+  //   setShouldScrollToTop(true)
+  // }
 
   // Envío del formulario
   const onSubmit = async (data: CreateServiceFormValues) => {
@@ -137,10 +137,12 @@ export default function CreateService() {
       // Filtrar solo las tareas que tienen rol y usuario asignados
       const validTasks = data.taskAssignments.filter((task) => task.role && task.assignedTo)
 
+      // console.log("serviceName: ", `${selectedProtocolName} - ${data.workspaceName} - ${data.establishmentName}`)
+
       // Preparar los datos para enviar al API
       const serviceData = {
         projectId: project as string,
-        serviceName: `Servicio de ${selectedProtocol}`, 
+        serviceName: `${selectedProtocolName} - ${data.workspaceName} - ${data.establishmentName}`, 
         externalServiceKey: `SRV-${Date.now()}`, // Generar un ID único
         sourceSystem: "jira",
         externalTemplateId: data.protocol,

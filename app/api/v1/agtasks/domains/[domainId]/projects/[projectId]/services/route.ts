@@ -96,6 +96,8 @@ export async function POST(req: Request, { params }: { params: { domainId: strin
       return NextResponse.json({ error: "Validation error", issues: parsedBody.error.format() }, { status: 400 })
     }
 
+    //console.log("parsedBody.data: ", parsedBody.data)
+
     // Crear el servicio
     const newService = await createService(parsedBody.data)
 

@@ -323,8 +323,11 @@ export const createService = async (data: any) => {
     if (data.fields && Array.isArray(data.fields) && data.fields.length > 0) {
       try {
         const fieldsData = await listFields(data.workspaceId, data.campaignId, data.farmId);
+
         const fieldIds = data.fields.map((field: any) => field.fieldId);
+        
         const selectedFields = fieldsData.filter((field) => fieldIds.includes(field.id.toString()));
+        
         totalArea = selectedFields.reduce((sum: number, field: any) => sum + (field.hectares || 0), 0);
       } catch (error) {
         console.error("Error fetching field data for area calculation:", error);
