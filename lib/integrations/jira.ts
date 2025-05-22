@@ -37,8 +37,8 @@ jiraApi.interceptors.response.use(
   },
 )
 
-// Jira Service Desk > Services  
 
+// Services  
 export async function listServicesByProject(domainId: string, serviceDeskId: string, queueId: string): Promise<JiraResponse> {
   try {
     const endpoint = `/rest/servicedeskapi/servicedesk/${serviceDeskId}/queue/${queueId}/issue`
@@ -63,11 +63,113 @@ export async function listServicesByProject(domainId: string, serviceDeskId: str
   }
 }
 
-export async function listTasksbyService(
-  issueIdOrKey: string,
-  // projectKey: string,
-  // includeRelatedIssues: boolean = false
-): Promise<JiraResponse> {
+// Función para formatear datos que se usaba en createService 
+// (Eliminar luego de confirmar la creación del servicio en Jira)
+
+// function formatDataToJiraPost(data: JiraRequestData, lang: string): string {
+//   return JSON.stringify({ data, lang })
+// }
+
+// Funcion para Crear request participants
+async function processParticipants(participants: string[]): Promise<string[]> {
+  const participantsToSubmitInJira: string[] = []
+
+  for (const participant of participants) {
+    try {
+      // Usar GetCustomer para buscar el cliente existente
+      // const customerResult = await getCustomer(participant);
+      // if (customerResult.success && customerResult.data) {
+      //   participantsToSubmitInJira.push(customerResult.data.accountId);
+      // } else {
+
+      // Crear cliente si no existe usando CreateCustomer
+      const customerData: JiraCustomerData = {
+        displayName: participant,
+        email: participant,
+      }
+
+      const createCustomerResult = await createCustomer(customerData)
+
+      if (createCustomerResult.success && createCustomerResult.data) {
+        participantsToSubmitInJira.push(createCustomerResult.data.accountId)
+      } else {
+        throw new Error(
+          `Failed to create customer for participant: ${participant}. Error: ${createCustomerResult.error}`,
+        )
+      }
+
+      //}
+    } catch (error) {
+      console.error("Error processing participant:", participant, error)
+      // Opcional: continuar incluso si un participante falla
+      continue
+    }
+  }
+
+  return participantsToSubmitInJira
+}
+
+export async function createService(data: JiraRequestData, lang: string, env: string): Promise<JiraResponse> {
+  // Doc: https://developer.atlassian.com/cloud/jira/service-desk/rest/api-group-request/#api-rest-servicedeskapi-request-post
+  
+  try {
+    // Generar el summary según el entorno
+    const summary =
+      env === "test"
+        ? `TEST - ${data.request} - ${data.workspace} - ${data.farm}`
+        : `${data.request} - ${data.workspace} - ${data.farm}`
+
+    // Crear el issue para Jira
+    const issue: JiraRequest = {
+      summary,
+      // description: formatDataToJiraPost(data, lang),
+      description: JSON.stringify({ data, lang })
+      //customfield_10076: data.date_limit,
+    }
+
+    // Obtener credenciales del secreto (simulando get_secret)
+    //const secret = await getSecret('prod/api/jira_user', 'us-east-1');
+    //const authHeader = `Basic ${Buffer.from(`${secret.user_jira}:${secret.password_jira}`).toString('base64')}`;
+
+    // Procesar participantes usando la función separada
+    const participantsToSubmitInJira = data.participants ? await processParticipants(data.participants) : []
+
+    // Crear la solicitud de cliente en Jira
+    await jiraApi.post("/rest/servicedeskapi/request", {
+      serviceDeskId: JIRA_SD_ID,
+      requestTypeId: "54",
+      requestFieldValues: issue,
+      // requestFieldValues: {
+      //   "description": "I need a new *mouse* for my Mac",
+      //   "summary": "Request JSD help via REST"
+      // },
+      raiseOnBehalfOf: "fgavegno@geoagro.com",
+      requestParticipants: participantsToSubmitInJira,
+    })
+
+    // console.log('Jira request created successfully');
+    return {
+      success: true,
+    }
+  } catch (error) {
+    let errorMessage: string
+
+    if (axios.isAxiosError(error)) {
+      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
+    } else {
+      errorMessage = "Unknown error occurred while creating Jira request"
+    }
+
+    console.error("Error creating Jira request:", errorMessage)
+    return {
+      success: false,
+      error: errorMessage,
+    }
+  }
+}
+
+// Tasks 
+export async function listTasksbyService(issueIdOrKey: string): Promise<JiraResponse> {
   try {
     // 1. Obtener detalles del Customer Request
     const issueEndpoint = `/rest/api/3/issue/${issueIdOrKey}`
@@ -86,23 +188,6 @@ export async function listTasksbyService(
       })),
     }
 
-    // // 3. Opcional: Buscar tareas relacionadas usando JQL
-    // if (includeRelatedIssues) {
-    //   const jql = `project = "${projectKey}" AND parent = "${issueIdOrKey}"`
-    //   const searchEndpoint = `/rest/api/3/search`
-    //   const searchResponse = await jiraApi.get(searchEndpoint, {
-    //     params: {
-    //       jql,
-    //       fields: "key,summary,status",
-    //     },
-    //   })
-    //   result.relatedIssues = searchResponse.data.issues.map((issue: { key: string; fields: { summary: string; status: { name: string } } }) => ({
-    //     key: issue.key,
-    //     summary: issue.fields.summary,
-    //     status: issue.fields.status.name,
-    //   }))
-    // }
-
     return {
       success: true,
       data: result,
@@ -120,12 +205,6 @@ export async function listTasksbyService(
       error: errorMessage,
     }
   }
-}
-
-// Función para formatear datos (simplificada sin fields y monitors)
-const formatDataToJiraPost = (data: JiraRequestData, lang: string): string => {
-  // Implementa la lógica de formateo aquí (puedes ajustarla según tu necesidad)
-  return JSON.stringify({ data, lang })
 }
 
 // Nueva función para obtener un issue específico (adaptada del código node-fetch)
@@ -182,100 +261,6 @@ export async function createCustomer(customerData: JiraCustomerData): Promise<Ji
   }
 }
 
-async function processParticipants(participants: string[]): Promise<string[]> {
-  const participantsToSubmitInJira: string[] = []
-
-  for (const participant of participants) {
-    try {
-      // Usar GetCustomer para buscar el cliente existente
-      // const customerResult = await getCustomer(participant);
-      // if (customerResult.success && customerResult.data) {
-      //   participantsToSubmitInJira.push(customerResult.data.accountId);
-      // } else {
-
-      // Crear cliente si no existe usando CreateCustomer
-      const customerData: JiraCustomerData = {
-        displayName: participant,
-        email: participant,
-      }
-
-      const createCustomerResult = await createCustomer(customerData)
-
-      if (createCustomerResult.success && createCustomerResult.data) {
-        participantsToSubmitInJira.push(createCustomerResult.data.accountId)
-      } else {
-        throw new Error(
-          `Failed to create customer for participant: ${participant}. Error: ${createCustomerResult.error}`,
-        )
-      }
-
-      //}
-    } catch (error) {
-      console.error("Error processing participant:", participant, error)
-      // Opcional: continuar incluso si un participante falla
-      continue
-    }
-  }
-
-  return participantsToSubmitInJira
-}
-
-// Actualización en CreateRequest:
-export async function createRequest(data: JiraRequestData, lang: string, env: string): Promise<JiraResponse> {
-  try {
-    // Generar el summary según el entorno
-    const summary =
-      env === "test"
-        ? `TEST - ${data.request} - ${data.workspace} - ${data.farm}`
-        : `${data.request} - ${data.workspace} - ${data.farm}`
-
-    // Crear el issue para Jira
-    const issue: JiraRequest = {
-      summary,
-      description: formatDataToJiraPost(data, lang),
-      //customfield_10076: data.date_limit,
-    }
-
-    // Obtener credenciales del secreto (simulando get_secret)
-    //const secret = await getSecret('prod/api/jira_user', 'us-east-1');
-    //const authHeader = `Basic ${Buffer.from(`${secret.user_jira}:${secret.password_jira}`).toString('base64')}`;
-
-    // Procesar participantes usando la función separada
-    const participantsToSubmitInJira = data.participants ? await processParticipants(data.participants) : []
-
-    // Crear la solicitud de cliente en Jira
-    await jiraApi.post("/rest/servicedeskapi/request", {
-      serviceDeskId: JIRA_SD_ID,
-      requestTypeId: "54",
-      requestFieldValues: issue,
-      // requestFieldValues: {
-      //   "description": "I need a new *mouse* for my Mac",
-      //   "summary": "Request JSD help via REST"
-      // },
-      raiseOnBehalfOf: "fgavegno@geoagro.com",
-      requestParticipants: participantsToSubmitInJira,
-    })
-
-    // console.log('Jira request created successfully');
-    return {
-      success: true,
-    }
-  } catch (error) {
-    let errorMessage: string
-
-    if (axios.isAxiosError(error)) {
-      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
-    } else {
-      errorMessage = "Unknown error occurred while creating Jira request"
-    }
-
-    console.error("Error creating Jira request:", errorMessage)
-    return {
-      success: false,
-      error: errorMessage,
-    }
-  }
-}
 
 export async function createProject(projectData: JiraProjectRequest): Promise<JiraResponse> {
   try {
