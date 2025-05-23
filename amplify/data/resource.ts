@@ -35,11 +35,14 @@ const schema = a
     }),
 
     Project: a.model({
-      domainId: a.string().required(),
+      domainId: a.string().required(), 
+      parentId: a.string(), // relaciona con el area de 360
+      language: a.string().required(),
+      sourceSystem: a.string().required(), // 'jira'
+      projectId: a.string(), // relaciona con el proyecto del task manager 
+      queueId: a.integer().required(), 
       id: a.string().required(),
       name: a.string().required(),
-      language: a.string().required(),
-      queueId: a.integer().required(),
       deleted: a.boolean().default(false).required(),
       services: a.hasMany("Service", "projectId"),
     }),
@@ -48,9 +51,9 @@ const schema = a
       projectId: a.string().required(),
       project: a.belongsTo("Project", "projectId"),
       serviceName: a.string().required(),
-      externalServiceKey: a.string().required(),
-      sourceSystem: a.string().required(),
-      externalTemplateId: a.string().required(),
+      sourceSystem: a.string().required(), // 'jira'
+      externalTemplateId: a.string().required(), // 'TEM-57'
+      externalServiceKey: a.string().required(), // TO DO: Completar cuando cree el Request en Jira 
       workspaceId: a.string().required(),
       workspaceName: a.string(),
       campaignId: a.string().required(),

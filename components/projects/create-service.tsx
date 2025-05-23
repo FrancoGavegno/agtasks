@@ -143,9 +143,9 @@ export default function CreateService() {
       const serviceData = {
         projectId: project as string,
         serviceName: `${selectedProtocolName} - ${data.workspaceName} - ${data.establishmentName}`, 
-        externalServiceKey: `SRV-${Date.now()}`, // Generar un ID único
         sourceSystem: "jira",
         externalTemplateId: data.protocol,
+        externalServiceKey: `SRV-${Date.now()}`, // TO DO: Completar cuando cree el Request en Jira
         workspaceId: data.workspace,
         workspaceName: data.workspaceName || "", // Incluir el nombre del workspace
         campaignId: data.campaign,
