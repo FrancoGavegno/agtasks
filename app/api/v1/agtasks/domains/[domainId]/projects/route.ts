@@ -10,9 +10,12 @@ const listProjectsQuerySchema = z.object({
 // Esquema de validación para el cuerpo de la solicitud (POST)
 const createProjectBodySchema = z.object({
   domainId: z.string(),
-  name: z.string(),
+  areaId: z.string(), // relaciona con el area de 360
   language: z.string(),
+  sourceSystem: z.string(),
+  projectId: z.string(), // relaciona con el proyecto del task manager
   queueId: z.number(),
+  name: z.string(),
 });
 
 export async function GET(req: Request, { params }: { params: { domainId: string } }) {

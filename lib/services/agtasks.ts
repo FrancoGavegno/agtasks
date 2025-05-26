@@ -40,10 +40,12 @@ export async function createDomainProtocol(
       throw new Error("Failed to create domain protocol");
     }
 
-    return {
-      ...response.data,
-      language: response.data.language || "ES", // Default to "ES" if language is undefined
-    };
+    // return {
+    //   ...response.data,
+    //   language: response.data.language || "ES", // Default to "ES" if language is undefined
+    // };
+
+    return response.data;
   } catch (error) {
     console.error("Error creating domain protocol in Amplify:", error);
     throw new Error(`Failed to create domain protocol: ${error instanceof Error ? error.message : String(error)}`);
@@ -59,6 +61,12 @@ export async function deleteDomainProtocol(domainId: string, protocolId: string)
       throw new Error(`Failed to delete domain protocol with ID ${protocolId}`);
     }
 
+    // const projectData = {
+    //   ...response.data,
+    //   parentId: response.data?.parentId === null ? undefined : response.data?.parentId,
+    // };
+    // return projectData;
+
     return response.data;
   } catch (error) {
     console.error("Error deleting domain protocol from Amplify:", error);
@@ -72,6 +80,11 @@ export async function listDomainProtocols(domainId: string) {
     const response: { data: Schema["DomainProtocol"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.DomainProtocol.list({
       filter: { domainId: { eq: domainId } },
     });
+
+    // return {
+    //   ...response.data,
+    //   parentId: response.data?.parentId === null ? undefined : response.data?.parentId,
+    // };
 
     return response.data;
   } catch (error) {
@@ -257,15 +270,25 @@ export const listAllRoles = async (): Promise<Role[]> => {
 // Projects
 export const createProject = async (
   domainId: string,
-  data: { name: string; language: string; queueId: number },
+  data: { 
+    areaId: string; 
+    language: string;
+    sourceSystem: string;
+    projectId: string;
+    queueId: number; 
+    name: string;  
+  },
 ) => {
   try {
     const client = getClient();
     const response: { data: Schema["Project"]["type"] | null; errors?: any[] } = await client.models.Project.create({
       domainId,
-      name: data.name,
+      areaId: data.areaId,
       language: data.language,
+      sourceSystem: data.sourceSystem,
+      projectId: data.projectId,
       queueId: data.queueId,
+      name: data.name,
       deleted: false,
     });
 
@@ -323,11 +346,8 @@ export const createService = async (data: any) => {
     if (data.fields && Array.isArray(data.fields) && data.fields.length > 0) {
       try {
         const fieldsData = await listFields(data.workspaceId, data.campaignId, data.farmId);
-
         const fieldIds = data.fields.map((field: any) => field.fieldId);
-        
         const selectedFields = fieldsData.filter((field) => fieldIds.includes(field.id.toString()));
-        
         totalArea = selectedFields.reduce((sum: number, field: any) => sum + (field.hectares || 0), 0);
       } catch (error) {
         console.error("Error fetching field data for area calculation:", error);
@@ -338,8 +358,8 @@ export const createService = async (data: any) => {
     const serviceData = {
       projectId: data.projectId,
       serviceName: data.serviceName,
+      // sourceSystem: data.sourceSystem,
       externalServiceKey: data.externalServiceKey || `SRV-${Date.now()}`,
-      sourceSystem: data.sourceSystem,
       externalTemplateId: data.externalTemplateId,
       workspaceId: data.workspaceId,
       workspaceName: data.workspaceName,
@@ -380,10 +400,12 @@ export const createService = async (data: any) => {
           client.models.ServiceTask.create({
             serviceId,
             externalTemplateId: task.externalTemplateId,
-            sourceSystem: task.sourceSystem,
-            roleId: task.roleId,
-            userId: task.userId,
             taskName: task.taskName,
+            userEmail: task.userEmail
+            // sourceSystem: task.sourceSystem,
+            // roleId: task.roleId,
+            // roleId: "",
+            // userId: task.userId,
           }),
         ),
       );
@@ -437,20 +459,22 @@ export const getServiceDetail = async (serviceId: string) => {
     const tasksResponse = await service.tasks();
     const tasks = await Promise.all(
       tasksResponse.data.map(async (task) => {
-        const role = await task.role();
-        const user = await task.user();
-        return {
-          id: task.id,
-          externalTemplateId: task.externalTemplateId,
-          sourceSystem: task.sourceSystem,
-          taskName: task.taskName,
-          role: role?.data
-            ? { id: role.data.id, name: role.data.name }
-            : { id: task.roleId, name: "Unknown Role" },
-          user: user?.data
-            ? { id: user.data.id, name: user.data.name, email: user.data.email }
-            : { id: task.userId, name: "Unknown User", email: "" },
-        };
+        // const role = await task.role();
+        // const user = await task.user();
+        return task
+        // return {
+        //   id: task.id,
+        //   externalTemplateId: task.externalTemplateId,
+        //   taskName: task.taskName,
+        //   userEmail: task.userEmail
+        //   // sourceSystem: task.sourceSystem,
+        //   // role: role?.data
+        //   //   ? { id: role.data.id, name: role.data.name }
+        //   //   : { id: task.roleId, name: "Unknown Role" },
+        //   // user: user?.data
+        //   //   ? { id: user.data.id, name: user.data.name, email: user.data.email }
+        //   //   : { id: task.userId, name: "Unknown User", email: "" },
+        // };
       }),
     );
 
@@ -542,20 +566,21 @@ export const listServicesByProject = async (
         const tasksResponse = await service.tasks();
         const tasks = await Promise.all(
           tasksResponse.data.map(async (task) => {
-            const role = await task.role();
-            const user = await task.user();
-            return {
-              id: task.id,
-              externalTemplateId: task.externalTemplateId,
-              sourceSystem: task.sourceSystem,
-              taskName: task.taskName,
-              role: role?.data
-                ? { id: role.data.id, name: role.data.name }
-                : { id: task.roleId, name: "Unknown Role" },
-              user: user?.data
-                ? { id: user.data.id, name: user.data.name, email: user.data.email }
-                : { id: task.userId, name: "Unknown User", email: "" },
-            };
+            // const role = await task.role();
+            // const user = await task.user();
+            return task;
+            // return {
+            //   id: task.id,
+            //   // sourceSystem: task.sourceSystem,
+            //   externalTemplateId: task.externalTemplateId,
+            //   taskName: task.taskName,
+            //   // role: role?.data
+            //   //   ? { id: role.data.id, name: role.data.name }
+            //   //   : { id: task.roleId, name: "Unknown Role" },
+            //   // user: user?.data
+            //   //   ? { id: user.data.id, name: user.data.name, email: user.data.email }
+            //   //   : { id: task.userId, name: "Unknown User", email: "" },
+            // };
           }),
         );
 
@@ -563,35 +588,35 @@ export const listServicesByProject = async (
         const completedTasks = 0;
         const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-        const now = new Date();
-        const startDate = service.startDate ? new Date(service.startDate) : null;
-        const endDate = service.endDate ? new Date(service.endDate) : null;
-        let status = "Planificado";
-        if (progress === 100) {
-          status = "Finalizado";
-        } else if (startDate && now >= startDate) {
-          status = "En progreso";
-        }
+        // const now = new Date();
+        // const startDate = service.startDate ? new Date(service.startDate) : null;
+        // const endDate = service.endDate ? new Date(service.endDate) : null;
+        // let status = "Planificado";
+        // if (progress === 100) {
+        //   status = "Finalizado";
+        // } else if (startDate && now >= startDate) {
+        //   status = "En progreso";
+        // }
 
         return {
-          projectId: service.projectId,
           id: service.id,
+          projectId: service.projectId,
           serviceName: service.serviceName,
-          externalServiceKey: service.externalServiceKey,
-          sourceSystem: service.sourceSystem,
           externalTemplateId: service.externalTemplateId,
+          externalServiceKey: service.externalServiceKey,
+          //sourceSystem: service.sourceSystem,
           workspaceId: service.workspaceId,
           workspaceName: service.workspaceName,
           campaignId: service.campaignId,
           campaignName: service.campaignName,
           farmId: service.farmId,
           farmName: service.farmName,
-          lots,
+          lots: lots,
           totalArea: service.totalArea,
           startDate: service.startDate,
           endDate: service.endDate,
+          // status,
           progress,
-          status,
         } as Service;
       }),
     );

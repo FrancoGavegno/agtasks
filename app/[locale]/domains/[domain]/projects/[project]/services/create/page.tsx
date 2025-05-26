@@ -7,12 +7,16 @@ import {
 } from "@/components/ui/breadcrumb"
 import CreateService from "@/components/projects/create-service"
 import { Link } from "@/i18n/routing"
+import { cookies } from 'next/headers'
 
 export default function Page({
-  params,
+    params,
 }: {
-  params: { domain: string; project: string };
+    params: { domain: string; project: string };
 }) {
+    const cookiesList = cookies();
+    const userEmail = cookiesList.get('user-email')?.value || "";
+
     return (
         <div className="container w-full pt-4 pb-4">
             <Breadcrumb>
@@ -39,7 +43,7 @@ export default function Page({
                 </BreadcrumbList>
             </Breadcrumb>
 
-            <CreateService />
+            <CreateService userEmail={userEmail} />
         </div>
     )
 }

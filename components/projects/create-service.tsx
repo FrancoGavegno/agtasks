@@ -25,7 +25,11 @@ const defaultValues: CreateServiceFormValues = {
   taskAssignments: [],
 }
 
-export default function CreateService() {
+interface Props {
+  userEmail: string
+}
+
+export default function CreateService({ userEmail }: Props) {
   const router = useRouter()
   const params = useParams()
   const { locale, project, domain } = params
@@ -39,7 +43,6 @@ export default function CreateService() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   // Añadir un nuevo estado para controlar si se muestra el mensaje de éxito
   const [isSuccess, setIsSuccess] = useState(false)
-
   // state to capture the selected protocol
   const [selectedProtocol, setSelectedProtocol] = useState<string>("")
   const [selectedProtocolName, setSelectedProtocolName] = useState<string>("")
@@ -72,34 +75,45 @@ export default function CreateService() {
         isValid = await methods.trigger(["workspace", "campaign", "establishment", "selectedLots"])
         break
       case 3:
-        // Solo validar las tareas que tienen un rol seleccionado
         const taskAssignments = methods.getValues("taskAssignments")
 
         // Validar solo las tareas con roles asignados
-        const tasksWithRoles = taskAssignments.filter((task) => task.role)
+        // const tasksWithRoles = taskAssignments.filter((task) => task.role)
 
-        if (tasksWithRoles.length === 0) {
-          // Si no hay tareas con roles, mostrar un mensaje
+        // if (tasksWithRoles.length === 0) {
+        //   // Si no hay tareas con roles, mostrar un mensaje
+        //   toast({
+        //     title: "Asignación incompleta",
+        //     description: "Por favor, asigne al menos un rol a una tarea",
+        //     variant: "destructive",
+        //   })
+        //   return
+        // }
+
+        // Validar solo las tareas con usuario asignado
+        const tasksWithUser = taskAssignments.filter((task) => task.assignedTo)
+        if (tasksWithUser.length === 0) {
+          // Si no hay tareas con usuario, mostrar un mensaje
           toast({
             title: "Asignación incompleta",
-            description: "Por favor, asigne al menos un rol a una tarea",
+            description: "Por favor, asigne al menos un usuario a una tarea",
             variant: "destructive",
           })
           return
         }
 
         // Validar que todas las tareas con roles tengan usuarios asignados
-        const incompleteAssignments = tasksWithRoles.filter((task) => !task.assignedTo)
+        // const incompleteAssignments = tasksWithRoles.filter((task) => !task.assignedTo)
 
-        if (incompleteAssignments.length > 0) {
-          // Si hay tareas con roles pero sin usuarios, mostrar un mensaje
-          toast({
-            title: "Asignación incompleta",
-            description: "Por favor, asigne usuarios a todas las tareas con roles",
-            variant: "destructive",
-          })
-          return
-        }
+        // if (incompleteAssignments.length > 0) {
+        //   // Si hay tareas con roles pero sin usuarios, mostrar un mensaje
+        //   toast({
+        //     title: "Asignación incompleta",
+        //     description: "Por favor, asigne usuarios a todas las tareas con roles",
+        //     variant: "destructive",
+        //   })
+        //   return
+        // }
 
         // Si llegamos aquí, la validación es correcta
         isValid = true
@@ -134,16 +148,15 @@ export default function CreateService() {
       setIsSubmitting(true)
       // console.log("Form data to submit:", data)
 
-      // Filtrar solo las tareas que tienen rol y usuario asignados
-      const validTasks = data.taskAssignments.filter((task) => task.role && task.assignedTo)
-
-      // console.log("serviceName: ", `${selectedProtocolName} - ${data.workspaceName} - ${data.establishmentName}`)
-
+      // Filtrar solo las tareas que tienen usuario asignado
+      // const validTasks = data.taskAssignments.filter((task) => task.role && task.assignedTo)
+      // const validTasks = data.taskAssignments.filter((task) => task.assignedTo)
+      
       // Preparar los datos para enviar al API
       const serviceData = {
         projectId: project as string,
         serviceName: `${selectedProtocolName} - ${data.workspaceName} - ${data.establishmentName}`, 
-        sourceSystem: "jira",
+        // sourceSystem: "jira",
         externalTemplateId: data.protocol,
         externalServiceKey: `SRV-${Date.now()}`, // TO DO: Completar cuando cree el Request en Jira
         workspaceId: data.workspace,
@@ -154,22 +167,26 @@ export default function CreateService() {
         farmName: data.establishmentName || "", // Incluir el nombre del establecimiento
         totalArea: 0, // Se calculará en el backend basado en los lotes seleccionados
         startDate: new Date().toISOString(),
+        
         // Enviar los lotes seleccionados en el formato correcto con sus nombres
         fields: data.selectedLots.map((lotId) => ({
           fieldId: lotId,
           fieldName: data.selectedLotsNames?.[lotId] || "",
         })),
+        
         // Enviar las tareas en el formato correcto
-        tasks: validTasks.map((task) => ({
+        // tasks: validTasks.map((task) => ({
+        tasks: data.taskAssignments.map((task) => ({
           externalTemplateId: data.protocol,
-          sourceSystem: "jira",
-          roleId: task.role,
-          userId: task.assignedTo,
           taskName: task.task,
+          userEmail: task.assignedTo,
+          // userId: task.assignedTo,
+          // sourceSystem: "jira",
+          // roleId: task.role,
         })),
       }
 
-      // console.log("Service data to send:", serviceData)
+      console.log("Service data to send:", serviceData)
 
       // Enviar los datos al API
       const response = await fetch(`/api/v1/agtasks/domains/${domain}/projects/${project}/services`, {
@@ -236,7 +253,7 @@ export default function CreateService() {
           selectedProtocolName={selectedProtocolName}
           onSelectProtocolName={setSelectedProtocolName} />
       case 2:
-        return <Step2Lots />
+        return <Step2Lots userEmail={userEmail} />
       case 3:
         return <Step3Tasks />
       default:

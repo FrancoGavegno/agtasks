@@ -4,16 +4,23 @@ import { z } from "zod"
 export const step1Schema = z.object({
   protocol: z.string({ required_error: "Por favor, seleccione un protocolo" }),
   protocolName: z.string().optional(),
+  // taskAssignments: z.array(
+  //   z.object({
+  //     task: z.string(),
+  //     role: z.string(),
+  //     assignedTo: z.string(),
+  //   }),
+  // ),
   taskAssignments: z.array(
     z.object({
       task: z.string(),
-      role: z.string(),
       assignedTo: z.string(),
     }),
   ),
 })
 
 export type Step1FormValues = z.infer<typeof step1Schema>
+
 
 // Esquema de validación para el paso 2 (selección de lotes)
 export const step2Schema = z.object({
@@ -29,22 +36,37 @@ export const step2Schema = z.object({
 
 export type Step2FormValues = z.infer<typeof step2Schema>
 
+
 // Esquema de validación para el paso 3 (asignación de tareas)
 export const taskAssignmentSchema = z.object({
   task: z.string(),
-  role: z.string({ required_error: "Por favor, seleccione un rol" }).min(1, { message: "Por favor, seleccione un rol" }),
+  // role: z.string({ required_error: "Por favor, seleccione un rol" }).min(1, { message: "Por favor, seleccione un rol" }),
   assignedTo: z.string({ required_error: "Por favor, seleccione un usuario" }).min(1, { message: "Por favor, seleccione un usuario" }),
 })
+
+// export const step3Schema = z.object({
+//   taskAssignments: z.array(taskAssignmentSchema).refine(
+//     (tasks) => {
+//       // Solo validar tareas que tengan un rol seleccionado
+//       const tasksWithRoles = tasks.filter((task) => task.role.length > 0)
+//       return tasksWithRoles.every((task) => task.assignedTo.length > 0)
+//     },
+//     {
+//       message: "Todas las tareas con rol asignado deben tener un usuario asignado",
+//       path: ["taskAssignments"],
+//     },
+//   ),
+// })
 
 export const step3Schema = z.object({
   taskAssignments: z.array(taskAssignmentSchema).refine(
     (tasks) => {
-      // Solo validar tareas que tengan un rol seleccionado
-      const tasksWithRoles = tasks.filter((task) => task.role.length > 0)
-      return tasksWithRoles.every((task) => task.assignedTo.length > 0)
+      // Solo validar tareas que tengan un usuario seleccionado
+      const tasksWithUser = tasks.filter((task) => task.assignedTo.length > 0)
+      return tasksWithUser
     },
     {
-      message: "Todas las tareas con rol asignado deben tener un usuario asignado",
+      message: "Todas las tareas deben tener un usuario asignado",
       path: ["taskAssignments"],
     },
   ),

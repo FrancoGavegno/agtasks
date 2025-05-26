@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { 
   Check, 
   ChevronDown 
@@ -14,7 +14,11 @@ import {
   CommandItem,
   CommandList
 } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { 
+  Popover, 
+  PopoverContent, 
+  PopoverTrigger 
+} from "@/components/ui/popover"
 import { Project } from "@/lib/interfaces"
 
 interface Props {

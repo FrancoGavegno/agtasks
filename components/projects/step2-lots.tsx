@@ -11,11 +11,14 @@ import { useServiceForm } from "@/lib/contexts/service-form-context"
 import { listWorkspaces, listSeasons, listFarms, listFields } from "@/lib/integrations/360"
 import type { Workspace, Season, Farm, LotField } from "@/lib/interfaces"
 
-export default function Step2Lots() {
-  // Using a default email for now - in a real app, this would come from authentication
-  const email = "francogavegno@gmail.com" // Default user email
+interface Props {
+  userEmail: string
+}
+
+export default function Step2Lots({ userEmail }: Props) {
   const { domain } = useParams<{ domain: string }>()
-  const domainId = domain || "8644" // Fallback to "8644" if domain is not in URL
+  //const domainId = domain || "8644" // Fallback to "8644" if domain is not in URL
+  const domainId = domain
 
   const form = useFormContext<Step2FormValues>()
   const { updateFormValues } = useServiceForm()
@@ -49,7 +52,7 @@ export default function Step2Lots() {
     const fetchWorkspaces = async () => {
       try {
         setWorkspacesLoading(true)
-        const workspacesData = await listWorkspaces(email, domainId)
+        const workspacesData = await listWorkspaces(userEmail, domainId)
         // Filtrar workspaces no eliminados y ordenar alfabéticamente
         const filteredAndSorted = workspacesData
           .filter((workspace) => workspace.deleted === false)
@@ -66,7 +69,7 @@ export default function Step2Lots() {
     }
 
     fetchWorkspaces()
-  }, [email, domainId])
+  }, [userEmail, domainId])
 
   // Fetch seasons when workspace changes
   useEffect(() => {
@@ -266,8 +269,8 @@ export default function Step2Lots() {
     }
 
     // Añadir un log para depuración
-    console.log("Lotes seleccionados actualizados:", form.getValues("selectedLots"))
-    console.log("Nombres de lotes seleccionados:", form.getValues("selectedLotsNames"))
+    // console.log("Lotes seleccionados actualizados:", form.getValues("selectedLots"))
+    // console.log("Nombres de lotes seleccionados:", form.getValues("selectedLotsNames"))
   }
 
   return (
@@ -397,12 +400,12 @@ export default function Step2Lots() {
                     >
                       Seleccionar
                     </th>
-                    <th
+                    {/* <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
                       ID
-                    </th>
+                    </th> */}
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -440,7 +443,7 @@ export default function Step2Lots() {
                             onCheckedChange={() => handleLotSelection(field.id.toString())}
                           />
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{field.id}</td>
+                        {/* <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{field.id}</td> */}
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{field.name}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {field.cropName} {field.hybridName ? `/ ${field.hybridName}` : ""}
