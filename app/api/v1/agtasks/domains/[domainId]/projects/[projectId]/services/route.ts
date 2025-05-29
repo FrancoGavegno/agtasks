@@ -26,12 +26,16 @@ const createServiceBodySchema = z.object({
   campaignName: z.string().optional(),
   farmId: z.string(),
   farmName: z.string().optional(),
+  totalArea: z.number().optional(),
   startDate: z.string(),
   endDate: z.string().optional(),
   fields: z.array(
       z.object({ 
         fieldId: z.string(), 
         fieldName: z.string(),
+        hectares: z.number(),
+        cropName: z.string(),
+        hybridName: z.string().optional(),
       })).optional(),
   tasks: z.array(
       z.object({

@@ -21,6 +21,16 @@ export const step1Schema = z.object({
 
 export type Step1FormValues = z.infer<typeof step1Schema>
 
+// Definir la estructura para un lote seleccionado con todos sus detalles
+export const selectedLotDetailSchema = z.object({
+  fieldId: z.string(),
+  fieldName: z.string(),
+  hectares: z.number(),
+  cropName: z.string(),
+  hybridName: z.string().optional(),
+})
+
+export type SelectedLotDetail = z.infer<typeof selectedLotDetailSchema>
 
 // Esquema de validación para el paso 2 (selección de lotes)
 export const step2Schema = z.object({
@@ -30,12 +40,12 @@ export const step2Schema = z.object({
   campaignName: z.string().optional(),
   establishment: z.string().min(1, "Debe seleccionar un establecimiento"),
   establishmentName: z.string().optional(),
-  selectedLots: z.array(z.string()).min(1, "Debe seleccionar al menos un lote"),
+  //selectedLots: z.array(z.string()).min(1, "Debe seleccionar al menos un lote"),
+  selectedLots: z.array(selectedLotDetailSchema).min(1, "Debe seleccionar al menos un lote"),
   selectedLotsNames: z.record(z.string()).optional(),
 })
 
 export type Step2FormValues = z.infer<typeof step2Schema>
-
 
 // Esquema de validación para el paso 3 (asignación de tareas)
 export const taskAssignmentSchema = z.object({

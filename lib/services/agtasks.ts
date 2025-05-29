@@ -340,19 +340,18 @@ export const listProjectsByDomain = async (domainId: string): Promise<Project[]>
 export const createService = async (data: any) => {
   try {
     const client = getClient();
-    let totalArea = data.totalArea || 0;
-
+    // let totalArea = data.totalArea || 0;
     // Calcular el área total si hay campos seleccionados
-    if (data.fields && Array.isArray(data.fields) && data.fields.length > 0) {
-      try {
-        const fieldsData = await listFields(data.workspaceId, data.campaignId, data.farmId);
-        const fieldIds = data.fields.map((field: any) => field.fieldId);
-        const selectedFields = fieldsData.filter((field) => fieldIds.includes(field.id.toString()));
-        totalArea = selectedFields.reduce((sum: number, field: any) => sum + (field.hectares || 0), 0);
-      } catch (error) {
-        console.error("Error fetching field data for area calculation:", error);
-      }
-    }
+    // if (data.fields && Array.isArray(data.fields) && data.fields.length > 0) {
+    //   try {
+    //     const fieldsData = await listFields(data.workspaceId, data.campaignId, data.farmId);
+    //     const fieldIds = data.fields.map((field: any) => field.fieldId);
+    //     const selectedFields = fieldsData.filter((field) => fieldIds.includes(field.id.toString()));
+    //     totalArea = selectedFields.reduce((sum: number, field: any) => sum + (field.hectares || 0), 0);
+    //   } catch (error) {
+    //     console.error("Error fetching field data for area calculation:", error);
+    //   }
+    // }
 
     // Crear el servicio
     const serviceData = {
@@ -367,7 +366,7 @@ export const createService = async (data: any) => {
       campaignName: data.campaignName,
       farmId: data.farmId,
       farmName: data.farmName,
-      totalArea,
+      totalArea: data.totalArea,
       startDate: data.startDate,
       endDate: data.endDate,
     };
@@ -379,19 +378,25 @@ export const createService = async (data: any) => {
     }
 
     const serviceId = serviceResponse.data.id;
+    console.log("data.fields: ", data.fields)
 
     // Crear los campos del servicio
-    if (data.fields && Array.isArray(data.fields) && data.fields.length > 0) {
-      await Promise.all(
+    // if (data.fields && Array.isArray(data.fields) && data.fields.length > 0) {
+      
+    // }
+
+    await Promise.all(
         data.fields.map((field: any) =>
           client.models.ServiceField.create({
             serviceId,
             fieldId: field.fieldId,
             fieldName: field.fieldName,
+            hectares: field.hectares,
+            crop: field.cropName,
+            hybrid: field.hybridName
           }),
         ),
       );
-    }
 
     // Crear las tareas del servicio
     if (data.tasks && Array.isArray(data.tasks) && data.tasks.length > 0) {

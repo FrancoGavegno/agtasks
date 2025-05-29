@@ -11,8 +11,19 @@ import { useRouter, useParams } from "next/navigation"
 import Step1Protocol from "./step1-protocol"
 import Step2Lots from "./step2-lots"
 import Step3Tasks from "./step3-tasks"
-import { createServiceSchema, type CreateServiceFormValues } from "./validation-schemas"
-import { ServiceFormProvider } from "@/lib/contexts/service-form-context"
+//import { createServiceSchema, type CreateServiceFormValues } from "./validation-schemas"
+
+import { 
+  createServiceSchema, 
+  type CreateServiceFormValues, 
+  type SelectedLotDetail 
+} from "./validation-schemas"
+
+//import { ServiceFormProvider } from "@/lib/contexts/service-form-context"
+import { 
+  ServiceFormProvider
+} from "@/lib/contexts/service-form-context"
+
 import { useTranslations } from "next-intl"
 import { createService, createSubtask } from "@/lib/integrations/jira"
 import { JiraServiceRequest } from "@/lib/interfaces"
@@ -37,6 +48,8 @@ export default function CreateService({ userEmail }: Props) {
   const { locale, project, domain } = params
   const t = useTranslations("CreateService")
 
+  // const { formValues, resetForm } = useServiceForm() 
+  
   // Estado para controlar el paso actual del wizard
   const [currentStep, setCurrentStep] = useState(1)
   // Estado para controlar si se debe hacer scroll al inicio
@@ -52,7 +65,9 @@ export default function CreateService({ userEmail }: Props) {
   // Configurar el formulario con react-hook-form y zod
   const methods = useForm<CreateServiceFormValues>({
     resolver: zodResolver(createServiceSchema),
-    defaultValues,
+    defaultValues: {
+      ...defaultValues,
+    },
     mode: "onChange",
   })
 
@@ -159,11 +174,20 @@ export default function CreateService({ userEmail }: Props) {
         campaignName: data.campaignName || "",
         farmId: data.establishment,
         farmName: data.establishmentName || "",
-        totalArea: 0,
+        //totalArea: 0,
+        // Sumar hectáreas
+        totalArea: data.selectedLots.reduce((sum, lot) => sum + (lot.hectares || 0), 0), 
         startDate: new Date().toISOString(),
-        fields: data.selectedLots.map((lotId) => ({
-          fieldId: lotId,
-          fieldName: data.selectedLotsNames?.[lotId] || "",
+        // fields: data.selectedLots.map((lotId) => ({
+          //   fieldId: lotId,
+          //   fieldName: data.selectedLotsNames?.[lotId] || "",
+          // })),
+        fields: data.selectedLots.map((lot: SelectedLotDetail) => ({
+          fieldId: lot.fieldId,
+          fieldName: lot.fieldName,
+          hectares: lot.hectares,
+          cropName: lot.cropName,
+          hybridName: lot.hybridName || "",
         })),
         tasks: data.taskAssignments.map((task) => ({
           externalTemplateId: data.protocol,
@@ -233,6 +257,8 @@ export default function CreateService({ userEmail }: Props) {
       });
 
       setIsSuccess(true);
+      // resetForm() // Limpiar el contexto después de un envío exitoso
+      // methods.reset(defaultValues) // Limpiar el formulario local
     } catch (error) {
       console.error("Error creating service:", error);
       toast({

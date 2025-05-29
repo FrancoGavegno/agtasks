@@ -6,7 +6,7 @@ import { useFormContext } from "react-hook-form"
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import type { Step2FormValues } from "./validation-schemas"
+import type { Step2FormValues, SelectedLotDetail } from "./validation-schemas"
 import { useServiceForm } from "@/lib/contexts/service-form-context"
 import { listWorkspaces, listSeasons, listFarms, listFields } from "@/lib/integrations/360"
 import type { Workspace, Season, Farm, LotField } from "@/lib/interfaces"
@@ -231,46 +231,28 @@ export default function Step2Lots({ userEmail }: Props) {
   // Modificar handleLotSelection para guardar también los nombres de los lotes
   const handleLotSelection = (lotId: string) => {
     const currentLots = form.getValues("selectedLots") || []
-    const currentLotsNames = form.getValues("selectedLotsNames") || {}
-
-    // Encontrar el lote seleccionado para obtener su nombre
     const selectedField = fields.find((field) => field.id.toString() === lotId)
 
-    if (currentLots.includes(lotId)) {
-      // Si ya está seleccionado, lo quitamos
-      const newLots = currentLots.filter((id) => id !== lotId)
-      const newLotsNames = { ...currentLotsNames }
-      delete newLotsNames[lotId]
+    if (!selectedField) return // No hacer nada si el campo no se encuentra
 
-      form.setValue("selectedLots", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
-      form.setValue("selectedLotsNames", newLotsNames, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
-
-      // Actualizar el contexto
-      updateFormValues({
-        selectedLots: newLots,
-        selectedLotsNames: newLotsNames,
-      })
-    } else {
-      // Si no está seleccionado, lo añadimos
-      const newLots = [...currentLots, lotId]
-      const newLotsNames = {
-        ...currentLotsNames,
-        [lotId]: selectedField ? selectedField.name : "",
-      }
-
-      form.setValue("selectedLots", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
-      form.setValue("selectedLotsNames", newLotsNames, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
-
-      // Actualizar el contexto
-      updateFormValues({
-        selectedLots: newLots,
-        selectedLotsNames: newLotsNames,
-      })
+    const lotDetail: SelectedLotDetail = {
+      fieldId: selectedField.id.toString(),
+      fieldName: selectedField.name,
+      hectares: selectedField.hectares,
+      cropName: selectedField.cropName,
+      hybridName: selectedField.hybridName || "",
     }
 
-    // Añadir un log para depuración
-    // console.log("Lotes seleccionados actualizados:", form.getValues("selectedLots"))
-    // console.log("Nombres de lotes seleccionados:", form.getValues("selectedLotsNames"))
+    let newLots: SelectedLotDetail[]
+    if (currentLots.some((lot) => lot.fieldId === lotId)) {
+      newLots = currentLots.filter((lot) => lot.fieldId !== lotId)
+    } else {
+      newLots = [...currentLots, lotDetail]
+    }
+
+    form.setValue("selectedLots", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
+    updateFormValues({ selectedLots: newLots })
+    console.log("Lotes seleccionados actualizados:", newLots)
   }
 
   return (
@@ -439,7 +421,7 @@ export default function Step2Lots({ userEmail }: Props) {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <Checkbox
                             id={`lot-${field.id}`}
-                            checked={selectedLots?.includes(field.id.toString())}
+                            checked={selectedLots?.some((lot) => lot.fieldId === field.id.toString())}
                             onCheckedChange={() => handleLotSelection(field.id.toString())}
                           />
                         </td>
