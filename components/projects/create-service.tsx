@@ -14,6 +14,8 @@ import Step3Tasks from "./step3-tasks"
 import { createServiceSchema, type CreateServiceFormValues } from "./validation-schemas"
 import { ServiceFormProvider } from "@/lib/contexts/service-form-context"
 import { useTranslations } from "next-intl"
+import { createService, createSubtask } from "@/lib/integrations/jira"
+import { JiraServiceRequest } from "@/lib/interfaces"
 
 // Valores iniciales del formulario
 const defaultValues: CreateServiceFormValues = {
@@ -142,91 +144,107 @@ export default function CreateService({ userEmail }: Props) {
   //   setShouldScrollToTop(true)
   // }
 
-  // Envío del formulario
   const onSubmit = async (data: CreateServiceFormValues) => {
     try {
-      setIsSubmitting(true)
-      // console.log("Form data to submit:", data)
+      setIsSubmitting(true);
 
-      // Filtrar solo las tareas que tienen usuario asignado
-      // const validTasks = data.taskAssignments.filter((task) => task.role && task.assignedTo)
-      // const validTasks = data.taskAssignments.filter((task) => task.assignedTo)
-      
-      // Preparar los datos para enviar al API
       const serviceData = {
         projectId: project as string,
-        serviceName: `${selectedProtocolName} - ${data.workspaceName} - ${data.establishmentName}`, 
-        // sourceSystem: "jira",
+        serviceName: `${selectedProtocolName} - ${data.workspaceName} - ${data.establishmentName}`,
         externalTemplateId: data.protocol,
-        externalServiceKey: `SRV-${Date.now()}`, // TO DO: Completar cuando cree el Request en Jira
+        // externalServiceKey: `SRV-${Date.now()}`,
         workspaceId: data.workspace,
-        workspaceName: data.workspaceName || "", // Incluir el nombre del workspace
+        workspaceName: data.workspaceName || "",
         campaignId: data.campaign,
-        campaignName: data.campaignName || "", // Incluir el nombre de la campaña
+        campaignName: data.campaignName || "",
         farmId: data.establishment,
-        farmName: data.establishmentName || "", // Incluir el nombre del establecimiento
-        totalArea: 0, // Se calculará en el backend basado en los lotes seleccionados
+        farmName: data.establishmentName || "",
+        totalArea: 0,
         startDate: new Date().toISOString(),
-        
-        // Enviar los lotes seleccionados en el formato correcto con sus nombres
         fields: data.selectedLots.map((lotId) => ({
           fieldId: lotId,
           fieldName: data.selectedLotsNames?.[lotId] || "",
         })),
-        
-        // Enviar las tareas en el formato correcto
-        // tasks: validTasks.map((task) => ({
         tasks: data.taskAssignments.map((task) => ({
           externalTemplateId: data.protocol,
           taskName: task.task,
           userEmail: task.assignedTo,
-          // userId: task.assignedTo,
-          // sourceSystem: "jira",
-          // roleId: task.role,
         })),
+      };
+
+      // Crear el servicio (issue principal)
+      const requestData: JiraServiceRequest = {
+        serviceDeskId: '107',
+        requestTypeId: '153',
+        requestFieldValues: {
+          summary: serviceData.serviceName,
+          description: 'Servicio generado desde el sistema', // Ajusta si hace falta
+        },
+        requestParticipants: [],
+        raiseOnBehalfOf: 'fgavegno@geoagro.com',
+      };
+
+      const response = await createService(requestData);
+      // console.log("response: ", response);
+
+      // ✅ Asegúrate de que el response contiene el key del issue creado (por ejemplo: TAN-123)
+      const parentIssueKey = response.data?.issueKey;
+
+      if (!parentIssueKey) {
+        throw new Error("No se pudo obtener el issueKey del request creado en Jira");
       }
 
-      console.log("Service data to send:", serviceData)
+      // Crear subtareas en Jira como hijas del request
+      await Promise.all(
+        serviceData.tasks.map((task) =>
+          createSubtask(
+            parentIssueKey,
+            task.taskName,
+            task.userEmail,
+            `Asignado a: ${task.userEmail}`
+          )
+        )
+      );
 
       // Enviar los datos al API
-      const response = await fetch(`/api/v1/agtasks/domains/${domain}/projects/${project}/services`, {
+      const newServiceData = {
+        ...serviceData,
+        externalServiceKey: parentIssueKey 
+      }
+
+      const response2 = await fetch(`/api/v1/agtasks/domains/${domain}/projects/${project}/services`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(serviceData),
+        body: JSON.stringify(newServiceData),
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
+      if (!response2.ok) {
+        const errorData = await response2.json()
         console.error("API error response:", errorData)
-        throw new Error(errorData.error || errorData.message || `Error: ${response.status}`)
+        throw new Error(errorData.error || errorData.message || `Error: ${response2.status}`)
       }
-
-      // Mostrar mensaje de confirmación
+      
       toast({
         title: "Servicio creado exitosamente",
-        description: "El servicio ha sido creado con éxito.",
+        description: "El servicio y sus tareas fueron creados correctamente.",
         duration: 5000,
-      })
+      });
 
-      // Marcar como exitoso y permitir crear otro
-      setIsSuccess(true)
-
-      // No redirigir automáticamente para permitir crear otro servicio
-      // router.push(`${locale}/domains/${domain}/projects/${project}/services`)
+      setIsSuccess(true);
     } catch (error) {
-      console.error("Error creating service:", error)
+      console.error("Error creating service:", error);
       toast({
         title: "Error al crear el servicio",
         description: `Ha ocurrido un error al crear el servicio: ${error instanceof Error ? error.message : "Error desconocido"}`,
         variant: "destructive",
         duration: 5000,
-      })
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   // Función para reiniciar el formulario 
   const createNewService = () => {
@@ -247,8 +265,8 @@ export default function CreateService({ userEmail }: Props) {
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <Step1Protocol 
-          selectedProtocol={selectedProtocol} 
+        return <Step1Protocol
+          selectedProtocol={selectedProtocol}
           onSelectProtocol={setSelectedProtocol}
           selectedProtocolName={selectedProtocolName}
           onSelectProtocolName={setSelectedProtocolName} />
@@ -263,7 +281,7 @@ export default function CreateService({ userEmail }: Props) {
 
   return (
     <ServiceFormProvider>
-       <Card className="w-full max-w-6xl mx-auto border-none shadow-none min-h-[600px]">
+      <Card className="w-full max-w-6xl mx-auto border-none shadow-none min-h-[600px]">
         <CardHeader>
           <CardTitle>{t("CardTitle")}</CardTitle>
           <CardDescription>{t("CardDescription")}</CardDescription>

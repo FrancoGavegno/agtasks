@@ -444,11 +444,15 @@ export default function Step2Lots({ userEmail }: Props) {
                           />
                         </td>
                         {/* <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{field.id}</td> */}
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{field.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {field.name}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {field.cropName} {field.hybridName ? `/ ${field.hybridName}` : ""}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{field.hectares}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {field.hectares}
+                        </td>
                       </tr>
                     ))
                   )}

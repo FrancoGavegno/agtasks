@@ -275,6 +275,7 @@ export interface AvatarUrls {
   "48x48": string
 }
 
+// --------------
 export interface JiraResponseData {
   issues: JiraIssue[]
   total: number
@@ -317,16 +318,34 @@ export interface JiraIssue {
   }
 }
 
-// Nueva interfaz para la creación de solicitudes de
-// cliente según la API de Jira Service Desk
+// esta interface será reemplazada por JiraServiceRequest
 export interface JiraCustomerRequestData {
-  serviceDeskId: string
-  requestTypeId: string
+  isAdfRequest: boolean
+  raiseOnBehalfOf?: string // Email del usuario en cuyo nombre se crea la solicitud
   requestFieldValues: {
     summary: string
     description?: string
     [key: string]: any // Para campos personalizados
   }
-  raiseOnBehalfOf?: string // Email del usuario en cuyo nombre se crea la solicitud
   requestParticipants?: string[] // Array de emails de participantes
+  requestTypeId: string
+  serviceDeskId: string
+}
+
+export interface JiraServiceRequest {
+  serviceDeskId: string;
+  requestTypeId: string;
+  requestFieldValues: {
+    summary: string;
+    description: string;
+    customFields?: Record<string, any>;
+  };
+  raiseOnBehalfOf?: string;
+  requestParticipants?: string[];
+}
+
+export interface JiraServiceResponse {
+  success: boolean;
+  data?: any;
+  error?: string;
 }

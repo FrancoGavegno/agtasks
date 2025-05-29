@@ -20,16 +20,16 @@ export default function TabsNavigation() {
     <SettingsProvider>
       <div className="w-full">
         <Tabs defaultValue="protocols" className="w-full">
-          <TabsList className="grid grid-cols-4 w-full bg-muted/60 p-1 rounded-lg">
+          <TabsList className="grid grid-cols-3 w-full bg-muted/60 p-1 rounded-lg">
             <TabsTrigger value="protocols" className="rounded-md data-[state=active]:bg-background">
               {t("tab-1")}
             </TabsTrigger>
             <TabsTrigger value="users" className="rounded-md data-[state=active]:bg-background">
               {t("tab-2")}
             </TabsTrigger>
-            <TabsTrigger value="roles" className="rounded-md data-[state=active]:bg-background">
+            {/* <TabsTrigger value="roles" className="rounded-md data-[state=active]:bg-background">
               {t("tab-3")}
-            </TabsTrigger>
+            </TabsTrigger> */}
             <TabsTrigger value="forms" className="rounded-md data-[state=active]:bg-background">
               {t("tab-4")}
             </TabsTrigger>

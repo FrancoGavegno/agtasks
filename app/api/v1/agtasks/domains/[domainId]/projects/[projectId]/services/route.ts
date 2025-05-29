@@ -18,6 +18,7 @@ const createServiceBodySchema = z.object({
   projectId: z.string(),
   serviceName: z.string(),
   // sourceSystem: z.string(),
+  externalServiceKey: z.string(),
   externalTemplateId: z.string(),
   workspaceId: z.string(),
   workspaceName: z.string().optional(),

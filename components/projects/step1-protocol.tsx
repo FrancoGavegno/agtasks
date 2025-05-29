@@ -204,7 +204,7 @@ export default function Step1Protocol({
       ) : (
         selectedProtocol && (
           <div className="mt-6 border rounded-md p-4 text-center text-gray-500">
-            <p>No hay tareas disponibles para el protocolo {selectedProtocolName || "seleccionado"}</p>
+            <p>Buscando tareas del protocolo {selectedProtocolName || "seleccionado"}</p>
           </div>
         )
       )}

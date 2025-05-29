@@ -241,6 +241,7 @@ export function ServicesPageDetails() {
         <Table>
           <TableHeader>
             <TableRow>
+              <SortableHeader column="externalServiceKey" label="Key" />
               <SortableHeader column="serviceName" label="Servicio" />
               <SortableHeader column="workspaceName" label="Espacio de trabajo" />
               <SortableHeader column="campaignName" label="Campaña" />
@@ -262,6 +263,7 @@ export function ServicesPageDetails() {
             ) : (
               services.map((service) => (
                 <TableRow key={service.id}>
+                  <TableCell>{service.externalServiceKey}</TableCell>
                   <TableCell className="font-medium">{service.serviceName}</TableCell>
                   <TableCell>{service.workspaceName || "-"}</TableCell>
                   <TableCell>{service.campaignName || "-"}</TableCell>
@@ -300,11 +302,11 @@ export function ServicesPageDetails() {
                           <Play className="h-4 w-4" />
                         </Button>
                       )}
-                      <Link href={`/domains/${domainId}/projects/${projectId}/services/${service.id}`}>
+                      {/* <Link href={`/domains/${domainId}/projects/${projectId}/services/${service.id}`}>
                         <Button variant="outline" size="icon" className="h-8 w-8" title="Editar servicio">
                           <Edit className="h-4 w-4" />
                         </Button>
-                      </Link>
+                      </Link> */}
                     </div>
                   </TableCell>
                 </TableRow>

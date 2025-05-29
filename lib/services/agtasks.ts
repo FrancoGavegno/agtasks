@@ -359,7 +359,7 @@ export const createService = async (data: any) => {
       projectId: data.projectId,
       serviceName: data.serviceName,
       // sourceSystem: data.sourceSystem,
-      externalServiceKey: data.externalServiceKey || `SRV-${Date.now()}`,
+      externalServiceKey: data.externalServiceKey,
       externalTemplateId: data.externalTemplateId,
       workspaceId: data.workspaceId,
       workspaceName: data.workspaceName,
