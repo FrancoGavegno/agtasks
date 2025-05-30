@@ -380,11 +380,6 @@ export const createService = async (data: any) => {
     const serviceId = serviceResponse.data.id;
     //console.log("data.fields: ", data.fields)
 
-    // Crear los campos del servicio
-    // if (data.fields && Array.isArray(data.fields) && data.fields.length > 0) {
-      
-    // }
-
     await Promise.all(
         data.fields.map((field: any) =>
           client.models.ServiceField.create({
