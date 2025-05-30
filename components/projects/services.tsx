@@ -16,6 +16,7 @@ import {
   ArrowUp,
   ArrowUpDown,
   PlusCircle,
+  SquareArrowOutUpRight,
   RefreshCw,
   Plus,
 } from "lucide-react"
@@ -247,9 +248,9 @@ export function ServicesPageDetails() {
               <SortableHeader column="campaignName" label="Campaña" />
               <SortableHeader column="farmName" label="Establecimiento" />
               <SortableHeader column="totalArea" label="Tot. Has" />
-              <SortableHeader column="progress" label="Progreso" />
+              {/* <SortableHeader column="progress" label="Progreso" />
               <SortableHeader column="startDate" label="Fecha Inicio" />
-              <SortableHeader column="status" label="Estado" />
+              <SortableHeader column="status" label="Estado" /> */}
               <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -257,7 +258,7 @@ export function ServicesPageDetails() {
             {services.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="text-center py-6 text-muted-foreground">
-                  No se encontraron servicios que coincidan con la búsqueda
+                  No se encontraron servicios que coincidan con su búsqueda
                 </TableCell>
               </TableRow>
             ) : (
@@ -269,7 +270,7 @@ export function ServicesPageDetails() {
                   <TableCell>{service.campaignName || "-"}</TableCell>
                   <TableCell>{service.farmName || service.farmId}</TableCell>
                   <TableCell>{service.totalArea} ha</TableCell>
-                  <TableCell>
+                  {/* <TableCell>
                     <div className="flex items-center gap-2">
                       <Progress value={service.progress} className="h-2 w-[60px]" />
                       <span className="text-xs text-muted-foreground">{service.progress}%</span>
@@ -278,18 +279,24 @@ export function ServicesPageDetails() {
                   <TableCell>{service.startDate ? new Date(service.startDate).toLocaleDateString() : "-"}</TableCell>
                   <TableCell>
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        service.status === "Finalizado"
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${service.status === "Finalizado"
                           ? "bg-green-100 text-green-800"
                           : service.status === "En progreso"
                             ? "bg-blue-100 text-blue-800"
                             : "bg-yellow-100 text-yellow-800"
-                      }`}
+                        }`}
                     >
                       {service.status}
                     </span>
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell>
+                    <Link
+                      target="_blank"
+                      href={`https://geoagro1.atlassian.net/browse/${service.externalServiceKey}`}>
+                      <SquareArrowOutUpRight />
+                    </Link>
+                  </TableCell>
+                  {/* <TableCell>
                     <div className="flex gap-2">
                       {service.status === "Planificado" && (
                         <Button
@@ -302,13 +309,13 @@ export function ServicesPageDetails() {
                           <Play className="h-4 w-4" />
                         </Button>
                       )}
-                      {/* <Link href={`/domains/${domainId}/projects/${projectId}/services/${service.id}`}>
+                      <Link href={`/domains/${domainId}/projects/${projectId}/services/${service.id}`}>
                         <Button variant="outline" size="icon" className="h-8 w-8" title="Editar servicio">
                           <Edit className="h-4 w-4" />
                         </Button>
-                      </Link> */}
+                      </Link> 
                     </div>
-                  </TableCell>
+                  </TableCell> */}
                 </TableRow>
               ))
             )}
