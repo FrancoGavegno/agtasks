@@ -4,16 +4,33 @@ import { z } from "zod"
 export const step1Schema = z.object({
   protocol: z.string({ required_error: "Por favor, seleccione un protocolo" }),
   protocolName: z.string().optional(),
+  // taskAssignments: z.array(
+  //   z.object({
+  //     task: z.string(),
+  //     role: z.string(),
+  //     assignedTo: z.string(),
+  //   }),
+  // ),
   taskAssignments: z.array(
     z.object({
       task: z.string(),
-      role: z.string(),
       assignedTo: z.string(),
     }),
   ),
 })
 
 export type Step1FormValues = z.infer<typeof step1Schema>
+
+// Definir la estructura para un lote seleccionado con todos sus detalles
+export const selectedLotDetailSchema = z.object({
+  fieldId: z.string(),
+  fieldName: z.string(),
+  hectares: z.number(),
+  cropName: z.string(),
+  hybridName: z.string().optional(),
+})
+
+export type SelectedLotDetail = z.infer<typeof selectedLotDetailSchema>
 
 // Esquema de validación para el paso 2 (selección de lotes)
 export const step2Schema = z.object({
@@ -23,7 +40,8 @@ export const step2Schema = z.object({
   campaignName: z.string().optional(),
   establishment: z.string().min(1, "Debe seleccionar un establecimiento"),
   establishmentName: z.string().optional(),
-  selectedLots: z.array(z.string()).min(1, "Debe seleccionar al menos un lote"),
+  //selectedLots: z.array(z.string()).min(1, "Debe seleccionar al menos un lote"),
+  selectedLots: z.array(selectedLotDetailSchema).min(1, "Debe seleccionar al menos un lote"),
   selectedLotsNames: z.record(z.string()).optional(),
 })
 
@@ -32,19 +50,33 @@ export type Step2FormValues = z.infer<typeof step2Schema>
 // Esquema de validación para el paso 3 (asignación de tareas)
 export const taskAssignmentSchema = z.object({
   task: z.string(),
-  role: z.string({ required_error: "Por favor, seleccione un rol" }).min(1, { message: "Por favor, seleccione un rol" }),
+  // role: z.string({ required_error: "Por favor, seleccione un rol" }).min(1, { message: "Por favor, seleccione un rol" }),
   assignedTo: z.string({ required_error: "Por favor, seleccione un usuario" }).min(1, { message: "Por favor, seleccione un usuario" }),
 })
+
+// export const step3Schema = z.object({
+//   taskAssignments: z.array(taskAssignmentSchema).refine(
+//     (tasks) => {
+//       // Solo validar tareas que tengan un rol seleccionado
+//       const tasksWithRoles = tasks.filter((task) => task.role.length > 0)
+//       return tasksWithRoles.every((task) => task.assignedTo.length > 0)
+//     },
+//     {
+//       message: "Todas las tareas con rol asignado deben tener un usuario asignado",
+//       path: ["taskAssignments"],
+//     },
+//   ),
+// })
 
 export const step3Schema = z.object({
   taskAssignments: z.array(taskAssignmentSchema).refine(
     (tasks) => {
-      // Solo validar tareas que tengan un rol seleccionado
-      const tasksWithRoles = tasks.filter((task) => task.role.length > 0)
-      return tasksWithRoles.every((task) => task.assignedTo.length > 0)
+      // Solo validar tareas que tengan un usuario seleccionado
+      const tasksWithUser = tasks.filter((task) => task.assignedTo.length > 0)
+      return tasksWithUser
     },
     {
-      message: "Todas las tareas con rol asignado deben tener un usuario asignado",
+      message: "Todas las tareas deben tener un usuario asignado",
       path: ["taskAssignments"],
     },
   ),

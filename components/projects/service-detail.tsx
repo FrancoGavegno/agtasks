@@ -241,7 +241,9 @@ export function ServiceDetail({ serviceId }: ServiceDetailProps) {
                     </div>
                     <div className="flex justify-between">
                       <dt className="text-sm text-muted-foreground">Source System</dt>
-                      <dd className="text-sm font-medium">{capitalizeFirstLetter(service.sourceSystem)}</dd>
+                      <dd className="text-sm font-medium">{/* capitalizeFirstLetter(service.sourceSystem) */}
+                        {service.sourceSystem}
+                      </dd>
                     </div>
                     <div className="flex justify-between">
                       <dt className="text-sm text-muted-foreground">Template ID</dt>

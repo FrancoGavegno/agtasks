@@ -6,16 +6,19 @@ import { useFormContext } from "react-hook-form"
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import type { Step2FormValues } from "./validation-schemas"
+import type { Step2FormValues, SelectedLotDetail } from "./validation-schemas"
 import { useServiceForm } from "@/lib/contexts/service-form-context"
 import { listWorkspaces, listSeasons, listFarms, listFields } from "@/lib/integrations/360"
 import type { Workspace, Season, Farm, LotField } from "@/lib/interfaces"
 
-export default function Step2Lots() {
-  // Using a default email for now - in a real app, this would come from authentication
-  const email = "francogavegno@gmail.com" // Default user email
+interface Props {
+  userEmail: string
+}
+
+export default function Step2Lots({ userEmail }: Props) {
   const { domain } = useParams<{ domain: string }>()
-  const domainId = domain || "8644" // Fallback to "8644" if domain is not in URL
+  //const domainId = domain || "8644" // Fallback to "8644" if domain is not in URL
+  const domainId = domain
 
   const form = useFormContext<Step2FormValues>()
   const { updateFormValues } = useServiceForm()
@@ -49,7 +52,7 @@ export default function Step2Lots() {
     const fetchWorkspaces = async () => {
       try {
         setWorkspacesLoading(true)
-        const workspacesData = await listWorkspaces(email, domainId)
+        const workspacesData = await listWorkspaces(userEmail, domainId)
         // Filtrar workspaces no eliminados y ordenar alfabéticamente
         const filteredAndSorted = workspacesData
           .filter((workspace) => workspace.deleted === false)
@@ -66,7 +69,7 @@ export default function Step2Lots() {
     }
 
     fetchWorkspaces()
-  }, [email, domainId])
+  }, [userEmail, domainId])
 
   // Fetch seasons when workspace changes
   useEffect(() => {
@@ -228,46 +231,28 @@ export default function Step2Lots() {
   // Modificar handleLotSelection para guardar también los nombres de los lotes
   const handleLotSelection = (lotId: string) => {
     const currentLots = form.getValues("selectedLots") || []
-    const currentLotsNames = form.getValues("selectedLotsNames") || {}
-
-    // Encontrar el lote seleccionado para obtener su nombre
     const selectedField = fields.find((field) => field.id.toString() === lotId)
 
-    if (currentLots.includes(lotId)) {
-      // Si ya está seleccionado, lo quitamos
-      const newLots = currentLots.filter((id) => id !== lotId)
-      const newLotsNames = { ...currentLotsNames }
-      delete newLotsNames[lotId]
+    if (!selectedField) return // No hacer nada si el campo no se encuentra
 
-      form.setValue("selectedLots", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
-      form.setValue("selectedLotsNames", newLotsNames, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
-
-      // Actualizar el contexto
-      updateFormValues({
-        selectedLots: newLots,
-        selectedLotsNames: newLotsNames,
-      })
-    } else {
-      // Si no está seleccionado, lo añadimos
-      const newLots = [...currentLots, lotId]
-      const newLotsNames = {
-        ...currentLotsNames,
-        [lotId]: selectedField ? selectedField.name : "",
-      }
-
-      form.setValue("selectedLots", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
-      form.setValue("selectedLotsNames", newLotsNames, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
-
-      // Actualizar el contexto
-      updateFormValues({
-        selectedLots: newLots,
-        selectedLotsNames: newLotsNames,
-      })
+    const lotDetail: SelectedLotDetail = {
+      fieldId: selectedField.id.toString(),
+      fieldName: selectedField.name,
+      hectares: selectedField.hectares,
+      cropName: selectedField.cropName,
+      hybridName: selectedField.hybridName || "",
     }
 
-    // Añadir un log para depuración
-    console.log("Lotes seleccionados actualizados:", form.getValues("selectedLots"))
-    console.log("Nombres de lotes seleccionados:", form.getValues("selectedLotsNames"))
+    let newLots: SelectedLotDetail[]
+    if (currentLots.some((lot) => lot.fieldId === lotId)) {
+      newLots = currentLots.filter((lot) => lot.fieldId !== lotId)
+    } else {
+      newLots = [...currentLots, lotDetail]
+    }
+
+    form.setValue("selectedLots", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
+    updateFormValues({ selectedLots: newLots })
+    console.log("Lotes seleccionados actualizados:", newLots)
   }
 
   return (
@@ -397,12 +382,12 @@ export default function Step2Lots() {
                     >
                       Seleccionar
                     </th>
-                    <th
+                    {/* <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
                       ID
-                    </th>
+                    </th> */}
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -436,16 +421,20 @@ export default function Step2Lots() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <Checkbox
                             id={`lot-${field.id}`}
-                            checked={selectedLots?.includes(field.id.toString())}
+                            checked={selectedLots?.some((lot) => lot.fieldId === field.id.toString())}
                             onCheckedChange={() => handleLotSelection(field.id.toString())}
                           />
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{field.id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{field.name}</td>
+                        {/* <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{field.id}</td> */}
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {field.name}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {field.cropName} {field.hybridName ? `/ ${field.hybridName}` : ""}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{field.hectares}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {field.hectares}
+                        </td>
                       </tr>
                     ))
                   )}

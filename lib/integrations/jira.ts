@@ -1,28 +1,29 @@
-"use server" 
+"use server"
 
 import axios, { type AxiosError, type AxiosResponse } from "axios"
 import type {
   JiraCustomerData,
   JiraResponse,
-  JiraRequestData,
-  JiraRequest,
+  // JiraRequestData,
+  // JiraRequest,
   QueueIssueResponse,
   JiraProjectRequest,
   JiraProjectResponse,
-  JiraCustomerRequestData,
+  // JiraCustomerRequestData,
+  JiraServiceRequest,
+  JiraServiceResponse,
+  JiraSubtaskResponse,
+  JiraRequest,
 } from "@/lib/interfaces"
 
-const JIRA_API_URL = process.env.NEXT_PUBLIC_JIRA_API_URL 
-const JIRA_API_TOKEN = process.env.NEXT_PUBLIC_JIRA_API_TOKEN 
-
-// Jira Service Desk ID  
-const JIRA_SD_ID = process.env.NEXT_PUBLIC_JIRA_SD_ID || "your_jira_sd_id"
+const JIRA_API_URL = process.env.NEXT_PUBLIC_JIRA_API_URL
+const JIRA_API_TOKEN = process.env.NEXT_PUBLIC_JIRA_API_TOKEN
 
 export const jiraApi = axios.create({
   baseURL: JIRA_API_URL,
   headers: {
-    Authorization: `Basic ${JIRA_API_TOKEN}`,
-    Accept: "application/json",
+    "Authorization": `Basic ${JIRA_API_TOKEN}`,
+    "Accept": "application/json",
     "Content-Type": "application/json",
   },
   timeout: 3600000, // Timeout de 3600 segundos para evitar solicitudes eternas
@@ -37,40 +38,7 @@ jiraApi.interceptors.response.use(
   },
 )
 
-
-// Services  
-export async function listServicesByProject(domainId: string, serviceDeskId: string, queueId: string): Promise<JiraResponse> {
-  try {
-    const endpoint = `/rest/servicedeskapi/servicedesk/${serviceDeskId}/queue/${queueId}/issue`
-    const response = await jiraApi.get<QueueIssueResponse>(endpoint)
-    // console.log('Jira queue issues retrieved successfully:', response.status);
-    return {
-      success: true,
-      data: response.data,
-    }
-  } catch (error) {
-    let errorMessage: string
-
-    if (axios.isAxiosError(error)) {
-      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
-    } else {
-      errorMessage = "Unknown error occurred while fetching Jira queue issues"
-    }
-    return {
-      success: false,
-      error: errorMessage,
-    }
-  }
-}
-
-// Función para formatear datos que se usaba en createService 
-// (Eliminar luego de confirmar la creación del servicio en Jira)
-
-// function formatDataToJiraPost(data: JiraRequestData, lang: string): string {
-//   return JSON.stringify({ data, lang })
-// }
-
-// Funcion para Crear request participants
+// Request participants
 async function processParticipants(participants: string[]): Promise<string[]> {
   const participantsToSubmitInJira: string[] = []
 
@@ -109,47 +77,15 @@ async function processParticipants(participants: string[]): Promise<string[]> {
   return participantsToSubmitInJira
 }
 
-export async function createService(data: JiraRequestData, lang: string, env: string): Promise<JiraResponse> {
-  // Doc: https://developer.atlassian.com/cloud/jira/service-desk/rest/api-group-request/#api-rest-servicedeskapi-request-post
-  
+// Services  
+export async function listServicesByProject(domainId: string, serviceDeskId: string, queueId: string): Promise<JiraResponse> {
   try {
-    // Generar el summary según el entorno
-    const summary =
-      env === "test"
-        ? `TEST - ${data.request} - ${data.workspace} - ${data.farm}`
-        : `${data.request} - ${data.workspace} - ${data.farm}`
-
-    // Crear el issue para Jira
-    const issue: JiraRequest = {
-      summary,
-      // description: formatDataToJiraPost(data, lang),
-      description: JSON.stringify({ data, lang })
-      //customfield_10076: data.date_limit,
-    }
-
-    // Obtener credenciales del secreto (simulando get_secret)
-    //const secret = await getSecret('prod/api/jira_user', 'us-east-1');
-    //const authHeader = `Basic ${Buffer.from(`${secret.user_jira}:${secret.password_jira}`).toString('base64')}`;
-
-    // Procesar participantes usando la función separada
-    const participantsToSubmitInJira = data.participants ? await processParticipants(data.participants) : []
-
-    // Crear la solicitud de cliente en Jira
-    await jiraApi.post("/rest/servicedeskapi/request", {
-      serviceDeskId: JIRA_SD_ID,
-      requestTypeId: "54",
-      requestFieldValues: issue,
-      // requestFieldValues: {
-      //   "description": "I need a new *mouse* for my Mac",
-      //   "summary": "Request JSD help via REST"
-      // },
-      raiseOnBehalfOf: "fgavegno@geoagro.com",
-      requestParticipants: participantsToSubmitInJira,
-    })
-
-    // console.log('Jira request created successfully');
+    const endpoint = `/rest/servicedeskapi/servicedesk/${serviceDeskId}/queue/${queueId}/issue`
+    const response = await jiraApi.get<QueueIssueResponse>(endpoint)
+    // console.log('Jira queue issues retrieved successfully:', response.status);
     return {
       success: true,
+      data: response.data,
     }
   } catch (error) {
     let errorMessage: string
@@ -157,10 +93,8 @@ export async function createService(data: JiraRequestData, lang: string, env: st
     if (axios.isAxiosError(error)) {
       errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
     } else {
-      errorMessage = "Unknown error occurred while creating Jira request"
+      errorMessage = "Unknown error occurred while fetching Jira queue issues"
     }
-
-    console.error("Error creating Jira request:", errorMessage)
     return {
       success: false,
       error: errorMessage,
@@ -168,7 +102,105 @@ export async function createService(data: JiraRequestData, lang: string, env: st
   }
 }
 
-// Tasks 
+export async function createService(requestData: JiraServiceRequest): Promise<JiraServiceResponse> {
+  // Referencia: https://developer.atlassian.com/cloud/jira/service-desk/rest/api-group-request/#api-rest-servicedeskapi-request-post
+
+  try {
+    const endpoint = "/rest/servicedeskapi/request";
+    // Preparar el payload según la estructura requerida por la API
+    const payload = {
+      serviceDeskId: requestData.serviceDeskId,
+      requestTypeId: requestData.requestTypeId,
+      requestFieldValues: {
+        summary: requestData.requestFieldValues.summary,
+        description: requestData.requestFieldValues.description,
+        // Agregar otros campos personalizados si están definidos
+        // ...(requestData.requestFieldValues.customFields && {
+        //   ...requestData.requestFieldValues.customFields
+        // })
+      },
+      // Opcional: incluir si se proporciona
+      ...(requestData.raiseOnBehalfOf && { raiseOnBehalfOf: requestData.raiseOnBehalfOf }),
+      ...(requestData.requestParticipants && { requestParticipants: requestData.requestParticipants }),
+      // Controlar si la descripción es en formato ADF
+      // isAdfRequest: requestData.isAdfRequest || false
+    };
+
+    // console.log("payload:", JSON.stringify(payload, null, 2));
+    // Realizar la solicitud POST
+    const response = await jiraApi.post(endpoint, payload);
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    let errorMessage: string;
+
+    if (axios.isAxiosError(error)) {
+      const errorData = error.response?.data;
+      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${errorData?.errorMessages?.join(', ') || errorData?.message || error.message
+        }`;
+    } else {
+      errorMessage = "Unknown error occurred while creating Jira service";
+    }
+
+    console.error("Error creating Jira service:", errorMessage);
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+}
+
+export async function createSubtask(
+  parentIssueKey: string,
+  summary: string,
+  userEmail: string,
+  description: string // Ahora recibe el texto en formato Wiki
+): Promise<JiraSubtaskResponse | void> {
+
+  const payload = {
+    fields: {
+      project: {
+        key: parentIssueKey.split('-')[0]
+      },
+      summary: summary,
+      description: {
+        type: "doc",
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              {
+                type: "text",
+                text: description // Texto plano con formato Wiki
+              }
+            ]
+          }
+        ]
+      },
+      issuetype: {
+        name: "Sub-task"
+      },
+      parent: {
+        key: parentIssueKey
+      },
+      customfield_10305: userEmail,
+    }
+  }
+
+  try {
+    const endpoint = `${JIRA_API_URL}/rest/api/3/issue`
+    const response = await jiraApi.post(endpoint, payload)
+    return response.data
+  } catch (err) {
+    console.error("Error creating subtask:", err)
+    throw err
+  }
+}
+
 export async function listTasksbyService(issueIdOrKey: string): Promise<JiraResponse> {
   try {
     // 1. Obtener detalles del Customer Request
@@ -207,7 +239,6 @@ export async function listTasksbyService(issueIdOrKey: string): Promise<JiraResp
   }
 }
 
-// Nueva función para obtener un issue específico (adaptada del código node-fetch)
 export async function getIssue(issueIdOrKey: string): Promise<JiraResponse> {
   try {
     const endpoint = `/rest/api/3/issue/${issueIdOrKey}`
@@ -261,7 +292,7 @@ export async function createCustomer(customerData: JiraCustomerData): Promise<Ji
   }
 }
 
-
+// Projects 
 export async function createProject(projectData: JiraProjectRequest): Promise<JiraResponse> {
   try {
     const endpoint = "/rest/api/3/project"
@@ -288,43 +319,5 @@ export async function createProject(projectData: JiraProjectRequest): Promise<Ji
   }
 }
 
-// Nueva función para crear una solicitud de cliente según la documentación de la API
-// https://developer.atlassian.com/cloud/jira/service-desk/rest/api-group-request/#api-rest-servicedeskapi-request-post
-export async function createCustomerRequest(requestData: JiraCustomerRequestData): Promise<JiraResponse> {
-  try {
-    const endpoint = "/rest/servicedeskapi/request"
 
-    // Preparar los datos según la estructura de la API
-    const payload = {
-      serviceDeskId: requestData.serviceDeskId,
-      requestTypeId: requestData.requestTypeId,
-      requestFieldValues: requestData.requestFieldValues,
-      raiseOnBehalfOf: requestData.raiseOnBehalfOf,
-      requestParticipants: requestData.requestParticipants || [],
-    }
-
-    // Realizar la solicitud POST
-    const response = await jiraApi.post(endpoint, payload)
-
-    console.log("Jira customer request created successfully:", response.status)
-    return {
-      success: true,
-      data: response.data,
-    }
-  } catch (error) {
-    let errorMessage: string
-
-    if (axios.isAxiosError(error)) {
-      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
-    } else {
-      errorMessage = "Unknown error occurred while creating Jira customer request"
-    }
-
-    console.error("Error creating Jira customer request:", errorMessage)
-    return {
-      success: false,
-      error: errorMessage,
-    }
-  }
-}
 

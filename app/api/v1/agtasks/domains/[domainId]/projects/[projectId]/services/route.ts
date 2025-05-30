@@ -17,7 +17,8 @@ const listServicesQuerySchema = z.object({
 const createServiceBodySchema = z.object({
   projectId: z.string(),
   serviceName: z.string(),
-  sourceSystem: z.string(),
+  // sourceSystem: z.string(),
+  externalServiceKey: z.string(),
   externalTemplateId: z.string(),
   workspaceId: z.string(),
   workspaceName: z.string().optional(),
@@ -25,20 +26,26 @@ const createServiceBodySchema = z.object({
   campaignName: z.string().optional(),
   farmId: z.string(),
   farmName: z.string().optional(),
+  totalArea: z.number().optional(),
   startDate: z.string(),
   endDate: z.string().optional(),
-  fields: z.array(z.object({ fieldId: z.string(), fieldName: z.string().optional() })).optional(),
-  tasks: z
-    .array(
+  fields: z.array(
+      z.object({ 
+        fieldId: z.string(), 
+        fieldName: z.string(),
+        hectares: z.number(),
+        cropName: z.string(),
+        hybridName: z.string().optional(),
+      })).optional(),
+  tasks: z.array(
       z.object({
         externalTemplateId: z.string(),
-        sourceSystem: z.string(),
-        roleId: z.string(),
-        userId: z.string(),
-        taskName: z.string().optional(),
-      }),
-    )
-    .optional(),
+        taskName: z.string(),
+        userEmail: z.string(),
+        // userId: z.string(),
+        // sourceSystem: z.string(),
+        // roleId: z.string(),
+      })).optional(),
 })
 
 // Handler para GET (listar servicios con paginación)
@@ -93,10 +100,8 @@ export async function POST(req: Request, { params }: { params: { domainId: strin
     const parsedBody = createServiceBodySchema.safeParse({ ...body, projectId })
 
     if (!parsedBody.success) {
-      return NextResponse.json({ error: "Validation error", issues: parsedBody.error.format() }, { status: 400 })
+      return NextResponse.json({ error: "API Validation error", issues: parsedBody.error.format() }, { status: 400 })
     }
-
-    //console.log("parsedBody.data: ", parsedBody.data)
 
     // Crear el servicio
     const newService = await createService(parsedBody.data)

@@ -94,69 +94,75 @@ export interface Form {
 // Projects & Services
 
 export interface Project {
-  domainId: string; // FK a 360 Domain
-  id: string;
-  name: string;
-  language: string;
-  queueId: number;
-  deleted: boolean;
+  id: string
+  domainId: string // FK a 360 Domain
+  areaId: string // FK 360 Area
+  language: string
+  sourceSystem: string 
+  projectId: string // FK to Task Manager Project 
+  queueId: number // FK to Task Manager Default Queue
+  name: string
+  deleted: boolean
 }
 
 export interface Service {
-  projectId: string; // FK local a Project
-  id: string;
-  serviceName: string;
-  externalServiceKey: string; // ID en el task manager (ej. issueKey de Jira)
-  sourceSystem: string; // Ej.: "jira", "clickup", etc.
-  externalTemplateId: string; // ID del template usado en el task manager
-  workspaceId: string;
-  workspaceName?: string; // Nombre del workspace (opcional, según el esquema)
-  campaignId: string;
-  campaignName?: string; // Nombre de la campaña (opcional, según el esquema)
-  farmId: string;
-  farmName?: string; // Nombre de la farm (opcional, según el esquema)
-  totalArea: number;
-  startDate: string;
-  endDate?: string;
-  lots: string; // Campo calculado en listServicesByProject (ej. "field1, field2" o "Sin lotes asignados")
-  status: string; // Ahora es obligatorio porque siempre se calcula
-  progress: number; // Ahora es obligatorio porque siempre se calcula
+  id: string
+  projectId: string 
+  serviceName: string
+  // sourceSystem: string 
+  externalTemplateId: string // FK to Task Manager Service Template ID 'TEM-57' 
+  externalServiceKey: string 
+  workspaceId: string
+  workspaceName?: string 
+  campaignId: string
+  campaignName?: string 
+  farmId: string
+  farmName?: string 
+  totalArea: number
+  startDate: string
+  endDate?: string
+  status?: string 
+  progress?: number 
+  fields?: ServiceField[] 
+  tasks?: ServiceTask[]
 }
 
 export interface ServiceField {
-  serviceId: string; // FK local a Service
-  fieldId: string; // ID del Field en 360 (referencia externa)
-  fieldName?: string; // Nombre del campo (opcional, según el esquema)
-  // Campos enriquecidos desde la API de 360 (opcional, usado en getServiceDetail)
-  name?: string;
-  hectares?: number;
-  crop?: string;
-  hybrid?: string;
+  id: string
+  serviceId: string // FK local a Service
+  fieldId: string // ID del Field en 360 (referencia externa)
+  fieldName: string // Nombre del campo (opcional, según el esquema)
+  hectares?: number
+  crop?: string
+  hybrid?: string
+  // name?: string
 }
 
 export interface ServiceTask {
-  id: string; // ID de la tarea
-  serviceId: string; // FK local a Service
-  externalTemplateId: string; // Referencia al sub-template del task manager (opcional, si existen)
-  sourceSystem: string; // Ej.: "jira"
-  roleId: string; // FK local a Role (asignado manualmente)
-  userId: string; // FK local a 360 User (asignado manualmente)
-  taskName?: string; // Nombre de la tarea (opcional, según el esquema)
-  role: {
-    id: string;
-    name: string;
-  }; // Objeto role devuelto por listServicesByProject y getServiceDetail
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  }; // Objeto user devuelto por listServicesByProject y getServiceDetail
+  id: string
+  serviceId: string // FK local a Service
+  externalTemplateId: string // Referencia al sub-template del task manager (opcional, si existen)
+  taskName?: string // Nombre de la tarea (opcional, según el esquema)
+  userEmail: string
+  //id: string // ID de la tarea
+  //sourceSystem: string // Ej.: "jira"
+  // roleId: string // FK local a Role (asignado manualmente)
+  // userId: string // FK local a 360 User (asignado manualmente)
+  // role: {
+  //   id: string
+  //   name: string
+  // } // Objeto role devuelto por listServicesByProject y getServiceDetail
+  // user: {
+  //   id: string
+  //   name: string
+  //   email: string
+  // } // Objeto user devuelto por listServicesByProject y getServiceDetail
 }
 
 export interface TaskAssignment {
   task: string
-  role: string
   assignedTo: string
+  //role: string
 }
 
 //  Jira
@@ -195,11 +201,11 @@ export interface JiraRequest {
 }
 
 // export interface QueueIssuesResponse {
-//   issues: any[];
-//   values: any[];
-//   total: number;
-//   maxResults: number;
-//   startAt: number;
+//   issues: any[]
+//   values: any[]
+//   total: number
+//   maxResults: number
+//   startAt: number
 // }
 
 export interface QueueIssueResponse {
@@ -269,6 +275,7 @@ export interface AvatarUrls {
   "48x48": string
 }
 
+// --------------
 export interface JiraResponseData {
   issues: JiraIssue[]
   total: number
@@ -311,16 +318,41 @@ export interface JiraIssue {
   }
 }
 
-// Nueva interfaz para la creación de solicitudes de
-// cliente según la API de Jira Service Desk
+// esta interface será reemplazada por JiraServiceRequest
 export interface JiraCustomerRequestData {
-  serviceDeskId: string
-  requestTypeId: string
+  isAdfRequest: boolean
+  raiseOnBehalfOf?: string // Email del usuario en cuyo nombre se crea la solicitud
   requestFieldValues: {
     summary: string
     description?: string
     [key: string]: any // Para campos personalizados
   }
-  raiseOnBehalfOf?: string // Email del usuario en cuyo nombre se crea la solicitud
   requestParticipants?: string[] // Array de emails de participantes
+  requestTypeId: string
+  serviceDeskId: string
+}
+
+export interface JiraServiceRequest {
+  serviceDeskId: string;
+  requestTypeId: string;
+  requestFieldValues: {
+    summary: string;
+    description: string;
+    customFields?: Record<string, any>;
+  };
+  raiseOnBehalfOf?: string;
+  requestParticipants?: string[];
+}
+
+export interface JiraServiceResponse {
+  success: boolean;
+  data?: any;
+  error?: string;
+}
+
+export interface JiraSubtaskResponse {
+  id: string;
+  key: string;
+  self: string;
+  [key: string]: any;
 }
