@@ -349,3 +349,10 @@ export interface JiraServiceResponse {
   data?: any;
   error?: string;
 }
+
+export interface JiraSubtaskResponse {
+  id: string;
+  key: string;
+  self: string;
+  [key: string]: any;
+}

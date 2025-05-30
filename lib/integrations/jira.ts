@@ -12,14 +12,12 @@ import type {
   // JiraCustomerRequestData,
   JiraServiceRequest,
   JiraServiceResponse,
+  JiraSubtaskResponse,
   JiraRequest,
 } from "@/lib/interfaces"
 
 const JIRA_API_URL = process.env.NEXT_PUBLIC_JIRA_API_URL
 const JIRA_API_TOKEN = process.env.NEXT_PUBLIC_JIRA_API_TOKEN
-
-// Jira Service Desk ID  
-// const JIRA_SD_ID = process.env.NEXT_PUBLIC_JIRA_SD_ID || "your_jira_sd_id"
 
 export const jiraApi = axios.create({
   baseURL: JIRA_API_URL,
@@ -39,14 +37,6 @@ jiraApi.interceptors.response.use(
     throw error
   },
 )
-
-
-// Función para formatear datos que se usaba en createService 
-// (Eliminar luego de confirmar la creación del servicio en Jira)
-// function formatDataToJiraPost(data: JiraRequestData, lang: string): string {
-//   return JSON.stringify({ data, lang })
-// }
-
 
 // Request participants
 async function processParticipants(participants: string[]): Promise<string[]> {
@@ -163,29 +153,17 @@ export async function createService(requestData: JiraServiceRequest): Promise<Ji
   }
 }
 
-interface CreateSubtaskParams {
-  parentIssueKey: string;
-  summary: string;
-  description?: string;
-}
-
-interface JiraSubtaskResponse {
-  id: string;
-  key: string;
-  self: string;
-  [key: string]: any; // Allow additional Jira fields
-}
-
 export async function createSubtask(
   parentIssueKey: string,
   summary: string,
   userEmail: string,
-  description: string = ""
+  description: string // Ahora recibe el texto en formato Wiki
 ): Promise<JiraSubtaskResponse | void> {
-  const bodyData = JSON.stringify({
+
+  const payload = {
     fields: {
       project: {
-        key: parentIssueKey.split('-')[0] // extrae el prefijo del issue, ej: "PROY"
+        key: parentIssueKey.split('-')[0]
       },
       summary: summary,
       description: {
@@ -197,7 +175,7 @@ export async function createSubtask(
             content: [
               {
                 type: "text",
-                text: description
+                text: description // Texto plano con formato Wiki
               }
             ]
           }
@@ -211,122 +189,17 @@ export async function createSubtask(
       },
       customfield_10305: userEmail,
     }
-  });
+  }
 
   try {
-    const response: Response = await fetch(`${JIRA_API_URL}/rest/api/3/issue`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${JIRA_API_TOKEN}`,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: bodyData
-    });
-
-    console.log(`Response: ${response.status} ${response.statusText}`);
-    const data: JiraSubtaskResponse = await response.json();
-    console.log("Created subtask:", data);
-    return data;
+    const endpoint = `${JIRA_API_URL}/rest/api/3/issue`
+    const response = await jiraApi.post(endpoint, payload)
+    return response.data
   } catch (err) {
-    console.error("Error creating subtask:", err);
+    console.error("Error creating subtask:", err)
+    throw err
   }
 }
-
-
-// export async function createTask({
-//   summary,
-//   description,
-//   projectKey,
-//   issueType = 'Task',
-// }: {
-//   summary: string;
-//   description: string;
-//   projectKey: string;
-//   issueType?: string;
-// }) {
-//   const bodyData = JSON.stringify({
-//     fields: {
-//       project: {
-//         key: projectKey
-//       },
-//       summary,
-//       description: {
-//         type: 'doc',
-//         version: 1,
-//         content: [
-//           {
-//             type: 'paragraph',
-//             content: [
-//               {
-//                 type: 'text',
-//                 text: description
-//               }
-//             ]
-//           }
-//         ]
-//       },
-//       issuetype: {
-//         name: issueType
-//       }
-//     }
-//   });
-
-//   try {
-//     const response = await fetch(`${JIRA_API_URL}/rest/api/107/issue`, {
-//       method: 'POST',
-//       headers: {
-//         'Authorization': `Basic ${JIRA_API_TOKEN}`,
-//         'Accept': 'application/json',
-//         'Content-Type': 'application/json'
-//       },
-//       body: bodyData
-//     });
-
-//     const text = await response.text();
-
-//     console.log(`Response: ${response.status} ${response.statusText}`);
-//     console.log(text);
-//     return JSON.parse(text);
-//   } catch (err) {
-//     console.error('Error creando tarea en Jira:', err);
-//     return null;
-//   }
-// }
-
-
-// export async function createServiceOld(requestData: JiraServiceRequest) {
-//   const bodyData = `{
-//   "requestFieldValues": {
-//     "description": "I need a new mouse for my Mac",
-//     "summary": "Request JSD help via REST"
-//   },
-//   "requestParticipants": [],
-//   "requestTypeId": "153",
-//   "serviceDeskId": "107",
-//   "raiseOnBehalfOf": "fgavegno@geoagro.com"
-// }`;
-
-//   fetch(`${JIRA_API_URL}/rest/servicedeskapi/request`, {
-//     method: 'POST',
-//     headers: {
-//       'Authorization': `Basic ${JIRA_API_TOKEN}`,
-//       'Accept': 'application/json',
-//       'Content-Type': 'application/json'
-//     },
-//     body: bodyData
-//   })
-//     .then(response => {
-//       console.log(
-//         `Response: ${response.status} ${response.statusText}`
-//       );
-//       return response.text();
-//     })
-//     .then(text => console.log(text))
-//     .catch(err => console.error(err));
-// }
-
-// Tasks 
 
 export async function listTasksbyService(issueIdOrKey: string): Promise<JiraResponse> {
   try {
@@ -366,7 +239,6 @@ export async function listTasksbyService(issueIdOrKey: string): Promise<JiraResp
   }
 }
 
-// Nueva función para obtener un issue específico (adaptada del código node-fetch)
 export async function getIssue(issueIdOrKey: string): Promise<JiraResponse> {
   try {
     const endpoint = `/rest/api/3/issue/${issueIdOrKey}`
@@ -420,7 +292,7 @@ export async function createCustomer(customerData: JiraCustomerData): Promise<Ji
   }
 }
 
-
+// Projects 
 export async function createProject(projectData: JiraProjectRequest): Promise<JiraResponse> {
   try {
     const endpoint = "/rest/api/3/project"

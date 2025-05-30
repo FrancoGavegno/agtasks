@@ -13,14 +13,14 @@ import Step2Lots from "./step2-lots"
 import Step3Tasks from "./step3-tasks"
 //import { createServiceSchema, type CreateServiceFormValues } from "./validation-schemas"
 
-import { 
-  createServiceSchema, 
-  type CreateServiceFormValues, 
-  type SelectedLotDetail 
+import {
+  createServiceSchema,
+  type CreateServiceFormValues,
+  type SelectedLotDetail
 } from "./validation-schemas"
 
 //import { ServiceFormProvider } from "@/lib/contexts/service-form-context"
-import { 
+import {
   ServiceFormProvider
 } from "@/lib/contexts/service-form-context"
 
@@ -49,7 +49,7 @@ export default function CreateService({ userEmail }: Props) {
   const t = useTranslations("CreateService")
 
   // const { formValues, resetForm } = useServiceForm() 
-  
+
   // Estado para controlar el paso actual del wizard
   const [currentStep, setCurrentStep] = useState(1)
   // Estado para controlar si se debe hacer scroll al inicio
@@ -176,12 +176,12 @@ export default function CreateService({ userEmail }: Props) {
         farmName: data.establishmentName || "",
         //totalArea: 0,
         // Sumar hectáreas
-        totalArea: data.selectedLots.reduce((sum, lot) => sum + (lot.hectares || 0), 0), 
+        totalArea: data.selectedLots.reduce((sum, lot) => sum + (lot.hectares || 0), 0),
         startDate: new Date().toISOString(),
         // fields: data.selectedLots.map((lotId) => ({
-          //   fieldId: lotId,
-          //   fieldName: data.selectedLotsNames?.[lotId] || "",
-          // })),
+        //   fieldId: lotId,
+        //   fieldName: data.selectedLotsNames?.[lotId] || "",
+        // })),
         fields: data.selectedLots.map((lot: SelectedLotDetail) => ({
           fieldId: lot.fieldId,
           fieldName: lot.fieldName,
@@ -196,13 +196,28 @@ export default function CreateService({ userEmail }: Props) {
         })),
       };
 
+      const jiraFieldsTable = `
+||Lote||Hectáreas||Cultivo||Híbrido||
+${data.selectedLots.map((lot: SelectedLotDetail) => `| ${lot.fieldName || '-'} | ${lot.hectares || '-'} | ${lot.cropName || '-'} | ${lot.hybridName || '-'} |
+`).join('')}
+`;
+
+      const jiraDescription = `
+*Espacio de trabajo:* ${serviceData.workspaceName || 'No especificado'}
+*Campaña:* ${serviceData.campaignName || 'No especificado'} 
+*Establecimiento:* ${serviceData.farmName || 'No especificado'}
+*Hectáreas totales:* ${serviceData.totalArea || '0'} h
+*Lotes:*
+${jiraFieldsTable}
+`;
+
       // Crear el servicio (issue principal)
       const requestData: JiraServiceRequest = {
         serviceDeskId: '107',
         requestTypeId: '153',
         requestFieldValues: {
           summary: serviceData.serviceName,
-          description: 'Servicio generado desde el sistema', // Ajusta si hace falta
+          description: jiraDescription,
         },
         requestParticipants: [],
         raiseOnBehalfOf: 'fgavegno@geoagro.com',
@@ -218,6 +233,31 @@ export default function CreateService({ userEmail }: Props) {
         throw new Error("No se pudo obtener el issueKey del request creado en Jira");
       }
 
+      // Versión 1: Formato de lista con separadores
+const jiraFieldsTablePlain = `
+Lote | Hectáreas | Cultivo | Híbrido
+-----|-----------|---------|--------
+${data.selectedLots.map((lot: SelectedLotDetail) => 
+  `${lot.fieldName || '-'} | ${lot.hectares || '-'} | ${lot.cropName || '-'} | ${lot.hybridName || '-'}`
+).join('\n')}
+`;
+
+// Versión 2: Formato de lista vertical (más legible para muchos lotes)
+const jiraDescriptionPlain = `
+• Espacio de trabajo: ${serviceData.workspaceName || 'No especificado'}
+• Campaña: ${serviceData.campaignName || 'No especificado'}
+• Establecimiento: ${serviceData.farmName || 'No especificado'}
+• Hectáreas totales: ${serviceData.totalArea || '0'} h
+• Lotes:
+${data.selectedLots.map((lot: SelectedLotDetail, index) => 
+  `Lote ${index + 1}:
+   - Nombre: ${lot.fieldName || '-'}
+   - Hectáreas: ${lot.hectares || '-'}
+   - Cultivo: ${lot.cropName || '-'}
+   - Híbrido: ${lot.hybridName || '-'}`
+).join('\n\n')}
+`;
+
       // Crear subtareas en Jira como hijas del request
       await Promise.all(
         serviceData.tasks.map((task) =>
@@ -225,7 +265,7 @@ export default function CreateService({ userEmail }: Props) {
             parentIssueKey,
             task.taskName,
             task.userEmail,
-            `Asignado a: ${task.userEmail}`
+            jiraDescriptionPlain
           )
         )
       );
@@ -233,7 +273,7 @@ export default function CreateService({ userEmail }: Props) {
       // Enviar los datos al API
       const newServiceData = {
         ...serviceData,
-        externalServiceKey: parentIssueKey 
+        externalServiceKey: parentIssueKey
       }
 
       const response2 = await fetch(`/api/v1/agtasks/domains/${domain}/projects/${project}/services`, {
@@ -249,7 +289,7 @@ export default function CreateService({ userEmail }: Props) {
         console.error("API error response:", errorData)
         throw new Error(errorData.error || errorData.message || `Error: ${response2.status}`)
       }
-      
+
       toast({
         title: "Servicio creado exitosamente",
         description: "El servicio y sus tareas fueron creados correctamente.",
