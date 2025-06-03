@@ -2,7 +2,7 @@ import { Amplify } from "aws-amplify";
 import outputs from "@/amplify_outputs.json";
 import { generateClient } from "aws-amplify/api";
 import type { Schema } from "@/amplify/data/resource";
-import type { Project, Service, Role } from "@/lib/interfaces";
+import type { Project, Service, Role, ServiceTask } from "@/lib/interfaces";
 import { listFields } from "@/lib/integrations/360";
 
 // Amplify configuration - Singleton Client
@@ -223,8 +223,8 @@ export const createRole = async (data: { name: string; language: string }): Prom
 export const deleteRole = async (roleId: string) => {
   try {
     const client = getClient();
-    const response: { 
-      data: Schema["Role"]["type"] | null; errors?: any[] 
+    const response: {
+      data: Schema["Role"]["type"] | null; errors?: any[]
     } = await client.models.Role.delete({ id: roleId });
     if (!response.data) {
       throw new Error(`Failed to delete role with ID ${roleId}`);
@@ -240,11 +240,11 @@ export const deleteRole = async (roleId: string) => {
 export const listRoles = async (language: string): Promise<Role[]> => {
   try {
     const client = getClient();
-     
-    const response: { data: Schema["Role"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.Role.list({ 
-      filter: { language: { eq: language } }, 
+
+    const response: { data: Schema["Role"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.Role.list({
+      filter: { language: { eq: language } },
     });
-    
+
     return response.data;
   } catch (error) {
     console.error("Error fetching roles from Amplify:", error);
@@ -255,11 +255,11 @@ export const listRoles = async (language: string): Promise<Role[]> => {
 export const listAllRoles = async (): Promise<Role[]> => {
   try {
     const client = getClient();
-    
-    const response: { 
-      data: Schema["Role"]["type"][]; nextToken?: string | null; errors?: any[] 
+
+    const response: {
+      data: Schema["Role"]["type"][]; nextToken?: string | null; errors?: any[]
     } = await client.models.Role.list()
-    
+
     return response.data;
   } catch (error) {
     console.error("Error fetching roles from Amplify:", error);
@@ -270,13 +270,13 @@ export const listAllRoles = async (): Promise<Role[]> => {
 // Projects
 export const createProject = async (
   domainId: string,
-  data: { 
-    areaId: string; 
+  data: {
+    areaId: string;
     language: string;
     sourceSystem: string;
     projectId: string;
-    queueId: number; 
-    name: string;  
+    queueId: number;
+    name: string;
   },
 ) => {
   try {
@@ -336,6 +336,7 @@ export const listProjectsByDomain = async (domainId: string): Promise<Project[]>
   }
 };
 
+
 // Services
 export const createService = async (data: any) => {
   try {
@@ -381,17 +382,17 @@ export const createService = async (data: any) => {
     //console.log("data.fields: ", data.fields)
 
     await Promise.all(
-        data.fields.map((field: any) =>
-          client.models.ServiceField.create({
-            serviceId,
-            fieldId: field.fieldId,
-            fieldName: field.fieldName,
-            hectares: field.hectares,
-            crop: field.cropName,
-            hybrid: field.hybridName
-          }),
-        ),
-      );
+      data.fields.map((field: any) =>
+        client.models.ServiceField.create({
+          serviceId,
+          fieldId: field.fieldId,
+          fieldName: field.fieldName,
+          hectares: field.hectares,
+          crop: field.cropName,
+          hybrid: field.hybridName
+        }),
+      ),
+    );
 
     // Crear las tareas del servicio
     if (data.tasks && Array.isArray(data.tasks) && data.tasks.length > 0) {
@@ -634,3 +635,17 @@ export const listServicesByProject = async (
   }
 };
 
+// Tasks
+export const getTask = async (taskId: string): Promise<ServiceTask> => {
+  const client = getClient();
+
+  const taskResponse: { 
+    data: Schema["ServiceTask"]["type"] | null; errors?: any[] 
+  } = await client.models.ServiceTask.get({ id: taskId });
+
+  if (!taskResponse.data) {
+    throw new Error(`Task with ID ${taskId} not found`);
+  }
+
+  return taskResponse.data;
+}

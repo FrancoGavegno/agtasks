@@ -1,0 +1,24 @@
+[
+   {
+      "type":"select",
+      "required":true,
+      "label":"Capa Recorrida",
+      "description":"Seleccione una capa con puntos de recorrida",
+      "placeholder":"Capas de puntos en el espacio de trabajo activo",
+      "name":"select-1748948808285-0",
+      "options":[
+         {
+            "label":"Option 1",
+            "value":"option-1"
+         },
+         {
+            "label":"Option 2",
+            "value":"option-2"
+         },
+         {
+            "label":"Option 3",
+            "value":"option-3"
+         }
+      ]
+   }
+]

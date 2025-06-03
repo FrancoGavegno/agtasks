@@ -1,0 +1,12 @@
+[
+    {
+        "type":"text",
+        "required":false,
+        "label":"Nombre",
+        "description":"Este es el texto de ayuda",
+        "className":"form-control",
+        "name":"text-1748869177847-0",
+        "access":false,
+         "subtype":"text"
+    }
+]
