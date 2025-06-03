@@ -160,6 +160,7 @@ export async function createSubtask(
   description: string // Ahora recibe el texto en formato Wiki
 ): Promise<JiraSubtaskResponse | void> {
 
+  
   const payload = {
     fields: {
       project: {
@@ -188,6 +189,8 @@ export async function createSubtask(
         key: parentIssueKey
       },
       customfield_10305: userEmail,
+      customfield_10338: 
+      
     }
   }
 
