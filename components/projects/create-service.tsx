@@ -220,7 +220,7 @@ ${jiraFieldsTable}
           description: jiraDescription,
         },
         requestParticipants: [],
-        raiseOnBehalfOf: 'fgavegno@geoagro.com',
+        raiseOnBehalfOf: userEmail,
       };
 
       const response = await createService(requestData);
