@@ -16,6 +16,16 @@ import type {
   JiraRequest,
 } from "@/lib/interfaces"
 
+interface JiraDescriptionFields {
+  description: string;
+  descriptionPlain: string;
+}
+
+import {
+  type CreateServiceFormValues,
+  type SelectedLotDetail
+} from "@/components/projects/validation-schemas"
+
 const JIRA_API_URL = process.env.NEXT_PUBLIC_JIRA_API_URL
 const JIRA_API_TOKEN = process.env.NEXT_PUBLIC_JIRA_API_TOKEN
 
@@ -37,6 +47,48 @@ jiraApi.interceptors.response.use(
     throw error
   },
 )
+
+
+// Genera campos Description de Service y Tasks en Jira
+export const generateDescriptionField = async (data: CreateServiceFormValues): Promise<JiraDescriptionFields> => {
+  const totalArea: number | string = data.selectedLots.reduce((sum: number, lot: SelectedLotDetail) => sum + (lot.hectares || 0), 0) || '0';
+
+  const fieldsTable: string = `
+  ||Lote||Hectáreas||Cultivo||Híbrido||
+  ${data.selectedLots.map((lot: SelectedLotDetail) => `| ${lot.fieldName || '-'} | ${lot.hectares || '-'} | ${lot.cropName || '-'} | ${lot.hybridName || '-'} |
+  `).join('')}
+  `;
+
+  const description: string = `
+  *Espacio de trabajo:* ${data.workspaceName || 'No especificado'}
+  *Campaña:* ${data.campaignName || 'No especificado'} 
+  *Establecimiento:* ${data.establishmentName || 'No especificado'}
+  *Hectáreas totales:* ${totalArea} h
+  *Lotes:*
+  ${fieldsTable}
+  `;
+
+  // Formato de lista vertical (más legible para muchos lotes)
+  const descriptionPlain: string = `
+  • Espacio de trabajo: ${data.workspaceName || 'No especificado'}
+  • Campaña: ${data.campaignName || 'No especificado'}
+  • Establecimiento: ${data.establishmentName || 'No especificado'}
+  • Hectáreas totales: ${totalArea} h
+  • Lotes:
+  ${data.selectedLots.map((lot: SelectedLotDetail, index: number) =>
+    `Lote ${index + 1}:
+     - Nombre: ${lot.fieldName || '-'}
+     - Hectáreas: ${lot.hectares || '-'}
+     - Cultivo: ${lot.cropName || '-'}
+     - Híbrido: ${lot.hybridName || '-'}`
+  ).join('\n\n')}
+  `;
+
+  return {
+    description,
+    descriptionPlain
+  };
+};
 
 // Request participants
 async function processParticipants(participants: string[]): Promise<string[]> {
@@ -102,32 +154,27 @@ export async function listServicesByProject(domainId: string, serviceDeskId: str
   }
 }
 
-export async function createService(requestData: JiraServiceRequest): Promise<JiraServiceResponse> {
-  // Referencia: https://developer.atlassian.com/cloud/jira/service-desk/rest/api-group-request/#api-rest-servicedeskapi-request-post
+export async function createService(
+  serviceName: string,
+  jiraDescription: string,
+  userEmail: string,
+  serviceDeskId: string = '140', // '107'
+  requestTypeId: string = '252' // 153 = 01-Tandil 
+): Promise<JiraServiceResponse> {
 
   try {
     const endpoint = "/rest/servicedeskapi/request";
-    // Preparar el payload según la estructura requerida por la API
+    
     const payload = {
-      serviceDeskId: requestData.serviceDeskId,
-      requestTypeId: requestData.requestTypeId,
+      serviceDeskId: serviceDeskId,
+      requestTypeId: requestTypeId,
       requestFieldValues: {
-        summary: requestData.requestFieldValues.summary,
-        description: requestData.requestFieldValues.description,
-        // Agregar otros campos personalizados si están definidos
-        // ...(requestData.requestFieldValues.customFields && {
-        //   ...requestData.requestFieldValues.customFields
-        // })
+        summary: serviceName,
+        description: jiraDescription,
       },
-      // Opcional: incluir si se proporciona
-      ...(requestData.raiseOnBehalfOf && { raiseOnBehalfOf: requestData.raiseOnBehalfOf }),
-      ...(requestData.requestParticipants && { requestParticipants: requestData.requestParticipants }),
-      // Controlar si la descripción es en formato ADF
-      // isAdfRequest: requestData.isAdfRequest || false
+      raiseOnBehalfOf: userEmail
     };
 
-    // console.log("payload:", JSON.stringify(payload, null, 2));
-    // Realizar la solicitud POST
     const response = await jiraApi.post(endpoint, payload);
 
     return {
@@ -157,10 +204,11 @@ export async function createSubtask(
   parentIssueKey: string,
   summary: string,
   userEmail: string,
-  description: string // Ahora recibe el texto en formato Wiki
+  description: string, // Ahora recibe el texto en formato Wiki
+  agtasksUrl: string
 ): Promise<JiraSubtaskResponse | void> {
 
-  
+
   const payload = {
     fields: {
       project: {
@@ -189,8 +237,8 @@ export async function createSubtask(
         key: parentIssueKey
       },
       customfield_10305: userEmail,
-      customfield_10338: 
-      
+      customfield_10338: agtasksUrl
+
     }
   }
 

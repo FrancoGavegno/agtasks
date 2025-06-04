@@ -30,8 +30,8 @@ export default function TaskPage() {
             try {
                 setIsLoadingSchema(true)
                 setErrorSchema(null)
-                // const response = await fetch("/schemas/field_visit.json")
-                const response = await fetch("/schemas/crear_puntos_recorrida.json") // Carga desde public
+                const response = await fetch("/schemas/field_visit.json")
+                //const response = await fetch("/schemas/crear_puntos_recorrida.json") // Carga desde public
                 if (!response.ok) {
                     throw new Error(`Error al cargar el esquema: ${response.status} ${response.statusText}`)
                 }
@@ -53,17 +53,17 @@ export default function TaskPage() {
     }
 
     // Datos iniciales opcionales, deben coincidir con los nombres del nuevo esquema
-    const initialFormValues = {
-        establecimiento: "DS_Bossio",
-        // 'lote' se llenará dinámicamente basado en 'establecimiento',
-        // pero si DS_Bossio tiene un lote por defecto, podría ponerse aquí.
-        // lote: "Lote 1A",
-        tipoRecorridas: "Control Emergencia",
-        asignadoA: "Franco Gavegno",
-        fecha: "2024-07-20", // Formato YYYY-MM-DD para que parseISO funcione
-        estado: "Planificado",
-        mapaFondoURL: "https://example.com/map.png",
-    }
+    // const initialFormValues = {
+    //     establecimiento: "DS_Bossio",
+    //     // 'lote' se llenará dinámicamente basado en 'establecimiento',
+    //     // pero si DS_Bossio tiene un lote por defecto, podría ponerse aquí.
+    //     // lote: "Lote 1A",
+    //     tipoRecorridas: "Control Emergencia",
+    //     asignadoA: "Franco Gavegno",
+    //     fecha: "2024-07-20", // Formato YYYY-MM-DD para que parseISO funcione
+    //     estado: "Planificado",
+    //     mapaFondoURL: "https://example.com/map.png",
+    // }
 
     if (isLoadingSchema) {
         return (

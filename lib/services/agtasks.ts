@@ -2,8 +2,26 @@ import { Amplify } from "aws-amplify";
 import outputs from "@/amplify_outputs.json";
 import { generateClient } from "aws-amplify/api";
 import type { Schema } from "@/amplify/data/resource";
-import type { Project, Service, Role, ServiceTask } from "@/lib/interfaces";
-import { listFields } from "@/lib/integrations/360";
+
+import type {
+  Project,
+  Service,
+  Role,
+  ServiceTask,
+  ServiceField
+} from "@/lib/interfaces";
+
+import {
+  type CreateServiceFormValues,
+  type SelectedLotDetail
+} from "@/components/projects/validation-schemas"
+
+import {
+  createSubtask 
+} from "@/lib/integrations/jira"
+
+// import { listFields } from "@/lib/integrations/360";
+
 
 // Amplify configuration - Singleton Client
 let clientInstance: ReturnType<typeof generateClient<Schema>> | null = null;
@@ -336,175 +354,121 @@ export const listProjectsByDomain = async (domainId: string): Promise<Project[]>
   }
 };
 
-
 // Services
-export const createService = async (data: any) => {
+export const createService = async (
+  data: CreateServiceFormValues,
+  projectId: string,
+  serviceName: string,
+  issueKey: string
+) => {
   try {
     const client = getClient();
-    // let totalArea = data.totalArea || 0;
-    // Calcular el área total si hay campos seleccionados
-    // if (data.fields && Array.isArray(data.fields) && data.fields.length > 0) {
-    //   try {
-    //     const fieldsData = await listFields(data.workspaceId, data.campaignId, data.farmId);
-    //     const fieldIds = data.fields.map((field: any) => field.fieldId);
-    //     const selectedFields = fieldsData.filter((field) => fieldIds.includes(field.id.toString()));
-    //     totalArea = selectedFields.reduce((sum: number, field: any) => sum + (field.hectares || 0), 0);
-    //   } catch (error) {
-    //     console.error("Error fetching field data for area calculation:", error);
-    //   }
-    // }
 
-    // Crear el servicio
+    const totalArea: number = data.selectedLots.reduce((sum: number, lot: SelectedLotDetail) => sum + (lot.hectares || 0), 0);
+
     const serviceData = {
-      projectId: data.projectId,
-      serviceName: data.serviceName,
-      // sourceSystem: data.sourceSystem,
-      externalServiceKey: data.externalServiceKey,
-      externalTemplateId: data.externalTemplateId,
-      workspaceId: data.workspaceId,
+      projectId: projectId,
+      serviceName: serviceName,
+      externalServiceKey: issueKey,
+      externalTemplateId: data.protocol,
+      workspaceId: data.workspace,
       workspaceName: data.workspaceName,
-      campaignId: data.campaignId,
+      campaignId: data.campaign,
       campaignName: data.campaignName,
-      farmId: data.farmId,
-      farmName: data.farmName,
-      totalArea: data.totalArea,
-      startDate: data.startDate,
-      endDate: data.endDate,
+      farmId: data.establishment,
+      farmName: data.establishmentName,  
+      totalArea: totalArea,
+      startDate: new Date().toISOString(),
     };
 
-    const serviceResponse: { data: Schema["Service"]["type"] | null; errors?: any[] } = await client.models.Service.create(serviceData);
+    const response: { data: Schema["Service"]["type"] | null; errors?: any[] } = await client.models.Service.create(serviceData);
 
-    if (!serviceResponse.data) {
+    if (!response.data) {
       throw new Error("Failed to create service");
     }
 
-    const serviceId = serviceResponse.data.id;
-    //console.log("data.fields: ", data.fields)
-
-    await Promise.all(
-      data.fields.map((field: any) =>
-        client.models.ServiceField.create({
-          serviceId,
-          fieldId: field.fieldId,
-          fieldName: field.fieldName,
-          hectares: field.hectares,
-          crop: field.cropName,
-          hybrid: field.hybridName
-        }),
-      ),
-    );
-
-    // Crear las tareas del servicio
-    if (data.tasks && Array.isArray(data.tasks) && data.tasks.length > 0) {
-      await Promise.all(
-        data.tasks.map((task: any) =>
-          client.models.ServiceTask.create({
-            serviceId,
-            externalTemplateId: task.externalTemplateId,
-            taskName: task.taskName,
-            userEmail: task.userEmail
-            // sourceSystem: task.sourceSystem,
-            // roleId: task.roleId,
-            // roleId: "",
-            // userId: task.userId,
-          }),
-        ),
-      );
-    }
-
-    return serviceResponse.data;
+    return response.data;
   } catch (error) {
     console.error("Error creating service in Amplify:", error);
     throw new Error(`Failed to create service: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
-export const getServiceDetail = async (serviceId: string) => {
+export const createServiceFields = async (serviceId: string, fields: any[]): Promise<void> => {
   try {
     const client = getClient();
-    const serviceResponse: { data: Schema["Service"]["type"] | null; errors?: any[] } = await client.models.Service.get({ id: serviceId });
 
-    if (!serviceResponse.data) {
-      throw new Error(`Service with ID ${serviceId} not found`);
-    }
+    await Promise.all(
+      fields.map((field: SelectedLotDetail) =>
+        client.models.ServiceField.create({
+          serviceId,
+          fieldId: field.fieldId,
+          fieldName: field.fieldName,
+          hectares: field.hectares,
+          crop: field.cropName,
+          hybrid: field.hybridName,
+        }),
+      ),
+    );
+  } catch (error) {
+    console.error("Error creating service fields in Amplify:", error);
+    throw new Error(`Failed to create service fields: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
 
-    const service = serviceResponse.data;
-
-    // Cargar los campos (fields) usando la relación
-    const fieldsResponse = await service.fields();
-    let enrichedFields: Schema["ServiceField"]["type"][] = fieldsResponse.data;
-
-    // Enriquecer los datos de los campos con información de la API de 360
-    try {
-      if (service.workspaceId && service.campaignId && service.farmId && fieldsResponse.data.length > 0) {
-        const fieldsData = await listFields(service.workspaceId, service.campaignId, service.farmId);
-        enrichedFields = fieldsResponse.data.map((field) => {
-          const fieldData = fieldsData.find((f) => f.id.toString() === field.fieldId);
-          if (fieldData) {
-            return {
-              ...field,
-              name: fieldData.name,
-              hectares: fieldData.hectares,
-              crop: fieldData.cropName,
-              hybrid: fieldData.hybridName,
-            };
-          }
-          return field;
+export const createServiceTasks = async (
+  serviceId: string,
+  tasks: any[],
+  locale: string,
+  domain: string,
+  project: string
+): Promise<string[]> => {
+  try {
+    const client = getClient();
+    const taskResults = await Promise.all(
+      tasks.map(async (task: any) => {
+        // Crear el ServiceTask
+        const response: { data: { id: string } | null; errors?: any[] } = await client.models.ServiceTask.create({
+          serviceId,
+          externalTemplateId: task.externalTemplateId,
+          taskName: task.taskName,
+          userEmail: task.userEmail,
         });
-      }
-    } catch (error) {
-      console.error("Error fetching detailed field information:", error);
-    }
 
-    // Cargar las tareas (tasks) usando la relación
-    const tasksResponse = await service.tasks();
-    const tasks = await Promise.all(
-      tasksResponse.data.map(async (task) => {
-        // const role = await task.role();
-        // const user = await task.user();
-        return task
-        // return {
-        //   id: task.id,
-        //   externalTemplateId: task.externalTemplateId,
-        //   taskName: task.taskName,
-        //   userEmail: task.userEmail
-        //   // sourceSystem: task.sourceSystem,
-        //   // role: role?.data
-        //   //   ? { id: role.data.id, name: role.data.name }
-        //   //   : { id: task.roleId, name: "Unknown Role" },
-        //   // user: user?.data
-        //   //   ? { id: user.data.id, name: user.data.name, email: user.data.email }
-        //   //   : { id: task.userId, name: "Unknown User", email: "" },
-        // };
-      }),
+        if (!response.data) {
+          throw new Error(`Failed to create task: ${task.taskName}`);
+        }
+
+        const taskId = response.data.id;
+
+        // Llamar a createSubtask si se proporcionan los parámetros necesarios
+        if (task.parentIssueKey && task.description) {
+          try {
+            const agtasksUrl = `http://localhost:3000/${locale}/domains/${domain}/projects/${project}/tasks/${taskId}`;
+            await createSubtask(
+              task.parentIssueKey,
+              task.taskName,
+              task.userEmail,
+              task.description,
+              agtasksUrl
+            );
+            console.log(`Jira subtask created for task ${task.taskName}`);
+          } catch (error) {
+            console.error(`Failed to create Jira subtask for task ${task.taskName}:`, error);
+            // No lanzamos error para permitir que el proceso continúe
+          }
+        } else {
+          console.warn(`Skipping Jira subtask creation for task ${task.taskName}: missing parentIssueKey or description`);
+        }
+
+        return taskId;
+      })
     );
 
-    // Calcular el progreso (simplificado)
-    const totalTasks = tasks.length;
-    const completedTasks = 0; // Esto debería venir de un estado real de las tareas
-    const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-
-    // Determinar el estado del servicio
-    const now = new Date();
-    const startDate = service.startDate ? new Date(service.startDate) : null;
-    const endDate = service.endDate ? new Date(service.endDate) : null;
-    let status = "Planificado";
-    if (progress === 100) {
-      status = "Finalizado";
-    } else if (startDate && now >= startDate) {
-      status = "En progreso";
-    }
-
-    return {
-      ...service,
-      fields: enrichedFields,
-      tasks,
-      progress,
-      status,
-    };
+    return taskResults;
   } catch (error) {
-    console.error("Error fetching service detail from Amplify:", error);
-    throw new Error(`Failed to fetch service detail: ${error instanceof Error ? error.message : String(error)}`);
+    console.error("Error creating service tasks in Amplify:", error);
+    throw new Error(`Failed to create service tasks: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
@@ -639,8 +603,8 @@ export const listServicesByProject = async (
 export const getTask = async (taskId: string): Promise<ServiceTask> => {
   const client = getClient();
 
-  const taskResponse: { 
-    data: Schema["ServiceTask"]["type"] | null; errors?: any[] 
+  const taskResponse: {
+    data: Schema["ServiceTask"]["type"] | null; errors?: any[]
   } = await client.models.ServiceTask.get({ id: taskId });
 
   if (!taskResponse.data) {
@@ -650,6 +614,91 @@ export const getTask = async (taskId: string): Promise<ServiceTask> => {
   return taskResponse.data;
 }
 
-export const createSubtask = async () => {
-  
-}
+// export const getServiceDetail = async (serviceId: string) => {
+//   try {
+//     const client = getClient();
+//     const serviceResponse: { data: Schema["Service"]["type"] | null; errors?: any[] } = await client.models.Service.get({ id: serviceId });
+
+//     if (!serviceResponse.data) {
+//       throw new Error(`Service with ID ${serviceId} not found`);
+//     }
+
+//     const service = serviceResponse.data;
+
+//     // Cargar los campos (fields) usando la relación
+//     const fieldsResponse = await service.fields();
+//     let enrichedFields: Schema["ServiceField"]["type"][] = fieldsResponse.data;
+
+//     // Enriquecer los datos de los campos con información de la API de 360
+//     try {
+//       if (service.workspaceId && service.campaignId && service.farmId && fieldsResponse.data.length > 0) {
+//         const fieldsData = await listFields(service.workspaceId, service.campaignId, service.farmId);
+//         enrichedFields = fieldsResponse.data.map((field) => {
+//           const fieldData = fieldsData.find((f) => f.id.toString() === field.fieldId);
+//           if (fieldData) {
+//             return {
+//               ...field,
+//               name: fieldData.name,
+//               hectares: fieldData.hectares,
+//               crop: fieldData.cropName,
+//               hybrid: fieldData.hybridName,
+//             };
+//           }
+//           return field;
+//         });
+//       }
+//     } catch (error) {
+//       console.error("Error fetching detailed field information:", error);
+//     }
+
+//     // Cargar las tareas (tasks) usando la relación
+//     const tasksResponse = await service.tasks();
+//     const tasks = await Promise.all(
+//       tasksResponse.data.map(async (task) => {
+//         // const role = await task.role();
+//         // const user = await task.user();
+//         return task
+//         // return {
+//         //   id: task.id,
+//         //   externalTemplateId: task.externalTemplateId,
+//         //   taskName: task.taskName,
+//         //   userEmail: task.userEmail
+//         //   // sourceSystem: task.sourceSystem,
+//         //   // role: role?.data
+//         //   //   ? { id: role.data.id, name: role.data.name }
+//         //   //   : { id: task.roleId, name: "Unknown Role" },
+//         //   // user: user?.data
+//         //   //   ? { id: user.data.id, name: user.data.name, email: user.data.email }
+//         //   //   : { id: task.userId, name: "Unknown User", email: "" },
+//         // };
+//       }),
+//     );
+
+//     // Calcular el progreso (simplificado)
+//     const totalTasks = tasks.length;
+//     const completedTasks = 0; // Esto debería venir de un estado real de las tareas
+//     const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+//     // Determinar el estado del servicio
+//     const now = new Date();
+//     const startDate = service.startDate ? new Date(service.startDate) : null;
+//     const endDate = service.endDate ? new Date(service.endDate) : null;
+//     let status = "Planificado";
+//     if (progress === 100) {
+//       status = "Finalizado";
+//     } else if (startDate && now >= startDate) {
+//       status = "En progreso";
+//     }
+
+//     return {
+//       ...service,
+//       fields: enrichedFields,
+//       tasks,
+//       progress,
+//       status,
+//     };
+//   } catch (error) {
+//     console.error("Error fetching service detail from Amplify:", error);
+//     throw new Error(`Failed to fetch service detail: ${error instanceof Error ? error.message : String(error)}`);
+//   }
+// };

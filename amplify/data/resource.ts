@@ -39,8 +39,9 @@ const schema = a
       areaId: a.string().required(), // FK to 360 Area
       language: a.string().required(),  
       sourceSystem: a.string().required(), // Task Manager 'jira'
-      projectId: a.string().required(), // FK to Task Manager Project 
+      projectId: a.string().required(), // FK to Task Manager Project (serviceDeskId) 
       queueId: a.integer().required(),  // FK to Task Manager Default Queue
+      requestTypeId: a.string(),
       // id: a.string().required(), 
       name: a.string().required(),
       deleted: a.boolean().default(false).required(),

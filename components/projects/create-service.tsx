@@ -5,34 +5,38 @@ import { useForm, FormProvider } from "react-hook-form"
 import { useRouter, useParams } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import Step1Protocol from "./step1-protocol"
 import Step2Lots from "./step2-lots"
 import Step3Tasks from "./step3-tasks"
-//import { createServiceSchema, type CreateServiceFormValues } from "./validation-schemas"
 
 import {
   createServiceSchema,
   type CreateServiceFormValues,
-  type SelectedLotDetail
 } from "./validation-schemas"
-
-import { JiraServiceRequest } from "@/lib/interfaces"
 
 import {
   ServiceFormProvider
 } from "@/lib/contexts/service-form-context"
 
-import { 
-  createService, 
-  createSubtask 
+import {
+  generateDescriptionField,
+  createService
 } from "@/lib/integrations/jira"
 
 import {
   createService as createAgService,
-  createSubtask as createAgSubtask
+  createServiceFields,
+  createServiceTasks
 } from "@/lib/services/agtasks"
 
 import { useTranslations } from "next-intl"
@@ -56,8 +60,6 @@ export default function CreateService({ userEmail }: Props) {
   const params = useParams()
   const { locale, project, domain } = params
   const t = useTranslations("CreateService")
-
-  // const { formValues, resetForm } = useServiceForm() 
 
   // Estado para controlar el paso actual del wizard
   const [currentStep, setCurrentStep] = useState(1)
@@ -161,161 +163,40 @@ export default function CreateService({ userEmail }: Props) {
     setShouldScrollToTop(true)
   }
 
-  // Función para reiniciar el formulario
-  // const resetForm = () => {
-  //   methods.reset(defaultValues)
-  //   setCurrentStep(1)
-  //   setShouldScrollToTop(true)
-  // }
-
   const onSubmit = async (data: CreateServiceFormValues) => {
     try {
       setIsSubmitting(true);
 
-      const serviceData = {
-        projectId: project as string,
-        serviceName: `${selectedProtocolName} - ${data.workspaceName} - ${data.establishmentName}`,
-        externalTemplateId: data.protocol,
-        // externalServiceKey: `SRV-${Date.now()}`,
-        workspaceId: data.workspace,
-        workspaceName: data.workspaceName || "",
-        campaignId: data.campaign,
-        campaignName: data.campaignName || "",
-        farmId: data.establishment,
-        farmName: data.establishmentName || "",
-        //totalArea: 0,
-        // Sumar hectáreas
-        totalArea: data.selectedLots.reduce((sum, lot) => sum + (lot.hectares || 0), 0),
-        startDate: new Date().toISOString(),
-        // fields: data.selectedLots.map((lotId) => ({
-        //   fieldId: lotId,
-        //   fieldName: data.selectedLotsNames?.[lotId] || "",
-        // })),
-        fields: data.selectedLots.map((lot: SelectedLotDetail) => ({
-          fieldId: lot.fieldId,
-          fieldName: lot.fieldName,
-          hectares: lot.hectares,
-          cropName: lot.cropName,
-          hybridName: lot.hybridName || "",
-        })),
-        tasks: data.taskAssignments.map((task) => ({
-          externalTemplateId: data.protocol,
-          taskName: task.task,
-          userEmail: task.assignedTo,
-        })),
-      };
+      const serviceName = `${selectedProtocolName} - ${data.workspaceName} - ${data.establishmentName}`;
+      const { description, descriptionPlain } = await generateDescriptionField(data);
 
-      const jiraFieldsTable = `
-||Lote||Hectáreas||Cultivo||Híbrido||
-${data.selectedLots.map((lot: SelectedLotDetail) => `| ${lot.fieldName || '-'} | ${lot.hectares || '-'} | ${lot.cropName || '-'} | ${lot.hybridName || '-'} |
-`).join('')}
-`;
+      const jiraResponse = await createService(serviceName, description, userEmail);
 
-      const jiraDescription = `
-*Espacio de trabajo:* ${serviceData.workspaceName || 'No especificado'}
-*Campaña:* ${serviceData.campaignName || 'No especificado'} 
-*Establecimiento:* ${serviceData.farmName || 'No especificado'}
-*Hectáreas totales:* ${serviceData.totalArea || '0'} h
-*Lotes:*
-${jiraFieldsTable}
-`;
-
-const jiraFieldsTablePlain = `
-Lote | Hectáreas | Cultivo | Híbrido
------|-----------|---------|--------
-${data.selectedLots.map((lot: SelectedLotDetail) => 
-  `${lot.fieldName || '-'} | ${lot.hectares || '-'} | ${lot.cropName || '-'} | ${lot.hybridName || '-'}`
-).join('\n')}
-`;
-
-const jiraDescriptionPlain = `
-• Espacio de trabajo: ${serviceData.workspaceName || 'No especificado'}
-• Campaña: ${serviceData.campaignName || 'No especificado'}
-• Establecimiento: ${serviceData.farmName || 'No especificado'}
-• Hectáreas totales: ${serviceData.totalArea || '0'} h
-• Lotes:
-${data.selectedLots.map((lot: SelectedLotDetail, index) => 
-  `Lote ${index + 1}:
-   - Nombre: ${lot.fieldName || '-'}
-   - Hectáreas: ${lot.hectares || '-'}
-   - Cultivo: ${lot.cropName || '-'}
-   - Híbrido: ${lot.hybridName || '-'}`
-).join('\n\n')}
-`;
-
-      // Crear el servicio (issue principal)
-      const requestData: JiraServiceRequest = {
-        serviceDeskId: '107',
-        requestTypeId: '153',
-        requestFieldValues: {
-          summary: serviceData.serviceName,
-          description: jiraDescription,
-        },
-        requestParticipants: [],
-        raiseOnBehalfOf: 'fgavegno@geoagro.com',
-      };
-
-      const jiraResponse = await createService(requestData);
-
-      // El response contiene el key del issue creado (por ejemplo: TAN-123)
-      //const parentIssueKey = jiraResponse.data?.issueKey;
-
-      if (!jiraResponse.data?.issueKey) {
-        throw new Error("No se pudo obtener el issueKey del request creado en Jira");
+      if (!jiraResponse.success || !jiraResponse.data?.issueKey) {
+        throw new Error(`Failed to create Jira service: ${jiraResponse.error || 'No issueKey returned'}`);
       }
+      const { issueKey } = jiraResponse.data;
 
-      // Enviar los datos al API
-      // const newServiceData = {
-      //   ...serviceData,
-      //   externalServiceKey: parentIssueKey
-      // }
+      const agResponse = await createAgService(data, project as string, serviceName, issueKey);
+      const { id } = agResponse;
 
-      // const response2 = await fetch(`/api/v1/agtasks/domains/${domain}/projects/${project}/services`, {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify(newServiceData),
-      // })
+      // const serviceFieldsResponse = 
+      await createServiceFields(id, data.selectedLots)
+      // console.log("serviceFieldsResponse: ", serviceFieldsResponse)
 
-      // if (!response2.ok) {
-      //   const errorData = await response2.json()
-      //   console.error("API error response:", errorData)
-      //   throw new Error(errorData.error || errorData.message || `Error: ${response2.status}`)
-      // }
+      // Transformar taskAssignments y crear tareas en Agtasks y subtareas en Jira
+      const tasks = data.taskAssignments.map((task) => ({
+        externalTemplateId: data.protocol,
+        taskName: task.task,
+        userEmail: task.assignedTo,
+        parentIssueKey: issueKey,
+        description: descriptionPlain,
+      }));
 
-      const agtaskResponse = await createAgService(requestData)
-      
-      let taskId = ""
-
-      // Crear subtareas en Jira como hijas del request
-      await Promise.all(
-        serviceData.tasks.map(async (task) => {
-          const subtaskResponse = await createAgSubtask(
-            jiraResponse.data?.issueKey,
-            task.taskName,
-            task.userEmail,
-            jiraDescriptionPlain,
-          );
-
-          // Extract the subtask key or id from the response if available
-          let subtaskId = "";
-          if (subtaskResponse && typeof subtaskResponse === "object" && "data" in subtaskResponse && subtaskResponse.data?.issueKey) {
-            subtaskId = subtaskResponse.data.issueKey;
-          }
-
-          // Call createAgSubtask with the subtaskId in the URL
-          await createSubtask(
-            jiraResponse.data?.issueKey,
-            task.taskName,
-            task.userEmail,
-            jiraDescriptionPlain,
-            `http://localhost:3000/${locale}/domains/${domain}/projects/${project}/tasks/${subtaskId}`
-          );
-        })
-      );
-
-      
+      if (tasks.length > 0) {
+        const taskIds = await createServiceTasks(id, tasks, locale as string, domain as string, project as string);
+        // console.log('Task IDs created:', taskIds);
+      }
 
       toast({
         title: "Servicio creado exitosamente",
@@ -324,8 +205,6 @@ ${data.selectedLots.map((lot: SelectedLotDetail, index) =>
       });
 
       setIsSuccess(true);
-      // resetForm() // Limpiar el contexto después de un envío exitoso
-      // methods.reset(defaultValues) // Limpiar el formulario local
     } catch (error) {
       console.error("Error creating service:", error);
       toast({

@@ -380,7 +380,7 @@ export function DynamicForm({
             {field.required && <span className="text-destructive">*</span>}
           </Label>
         )}
-        {field.description && field.type !== "subform" && (
+        {field.description && (
           <p className="text-xs text-muted-foreground pt-1">{field.description}</p>
         )}
       </div>
