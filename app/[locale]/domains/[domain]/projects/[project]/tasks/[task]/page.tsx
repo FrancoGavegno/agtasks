@@ -30,7 +30,7 @@ export default function TaskPage() {
             try {
                 setIsLoadingSchema(true)
                 setErrorSchema(null)
-                const response = await fetch("/schemas/field_visit.json")
+                const response = await fetch("/schemas/crear_puntos_recorrida.json")
                 //const response = await fetch("/schemas/crear_puntos_recorrida.json") // Carga desde public
                 if (!response.ok) {
                     throw new Error(`Error al cargar el esquema: ${response.status} ${response.statusText}`)

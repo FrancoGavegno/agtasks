@@ -1,8 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { useForm, FormProvider } from "react-hook-form"
-import { useRouter, useParams } from "next/navigation"
+import { 
+  useForm, 
+  FormProvider 
+} from "react-hook-form"
+import { 
+  useRouter, 
+  useParams 
+} from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,35 +19,32 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { 
+  ChevronLeft, 
+  ChevronRight 
+} from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import Step1Protocol from "./step1-protocol"
 import Step2Lots from "./step2-lots"
 import Step3Tasks from "./step3-tasks"
-
 import {
   createServiceSchema,
   type CreateServiceFormValues,
 } from "./validation-schemas"
-
 import {
   ServiceFormProvider
 } from "@/lib/contexts/service-form-context"
-
 import {
   generateDescriptionField,
   createService
 } from "@/lib/integrations/jira"
-
 import {
   createService as createAgService,
   createServiceFields,
   createServiceTasks
 } from "@/lib/services/agtasks"
-
 import { useTranslations } from "next-intl"
 
-// Valores iniciales del formulario
 const defaultValues: CreateServiceFormValues = {
   protocol: "",
   workspace: "",
@@ -88,17 +91,13 @@ export default function CreateService({ userEmail }: Props) {
 
     switch (currentStep) {
       case 1:
-        // console.log("Validando paso 1, taskAssignments:", methods.getValues("taskAssignments"))
         isValid = await methods.trigger("protocol")
         if (isValid) {
-          // Asegurarse de que taskAssignments esté disponible para el siguiente paso
           const protocol = methods.getValues("protocol")
           const taskAssignments = methods.getValues("taskAssignments")
-          // console.log("Protocolo seleccionado:", protocol, "Tareas:", taskAssignments)
         }
         break
       case 2:
-        // Marcar los campos como "touched" antes de validar
         methods.setValue("selectedLots", methods.getValues("selectedLots"), { shouldDirty: true })
         isValid = await methods.trigger(["workspace", "campaign", "establishment", "selectedLots"])
         break
@@ -121,7 +120,6 @@ export default function CreateService({ userEmail }: Props) {
         // Validar solo las tareas con usuario asignado
         const tasksWithUser = taskAssignments.filter((task) => task.assignedTo)
         if (tasksWithUser.length === 0) {
-          // Si no hay tareas con usuario, mostrar un mensaje
           toast({
             title: "Asignación incompleta",
             description: "Por favor, asigne al menos un usuario a una tarea",
@@ -132,7 +130,6 @@ export default function CreateService({ userEmail }: Props) {
 
         // Validar que todas las tareas con roles tengan usuarios asignados
         // const incompleteAssignments = tasksWithRoles.filter((task) => !task.assignedTo)
-
         // if (incompleteAssignments.length > 0) {
         //   // Si hay tareas con roles pero sin usuarios, mostrar un mensaje
         //   toast({
@@ -148,7 +145,7 @@ export default function CreateService({ userEmail }: Props) {
 
         // Enviar el formulario
         onSubmit(methods.getValues())
-        return // Retornar aquí para evitar avanzar al siguiente paso
+        return 
     }
 
     if (isValid) {
@@ -180,11 +177,8 @@ export default function CreateService({ userEmail }: Props) {
       const agResponse = await createAgService(data, project as string, serviceName, issueKey);
       const { id } = agResponse;
 
-      // const serviceFieldsResponse = 
       await createServiceFields(id, data.selectedLots)
-      // console.log("serviceFieldsResponse: ", serviceFieldsResponse)
-
-      // Transformar taskAssignments y crear tareas en Agtasks y subtareas en Jira
+      
       const tasks = data.taskAssignments.map((task) => ({
         externalTemplateId: data.protocol,
         taskName: task.task,
@@ -194,8 +188,7 @@ export default function CreateService({ userEmail }: Props) {
       }));
 
       if (tasks.length > 0) {
-        const taskIds = await createServiceTasks(id, tasks, locale as string, domain as string, project as string);
-        // console.log('Task IDs created:', taskIds);
+        await createServiceTasks(id, tasks, locale as string, domain as string, project as string);
       }
 
       toast({
