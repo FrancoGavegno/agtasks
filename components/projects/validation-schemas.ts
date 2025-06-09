@@ -14,6 +14,7 @@ export const step1Schema = z.object({
   taskAssignments: z.array(
     z.object({
       task: z.string(),
+      taskType: z.string(),
       assignedTo: z.string(),
     }),
   ),
@@ -50,6 +51,7 @@ export type Step2FormValues = z.infer<typeof step2Schema>
 // Esquema de validación para el paso 3 (asignación de tareas)
 export const taskAssignmentSchema = z.object({
   task: z.string(),
+  taskType: z.string(),
   // role: z.string({ required_error: "Por favor, seleccione un rol" }).min(1, { message: "Por favor, seleccione un rol" }),
   assignedTo: z.string({ required_error: "Por favor, seleccione un usuario" }).min(1, { message: "Por favor, seleccione un usuario" }),
 })

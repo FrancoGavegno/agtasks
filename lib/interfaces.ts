@@ -143,6 +143,7 @@ export interface ServiceTask {
   serviceId: string // FK local a Service
   externalTemplateId: string // Referencia al sub-template del task manager (opcional, si existen)
   taskName: string // Nombre de la tarea (opcional, según el esquema)
+  taskType: string
   userEmail: string
   //id: string // ID de la tarea
   //sourceSystem: string // Ej.: "jira"
@@ -161,6 +162,7 @@ export interface ServiceTask {
 
 export interface TaskAssignment {
   task: string
+  taskType: string
   assignedTo: string
   //role: string
 }

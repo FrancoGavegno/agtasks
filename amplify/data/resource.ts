@@ -84,6 +84,7 @@ const schema = a
       taskName: a.string().required(), 
       userEmail: a.string().required(), // FK to 360 User 'fgavegno@geoagro.com'
       service: a.belongsTo("Service", "serviceId"),
+      taskType: a.string()
       // sourceSystem: a.string().required(),
       // roleId: a.string().required(),
       // role: a.belongsTo("Role", "roleId"),

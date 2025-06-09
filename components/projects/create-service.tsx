@@ -182,6 +182,7 @@ export default function CreateService({ userEmail }: Props) {
       const tasks = data.taskAssignments.map((task) => ({
         externalTemplateId: data.protocol,
         taskName: task.task,
+        taskType: task.taskType,
         userEmail: task.assignedTo,
         parentIssueKey: issueKey,
         description: descriptionPlain,

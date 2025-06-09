@@ -65,7 +65,7 @@ export default function Step1Protocol({
     }
   }, [domainId])
 
-  // Define fetchProtocolTasks function 
+  // Fetch tasks 
   const fetchProtocolTasks = async (protocolId: string) => {
     try {
       // Use the correct API endpoint with parameters from the URL
@@ -76,13 +76,15 @@ export default function Step1Protocol({
       if (!response.ok) {
         throw new Error(`Error fetching tasks: ${response.status}`)
       }
-
       const data = await response.json()
+      // console.log("subtasks: ", data.data.subtasks)
+
 
       // Extract tasks from the response
       if (data && data.success && data.data) {
         // Extract task names from the response
-        const tasks = data.data.subtasks?.map((task: any) => task.summary) || []
+        // const tasks = data.data.subtasks?.map((task: any) => task.summary) || []
+        const tasks = data.data.subtasks || []
 
         // Update the protocol tasks state
         setProtocolTasks((prev) => ({
@@ -121,8 +123,9 @@ export default function Step1Protocol({
     if (value) {
       if (protocolTasks[value]) {
         const tasks = protocolTasks[value]
-        const newAssignments: TaskAssignment[] = tasks.map((task: string) => ({
-          task,
+        const newAssignments: TaskAssignment[] = tasks.map((task: any) => ({
+          task: task.summary,
+          taskType: task.customFields.customfield_10371,
           role: "",
           assignedTo: "",
         }))
@@ -134,8 +137,10 @@ export default function Step1Protocol({
       } else {
         const tasks = await fetchProtocolTasks(value)
         if (tasks && tasks.length > 0) {
-          const newAssignments: TaskAssignment[] = tasks.map((task: string) => ({
-            task,
+          // const newAssignments: TaskAssignment[] = tasks.map((task: string) => ({
+          const newAssignments: TaskAssignment[] = tasks.map((task: any) => ({
+            task: task.summary,
+            taskType: task.customFields.customfield_10371,
             role: "",
             assignedTo: "",
           }))
@@ -193,13 +198,23 @@ export default function Step1Protocol({
             Tareas que incluye el protocolo: {selectedProtocolName || "Cargando..."}
           </h4>
           <ul className="space-y-2">
-            {protocolTasks[selectedProtocol]?.map((task, index) => (
+            {form.watch("taskAssignments")?.map((task, index) => (
               <li key={index} className="flex items-start space-x-2">
                 <Check className="h-5 w-5 text-green-500 mt-0.5" />
-                <span>{task}</span>
+                <span>
+                  {task.task} {/* task.taskType */}
+                </span>
               </li>
             ))}
           </ul>
+          {/* <ul className="space-y-2">
+            {protocolTasks[selectedProtocol]?.map((task: any, index: number) => (
+              <li key={index} className="flex items-start space-x-2">
+                <Check className="h-5 w-5 text-green-500 mt-0.5" />
+                <span>{task.summary} - {task.taskType}</span>
+              </li>
+            ))}
+          </ul> */}
         </div>
       ) : (
         selectedProtocol && (

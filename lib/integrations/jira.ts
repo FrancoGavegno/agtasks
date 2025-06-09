@@ -3,7 +3,7 @@
 import axios, { type AxiosError, type AxiosResponse } from "axios"
 import type {
   JiraCustomerData,
-  JiraResponse,
+  // JiraResponse,
   // JiraRequestData,
   // JiraRequest,
   QueueIssueResponse,
@@ -164,7 +164,7 @@ export async function createService(
 
   try {
     const endpoint = "/rest/servicedeskapi/request";
-    
+
     const payload = {
       serviceDeskId: serviceDeskId,
       requestTypeId: requestTypeId,
@@ -205,9 +205,9 @@ export async function createSubtask(
   summary: string,
   userEmail: string,
   description: string, // Ahora recibe el texto en formato Wiki
-  agtasksUrl: string
+  agtasksUrl: string,
+  taskType: string
 ): Promise<JiraSubtaskResponse | void> {
-
 
   const payload = {
     fields: {
@@ -237,8 +237,8 @@ export async function createSubtask(
         key: parentIssueKey
       },
       customfield_10305: userEmail,
-      customfield_10338: agtasksUrl
-
+      customfield_10338: agtasksUrl,
+      customfield_10371: taskType
     }
   }
 
@@ -252,32 +252,97 @@ export async function createSubtask(
   }
 }
 
-export async function listTasksbyService(issueIdOrKey: string): Promise<JiraResponse> {
+// import { AxiosError } from 'axios';
+
+// Definición de tipos
+interface JiraStatus {
+  name: string;
+}
+
+interface JiraSubtask {
+  key: string;
+  fields: {
+    summary: string;
+    status: JiraStatus;
+    [key: string]: any; // Para campos personalizados dinámicos
+  };
+}
+
+interface JiraIssue {
+  key: string;
+  fields: {
+    summary: string;
+    subtasks?: JiraSubtask[];
+    [key: string]: any;
+  };
+}
+
+interface SubtaskResult {
+  key: string;
+  summary: string;
+  status: string;
+  customFields?: Record<string, any>; // Objeto para almacenar custom fields
+}
+
+interface JiraResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+interface ListTasksResult {
+  issueKey: string;
+  issueSummary: string;
+  subtasks: SubtaskResult[];
+}
+
+export async function listTasksbyService(
+  issueIdOrKey: string,
+  customFieldsToFetch: string[] = []
+): Promise<JiraResponse<ListTasksResult>> {
   try {
     // 1. Obtener detalles del Customer Request
-    const issueEndpoint = `/rest/api/3/issue/${issueIdOrKey}`
-    const issueResponse = await jiraApi.get(issueEndpoint)
-    const issueData = issueResponse.data
+    const issueEndpoint = `/rest/api/3/issue/${issueIdOrKey}`;
+    const issueResponse = await jiraApi.get<JiraIssue>(issueEndpoint);
+    const issueData = issueResponse.data;
 
-    // 2. Extraer subtareas
-    const subtasks = issueData.fields?.subtasks || []
-    const result = {
+    // 2. Extraer subtareas básicas
+    const subtasks = issueData.fields?.subtasks || [];
+
+    // 3. Obtener detalles completos de cada subtarea (incluyendo custom fields si se especifican)
+    const enrichedSubtasks = await Promise.all(
+      subtasks.map(async (subtask) => {
+        let customFieldsData: Record<string, any> = {};
+
+        if (customFieldsToFetch.length > 0) {
+          const fieldsQuery = customFieldsToFetch.join(',');
+          const response = await jiraApi.get<JiraSubtask>(
+            `/rest/api/3/issue/${subtask.key}?fields=${fieldsQuery}`
+          );
+          customFieldsData = response.data.fields;
+        }
+
+        return {
+          key: subtask.key,
+          summary: subtask.fields.summary,
+          status: subtask.fields.status.name,
+          customFields: customFieldsData
+        };
+      })
+    );
+
+    const result: ListTasksResult = {
       issueKey: issueData.key,
-      issueSummary: issueData.fields?.summary,
-      subtasks: subtasks.map((subtask: { key: string; fields: { summary: string; status: { name: string } } }) => ({
-        key: subtask.key,
-        summary: subtask.fields.summary,
-        status: subtask.fields.status.name,
-      })),
-    }
+      issueSummary: issueData.fields.summary,
+      subtasks: enrichedSubtasks,
+    };
 
     return {
       success: true,
       data: result,
-    }
+    };
   } catch (error) {
     let errorMessage: string
-
     if (axios.isAxiosError(error)) {
       errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
     } else {
@@ -289,6 +354,60 @@ export async function listTasksbyService(issueIdOrKey: string): Promise<JiraResp
     }
   }
 }
+
+// export async function listTasksbyService(issueIdOrKey: string): Promise<JiraResponse> {
+//   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-get
+
+//   try {
+//     // 1. Obtener detalles del Customer Request
+//     const issueEndpoint = `/rest/api/3/issue/${issueIdOrKey}`
+//     const issueResponse = await jiraApi.get(issueEndpoint)
+//     const issueData = issueResponse.data
+
+//     // 2. Extraer subtareas
+//     const subtasks = issueData.fields?.subtasks || []
+
+//     // console.log("subtasks: ", subtasks)
+
+//     const result = {
+//       issueKey: issueData.key,
+//       issueSummary: issueData.fields?.summary,
+//       subtasks: subtasks.map((subtask: { key: string; fields: { summary: string; status: { name: string } } }) => ({
+//         key: subtask.key,
+//         summary: subtask.fields.summary,
+//         status: subtask.fields.status.name,
+//       })),
+//     }
+
+//     // 2. Recorrer las subtasks y obtener sus campos
+//     const subtasksDetails = await Promise.all(
+//       issueData.fields.subtasks.map(async (subtask) => {
+//         const response = await jiraApi.get(
+//           `/rest/api/3/issue/${subtask.key}?fields=customfield_12345,customfield_67890`
+//         );
+//         return response.data;
+//       }
+//       );
+
+
+//     return {
+//       success: true,
+//       data: result,
+//     }
+//   } catch (error) {
+//     let errorMessage: string
+
+//     if (axios.isAxiosError(error)) {
+//       errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
+//     } else {
+//       errorMessage = "Unknown error occurred while fetching Jira request tasks"
+//     }
+//     return {
+//       success: false,
+//       error: errorMessage,
+//     }
+//   }
+// }
 
 export async function getIssue(issueIdOrKey: string): Promise<JiraResponse> {
   try {

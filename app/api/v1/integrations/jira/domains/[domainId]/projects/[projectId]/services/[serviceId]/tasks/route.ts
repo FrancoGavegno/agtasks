@@ -16,7 +16,20 @@ export async function GET(req: Request, { params }: { params: { serviceId: strin
                 { status: 400 }
             );
         }
-        const result = await listTasksbyService(serviceId);
+        const result = await listTasksbyService(serviceId, [
+            "customfield_10371"
+        ]);
+
+        // const resultWithCustomFields = await listTasksbyService("PROJ-123", [
+        //     "customfield_10010",
+        //     "customfield_10020"
+        // ]);
+        // if (resultWithCustomFields.success) {
+        //     console.log("Subtasks con custom fields:", resultWithCustomFields.data?.subtasks);
+        // } else {
+        //     console.error("Error:", resultWithCustomFields.error);
+        // }
+
         return NextResponse.json(result, { status: 200 });
     } catch (error) {
         console.error("Error fetching tasks:", error);
