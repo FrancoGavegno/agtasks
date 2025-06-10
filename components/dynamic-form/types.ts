@@ -13,8 +13,6 @@ export type FieldType =
   | "file"
   | "date"
   | "checkbox"
-  | "geojson" // Se tratará como 'file' con accept=".geojson,.json"
-  | "mbtile" // Se tratará como 'file' con accept=".mbtiles"
   | "subform"
 
 export interface BaseFieldSchema {
@@ -40,15 +38,11 @@ export interface TextareaFieldSchema extends BaseFieldSchema {
 
 export interface SelectFieldSchema extends BaseFieldSchema {
   type: "select"
-  options:
-    | FieldOption[]
-    | Record<string, FieldOption[]>
-    | ((dependentValue: any, allFormData: Record<string, any>) => FieldOption[])
-  dependsOn?: string
+  options: FieldOption[]
 }
 
 export interface FileFieldSchema extends BaseFieldSchema {
-  type: "file" | "geojson" | "mbtile"
+  type: "file"
   accept?: string
 }
 
@@ -83,4 +77,27 @@ export interface DynamicFormProps {
   initialData?: Record<string, any>
   submitButtonText?: string
   className?: string
+}
+
+// JSON Schema types
+export interface JSONSchemaProperty {
+  type: string
+  title?: string
+  description?: string
+  enum?: (string | number)[]
+  format?: string
+  minimum?: number
+  maximum?: number
+  items?: JSONSchemaProperty
+  properties?: Record<string, JSONSchemaProperty>
+  required?: string[]
+  default?: any
+}
+
+export interface JSONSchema {
+  type: "object"
+  properties: Record<string, JSONSchemaProperty>
+  required?: string[]
+  title?: string
+  description?: string
 }

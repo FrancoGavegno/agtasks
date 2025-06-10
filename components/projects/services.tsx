@@ -1,12 +1,22 @@
 "use client"
-import { useState, useEffect } from "react"
+
+import { 
+  useState, 
+  useEffect 
+} from "react"
+import { Link } from "@/i18n/routing"
+import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Progress } from "@/components/ui/progress"
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table"
 import {
-  Edit,
-  Play,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -15,31 +25,28 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
-  PlusCircle,
   SquareArrowOutUpRight,
   RefreshCw,
   Plus,
 } from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useParams } from "next/navigation"
-import { Link } from "@/i18n/routing"
-import type { Service } from "@/lib/interfaces"
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select"
+import type { 
+  PaginatedResponse, 
+  Service, 
+} from "@/lib/interfaces"
 import { useToast } from "@/hooks/use-toast"
-
-interface PaginatedResponse {
-  services: Service[]
-  total: number
-  page: number
-  pageSize: number
-  totalPages: number
-}
 
 export function ServicesPageDetails() {
   const params = useParams()
+  const domainId = params.domain as string 
   const projectId = params.project as string
-  const domainId = (params.domain as string) || "8644" // Obtener del parámetro o usar valor por defecto
   const { toast } = useToast()
-
   // Estado para los servicios y la paginación
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
@@ -75,13 +82,17 @@ export function ServicesPageDetails() {
 
       // Construir la URL con los parámetros de paginación y ordenación
       const url = new URL(`/api/v1/agtasks/domains/${domainId}/projects/${projectId}/services`, window.location.origin)
+      
       url.searchParams.append("page", currentPage.toString())
       url.searchParams.append("pageSize", rowsPerPage.toString())
       url.searchParams.append("search", debouncedSearchQuery)
       url.searchParams.append("sortBy", sortBy.toString())
       url.searchParams.append("sortDirection", sortDirection)
 
+      console.log("url: ", url.toString())
       const response = await fetch(url.toString())
+
+
 
       if (!response.ok) {
         const errorData = await response.json()

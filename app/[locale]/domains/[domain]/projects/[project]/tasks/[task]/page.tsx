@@ -1,11 +1,16 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { DynamicForm } from "@/components/dynamic-form/dynamic-form"
-import type { FieldSchema } from "@/components/dynamic-form/types"
+import {
+    useEffect,
+    useState
+} from "react"
 import { useParams } from "next/navigation"
+import type { FieldSchema } from "@/components/dynamic-form/types"
 import { ServiceTask } from "@/lib/interfaces"
 import { getTask } from "@/lib/services/agtasks"
+import { DynamicForm } from "@/components/dynamic-form/dynamic-form"
+import { convertJSONSchemaToFields, isJSONSchema } from "@/components/dynamic-form/utils"
+import { toast } from "@/hooks/use-toast"
 
 export default function TaskPage() {
     // http://localhost:3000/es/domains/8644/projects/1127f7f0-f21e-4825-b4fd-78dd3344e189/tasks/e4d26f05-96a7-4405-92b7-4e6ea20d6f7e
@@ -30,13 +35,23 @@ export default function TaskPage() {
             try {
                 setIsLoadingSchema(true)
                 setErrorSchema(null)
-                const response = await fetch("/schemas/crear_puntos_recorrida.json")
-                //const response = await fetch("/schemas/crear_puntos_recorrida.json") // Carga desde public
+
+                // console.log("taskData: ", taskData)
+                // console.log("taskType: ", taskData?.taskType)
+                let formType = taskData?.taskType || "administrative"
+
+                const response = await fetch(`/schemas/${formType}.json`)
                 if (!response.ok) {
                     throw new Error(`Error al cargar el esquema: ${response.status} ${response.statusText}`)
                 }
-                const schemaData = await response.json()
-                setLoadedSchema(schemaData)
+
+                const rawData = await response.json()
+                if (!isJSONSchema(rawData)) {
+                    throw new Error("El archivo debe seguir el formato JSON Schema estándar")
+                }
+
+                const convertedSchema = await convertJSONSchemaToFields(rawData)
+                setLoadedSchema(convertedSchema)
             } catch (error) {
                 console.error("Error fetching schema:", error)
                 setErrorSchema(error instanceof Error ? error.message : "Error desconocido al cargar el esquema.")
@@ -45,25 +60,32 @@ export default function TaskPage() {
             }
         }
         fetchSchema()
-    }, [])
+    }, [taskData])
 
     const handleSubmit = (data: Record<string, any>) => {
-        console.log("Datos del formulario de visita:", data)
-        alert("Formulario de visita enviado! Revisa la consola.")
+        console.log("Datos del formulario:", data)
+        toast({
+            title: "Formulario enviado!",
+            description: "Revisa la consola.",
+            duration: 5000,
+        });
     }
 
-    // Datos iniciales opcionales, deben coincidir con los nombres del nuevo esquema
-    // const initialFormValues = {
-    //     establecimiento: "DS_Bossio",
-    //     // 'lote' se llenará dinámicamente basado en 'establecimiento',
-    //     // pero si DS_Bossio tiene un lote por defecto, podría ponerse aquí.
-    //     // lote: "Lote 1A",
-    //     tipoRecorridas: "Control Emergencia",
-    //     asignadoA: "Franco Gavegno",
-    //     fecha: "2024-07-20", // Formato YYYY-MM-DD para que parseISO funcione
-    //     estado: "Planificado",
-    //     mapaFondoURL: "https://example.com/map.png",
-    // }
+    const initialFormValues = {
+        tipo: "Aplicación",
+        responsable: "usuario1@gmail.com",
+        contratista: "usuario2@gmail.com",
+        comoLlegar: "https://maps.google.com/example",
+        mapaDeFondo: "https://example.com/map.png",
+        insumos: [
+            {
+                insumo: "Insumo 1",
+                dosis: 10,
+                unidad: "Kg/Ha",
+                hectareas: 25,
+            },
+        ],
+    }
 
     if (isLoadingSchema) {
         return (
@@ -75,10 +97,10 @@ export default function TaskPage() {
 
     if (errorSchema) {
         return (
-            <div className="min-h-screen bg-background flex flex-col items-center justify-center py-8 px-4">
+            <div className="min-h-screen bg-background flex flex-col items-center justify-center py-8 px-4 space-y-4">
                 <p className="text-xl text-destructive">Error: {errorSchema}</p>
-                <p className="text-sm text-muted-foreground">
-                    Asegúrate que el archivo <code>public/schemas/field_visit.json</code> existe y es accesible.
+                <p className="text-sm text-muted-foreground text-center max-w-md">
+                    El archivo debe seguir el formato JSON Schema estándar con propiedades como `type`, `properties`, etc.
                 </p>
             </div>
         )
@@ -94,15 +116,16 @@ export default function TaskPage() {
 
     return (
         <div className="min-h-screen bg-background flex flex-col items-center py-8 px-4">
-            <div className="w-full max-w-3xl">
+            <div className="w-full max-w-4xl">
                 <h1 className="text-3xl font-bold mb-8 text-center text-foreground">
-                    {taskData && taskData.taskName}
+                    {taskData?.taskName}
                 </h1>
+
                 <DynamicForm
                     schema={loadedSchema}
                     onSubmit={handleSubmit}
-                    //initialData={initialFormValues}
-                    submitButtonText="Guardar"
+                    initialData={initialFormValues}
+                    submitButtonText="Guardar Formulario"
                     className="bg-card p-6 sm:p-8 shadow-xl rounded-xl border"
                 />
             </div>

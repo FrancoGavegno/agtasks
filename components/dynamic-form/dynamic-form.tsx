@@ -2,7 +2,12 @@
 
 import type React from "react"
 import { useState, useEffect, useCallback } from "react"
-import type { FieldSchema, DynamicFormProps, SubFormFieldSchema, SelectFieldSchema, FieldOption } from "./types"
+import type { 
+  FieldSchema, 
+  DynamicFormProps, 
+  SubFormFieldSchema, 
+  SelectFieldSchema 
+} from "./types"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
@@ -11,11 +16,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CalendarIcon, PlusCircle, Trash2 } from "lucide-react"
 import { format, parseISO, isValid } from "date-fns"
 import { cn } from "@/lib/utils"
-import type { JSX } from "react" // Import JSX to fix the undeclared variable error
+import type { JSX } from "react"
 
 const getByPath = (obj: any, path: string): any => {
   const keys = path.split(".")
@@ -42,7 +46,6 @@ const setByPath = (obj: any, path: string, value: any): void => {
     const numKey = Number(key)
     if (Number.isInteger(numKey) && Array.isArray(current)) {
       if (!current[numKey]) {
-        // Si el índice no existe, créalo
         const nextKeyIsNumber = Number.isInteger(Number(keys[i + 1]))
         current[numKey] = nextKeyIsNumber ? [] : {}
       }
@@ -81,7 +84,6 @@ const initializeFormData = (schema: FieldSchema[], existingData?: Record<string,
             initialEntries.push(initializeFormData(subFormSchema.fields, entry))
           })
         } else {
-          // Usa initialEntries si defaultValue no es un array
           for (let i = 0; i < numEntries; i++) {
             initialEntries.push(initializeFormData(subFormSchema.fields, {}))
           }
@@ -118,7 +120,7 @@ export function DynamicForm({
 
   useEffect(() => {
     setFormData(initializeFormData(schema, initialData))
-  }, [schema, JSON.stringify(initialData)]) // JSON.stringify para dependencia profunda de initialData
+  }, [schema, JSON.stringify(initialData)])
 
   const handleStateChange = useCallback((path: string, value: any) => {
     setFormData((prevData) => {
@@ -146,9 +148,58 @@ export function DynamicForm({
     [formData, handleStateChange],
   )
 
+  const renderTableCell = (field: FieldSchema, basePath: string, rowIndex: number): JSX.Element => {
+    const path = `${basePath}.${rowIndex}.${field.name}`
+    const value = getByPath(formData, path)
+
+    const cellProps = {
+      className: "h-8 text-sm border-0 bg-transparent focus:ring-1 focus:ring-blue-500 rounded-none",
+      value: value || "",
+      onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleStateChange(path, e.target.value),
+    }
+
+    switch (field.type) {
+      case "text":
+      case "email":
+      case "password":
+        return <Input {...cellProps} type={field.type} placeholder={field.placeholder} />
+      case "number":
+        return <Input {...cellProps} type="number" placeholder={field.placeholder} />
+      case "select": {
+        const selectField = field as SelectFieldSchema
+        return (
+          <Select value={value || ""} onValueChange={(val) => handleStateChange(path, val)}>
+            <SelectTrigger className="h-8 text-sm border-0 bg-transparent focus:ring-1 focus:ring-blue-500 rounded-none">
+              <SelectValue placeholder={field.placeholder || "Seleccionar..."} />
+            </SelectTrigger>
+            <SelectContent>
+                {selectField.options.map((opt: { value: string | number; label: string }) => (
+                <SelectItem key={opt.value.toString()} value={opt.value.toString()}>
+                  {opt.label}
+                </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        )
+      }
+      case "checkbox":
+        return (
+          <div className="flex justify-center">
+            <Checkbox
+              checked={!!value}
+              onCheckedChange={(checked) => handleStateChange(path, checked)}
+              className="h-4 w-4"
+            />
+          </div>
+        )
+      default:
+        return <Input {...cellProps} placeholder={field.placeholder} />
+    }
+  }
+
   const renderField = (field: FieldSchema, basePath = ""): JSX.Element | null => {
     const path = basePath ? `${basePath}.${field.name}` : field.name
-    const id = path.replace(/\./g, "-").replace(/\[/g, "-").replace(/\]/g, "") // Asegurar IDs válidos
+    const id = path.replace(/\./g, "-").replace(/\[/g, "-").replace(/\]/g, "")
     const value = getByPath(formData, path)
     const commonProps = {
       id,
@@ -186,72 +237,29 @@ export function DynamicForm({
         break
       case "select": {
         const selectField = field as SelectFieldSchema
-        let options: FieldOption[] = []
-
-        if (typeof selectField.options === "function") {
-          const dependentPath = selectField.dependsOn
-            ? basePath
-              ? `${basePath}.${selectField.dependsOn}`
-              : selectField.dependsOn
-            : ""
-          const dependentValue = selectField.dependsOn ? getByPath(formData, dependentPath) : null
-          options = selectField.options(dependentValue, formData)
-        } else if (Array.isArray(selectField.options)) {
-          options = selectField.options
-        } else if (typeof selectField.options === "object" && selectField.dependsOn) {
-          // Nueva lógica para options como objeto dependiente
-          const dependentPath = selectField.dependsOn
-            ? basePath
-              ? `${basePath}.${selectField.dependsOn}`
-              : selectField.dependsOn
-            : ""
-          const dependentValue = getByPath(formData, dependentPath)
-          if (
-            dependentValue &&
-            typeof dependentValue === "string" &&
-            (selectField.options as Record<string, FieldOption[]>)[dependentValue]
-          ) {
-            options = (selectField.options as Record<string, FieldOption[]>)[dependentValue]
-          } else {
-            // Opciones por defecto o vacías si el valor dependiente no existe o no tiene opciones
-            options = []
-          }
-        }
-        // El resto del case "select" (SelectTrigger, SelectContent, etc.) permanece igual
         fieldElement = (
           <Select
             value={value || ""}
             onValueChange={(val) => handleStateChange(path, val)}
-            disabled={field.disabled || options.length === 0} // Deshabilitar si no hay opciones
+            disabled={field.disabled}
             required={field.required}
           >
             <SelectTrigger id={id} className="w-full">
-              <SelectValue
-                placeholder={
-                  field.placeholder ||
-                  (options.length === 0 && selectField.dependsOn
-                    ? "Selecciona primero el campo anterior"
-                    : "Seleccionar...")
-                }
-              />
+              <SelectValue placeholder={field.placeholder || "Seleccionar..."} />
             </SelectTrigger>
             <SelectContent>
-              {options.map((opt) => (
+                {selectField.options.map((opt: { value: string | number; label: string }) => (
                 <SelectItem key={opt.value.toString()} value={opt.value.toString()}>
                   {opt.label}
                 </SelectItem>
-              ))}
+                ))}
             </SelectContent>
           </Select>
         )
         break
       }
-      case "file":
-      case "geojson":
-      case "mbtile": {
-        let accept = (field as any).accept
-        if (field.type === "geojson" && !accept) accept = ".geojson,.json"
-        if (field.type === "mbtile" && !accept) accept = ".mbtiles"
+      case "file": {
+        const accept = (field as any).accept
         fieldElement = (
           <Input
             id={id}
@@ -261,7 +269,7 @@ export function DynamicForm({
             disabled={field.disabled}
             required={field.required}
             onChange={(e) => handleStateChange(path, e.target.files ? e.target.files[0] : null)}
-            className="pt-1.5" // Ajuste para alinear mejor el texto del botón de archivo
+            className="pt-1.5"
           />
         )
         break
@@ -314,9 +322,12 @@ export function DynamicForm({
         const subFormEntries = (getByPath(formData, path) as any[]) || []
 
         return (
-          <Card className={cn("mt-2 border-dashed", field.className)}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-4">
-              <CardTitle className="text-lg">{field.label}</CardTitle>
+          <div className={cn("space-y-4", field.className)}>
+            <div className="flex items-center justify-between">
+              <Label className="text-base font-medium">
+                {field.label}
+                {field.required && <span className="text-destructive">*</span>}
+              </Label>
               <Button
                 type="button"
                 variant="outline"
@@ -327,36 +338,65 @@ export function DynamicForm({
                 <PlusCircle className="mr-2 h-4 w-4" />
                 {subFormField.addButtonLabel || "Añadir"}
               </Button>
-            </CardHeader>
-            <CardContent className="px-4 pb-4">
-              {field.description && <p className="text-sm text-muted-foreground mb-2">{field.description}</p>}
-              {subFormEntries.length === 0 && <p className="text-sm text-muted-foreground py-2">No hay entradas.</p>}
-              {subFormEntries.map((entryData, index) => (
-                <Card key={`${id}-entry-${index}`} className="mb-4 overflow-hidden">
-                  <CardHeader className="flex flex-row items-center justify-between py-2 px-3 bg-muted/50">
-                    <h4 className="font-medium text-sm">
-                      {subFormField.entryLabel
-                        ? subFormField.entryLabel(index, entryData)
-                        : `${field.label} #${index + 1}`}
-                    </h4>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeSubFormEntry(path, index)}
-                      disabled={field.disabled}
-                      aria-label={`Eliminar ${field.label} #${index + 1}`}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </CardHeader>
-                  <CardContent className="p-3 space-y-4">
-                    {subFormField.fields.map((subField) => renderField(subField, `${path}.${index}`))}
-                  </CardContent>
-                </Card>
-              ))}
-            </CardContent>
-          </Card>
+            </div>
+
+            {field.description && <p className="text-sm text-muted-foreground">{field.description}</p>}
+
+            {subFormEntries.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center border border-dashed rounded-lg">
+                No hay entradas. Haz clic en "Añadir" para crear una nueva entrada.
+              </p>
+            ) : (
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-200">
+                        {subFormField.fields.map((subField: FieldSchema) => (
+                        <th
+                          key={subField.name}
+                          className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-r border-gray-200 last:border-r-0"
+                        >
+                          {subField.label}
+                          {subField.required && <span className="text-destructive ml-1">*</span>}
+                        </th>
+                        ))}
+                      <th className="px-4 py-3 text-center text-sm font-medium text-gray-700 w-16">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {subFormEntries.map((_, rowIndex) => (
+                        <tr
+                        key={`${id}-row-${rowIndex}`}
+                        className={cn(
+                          "border-b border-gray-200 last:border-b-0",
+                          rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50/50",
+                        )}
+                        >
+                        {subFormField.fields.map((subField: FieldSchema) => (
+                          <td key={subField.name} className="px-4 py-2 border-r border-gray-200 last:border-r-0">
+                          {renderTableCell(subField, path, rowIndex)}
+                          </td>
+                        ))}
+                        <td className="px-4 py-2 text-center">
+                          <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeSubFormEntry(path, rowIndex)}
+                          disabled={field.disabled}
+                          className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                          aria-label={`Eliminar fila ${rowIndex + 1}`}
+                          >
+                          <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </td>
+                        </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         )
       }
       default:
@@ -394,11 +434,11 @@ export function DynamicForm({
 
   return (
     <form onSubmit={handleSubmit} className={cn("space-y-6", className)}>
-      {schema.map((field) => (
-        <div key={field.name}>{renderField(field)}</div>
+      {schema.map((field: FieldSchema) => (
+      <div key={field.name}>{renderField(field)}</div>
       ))}
       <Button type="submit" className="w-full sm:w-auto">
-        {submitButtonText}
+      {submitButtonText}
       </Button>
     </form>
   )

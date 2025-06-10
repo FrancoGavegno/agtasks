@@ -1,0 +1,36 @@
+{
+  "type": "object",
+  "properties": {
+    "responsable": {
+      "type": "string",
+      "title": "Responsable",
+      "enum": ["usuario1@gmail.com", "usuario2@gmail.com", "usuario3@gmail.com"]
+    },
+    "contratista": {
+      "type": "string",
+      "title": "Contratista",
+      "enum": ["usuario1@gmail.com", "usuario2@gmail.com", "usuario3@gmail.com"]
+    },
+    "comoLlegar": {
+      "type": "string",
+      "title": "Como llegar",
+      "format": "uri"
+    },
+    "mapaDeFondo": {
+      "type": "string",
+      "title": "Mapa de fondo",
+      "format": "uri"
+    },
+    "formularioTipo": {
+      "type": "string",
+      "title": "Tipo de formulario",
+      "enum": ["Control de Cosecha", "Control de Emergencia", "Estado de Cultivos", "Estimacion de Rindes", "Muestreos Simplificado", "Plagas y Enfermedades"]
+    },
+    "formularioUrl": {
+      "type": "string",
+      "title": "Formulario",
+      "format": "uri"
+    }
+  },
+  "required": ["responsable", "contratista", "comoLlegar", "mapaDeFondo", "formulario"]
+}

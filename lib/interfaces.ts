@@ -358,3 +358,12 @@ export interface JiraSubtaskResponse {
   self: string;
   [key: string]: any;
 }
+
+
+export interface PaginatedResponse {
+  services: Service[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}

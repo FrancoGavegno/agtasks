@@ -618,3 +618,4 @@ export const getTask = async (taskId: string): Promise<ServiceTask> => {
     taskType: taskResponse.data?.taskType ?? "",
   } as ServiceTask;
 }
+
