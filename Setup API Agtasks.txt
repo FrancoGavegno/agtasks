@@ -1,0 +1,52 @@
+query MyQuery {
+  listProjects {
+    items {
+      domainId
+      areaId
+      sourceSystem
+      projectId
+      queueId
+      name
+      requestTypeId
+      language
+    }
+  }
+}
+
+
+{
+  "data": {
+    "listProjects": {
+      "items": [
+        {
+          "domainId": "8644",
+          "areaId": "8645",
+          "sourceSystem": "jira",
+          "projectId": "107",
+          "queueId": 148,
+          "name": "01 - Tandil",
+          "requestTypeId": "153",
+          "language": "ES"
+        },
+        {
+          "domainId": "8644",
+          "areaId": "8656",
+          "sourceSystem": "jira",
+          "projectId": "140",
+          "queueId": 181,
+          "name": "09 - Juarez",
+          "requestTypeId": "252",
+          "language": "ES"
+        }
+      ]
+    }
+  }
+}
+
+mutation MyMutation {
+  createProject(
+    input: {domainId: "8644", areaId: "8656", language: "ES", sourceSystem: "jira", projectId: "140", queueId: 181, name: "09 - Juarez", deleted: false, requestTypeId: "252"}
+  ) {
+    id
+  }
+}
