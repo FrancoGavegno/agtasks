@@ -1,11 +1,6 @@
 {
   "type": "object",
   "properties": {
-    "responsable": {
-      "type": "string",
-      "title": "Responsable",
-      "enum": ["usuario1@gmail.com", "usuario2@gmail.com", "usuario3@gmail.com"]
-    },
     "mapaDeFondo": {
       "type": "string",
       "title": "Mapa de fondo",

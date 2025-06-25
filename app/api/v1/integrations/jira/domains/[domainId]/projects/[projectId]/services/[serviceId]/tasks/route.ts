@@ -17,18 +17,9 @@ export async function GET(req: Request, { params }: { params: { serviceId: strin
             );
         }
         const result = await listTasksbyService(serviceId, [
-            "customfield_10371"
+            "customfield_10371", // Task Type
+            "customfield_10140" // Task Detail
         ]);
-
-        // const resultWithCustomFields = await listTasksbyService("PROJ-123", [
-        //     "customfield_10010",
-        //     "customfield_10020"
-        // ]);
-        // if (resultWithCustomFields.success) {
-        //     console.log("Subtasks con custom fields:", resultWithCustomFields.data?.subtasks);
-        // } else {
-        //     console.error("Error:", resultWithCustomFields.error);
-        // }
 
         return NextResponse.json(result, { status: 200 });
     } catch (error) {

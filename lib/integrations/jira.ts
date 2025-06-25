@@ -6,255 +6,22 @@ import type {
   // JiraResponse,
   // JiraRequestData,
   // JiraRequest,
+  // JiraCustomerRequestData,
+  // JiraServiceRequest,
+  // JiraRequest,
   QueueIssueResponse,
   JiraProjectRequest,
   JiraProjectResponse,
-  // JiraCustomerRequestData,
-  JiraServiceRequest,
   JiraServiceResponse,
   JiraSubtaskResponse,
-  JiraRequest,
 } from "@/lib/interfaces"
-
-interface JiraDescriptionFields {
-  description: string;
-  descriptionPlain: string;
-}
 
 import {
   type CreateServiceFormValues,
   type SelectedLotDetail
 } from "@/components/projects/validation-schemas"
 
-const JIRA_API_URL = process.env.NEXT_PUBLIC_JIRA_API_URL
-const JIRA_API_TOKEN = process.env.NEXT_PUBLIC_JIRA_API_TOKEN
-
-export const jiraApi = axios.create({
-  baseURL: JIRA_API_URL,
-  headers: {
-    "Authorization": `Basic ${JIRA_API_TOKEN}`,
-    "Accept": "application/json",
-    "Content-Type": "application/json",
-  },
-  timeout: 3600000, // Timeout de 3600 segundos para evitar solicitudes eternas
-})
-
-// Interceptor opcional para manejar errores globalmente o añadir logging
-jiraApi.interceptors.response.use(
-  (response: AxiosResponse) => response,
-  (error: AxiosError) => {
-    console.error("Jira API request failed:", error)
-    throw error
-  },
-)
-
-
-// Genera campos Description de Service y Tasks en Jira
-export const generateDescriptionField = async (data: CreateServiceFormValues): Promise<JiraDescriptionFields> => {
-  const totalArea: number | string = data.selectedLots.reduce((sum: number, lot: SelectedLotDetail) => sum + (lot.hectares || 0), 0) || '0';
-
-  const fieldsTable: string = `
-  ||Lote||Hectáreas||Cultivo||Híbrido||
-  ${data.selectedLots.map((lot: SelectedLotDetail) => `| ${lot.fieldName || '-'} | ${lot.hectares || '-'} | ${lot.cropName || '-'} | ${lot.hybridName || '-'} |
-  `).join('')}
-  `;
-
-  const description: string = `
-  *Espacio de trabajo:* ${data.workspaceName || 'No especificado'}
-  *Campaña:* ${data.campaignName || 'No especificado'} 
-  *Establecimiento:* ${data.establishmentName || 'No especificado'}
-  *Hectáreas totales:* ${totalArea} h
-  *Lotes:*
-  ${fieldsTable}
-  `;
-
-  // Formato de lista vertical (más legible para muchos lotes)
-  const descriptionPlain: string = `
-  • Espacio de trabajo: ${data.workspaceName || 'No especificado'}
-  • Campaña: ${data.campaignName || 'No especificado'}
-  • Establecimiento: ${data.establishmentName || 'No especificado'}
-  • Hectáreas totales: ${totalArea} h
-  • Lotes:
-  ${data.selectedLots.map((lot: SelectedLotDetail, index: number) =>
-    `Lote ${index + 1}:
-     - Nombre: ${lot.fieldName || '-'}
-     - Hectáreas: ${lot.hectares || '-'}
-     - Cultivo: ${lot.cropName || '-'}
-     - Híbrido: ${lot.hybridName || '-'}`
-  ).join('\n\n')}
-  `;
-
-  return {
-    description,
-    descriptionPlain
-  };
-};
-
-// Request participants
-async function processParticipants(participants: string[]): Promise<string[]> {
-  const participantsToSubmitInJira: string[] = []
-
-  for (const participant of participants) {
-    try {
-      // Usar GetCustomer para buscar el cliente existente
-      // const customerResult = await getCustomer(participant);
-      // if (customerResult.success && customerResult.data) {
-      //   participantsToSubmitInJira.push(customerResult.data.accountId);
-      // } else {
-
-      // Crear cliente si no existe usando CreateCustomer
-      const customerData: JiraCustomerData = {
-        displayName: participant,
-        email: participant,
-      }
-
-      const createCustomerResult = await createCustomer(customerData)
-
-      if (createCustomerResult.success && createCustomerResult.data) {
-        participantsToSubmitInJira.push(createCustomerResult.data.accountId)
-      } else {
-        throw new Error(
-          `Failed to create customer for participant: ${participant}. Error: ${createCustomerResult.error}`,
-        )
-      }
-
-      //}
-    } catch (error) {
-      console.error("Error processing participant:", participant, error)
-      // Opcional: continuar incluso si un participante falla
-      continue
-    }
-  }
-
-  return participantsToSubmitInJira
-}
-
-// Services  
-export async function listServicesByProject(domainId: string, serviceDeskId: string, queueId: string): Promise<JiraResponse> {
-  try {
-    const endpoint = `/rest/servicedeskapi/servicedesk/${serviceDeskId}/queue/${queueId}/issue`
-    const response = await jiraApi.get<QueueIssueResponse>(endpoint)
-    // console.log('Jira queue issues retrieved successfully:', response.status);
-    return {
-      success: true,
-      data: response.data,
-    }
-  } catch (error) {
-    let errorMessage: string
-
-    if (axios.isAxiosError(error)) {
-      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
-    } else {
-      errorMessage = "Unknown error occurred while fetching Jira queue issues"
-    }
-    return {
-      success: false,
-      error: errorMessage,
-    }
-  }
-}
-
-export async function createService(
-  serviceName: string,
-  jiraDescription: string,
-  userEmail: string,
-  serviceDeskId: string = '140', // '107'
-  requestTypeId: string = '252' // 153 = 01-Tandil 
-): Promise<JiraServiceResponse> {
-
-  try {
-    const endpoint = "/rest/servicedeskapi/request";
-
-    const payload = {
-      serviceDeskId: serviceDeskId,
-      requestTypeId: requestTypeId,
-      requestFieldValues: {
-        summary: serviceName,
-        description: jiraDescription,
-      },
-      raiseOnBehalfOf: userEmail
-    };
-
-    const response = await jiraApi.post(endpoint, payload);
-
-    return {
-      success: true,
-      data: response.data,
-    };
-  } catch (error) {
-    let errorMessage: string;
-
-    if (axios.isAxiosError(error)) {
-      const errorData = error.response?.data;
-      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${errorData?.errorMessages?.join(', ') || errorData?.message || error.message
-        }`;
-    } else {
-      errorMessage = "Unknown error occurred while creating Jira service";
-    }
-
-    console.error("Error creating Jira service:", errorMessage);
-    return {
-      success: false,
-      error: errorMessage,
-    };
-  }
-}
-
-export async function createSubtask(
-  parentIssueKey: string,
-  summary: string,
-  userEmail: string,
-  description: string, // Ahora recibe el texto en formato Wiki
-  agtasksUrl: string,
-  taskType: string
-): Promise<JiraSubtaskResponse | void> {
-
-  const payload = {
-    fields: {
-      project: {
-        key: parentIssueKey.split('-')[0]
-      },
-      summary: summary,
-      description: {
-        type: "doc",
-        version: 1,
-        content: [
-          {
-            type: "paragraph",
-            content: [
-              {
-                type: "text",
-                text: description // Texto plano con formato Wiki
-              }
-            ]
-          }
-        ]
-      },
-      issuetype: {
-        name: "Sub-task"
-      },
-      parent: {
-        key: parentIssueKey
-      },
-      customfield_10305: userEmail,
-      customfield_10338: agtasksUrl,
-      customfield_10371: taskType
-    }
-  }
-
-  try {
-    const endpoint = `${JIRA_API_URL}/rest/api/3/issue`
-    const response = await jiraApi.post(endpoint, payload)
-    return response.data
-  } catch (err) {
-    console.error("Error creating subtask:", err)
-    throw err
-  }
-}
-
-// import { AxiosError } from 'axios';
-
-// Definición de tipos
+// Interfaces 
 interface JiraStatus {
   name: string;
 }
@@ -296,171 +63,32 @@ interface ListTasksResult {
   subtasks: SubtaskResult[];
 }
 
-export async function listTasksbyService(
-  issueIdOrKey: string,
-  customFieldsToFetch: string[] = []
-): Promise<JiraResponse<ListTasksResult>> {
-  try {
-    // 1. Obtener detalles del Customer Request
-    const issueEndpoint = `/rest/api/3/issue/${issueIdOrKey}`;
-    const issueResponse = await jiraApi.get<JiraIssue>(issueEndpoint);
-    const issueData = issueResponse.data;
-
-    // 2. Extraer subtareas básicas
-    const subtasks = issueData.fields?.subtasks || [];
-
-    // 3. Obtener detalles completos de cada subtarea (incluyendo custom fields si se especifican)
-    const enrichedSubtasks = await Promise.all(
-      subtasks.map(async (subtask) => {
-        let customFieldsData: Record<string, any> = {};
-
-        if (customFieldsToFetch.length > 0) {
-          const fieldsQuery = customFieldsToFetch.join(',');
-          const response = await jiraApi.get<JiraSubtask>(
-            `/rest/api/3/issue/${subtask.key}?fields=${fieldsQuery}`
-          );
-          customFieldsData = response.data.fields;
-        }
-
-        return {
-          key: subtask.key,
-          summary: subtask.fields.summary,
-          status: subtask.fields.status.name,
-          customFields: customFieldsData
-        };
-      })
-    );
-
-    const result: ListTasksResult = {
-      issueKey: issueData.key,
-      issueSummary: issueData.fields.summary,
-      subtasks: enrichedSubtasks,
-    };
-
-    return {
-      success: true,
-      data: result,
-    };
-  } catch (error) {
-    let errorMessage: string
-    if (axios.isAxiosError(error)) {
-      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
-    } else {
-      errorMessage = "Unknown error occurred while fetching Jira request tasks"
-    }
-    return {
-      success: false,
-      error: errorMessage,
-    }
-  }
+interface JiraDescriptionFields {
+  description: string;
+  descriptionPlain: string;
 }
 
-// export async function listTasksbyService(issueIdOrKey: string): Promise<JiraResponse> {
-//   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-get
+const JIRA_API_URL = process.env.NEXT_PUBLIC_JIRA_API_URL
+const JIRA_API_TOKEN = process.env.NEXT_PUBLIC_JIRA_API_TOKEN
 
-//   try {
-//     // 1. Obtener detalles del Customer Request
-//     const issueEndpoint = `/rest/api/3/issue/${issueIdOrKey}`
-//     const issueResponse = await jiraApi.get(issueEndpoint)
-//     const issueData = issueResponse.data
+export const jiraApi = axios.create({
+  baseURL: JIRA_API_URL,
+  headers: {
+    "Authorization": `Basic ${JIRA_API_TOKEN}`,
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+  },
+  timeout: 3600000, // Timeout de 3600 segundos para evitar solicitudes eternas
+})
 
-//     // 2. Extraer subtareas
-//     const subtasks = issueData.fields?.subtasks || []
-
-//     // console.log("subtasks: ", subtasks)
-
-//     const result = {
-//       issueKey: issueData.key,
-//       issueSummary: issueData.fields?.summary,
-//       subtasks: subtasks.map((subtask: { key: string; fields: { summary: string; status: { name: string } } }) => ({
-//         key: subtask.key,
-//         summary: subtask.fields.summary,
-//         status: subtask.fields.status.name,
-//       })),
-//     }
-
-//     // 2. Recorrer las subtasks y obtener sus campos
-//     const subtasksDetails = await Promise.all(
-//       issueData.fields.subtasks.map(async (subtask) => {
-//         const response = await jiraApi.get(
-//           `/rest/api/3/issue/${subtask.key}?fields=customfield_12345,customfield_67890`
-//         );
-//         return response.data;
-//       }
-//       );
-
-
-//     return {
-//       success: true,
-//       data: result,
-//     }
-//   } catch (error) {
-//     let errorMessage: string
-
-//     if (axios.isAxiosError(error)) {
-//       errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
-//     } else {
-//       errorMessage = "Unknown error occurred while fetching Jira request tasks"
-//     }
-//     return {
-//       success: false,
-//       error: errorMessage,
-//     }
-//   }
-// }
-
-export async function getIssue(issueIdOrKey: string): Promise<JiraResponse> {
-  try {
-    const endpoint = `/rest/api/3/issue/${issueIdOrKey}`
-    const response = await jiraApi.get(endpoint)
-
-    return {
-      success: true,
-      data: response.data,
-    }
-  } catch (error) {
-    let errorMessage: string
-
-    if (axios.isAxiosError(error)) {
-      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
-    } else {
-      errorMessage = "Unknown error occurred while fetching Jira issue"
-    }
-
-    return {
-      success: false,
-      error: errorMessage,
-    }
-  }
-}
-
-export async function createCustomer(customerData: JiraCustomerData): Promise<JiraResponse> {
-  try {
-    const response = await jiraApi.post("/rest/servicedeskapi/customer", customerData)
-    // console.log('Jira customer created successfully:', response.status);
-
-    return {
-      success: true,
-      data: response.data,
-    }
-  } catch (error) {
-    let errorMessage: string
-
-    if (axios.isAxiosError(error)) {
-      // Manejo específico de errores de Axios
-      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
-    } else {
-      // Manejo de errores genéricos
-      errorMessage = "Unknown error occurred while creating Jira customer"
-    }
-
-    // console.error('Error creating Jira customer:', errorMessage);
-    return {
-      success: false,
-      error: errorMessage,
-    }
-  }
-}
+// Interceptor opcional para manejar errores globalmente o añadir logging
+jiraApi.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  (error: AxiosError) => {
+    console.error("Jira API request failed:", error)
+    throw error
+  },
+)
 
 // Projects 
 export async function createProject(projectData: JiraProjectRequest): Promise<JiraResponse> {
@@ -489,5 +117,405 @@ export async function createProject(projectData: JiraProjectRequest): Promise<Ji
   }
 }
 
+// Service y Task Description Field Formatting
+export const generateDescriptionField = async (data: CreateServiceFormValues): Promise<JiraDescriptionFields> => {
+  const totalArea: number | string = data.selectedLots.reduce((sum: number, lot: SelectedLotDetail) => sum + (lot.hectares || 0), 0) || '0';
 
+  const fieldsTable: string = `
+  ||Lote||Hectáreas||Cultivo||Híbrido||
+  ${data.selectedLots.map((lot: SelectedLotDetail) => `| ${lot.fieldName || '-'} | ${lot.hectares || '-'} | ${lot.cropName || '-'} | ${lot.hybridName || '-'} |
+  `).join('')}
+  `;
 
+  const description: string = `
+  *Espacio de trabajo:* ${data.workspaceName || 'No especificado'}
+  *Campaña:* ${data.campaignName || 'No especificado'} 
+  *Establecimiento:* ${data.establishmentName || 'No especificado'}
+  *Hectáreas totales:* ${totalArea} h
+  *Lotes:*
+  ${fieldsTable}
+  `;
+
+  // Formato de lista vertical (más legible para muchos lotes)
+  const descriptionPlain: string = `
+  • Espacio de trabajo: ${data.workspaceName || 'No especificado'}
+  • Campaña: ${data.campaignName || 'No especificado'}
+  • Establecimiento: ${data.establishmentName || 'No especificado'}
+  • Hectáreas totales: ${totalArea} h
+  • Lotes:
+  ${data.selectedLots.map((lot: SelectedLotDetail, index: number) =>
+    `Lote ${index + 1}:
+     - Nombre: ${lot.fieldName || '-'}
+     - Hectáreas: ${lot.hectares || '-'}
+     - Cultivo: ${lot.cropName || '-'}
+     - Híbrido: ${lot.hybridName || '-'}`
+  ).join('\n\n')}
+  `;
+
+  return {
+    description,
+    descriptionPlain
+  };
+};
+
+// Service Desk Customers
+export async function getCustomer(email: string, serviceDeskId: string): Promise<JiraResponse> {
+  try {
+    // const endpoint = `/rest/servicedeskapi/customer`
+    const endpoint = `/rest/servicedeskapi/servicedesk/${serviceDeskId}/customer`
+    const response = await jiraApi.get(endpoint, {
+      params: {
+        query: encodeURIComponent(email),
+        start: 0,
+        limit: 5
+      }
+    })
+
+    // Check if customer exists in the response
+    const customers = response.data.values || []
+    const customer = customers.find((c: any) => c.emailAddress === email)
+
+    if (customer) {
+      return {
+        success: true,
+        data: customer
+      }
+    }
+
+    return {
+      success: false,
+      error: "Customer not found"
+    }
+  } catch (error) {
+    let errorMessage: string
+
+    if (axios.isAxiosError(error)) {
+      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
+    } else {
+      errorMessage = "Unknown error occurred while fetching Jira customer"
+    }
+
+    return {
+      success: false,
+      error: errorMessage
+    }
+  }
+}
+
+export async function createCustomer(customerData: JiraCustomerData, serviceDeskId: string): Promise<JiraResponse> {
+  try {
+    // const endpoint = "/rest/servicedeskapi/customer"
+    const endpoint = `/rest/servicedeskapi/servicedesk/${serviceDeskId}/customer`
+    const response = await jiraApi.post(endpoint, customerData)
+
+    return {
+      success: true,
+      data: response.data,
+    }
+  } catch (error) {
+    let errorMessage: string
+
+    if (axios.isAxiosError(error)) {
+      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
+    } else {
+      errorMessage = "Unknown error occurred while creating Jira customer"
+    }
+
+    return {
+      success: false,
+      error: errorMessage,
+    }
+  }
+}
+
+// Protocol Templates & Services
+export async function listServicesByProject(
+  domainId: string, 
+  serviceDeskId: string, 
+  queueId: string
+): Promise<JiraResponse> {
+  try {
+    const endpoint = `/rest/servicedeskapi/servicedesk/${serviceDeskId}/queue/${queueId}/issue`
+    const response = await jiraApi.get<QueueIssueResponse>(endpoint)
+    
+    return {
+      success: true,
+      data: response.data,
+    }
+  } catch (error) {
+    let errorMessage: string
+
+    if (axios.isAxiosError(error)) {
+      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
+    } else {
+      errorMessage = "Unknown error occurred while fetching Jira queue issues"
+    }
+    return {
+      success: false,
+      error: errorMessage,
+    }
+  }
+}
+
+export async function createService(
+  serviceName: string,
+  jiraDescription: string,
+  userEmail: string,
+  serviceDeskId: string,
+  requestTypeId: string 
+): Promise<JiraServiceResponse> {
+  try {
+    const endpoint = "/rest/servicedeskapi/request";
+
+    const payload = {
+      serviceDeskId: parseInt(serviceDeskId, 10),
+      requestTypeId: parseInt(requestTypeId, 10),
+      requestFieldValues: {
+        summary: serviceName,
+        description: jiraDescription,
+      },
+      raiseOnBehalfOf: userEmail
+    };
+
+    // console.log('Creating Jira service with payload:', JSON.stringify(payload, null, 2));
+
+    const response = await jiraApi.post(endpoint, payload);
+    // console.log('Jira service created successfully:', response.data);
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    let errorMessage: string;
+    let errorDetails: Record<string, unknown> = {};
+    
+    if (axios.isAxiosError(error)) {
+      errorDetails = {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers
+      };
+    }
+
+    if (axios.isAxiosError(error)) {
+      const errorData = error.response?.data;
+      errorDetails = {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: errorData,
+        headers: error.response?.headers
+      };
+      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${errorData?.errorMessages?.join(', ') || errorData?.message || error.message}`;
+    } else {
+      errorMessage = "Unknown error occurred while creating Jira service";
+    }
+
+    console.error("Error creating Jira service:", {
+      errorMessage,
+      errorDetails,
+      originalError: error
+    });
+
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+}
+
+// Tasks
+export async function createSubtask(
+  parentIssueKey: string,
+  summary: string,
+  userEmail: string,
+  description: string,
+  agtasksUrl: string,
+  taskType: string,
+  serviceDeskId: string
+): Promise<JiraSubtaskResponse | void> {
+  try {
+    // Create the subtask
+    const payload = {
+      fields: {
+        project: {
+          key: parentIssueKey.split('-')[0]
+        },
+        summary: summary,
+        description: {
+          type: "doc",
+          version: 1,
+          content: [
+            {
+              type: "paragraph",
+              content: [
+                {
+                  type: "text",
+                  text: description
+                }
+              ]
+            }
+          ]
+        },
+        issuetype: {
+          name: "Sub-task"
+        },
+        parent: {
+          key: parentIssueKey
+        },
+        customfield_10305: userEmail,
+        customfield_10338: agtasksUrl,
+        customfield_10371: taskType,        
+      }
+    }
+
+    const endpoint = `${JIRA_API_URL}/rest/api/3/issue`
+    const response = await jiraApi.post(endpoint, payload)
+    const subtaskKey = response.data.key
+    
+    if (userEmail !== ""){    
+      // let participantsToSubmitInJira: string[] = []
+      let customerId: string = ""
+
+      // Usar GetCustomer para buscar el cliente existente
+      const customerResult = await getCustomer(userEmail, serviceDeskId);
+      
+      if (customerResult.success && customerResult.data) {
+        customerId = customerResult.data.accountId
+        // participantsToSubmitInJira.push(customerResult.data.accountId);
+
+        console.log("Encontré este customer: ", userEmail)
+      } else {
+
+        // Crear cliente si no existe usando CreateCustomer
+        const customerData: JiraCustomerData = {
+          displayName: encodeURIComponent(userEmail),
+          email: encodeURIComponent(userEmail),
+        }
+
+        const createCustomerResult = await createCustomer(customerData, serviceDeskId)
+        if (createCustomerResult.success && createCustomerResult.data) {
+          // participantsToSubmitInJira.push(createCustomerResult.data.accountId)
+          customerId = customerResult.data.accountId
+
+          console.log("Tuve que crear este customer: ", userEmail)
+        } else {
+          throw new Error(
+            `Failed to create customer for participant: ${userEmail}. Error: ${createCustomerResult.error}`,
+          )
+        }
+
+      }
+
+      if (customerId !== "") {
+        const participantEndpoint = `/rest/servicedeskapi/request/${subtaskKey}/participant`
+        const participantPayload = {
+          accountIds: customerId
+        }
+
+        await jiraApi.post(participantEndpoint, participantPayload)
+
+      }
+
+      // const participants = await processParticipants([userEmail], serviceDeskId)
+      
+      // if (participants.length > 0) {
+      //   const participantEndpoint = `/rest/servicedeskapi/request/${subtaskKey}/participant`
+      //   const participantPayload = {
+      //     accountIds: participants
+      //   }
+      //   await jiraApi.post(participantEndpoint, participantPayload)
+      // }
+
+    }
+
+    return response.data
+  } catch (err) {
+    console.error("Error creating subtask:", err)
+    throw err
+  }
+}
+
+export async function listTasksbyService(
+  issueIdOrKey: string,
+  customFieldsToFetch: string[] = []
+): Promise<JiraResponse<ListTasksResult>> {
+  try {
+    const endpoint = `/rest/api/3/issue/${issueIdOrKey}`
+    const response = await jiraApi.get<JiraIssue>(endpoint)
+    
+    const issueData = response.data
+    const subtasks = issueData.fields?.subtasks || []
+
+    const enrichedSubtasks = await Promise.all(
+      subtasks.map(async (subtask) => {
+        let customFieldsData: Record<string, any> = {}
+
+        if (customFieldsToFetch.length > 0) {
+          const fieldsQuery = customFieldsToFetch.join(',')
+
+          const response = await jiraApi.get<JiraSubtask>(
+            `/rest/api/3/issue/${subtask.key}?fields=${fieldsQuery}`
+          )
+          
+          customFieldsData = response.data.fields
+        }
+
+        return {
+          key: subtask.key,
+          summary: subtask.fields.summary,
+          status: subtask.fields.status.name,
+          customFields: customFieldsData
+        }
+      })
+    );
+
+    const result: ListTasksResult = {
+      issueKey: issueData.key,
+      issueSummary: issueData.fields.summary,
+      subtasks: enrichedSubtasks,
+    };
+
+    return {
+      success: true,
+      data: result,
+    };
+  } catch (error) {
+    let errorMessage: string
+    if (axios.isAxiosError(error)) {
+      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
+    } else {
+      errorMessage = "Unknown error occurred while fetching Jira request tasks"
+    }
+    return {
+      success: false,
+      error: errorMessage,
+    }
+  }
+}
+
+export async function getIssue(issueIdOrKey: string): Promise<JiraResponse> {
+  try {
+    const endpoint = `/rest/api/3/issue/${issueIdOrKey}`
+    const response = await jiraApi.get(endpoint)
+
+    return {
+      success: true,
+      data: response.data,
+    }
+  } catch (error) {
+    let errorMessage: string
+
+    if (axios.isAxiosError(error)) {
+      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
+    } else {
+      errorMessage = "Unknown error occurred while fetching Jira issue"
+    }
+
+    return {
+      success: false,
+      error: errorMessage,
+    }
+  }
+}

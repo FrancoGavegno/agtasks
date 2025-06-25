@@ -258,7 +258,7 @@ export default function Step3Tasks() {
                         ) : (
                           users.map((user) => (
                             <SelectItem key={user.email} value={user.email}>
-                              {`${user.firstName} ${user.lastName}`.trim()}
+                              {`${user.firstName} ${user.lastName} <${user.email}>`.trim()} 
                             </SelectItem>
                           ))
                           // getUsersByRole(assignment.role).map((user) => (

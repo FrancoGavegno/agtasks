@@ -5,11 +5,11 @@ import {
   useForm, 
   FormProvider 
 } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { 
   useRouter, 
   useParams 
 } from "next/navigation"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -41,7 +41,8 @@ import {
 import {
   createService as createAgService,
   createServiceFields,
-  createServiceTasks
+  createServiceTasks,
+  getProject
 } from "@/lib/services/agtasks"
 import { useTranslations } from "next-intl"
 
@@ -61,18 +62,14 @@ interface Props {
 export default function CreateService({ userEmail }: Props) {
   const router = useRouter()
   const params = useParams()
-  const { locale, project, domain } = params
+  const { locale, domain, project } = params
   const t = useTranslations("CreateService")
-
   // Estado para controlar el paso actual del wizard
   const [currentStep, setCurrentStep] = useState(1)
   // Estado para controlar si se debe hacer scroll al inicio
   const [shouldScrollToTop, setShouldScrollToTop] = useState(false)
-  // Estado para controlar si se está enviando el formulario
   const [isSubmitting, setIsSubmitting] = useState(false)
-  // Añadir un nuevo estado para controlar si se muestra el mensaje de éxito
   const [isSuccess, setIsSuccess] = useState(false)
-  // state to capture the selected protocol
   const [selectedProtocol, setSelectedProtocol] = useState<string>("")
   const [selectedProtocolName, setSelectedProtocolName] = useState<string>("")
 
@@ -104,20 +101,7 @@ export default function CreateService({ userEmail }: Props) {
       case 3:
         const taskAssignments = methods.getValues("taskAssignments")
 
-        // Validar solo las tareas con roles asignados
-        // const tasksWithRoles = taskAssignments.filter((task) => task.role)
-
-        // if (tasksWithRoles.length === 0) {
-        //   // Si no hay tareas con roles, mostrar un mensaje
-        //   toast({
-        //     title: "Asignación incompleta",
-        //     description: "Por favor, asigne al menos un rol a una tarea",
-        //     variant: "destructive",
-        //   })
-        //   return
-        // }
-
-        // Validar solo las tareas con usuario asignado
+        // At least 1 task with user assigned
         const tasksWithUser = taskAssignments.filter((task) => task.assignedTo)
         if (tasksWithUser.length === 0) {
           toast({
@@ -128,22 +112,7 @@ export default function CreateService({ userEmail }: Props) {
           return
         }
 
-        // Validar que todas las tareas con roles tengan usuarios asignados
-        // const incompleteAssignments = tasksWithRoles.filter((task) => !task.assignedTo)
-        // if (incompleteAssignments.length > 0) {
-        //   // Si hay tareas con roles pero sin usuarios, mostrar un mensaje
-        //   toast({
-        //     title: "Asignación incompleta",
-        //     description: "Por favor, asigne usuarios a todas las tareas con roles",
-        //     variant: "destructive",
-        //   })
-        //   return
-        // }
-
-        // Si llegamos aquí, la validación es correcta
         isValid = true
-
-        // Enviar el formulario
         onSubmit(methods.getValues())
         return 
     }
@@ -163,20 +132,43 @@ export default function CreateService({ userEmail }: Props) {
   const onSubmit = async (data: CreateServiceFormValues) => {
     try {
       setIsSubmitting(true);
-
       const serviceName = `${selectedProtocolName} - ${data.workspaceName} - ${data.establishmentName}`;
       const { description, descriptionPlain } = await generateDescriptionField(data);
 
-      const jiraResponse = await createService(serviceName, description, userEmail);
-
+      // if Project exists then set serviceDeskId and requestTypeId
+      let serviceDeskId = "" // "140"
+      let requestTypeId = "" // "252"
+      
+      const res = await getProject(project as string);
+      if (res.id) {
+        serviceDeskId = res.projectId
+        requestTypeId = res.requestTypeId
+      }
+      // console.log(serviceDeskId, requestTypeId)
+    
+      // Create Service in Jira
+      const jiraResponse = await createService(
+        serviceName, 
+        description, 
+        userEmail, 
+        serviceDeskId, 
+        requestTypeId
+      );
       if (!jiraResponse.success || !jiraResponse.data?.issueKey) {
         throw new Error(`Failed to create Jira service: ${jiraResponse.error || 'No issueKey returned'}`);
       }
       const { issueKey } = jiraResponse.data;
-
-      const agResponse = await createAgService(data, project as string, serviceName, issueKey);
+      
+      // Create Service in Agtasks
+      const agResponse = await createAgService(
+        data, 
+        project as string, 
+        serviceName, 
+        issueKey
+      );
       const { id } = agResponse;
 
+      // Create Service Fields in Agtasks 
       await createServiceFields(id, data.selectedLots)
       
       const tasks = data.taskAssignments.map((task) => ({
@@ -188,8 +180,16 @@ export default function CreateService({ userEmail }: Props) {
         description: descriptionPlain,
       }));
 
+      // Create Service Tasks in Agtasks first and then in Jira
       if (tasks.length > 0) {
-        await createServiceTasks(id, tasks, locale as string, domain as string, project as string);
+        await createServiceTasks(
+          id, 
+          tasks, 
+          locale as string, 
+          domain as string, 
+          project as string, 
+          serviceDeskId
+        );
       }
 
       toast({
