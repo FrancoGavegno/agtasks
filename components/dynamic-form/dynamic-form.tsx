@@ -117,7 +117,7 @@ export function DynamicForm({
   schema,
   onSubmit,
   initialData = {},
-  submitButtonText = "Enviar",
+  submitButtonText = "Confirmar",
   className,
 }: DynamicFormProps) {
   const [formData, setFormData] = useState<Record<string, any>>(() => initializeFormData(schema, initialData))
@@ -438,8 +438,9 @@ export function DynamicForm({
 
   return (
     <form onSubmit={handleSubmit} className={cn("space-y-6", className)}>
+      
       {schema.map((field: FieldSchema) => (
-      <div key={field.name}>{renderField(field)}</div>
+        <div key={field.name}>{renderField(field)}</div>
       ))}
       <Button type="submit" className="w-full sm:w-auto">
       {submitButtonText}
