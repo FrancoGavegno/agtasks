@@ -14,6 +14,7 @@ const createProjectBodySchema = z.object({
   language: z.string(),
   sourceSystem: z.string(),
   projectId: z.string(), // relaciona con el proyecto del task manager
+  requestTypeId: z.string(),
   queueId: z.number(),
   name: z.string(),
 });

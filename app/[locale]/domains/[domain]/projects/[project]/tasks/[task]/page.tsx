@@ -7,15 +7,26 @@ import {
 import { useParams } from "next/navigation"
 import type { FieldSchema } from "@/components/dynamic-form/types"
 import { ServiceTask } from "@/lib/interfaces"
-import { getTask } from "@/lib/services/agtasks"
+import {
+    getServiceTask,
+    updateServiceTask
+} from "@/lib/services/agtasks"
 import { DynamicForm } from "@/components/dynamic-form/dynamic-form"
-import { convertJSONSchemaToFields, isJSONSchema } from "@/components/dynamic-form/utils"
+import {
+    convertJSONSchemaToFields,
+    isJSONSchema
+} from "@/components/dynamic-form/utils"
 import { toast } from "@/hooks/use-toast"
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+
+
 export default function TaskPage() {
-    // http://localhost:3000/es/domains/8644/projects/1127f7f0-f21e-4825-b4fd-78dd3344e189/tasks/e4d26f05-96a7-4405-92b7-4e6ea20d6f7e
     const params = useParams()
-    const { task } = params
+    const { locale, task } = params
     const [loadedSchema, setLoadedSchema] = useState<FieldSchema[] | null>(null)
     const [isLoadingSchema, setIsLoadingSchema] = useState(true)
     const [errorSchema, setErrorSchema] = useState<string | null>(null)
@@ -23,7 +34,9 @@ export default function TaskPage() {
 
     useEffect(() => {
         async function fetchTask(task: string) {
-            const taskData = await getTask(task)
+            const taskData = await getServiceTask(task)
+
+            console.log("taskData: ", taskData)
             setTaskData(taskData)
         }
 
@@ -40,12 +53,14 @@ export default function TaskPage() {
                 // console.log("taskType: ", taskData?.taskType)
                 let formType = taskData?.taskType || "administrative"
 
-                const response = await fetch(`/schemas/${formType}.json`)
+                const response = await fetch(`/schemas/${formType}-${locale}.json`)
                 if (!response.ok) {
                     throw new Error(`Error al cargar el esquema: ${response.status} ${response.statusText}`)
                 }
 
                 const rawData = await response.json()
+                // const rawData = taskData?.formSchema; 
+
                 if (!isJSONSchema(rawData)) {
                     throw new Error("El archivo debe seguir el formato JSON Schema estándar")
                 }
@@ -62,29 +77,44 @@ export default function TaskPage() {
         fetchSchema()
     }, [taskData])
 
-    const handleSubmit = (data: Record<string, any>) => {
-        console.log("Datos del formulario:", data)
-        toast({
-            title: "Formulario enviado!",
-            description: "Revisa la consola.",
-            duration: 5000,
-        });
+    const handleSubmit = async (data: Record<string, any>) => {
+        try {
+            // console.log("task: ", task)
+            // console.log("data: ", data)
+
+            const response = await updateServiceTask(task as string, data);
+
+            if (!response.success) {
+                toast({
+                    title: "Error al enviar el formulario",
+                    description: response.error ? response.error.toString() : "Ocurrió un error al intentar actualizar la tarea.",
+                    duration: 5000,
+                    variant: "destructive",
+                });
+                return;
+            }
+
+            toast({
+                title: "Formulario enviado!",
+                description: "La tarea ha sido actualizada",
+                duration: 5000,
+            });
+        } catch (error) {
+            console.error("Error en handleSubmit:", error);
+            toast({
+                title: "Error inesperado",
+                description: error instanceof Error ? error.message : "Ocurrió un error inesperado al enviar el formulario.",
+                duration: 5000,
+                variant: "destructive",
+            });
+        }
     }
 
-    const initialFormValues = {
-        tipo: "Aplicación",
-        responsable: "usuario1@gmail.com",
-        contratista: "usuario2@gmail.com",
-        comoLlegar: "https://maps.google.com/example",
-        mapaDeFondo: "https://example.com/map.png",
-        insumos: [
-            {
-                insumo: "Insumo 1",
-                dosis: 10,
-                unidad: "Kg/Ha",
-                hectareas: 25,
-            },
-        ],
+    // Set Initial Form Values
+    let initialFormValues = {}
+
+    if (typeof taskData?.formData === "string" && taskData.formData) {
+        initialFormValues = JSON.parse(taskData.formData);
     }
 
     if (isLoadingSchema) {
@@ -115,20 +145,55 @@ export default function TaskPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background flex flex-col items-center py-8 px-4">
-            <div className="w-full max-w-4xl">
-                <h1 className="text-3xl font-bold mb-8 text-center text-foreground">
-                    {taskData?.taskName}
-                </h1>
+        <div className="min-h-screen bg-background flex flex-col px-4">
+            <div className="w-full max-w-4xl space-y-6">
 
-                <DynamicForm
-                    schema={loadedSchema}
-                    onSubmit={handleSubmit}
-                    initialData={initialFormValues}
-                    submitButtonText="Guardar Formulario"
-                    className="bg-card p-6 sm:p-8 shadow-xl rounded-xl border"
-                />
+                {/* Encabezado */}
+                <Card className="shadow-none border-none">
+                    <CardHeader>
+                        <CardTitle className="text-2xl font-semibold">
+                            {taskData?.taskName}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4 text-sm">
+                        <h2 className="text-md font-semibold">Description</h2>
+
+                        <ul className="space-y-2">
+                            <li className="space-y-1">
+                                {/* <span className="font-medium text-foreground">Task type:</span> */}
+                                <Label htmlFor="tasktype">Task type <span className="text-destructive">*</span></Label>
+                                <Input
+                                    id="tasktype"
+                                    type="text"
+                                    value={taskData?.taskType}
+                                    disabled
+                                />
+                            </li>
+                            <li className="space-y-1">
+                                {/* <span className="font-medium text-foreground">Assigned to:</span> */}
+                                <Label htmlFor="useremail">Assigned to {/* <span className="text-destructive">*</span> */} </Label>
+                                <Input
+                                    id="useremail"
+                                    type="email"
+                                    value={taskData?.userEmail}
+                                    disabled
+                                />
+                            </li>
+                        </ul>
+
+                        {/* <h2 className="text-md font-semibold pt-2">Information</h2> */}
+                        <DynamicForm
+                            schema={loadedSchema}
+                            initialData={initialFormValues}
+                            onSubmit={handleSubmit}
+                            submitButtonText="Confirmar"
+                            className="space-y-4"
+                        />
+                    </CardContent>
+                </Card>
+
             </div>
         </div>
+
     )
 }

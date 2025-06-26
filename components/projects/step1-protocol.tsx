@@ -1,14 +1,32 @@
 "use client"
 
+import { 
+  useState, 
+  useEffect 
+} from "react"
 import { useFormContext } from "react-hook-form"
 import { Check } from "lucide-react"
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useState, useEffect } from "react"
+import { 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from "@/components/ui/form"
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select"
 import { useParams } from "next/navigation"
 import type { Step1FormValues } from "./validation-schemas"
 import { useServiceForm } from "@/lib/contexts/service-form-context"
-import { Protocol, TaskAssignment } from "@/lib/interfaces"
+import { 
+  Protocol, 
+  TaskAssignment 
+} from "@/lib/interfaces"
 
 interface Props {
   selectedProtocol: string
@@ -32,15 +50,14 @@ export default function Step1Protocol({
   const [protocolTasks, setProtocolTasks] = useState<Record<string, string[]>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  //const protocol = form.watch ? form.watch("protocol") : undefined
-
+  
   // Sync selectedProtocol with form.watch("protocol")
   useEffect(() => {
     const protocol = form.watch("protocol")
     onSelectProtocol(protocol) // Update state when protocol changes
   }, [form.watch("protocol")])
 
-  // Fetch protocols from the domain
+  // Fetch template protocols 
   useEffect(() => {
     const fetchProtocols = async () => {
       try {
@@ -49,6 +66,7 @@ export default function Step1Protocol({
         if (!res.ok) {
           throw new Error(`Error fetching protocols: ${res.status}`)
         }
+        
         const data = await res.json()
         const protocolsData = Array.isArray(data) ? data : []
         setProtocols(protocolsData)
@@ -65,28 +83,23 @@ export default function Step1Protocol({
     }
   }, [domainId])
 
-  // Fetch tasks 
+  // Fetch template tasks for specific protocol 
   const fetchProtocolTasks = async (protocolId: string) => {
     try {
-      // Use the correct API endpoint with parameters from the URL
       const response = await fetch(
         `/api/v1/integrations/jira/domains/${domainId}/projects/${projectId}/services/${protocolId}/tasks`,
       )
-
       if (!response.ok) {
         throw new Error(`Error fetching tasks: ${response.status}`)
       }
-      const data = await response.json()
-      // console.log("subtasks: ", data.data.subtasks)
-
 
       // Extract tasks from the response
+      const data = await response.json()
       if (data && data.success && data.data) {
-        // Extract task names from the response
-        // const tasks = data.data.subtasks?.map((task: any) => task.summary) || []
         const tasks = data.data.subtasks || []
 
-        // Update the protocol tasks state
+        //console.log("fetched tasks...", tasks)
+
         setProtocolTasks((prev) => ({
           ...prev,
           [protocolId]: tasks,
@@ -94,10 +107,12 @@ export default function Step1Protocol({
 
         return tasks
       }
+      
       return []
     } catch (err) {
       console.error(`Failed to fetch tasks for protocol ${protocolId}:`, err)
       setError(`Failed to load tasks for the selected protocol. Please try again later.`)
+      
       return []
     }
   }
@@ -126,6 +141,7 @@ export default function Step1Protocol({
         const newAssignments: TaskAssignment[] = tasks.map((task: any) => ({
           task: task.summary,
           taskType: task.customFields.customfield_10371,
+          taskDetail: task.customFields.customfield_10140,
           role: "",
           assignedTo: "",
         }))
@@ -141,6 +157,7 @@ export default function Step1Protocol({
           const newAssignments: TaskAssignment[] = tasks.map((task: any) => ({
             task: task.summary,
             taskType: task.customFields.customfield_10371,
+            taskDetail: task.customFields.customfield_10140,
             role: "",
             assignedTo: "",
           }))
@@ -207,14 +224,6 @@ export default function Step1Protocol({
               </li>
             ))}
           </ul>
-          {/* <ul className="space-y-2">
-            {protocolTasks[selectedProtocol]?.map((task: any, index: number) => (
-              <li key={index} className="flex items-start space-x-2">
-                <Check className="h-5 w-5 text-green-500 mt-0.5" />
-                <span>{task.summary} - {task.taskType}</span>
-              </li>
-            ))}
-          </ul> */}
         </div>
       ) : (
         selectedProtocol && (

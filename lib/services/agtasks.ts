@@ -1,8 +1,7 @@
 import { Amplify } from "aws-amplify";
 import outputs from "@/amplify_outputs.json";
 import { generateClient } from "aws-amplify/api";
-import type { Schema } from "@/amplify/data/resource";
-
+import { data, type Schema } from "@/amplify/data/resource";
 import type {
   Project,
   Service,
@@ -10,18 +9,13 @@ import type {
   ServiceTask,
   ServiceField
 } from "@/lib/interfaces";
-
 import {
   type CreateServiceFormValues,
   type SelectedLotDetail
 } from "@/components/projects/validation-schemas"
-
 import {
-  createSubtask 
+  createSubtask
 } from "@/lib/integrations/jira"
-
-// import { listFields } from "@/lib/integrations/360";
-
 
 // Amplify configuration - Singleton Client
 let clientInstance: ReturnType<typeof generateClient<Schema>> | null = null;
@@ -58,11 +52,6 @@ export async function createDomainProtocol(
       throw new Error("Failed to create domain protocol");
     }
 
-    // return {
-    //   ...response.data,
-    //   language: response.data.language || "ES", // Default to "ES" if language is undefined
-    // };
-
     return response.data;
   } catch (error) {
     console.error("Error creating domain protocol in Amplify:", error);
@@ -79,12 +68,6 @@ export async function deleteDomainProtocol(domainId: string, protocolId: string)
       throw new Error(`Failed to delete domain protocol with ID ${protocolId}`);
     }
 
-    // const projectData = {
-    //   ...response.data,
-    //   parentId: response.data?.parentId === null ? undefined : response.data?.parentId,
-    // };
-    // return projectData;
-
     return response.data;
   } catch (error) {
     console.error("Error deleting domain protocol from Amplify:", error);
@@ -98,11 +81,6 @@ export async function listDomainProtocols(domainId: string) {
     const response: { data: Schema["DomainProtocol"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.DomainProtocol.list({
       filter: { domainId: { eq: domainId } },
     });
-
-    // return {
-    //   ...response.data,
-    //   parentId: response.data?.parentId === null ? undefined : response.data?.parentId,
-    // };
 
     return response.data;
   } catch (error) {
@@ -293,6 +271,7 @@ export const createProject = async (
     language: string;
     sourceSystem: string;
     projectId: string;
+    requestTypeId: string;
     queueId: number;
     name: string;
   },
@@ -305,6 +284,7 @@ export const createProject = async (
       language: data.language,
       sourceSystem: data.sourceSystem,
       projectId: data.projectId,
+      requestTypeId: data.requestTypeId,
       queueId: data.queueId,
       name: data.name,
       deleted: false,
@@ -376,7 +356,7 @@ export const createService = async (
       campaignId: data.campaign,
       campaignName: data.campaignName,
       farmId: data.establishment,
-      farmName: data.establishmentName,  
+      farmName: data.establishmentName,
       totalArea: totalArea,
       startDate: new Date().toISOString(),
     };
@@ -421,14 +401,18 @@ export const createServiceTasks = async (
   tasks: any[],
   locale: string,
   domain: string,
-  project: string
+  project: string,
+  serviceDeskId: string
 ): Promise<string[]> => {
   try {
     const client = getClient();
     const taskResults = await Promise.all(
       tasks.map(async (task: any) => {
-        // Crear el ServiceTask
-        const response: { data: { id: string } | null; errors?: any[] } = await client.models.ServiceTask.create({
+
+        // Create ServiceTask in Agtasks 
+        const response: {
+          data: { id: string } | null; errors?: any[]
+        } = await client.models.ServiceTask.create({
           serviceId,
           externalTemplateId: task.externalTemplateId,
           taskName: task.taskName,
@@ -442,17 +426,24 @@ export const createServiceTasks = async (
 
         const taskId = response.data.id;
 
-        // Llamar a createSubtask si se proporcionan los parámetros necesarios
+        // Create Subtask in Jira 
         if (task.parentIssueKey && task.description) {
           try {
-            const agtasksUrl = `http://localhost:3000/${locale}/domains/${domain}/projects/${project}/tasks/${taskId}`;
+
+            const baseUrl = process.env.NODE_ENV === 'production'
+              ? process.env.NEXT_PUBLIC_SITE_URL
+              : 'http://localhost:3000'
+
+            const agtasksUrl = `${baseUrl}/${locale}/domains/${domain}/projects/${project}/tasks/${taskId}`;
+
             await createSubtask(
               task.parentIssueKey,
               task.taskName,
               task.userEmail,
               task.description,
               agtasksUrl,
-              task.taskType
+              task.taskType,
+              serviceDeskId
             );
             // console.log(`Jira subtask created for task ${task.taskName}`);
           } catch (error) {
@@ -471,6 +462,48 @@ export const createServiceTasks = async (
   } catch (error) {
     console.error("Error creating service tasks in Amplify:", error);
     throw new Error(`Failed to create service tasks: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+
+// Tasks
+export const getServiceTask = async (taskId: string): Promise<ServiceTask> => {
+  const client = getClient();
+
+  // obtengo ServiceTask
+  const taskResponse: {
+    data: Schema["ServiceTask"]["type"] | null; errors?: any[]
+  } = await client.models.ServiceTask.get({ id: taskId });
+
+  if (!taskResponse.data) {
+    throw new Error(`Task with ID ${taskId} not found`);
+  }
+
+  return {
+    ...taskResponse.data,
+    taskType: taskResponse.data?.taskType ?? "",
+  } as ServiceTask;
+}
+
+export const updateServiceTask = async (
+  taskId: string, 
+  formData: Record<string, any>
+): Promise<{ success: boolean; data?: any; error?: any }> => {
+  const client = getClient();
+
+  try {
+    const response = await client.models.ServiceTask.update({
+      id: taskId,
+      formData: JSON.stringify(formData),
+    });
+
+    if (!response.data) {
+      return { success: false, error: "No se pudo actualizar la tarea" };
+    }
+
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Ocurrió un error al intentar actualizar la tarea: ", error);
+    return { success: false, error };
   }
 };
 
@@ -600,22 +633,4 @@ export const listServicesByProject = async (
     throw new Error(`Failed to fetch services: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
-
-// Tasks
-export const getTask = async (taskId: string): Promise<ServiceTask> => {
-  const client = getClient();
-
-  const taskResponse: {
-    data: Schema["ServiceTask"]["type"] | null; errors?: any[]
-  } = await client.models.ServiceTask.get({ id: taskId });
-
-  if (!taskResponse.data) {
-    throw new Error(`Task with ID ${taskId} not found`);
-  }
-
-  return {
-    ...taskResponse.data,
-    taskType: taskResponse.data?.taskType ?? "",
-  } as ServiceTask;
-}
 
