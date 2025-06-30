@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "properties": {
+    "mapaDeFondo": {
+      "type": "string",
+      "title": "Mapa de fundo",
+      "format": "uri"
+    }
+  },
+  "required": ["responsable", "mapaDeFondo"]
+}

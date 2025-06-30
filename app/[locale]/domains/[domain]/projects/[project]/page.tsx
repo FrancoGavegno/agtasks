@@ -12,15 +12,8 @@ import {
 } from "@/components/ui/breadcrumb"
 import { ProjectPageDetails } from "@/components/projects/project-page"
 
-export default function ProjectPage(
-  // {
-  //   params,
-  // }: {
-  //   params: { domain: string; project: string};
-  // }
-) {
+export default function ProjectPage() {
   const { domain, project } = useParams<{ domain: string, project: string }>();  
-  // const { domain, project } = params
   const t = useTranslations("ProjectPage")
 
   return (

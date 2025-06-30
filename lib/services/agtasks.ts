@@ -1,9 +1,21 @@
 import { Amplify } from "aws-amplify";
 import outputs from "@/amplify_outputs.json";
 import { generateClient } from "aws-amplify/api";
-import type { Schema } from "@/amplify/data/resource";
-import type { Project, Service, Role } from "@/lib/interfaces";
-import { listFields } from "@/lib/integrations/360";
+import { data, type Schema } from "@/amplify/data/resource";
+import type {
+  Project,
+  Service,
+  Role,
+  ServiceTask,
+  ServiceField
+} from "@/lib/interfaces";
+import {
+  type CreateServiceFormValues,
+  type SelectedLotDetail
+} from "@/components/projects/validation-schemas"
+import {
+  createSubtask
+} from "@/lib/integrations/jira"
 
 // Amplify configuration - Singleton Client
 let clientInstance: ReturnType<typeof generateClient<Schema>> | null = null;
@@ -40,11 +52,6 @@ export async function createDomainProtocol(
       throw new Error("Failed to create domain protocol");
     }
 
-    // return {
-    //   ...response.data,
-    //   language: response.data.language || "ES", // Default to "ES" if language is undefined
-    // };
-
     return response.data;
   } catch (error) {
     console.error("Error creating domain protocol in Amplify:", error);
@@ -61,12 +68,6 @@ export async function deleteDomainProtocol(domainId: string, protocolId: string)
       throw new Error(`Failed to delete domain protocol with ID ${protocolId}`);
     }
 
-    // const projectData = {
-    //   ...response.data,
-    //   parentId: response.data?.parentId === null ? undefined : response.data?.parentId,
-    // };
-    // return projectData;
-
     return response.data;
   } catch (error) {
     console.error("Error deleting domain protocol from Amplify:", error);
@@ -80,11 +81,6 @@ export async function listDomainProtocols(domainId: string) {
     const response: { data: Schema["DomainProtocol"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.DomainProtocol.list({
       filter: { domainId: { eq: domainId } },
     });
-
-    // return {
-    //   ...response.data,
-    //   parentId: response.data?.parentId === null ? undefined : response.data?.parentId,
-    // };
 
     return response.data;
   } catch (error) {
@@ -223,8 +219,8 @@ export const createRole = async (data: { name: string; language: string }): Prom
 export const deleteRole = async (roleId: string) => {
   try {
     const client = getClient();
-    const response: { 
-      data: Schema["Role"]["type"] | null; errors?: any[] 
+    const response: {
+      data: Schema["Role"]["type"] | null; errors?: any[]
     } = await client.models.Role.delete({ id: roleId });
     if (!response.data) {
       throw new Error(`Failed to delete role with ID ${roleId}`);
@@ -240,11 +236,11 @@ export const deleteRole = async (roleId: string) => {
 export const listRoles = async (language: string): Promise<Role[]> => {
   try {
     const client = getClient();
-     
-    const response: { data: Schema["Role"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.Role.list({ 
-      filter: { language: { eq: language } }, 
+
+    const response: { data: Schema["Role"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.Role.list({
+      filter: { language: { eq: language } },
     });
-    
+
     return response.data;
   } catch (error) {
     console.error("Error fetching roles from Amplify:", error);
@@ -255,11 +251,11 @@ export const listRoles = async (language: string): Promise<Role[]> => {
 export const listAllRoles = async (): Promise<Role[]> => {
   try {
     const client = getClient();
-    
-    const response: { 
-      data: Schema["Role"]["type"][]; nextToken?: string | null; errors?: any[] 
+
+    const response: {
+      data: Schema["Role"]["type"][]; nextToken?: string | null; errors?: any[]
     } = await client.models.Role.list()
-    
+
     return response.data;
   } catch (error) {
     console.error("Error fetching roles from Amplify:", error);
@@ -270,13 +266,14 @@ export const listAllRoles = async (): Promise<Role[]> => {
 // Projects
 export const createProject = async (
   domainId: string,
-  data: { 
-    areaId: string; 
+  data: {
+    areaId: string;
     language: string;
     sourceSystem: string;
     projectId: string;
-    queueId: number; 
-    name: string;  
+    requestTypeId: string;
+    queueId: number;
+    name: string;
   },
 ) => {
   try {
@@ -287,6 +284,7 @@ export const createProject = async (
       language: data.language,
       sourceSystem: data.sourceSystem,
       projectId: data.projectId,
+      requestTypeId: data.requestTypeId,
       queueId: data.queueId,
       name: data.name,
       deleted: false,
@@ -337,173 +335,170 @@ export const listProjectsByDomain = async (domainId: string): Promise<Project[]>
 };
 
 // Services
-export const createService = async (data: any) => {
+export const createService = async (
+  data: CreateServiceFormValues,
+  projectId: string,
+  serviceName: string,
+  issueKey: string
+) => {
   try {
     const client = getClient();
-    // let totalArea = data.totalArea || 0;
-    // Calcular el área total si hay campos seleccionados
-    // if (data.fields && Array.isArray(data.fields) && data.fields.length > 0) {
-    //   try {
-    //     const fieldsData = await listFields(data.workspaceId, data.campaignId, data.farmId);
-    //     const fieldIds = data.fields.map((field: any) => field.fieldId);
-    //     const selectedFields = fieldsData.filter((field) => fieldIds.includes(field.id.toString()));
-    //     totalArea = selectedFields.reduce((sum: number, field: any) => sum + (field.hectares || 0), 0);
-    //   } catch (error) {
-    //     console.error("Error fetching field data for area calculation:", error);
-    //   }
-    // }
 
-    // Crear el servicio
+    const totalArea: number = data.selectedLots.reduce((sum: number, lot: SelectedLotDetail) => sum + (lot.hectares || 0), 0);
+
     const serviceData = {
-      projectId: data.projectId,
-      serviceName: data.serviceName,
-      // sourceSystem: data.sourceSystem,
-      externalServiceKey: data.externalServiceKey,
-      externalTemplateId: data.externalTemplateId,
-      workspaceId: data.workspaceId,
+      projectId: projectId,
+      serviceName: serviceName,
+      externalServiceKey: issueKey,
+      externalTemplateId: data.protocol,
+      workspaceId: data.workspace,
       workspaceName: data.workspaceName,
-      campaignId: data.campaignId,
+      campaignId: data.campaign,
       campaignName: data.campaignName,
-      farmId: data.farmId,
-      farmName: data.farmName,
-      totalArea: data.totalArea,
-      startDate: data.startDate,
-      endDate: data.endDate,
+      farmId: data.establishment,
+      farmName: data.establishmentName,
+      totalArea: totalArea,
+      startDate: new Date().toISOString(),
     };
 
-    const serviceResponse: { data: Schema["Service"]["type"] | null; errors?: any[] } = await client.models.Service.create(serviceData);
+    const response: { data: Schema["Service"]["type"] | null; errors?: any[] } = await client.models.Service.create(serviceData);
 
-    if (!serviceResponse.data) {
+    if (!response.data) {
       throw new Error("Failed to create service");
     }
 
-    const serviceId = serviceResponse.data.id;
-    //console.log("data.fields: ", data.fields)
-
-    await Promise.all(
-        data.fields.map((field: any) =>
-          client.models.ServiceField.create({
-            serviceId,
-            fieldId: field.fieldId,
-            fieldName: field.fieldName,
-            hectares: field.hectares,
-            crop: field.cropName,
-            hybrid: field.hybridName
-          }),
-        ),
-      );
-
-    // Crear las tareas del servicio
-    if (data.tasks && Array.isArray(data.tasks) && data.tasks.length > 0) {
-      await Promise.all(
-        data.tasks.map((task: any) =>
-          client.models.ServiceTask.create({
-            serviceId,
-            externalTemplateId: task.externalTemplateId,
-            taskName: task.taskName,
-            userEmail: task.userEmail
-            // sourceSystem: task.sourceSystem,
-            // roleId: task.roleId,
-            // roleId: "",
-            // userId: task.userId,
-          }),
-        ),
-      );
-    }
-
-    return serviceResponse.data;
+    return response.data;
   } catch (error) {
     console.error("Error creating service in Amplify:", error);
     throw new Error(`Failed to create service: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
-export const getServiceDetail = async (serviceId: string) => {
+export const createServiceFields = async (serviceId: string, fields: any[]): Promise<void> => {
   try {
     const client = getClient();
-    const serviceResponse: { data: Schema["Service"]["type"] | null; errors?: any[] } = await client.models.Service.get({ id: serviceId });
 
-    if (!serviceResponse.data) {
-      throw new Error(`Service with ID ${serviceId} not found`);
-    }
-
-    const service = serviceResponse.data;
-
-    // Cargar los campos (fields) usando la relación
-    const fieldsResponse = await service.fields();
-    let enrichedFields: Schema["ServiceField"]["type"][] = fieldsResponse.data;
-
-    // Enriquecer los datos de los campos con información de la API de 360
-    try {
-      if (service.workspaceId && service.campaignId && service.farmId && fieldsResponse.data.length > 0) {
-        const fieldsData = await listFields(service.workspaceId, service.campaignId, service.farmId);
-        enrichedFields = fieldsResponse.data.map((field) => {
-          const fieldData = fieldsData.find((f) => f.id.toString() === field.fieldId);
-          if (fieldData) {
-            return {
-              ...field,
-              name: fieldData.name,
-              hectares: fieldData.hectares,
-              crop: fieldData.cropName,
-              hybrid: fieldData.hybridName,
-            };
-          }
-          return field;
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching detailed field information:", error);
-    }
-
-    // Cargar las tareas (tasks) usando la relación
-    const tasksResponse = await service.tasks();
-    const tasks = await Promise.all(
-      tasksResponse.data.map(async (task) => {
-        // const role = await task.role();
-        // const user = await task.user();
-        return task
-        // return {
-        //   id: task.id,
-        //   externalTemplateId: task.externalTemplateId,
-        //   taskName: task.taskName,
-        //   userEmail: task.userEmail
-        //   // sourceSystem: task.sourceSystem,
-        //   // role: role?.data
-        //   //   ? { id: role.data.id, name: role.data.name }
-        //   //   : { id: task.roleId, name: "Unknown Role" },
-        //   // user: user?.data
-        //   //   ? { id: user.data.id, name: user.data.name, email: user.data.email }
-        //   //   : { id: task.userId, name: "Unknown User", email: "" },
-        // };
-      }),
+    await Promise.all(
+      fields.map((field: SelectedLotDetail) =>
+        client.models.ServiceField.create({
+          serviceId,
+          fieldId: field.fieldId,
+          fieldName: field.fieldName,
+          hectares: field.hectares,
+          crop: field.cropName,
+          hybrid: field.hybridName,
+        }),
+      ),
     );
+  } catch (error) {
+    console.error("Error creating service fields in Amplify:", error);
+    throw new Error(`Failed to create service fields: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
 
-    // Calcular el progreso (simplificado)
-    const totalTasks = tasks.length;
-    const completedTasks = 0; // Esto debería venir de un estado real de las tareas
-    const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+export const createServiceTasks = async (
+  serviceId: string,
+  tasks: any[],
+  locale: string,
+  domain: string,
+  project: string,
+  serviceDeskId: string
+): Promise<string[]> => {
+  try {
+    const client = getClient();
+    const taskResults: string[] = [];
+    for (const task of tasks) {
+      // Create ServiceTask in Agtasks 
+      const response: {
+        data: { id: string } | null; errors?: any[]
+      } = await client.models.ServiceTask.create({
+        serviceId,
+        externalTemplateId: task.externalTemplateId,
+        taskName: task.taskName,
+        taskType: task.taskType,
+        userEmail: task.userEmail,
+      });
 
-    // Determinar el estado del servicio
-    const now = new Date();
-    const startDate = service.startDate ? new Date(service.startDate) : null;
-    const endDate = service.endDate ? new Date(service.endDate) : null;
-    let status = "Planificado";
-    if (progress === 100) {
-      status = "Finalizado";
-    } else if (startDate && now >= startDate) {
-      status = "En progreso";
+      if (!response.data) {
+        throw new Error(`Failed to create task: ${task.taskName}`);
+      }
+
+      const taskId = response.data.id;
+
+      // Create Subtask in Jira 
+      if (task.parentIssueKey && task.description) {
+        try {
+          const baseUrl = process.env.NODE_ENV === 'production'
+            ? process.env.NEXT_PUBLIC_SITE_URL
+            : 'http://localhost:3000'
+
+          const agtasksUrl = `${baseUrl}/${locale}/domains/${domain}/projects/${project}/tasks/${taskId}`;
+
+          await createSubtask(
+            task.parentIssueKey,
+            task.taskName,
+            task.userEmail,
+            task.description,
+            agtasksUrl,
+            task.taskType,
+            serviceDeskId
+          );
+        } catch (error) {
+          console.error(`Failed to create Jira subtask for task ${task.taskName}:`, error);
+          // No lanzamos error para permitir que el proceso continúe
+        }
+      } else {
+        console.warn(`Skipping Jira subtask creation for task ${task.taskName}: missing parentIssueKey or description`);
+      }
+
+      taskResults.push(taskId);
+    }
+    return taskResults;
+  } catch (error) {
+    console.error("Error creating service tasks in Amplify:", error);
+    throw new Error(`Failed to create service tasks: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+
+// Tasks
+export const getServiceTask = async (taskId: string): Promise<ServiceTask> => {
+  const client = getClient();
+
+  // obtengo ServiceTask
+  const taskResponse: {
+    data: Schema["ServiceTask"]["type"] | null; errors?: any[]
+  } = await client.models.ServiceTask.get({ id: taskId });
+
+  if (!taskResponse.data) {
+    throw new Error(`Task with ID ${taskId} not found`);
+  }
+
+  return {
+    ...taskResponse.data,
+    taskType: taskResponse.data?.taskType ?? "",
+  } as ServiceTask;
+}
+
+export const updateServiceTask = async (
+  taskId: string, 
+  formData: Record<string, any>
+): Promise<{ success: boolean; data?: any; error?: any }> => {
+  const client = getClient();
+
+  try {
+    const response = await client.models.ServiceTask.update({
+      id: taskId,
+      formData: JSON.stringify(formData),
+    });
+
+    if (!response.data) {
+      return { success: false, error: "No se pudo actualizar la tarea" };
     }
 
-    return {
-      ...service,
-      fields: enrichedFields,
-      tasks,
-      progress,
-      status,
-    };
+    return { success: true, data: response.data };
   } catch (error) {
-    console.error("Error fetching service detail from Amplify:", error);
-    throw new Error(`Failed to fetch service detail: ${error instanceof Error ? error.message : String(error)}`);
+    console.error("Ocurrió un error al intentar actualizar la tarea: ", error);
+    return { success: false, error };
   }
 };
 
@@ -617,14 +612,21 @@ export const listServicesByProject = async (
           endDate: service.endDate,
           // status,
           progress,
+          createdAt: service.createdAt,
         } as Service;
       }),
     );
 
     const sortedServices = servicesWithRelations.sort((a, b) => {
-      const valueA = a[sortBy]?.toString().toLowerCase() || "";
-      const valueB = b[sortBy]?.toString().toLowerCase() || "";
-      return sortDirection === "asc" ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+      if (sortBy === 'createdAt') {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+      } else {
+        const valueA = a[sortBy]?.toString().toLowerCase() || "";
+        const valueB = b[sortBy]?.toString().toLowerCase() || "";
+        return sortDirection === "asc" ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+      }
     });
 
     return { services: sortedServices, total };

@@ -1,34 +1,51 @@
 "use client"
 
 import { useState } from "react"
-import { useForm, FormProvider } from "react-hook-form"
+import { 
+  useForm, 
+  FormProvider 
+} from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { 
+  useRouter, 
+  useParams 
+} from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card"
+import { 
+  ChevronLeft, 
+  ChevronRight 
+} from "lucide-react"
 import { toast } from "@/hooks/use-toast"
-import { useRouter, useParams } from "next/navigation"
 import Step1Protocol from "./step1-protocol"
 import Step2Lots from "./step2-lots"
 import Step3Tasks from "./step3-tasks"
-//import { createServiceSchema, type CreateServiceFormValues } from "./validation-schemas"
-
 import {
   createServiceSchema,
   type CreateServiceFormValues,
-  type SelectedLotDetail
 } from "./validation-schemas"
-
-//import { ServiceFormProvider } from "@/lib/contexts/service-form-context"
 import {
   ServiceFormProvider
 } from "@/lib/contexts/service-form-context"
-
+import {
+  generateDescriptionField,
+  createService
+} from "@/lib/integrations/jira"
+import {
+  createService as createAgService,
+  createServiceFields,
+  createServiceTasks,
+  getProject
+} from "@/lib/services/agtasks"
 import { useTranslations } from "next-intl"
-import { createService, createSubtask } from "@/lib/integrations/jira"
-import { JiraServiceRequest } from "@/lib/interfaces"
 
-// Valores iniciales del formulario
 const defaultValues: CreateServiceFormValues = {
   protocol: "",
   workspace: "",
@@ -45,20 +62,14 @@ interface Props {
 export default function CreateService({ userEmail }: Props) {
   const router = useRouter()
   const params = useParams()
-  const { locale, project, domain } = params
+  const { locale, domain, project } = params
   const t = useTranslations("CreateService")
-
-  // const { formValues, resetForm } = useServiceForm() 
-
   // Estado para controlar el paso actual del wizard
   const [currentStep, setCurrentStep] = useState(1)
   // Estado para controlar si se debe hacer scroll al inicio
   const [shouldScrollToTop, setShouldScrollToTop] = useState(false)
-  // Estado para controlar si se está enviando el formulario
   const [isSubmitting, setIsSubmitting] = useState(false)
-  // Añadir un nuevo estado para controlar si se muestra el mensaje de éxito
   const [isSuccess, setIsSuccess] = useState(false)
-  // state to capture the selected protocol
   const [selectedProtocol, setSelectedProtocol] = useState<string>("")
   const [selectedProtocolName, setSelectedProtocolName] = useState<string>("")
 
@@ -77,67 +88,30 @@ export default function CreateService({ userEmail }: Props) {
 
     switch (currentStep) {
       case 1:
-        // console.log("Validando paso 1, taskAssignments:", methods.getValues("taskAssignments"))
         isValid = await methods.trigger("protocol")
         if (isValid) {
-          // Asegurarse de que taskAssignments esté disponible para el siguiente paso
           const protocol = methods.getValues("protocol")
           const taskAssignments = methods.getValues("taskAssignments")
-          // console.log("Protocolo seleccionado:", protocol, "Tareas:", taskAssignments)
         }
         break
       case 2:
-        // Marcar los campos como "touched" antes de validar
         methods.setValue("selectedLots", methods.getValues("selectedLots"), { shouldDirty: true })
         isValid = await methods.trigger(["workspace", "campaign", "establishment", "selectedLots"])
         break
       case 3:
-        const taskAssignments = methods.getValues("taskAssignments")
-
-        // Validar solo las tareas con roles asignados
-        // const tasksWithRoles = taskAssignments.filter((task) => task.role)
-
-        // if (tasksWithRoles.length === 0) {
-        //   // Si no hay tareas con roles, mostrar un mensaje
-        //   toast({
-        //     title: "Asignación incompleta",
-        //     description: "Por favor, asigne al menos un rol a una tarea",
-        //     variant: "destructive",
-        //   })
-        //   return
-        // }
-
-        // Validar solo las tareas con usuario asignado
-        const tasksWithUser = taskAssignments.filter((task) => task.assignedTo)
-        if (tasksWithUser.length === 0) {
-          // Si no hay tareas con usuario, mostrar un mensaje
+        // Validar que todas las tareas tengan usuario asignado usando el schema
+        isValid = await methods.trigger("taskAssignments");
+        if (!isValid) {
+          const errorMsg = methods.formState.errors.taskAssignments?.message || "Todas las tareas deben tener un usuario asignado";
           toast({
             title: "Asignación incompleta",
-            description: "Por favor, asigne al menos un usuario a una tarea",
+            description: errorMsg,
             variant: "destructive",
-          })
-          return
+          });
+          return;
         }
-
-        // Validar que todas las tareas con roles tengan usuarios asignados
-        // const incompleteAssignments = tasksWithRoles.filter((task) => !task.assignedTo)
-
-        // if (incompleteAssignments.length > 0) {
-        //   // Si hay tareas con roles pero sin usuarios, mostrar un mensaje
-        //   toast({
-        //     title: "Asignación incompleta",
-        //     description: "Por favor, asigne usuarios a todas las tareas con roles",
-        //     variant: "destructive",
-        //   })
-        //   return
-        // }
-
-        // Si llegamos aquí, la validación es correcta
-        isValid = true
-
-        // Enviar el formulario
-        onSubmit(methods.getValues())
-        return // Retornar aquí para evitar avanzar al siguiente paso
+        onSubmit(methods.getValues());
+        return;
     }
 
     if (isValid) {
@@ -152,142 +126,67 @@ export default function CreateService({ userEmail }: Props) {
     setShouldScrollToTop(true)
   }
 
-  // Función para reiniciar el formulario
-  // const resetForm = () => {
-  //   methods.reset(defaultValues)
-  //   setCurrentStep(1)
-  //   setShouldScrollToTop(true)
-  // }
-
   const onSubmit = async (data: CreateServiceFormValues) => {
     try {
       setIsSubmitting(true);
+      const serviceName = `${selectedProtocolName} - ${data.workspaceName} - ${data.establishmentName}`;
+      const { description, descriptionPlain } = await generateDescriptionField(data);
 
-      const serviceData = {
-        projectId: project as string,
-        serviceName: `${selectedProtocolName} - ${data.workspaceName} - ${data.establishmentName}`,
-        externalTemplateId: data.protocol,
-        // externalServiceKey: `SRV-${Date.now()}`,
-        workspaceId: data.workspace,
-        workspaceName: data.workspaceName || "",
-        campaignId: data.campaign,
-        campaignName: data.campaignName || "",
-        farmId: data.establishment,
-        farmName: data.establishmentName || "",
-        //totalArea: 0,
-        // Sumar hectáreas
-        totalArea: data.selectedLots.reduce((sum, lot) => sum + (lot.hectares || 0), 0),
-        startDate: new Date().toISOString(),
-        // fields: data.selectedLots.map((lotId) => ({
-        //   fieldId: lotId,
-        //   fieldName: data.selectedLotsNames?.[lotId] || "",
-        // })),
-        fields: data.selectedLots.map((lot: SelectedLotDetail) => ({
-          fieldId: lot.fieldId,
-          fieldName: lot.fieldName,
-          hectares: lot.hectares,
-          cropName: lot.cropName,
-          hybridName: lot.hybridName || "",
-        })),
-        tasks: data.taskAssignments.map((task) => ({
-          externalTemplateId: data.protocol,
-          taskName: task.task,
-          userEmail: task.assignedTo,
-        })),
-      };
-
-      const jiraFieldsTable = `
-||Lote||Hectáreas||Cultivo||Híbrido||
-${data.selectedLots.map((lot: SelectedLotDetail) => `| ${lot.fieldName || '-'} | ${lot.hectares || '-'} | ${lot.cropName || '-'} | ${lot.hybridName || '-'} |
-`).join('')}
-`;
-
-      const jiraDescription = `
-*Espacio de trabajo:* ${serviceData.workspaceName || 'No especificado'}
-*Campaña:* ${serviceData.campaignName || 'No especificado'} 
-*Establecimiento:* ${serviceData.farmName || 'No especificado'}
-*Hectáreas totales:* ${serviceData.totalArea || '0'} h
-*Lotes:*
-${jiraFieldsTable}
-`;
-
-      // Crear el servicio (issue principal)
-      const requestData: JiraServiceRequest = {
-        serviceDeskId: '107',
-        requestTypeId: '153',
-        requestFieldValues: {
-          summary: serviceData.serviceName,
-          description: jiraDescription,
-        },
-        requestParticipants: [],
-        raiseOnBehalfOf: userEmail,
-      };
-
-      const response = await createService(requestData);
-      // console.log("response: ", response);
-
-      // ✅ Asegúrate de que el response contiene el key del issue creado (por ejemplo: TAN-123)
-      const parentIssueKey = response.data?.issueKey;
-
-      if (!parentIssueKey) {
-        throw new Error("No se pudo obtener el issueKey del request creado en Jira");
+      // if Project exists then set serviceDeskId and requestTypeId
+      let serviceDeskId = "" // "140"
+      let requestTypeId = "" // "252"
+      
+      const res = await getProject(project as string);
+      if (res.id) {
+        serviceDeskId = res.projectId
+        requestTypeId = res.requestTypeId
       }
-
-      // Versión 1: Formato de lista con separadores
-const jiraFieldsTablePlain = `
-Lote | Hectáreas | Cultivo | Híbrido
------|-----------|---------|--------
-${data.selectedLots.map((lot: SelectedLotDetail) => 
-  `${lot.fieldName || '-'} | ${lot.hectares || '-'} | ${lot.cropName || '-'} | ${lot.hybridName || '-'}`
-).join('\n')}
-`;
-
-// Versión 2: Formato de lista vertical (más legible para muchos lotes)
-const jiraDescriptionPlain = `
-• Espacio de trabajo: ${serviceData.workspaceName || 'No especificado'}
-• Campaña: ${serviceData.campaignName || 'No especificado'}
-• Establecimiento: ${serviceData.farmName || 'No especificado'}
-• Hectáreas totales: ${serviceData.totalArea || '0'} h
-• Lotes:
-${data.selectedLots.map((lot: SelectedLotDetail, index) => 
-  `Lote ${index + 1}:
-   - Nombre: ${lot.fieldName || '-'}
-   - Hectáreas: ${lot.hectares || '-'}
-   - Cultivo: ${lot.cropName || '-'}
-   - Híbrido: ${lot.hybridName || '-'}`
-).join('\n\n')}
-`;
-
-      // Crear subtareas en Jira como hijas del request
-      await Promise.all(
-        serviceData.tasks.map((task) =>
-          createSubtask(
-            parentIssueKey,
-            task.taskName,
-            task.userEmail,
-            jiraDescriptionPlain
-          )
-        )
+      // console.log(serviceDeskId, requestTypeId)
+          
+      // Create Service in Jira
+      const jiraResponse = await createService(
+        serviceName, 
+        description, 
+        userEmail, 
+        serviceDeskId, 
+        requestTypeId
       );
-
-      // Enviar los datos al API
-      const newServiceData = {
-        ...serviceData,
-        externalServiceKey: parentIssueKey
+      if (!jiraResponse.success || !jiraResponse.data?.issueKey) {
+        throw new Error(`Failed to create Jira service: ${jiraResponse.error || 'No issueKey returned'}`);
       }
+      const { issueKey } = jiraResponse.data;
+      
+      // Create Service in Agtasks
+      const agResponse = await createAgService(
+        data, 
+        project as string, 
+        serviceName, 
+        issueKey
+      );
+      const { id } = agResponse;
 
-      const response2 = await fetch(`/api/v1/agtasks/domains/${domain}/projects/${project}/services`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newServiceData),
-      })
+      // Create Service Fields in Agtasks 
+      await createServiceFields(id, data.selectedLots)
+      
+      // Create Service Tasks in Agtasks and Jira
+      const tasks = data.taskAssignments.map((task) => ({
+        externalTemplateId: data.protocol,
+        taskName: task.task,
+        taskType: task.taskType,
+        userEmail: task.assignedTo,
+        parentIssueKey: issueKey,
+        description: descriptionPlain,
+      }));
 
-      if (!response2.ok) {
-        const errorData = await response2.json()
-        console.error("API error response:", errorData)
-        throw new Error(errorData.error || errorData.message || `Error: ${response2.status}`)
+      if (tasks.length > 0) {
+        await createServiceTasks(
+          id, 
+          tasks, 
+          locale as string, 
+          domain as string, 
+          project as string, 
+          serviceDeskId
+        );
       }
 
       toast({
@@ -297,8 +196,6 @@ ${data.selectedLots.map((lot: SelectedLotDetail, index) =>
       });
 
       setIsSuccess(true);
-      // resetForm() // Limpiar el contexto después de un envío exitoso
-      // methods.reset(defaultValues) // Limpiar el formulario local
     } catch (error) {
       console.error("Error creating service:", error);
       toast({

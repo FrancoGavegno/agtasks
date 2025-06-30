@@ -23,15 +23,15 @@ export function LanguageSelector() {
   const currentLocale = useLocale();
   const t = useTranslations("LanguageSelector"); // Opcional: para traducciones
 
-  console.log('LanguageSelector - Current Locale:', currentLocale);
-  console.log('LanguageSelector - Current Pathname:', pathname);
+  // console.log('LanguageSelector - Current Locale:', currentLocale);
+  // console.log('LanguageSelector - Current Pathname:', pathname);
 
   const handleLanguageChange = (locale: string) => {
     // Obtener la ruta sin el locale actual
     const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}(\/|$)/, '/');
     // Construir la nueva URL con el nuevo locale
     const newPath = `/${locale}${pathWithoutLocale === '/' && locale ? '' : pathWithoutLocale}`;
-    console.log('LanguageSelector - Navigating to:', newPath);
+    // console.log('LanguageSelector - Navigating to:', newPath);
     // Usar router.replace para evitar agregar entradas al historial
     router.replace(newPath);
     // Forzar una recarga para asegurar que next-intl detecte el cambio

@@ -16,7 +16,11 @@ export async function GET(req: Request, { params }: { params: { serviceId: strin
                 { status: 400 }
             );
         }
-        const result = await listTasksbyService(serviceId);
+        const result = await listTasksbyService(serviceId, [
+            "customfield_10371", // Task Type
+            "customfield_10140" // Task Detail
+        ]);
+
         return NextResponse.json(result, { status: 200 });
     } catch (error) {
         console.error("Error fetching tasks:", error);

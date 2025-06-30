@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { listServicesByProject, createService } from "@/lib/services/agtasks"
 import type { Service } from "@/lib/interfaces"
+import { 
+  listServicesByProject, 
+  // createService 
+} from "@/lib/services/agtasks"
 
 // Esquema de validación para los parámetros de la query (GET)
 const listServicesQuerySchema = z.object({
@@ -13,40 +16,40 @@ const listServicesQuerySchema = z.object({
   sortDirection: z.enum(["asc", "desc"]).optional().default("asc"),
 })
 
-// Esquema de validación para el cuerpo de la solicitud (POST)
-const createServiceBodySchema = z.object({
-  projectId: z.string(),
-  serviceName: z.string(),
-  // sourceSystem: z.string(),
-  externalServiceKey: z.string(),
-  externalTemplateId: z.string(),
-  workspaceId: z.string(),
-  workspaceName: z.string().optional(),
-  campaignId: z.string(),
-  campaignName: z.string().optional(),
-  farmId: z.string(),
-  farmName: z.string().optional(),
-  totalArea: z.number().optional(),
-  startDate: z.string(),
-  endDate: z.string().optional(),
-  fields: z.array(
-      z.object({ 
-        fieldId: z.string(), 
-        fieldName: z.string(),
-        hectares: z.number(),
-        cropName: z.string(),
-        hybridName: z.string().optional(),
-      })).optional(),
-  tasks: z.array(
-      z.object({
-        externalTemplateId: z.string(),
-        taskName: z.string(),
-        userEmail: z.string(),
-        // userId: z.string(),
-        // sourceSystem: z.string(),
-        // roleId: z.string(),
-      })).optional(),
-})
+// // Esquema de validación para el cuerpo de la solicitud (POST)
+// const createServiceBodySchema = z.object({
+//   projectId: z.string(),
+//   serviceName: z.string(),
+//   // sourceSystem: z.string(),
+//   externalServiceKey: z.string(),
+//   externalTemplateId: z.string(),
+//   workspaceId: z.string(),
+//   workspaceName: z.string().optional(),
+//   campaignId: z.string(),
+//   campaignName: z.string().optional(),
+//   farmId: z.string(),
+//   farmName: z.string().optional(),
+//   totalArea: z.number().optional(),
+//   startDate: z.string(),
+//   endDate: z.string().optional(),
+//   fields: z.array(
+//       z.object({ 
+//         fieldId: z.string(), 
+//         fieldName: z.string(),
+//         hectares: z.number(),
+//         cropName: z.string(),
+//         hybridName: z.string().optional(),
+//       })).optional(),
+//   tasks: z.array(
+//       z.object({
+//         externalTemplateId: z.string(),
+//         taskName: z.string(),
+//         userEmail: z.string(),
+//         // userId: z.string(),
+//         // sourceSystem: z.string(),
+//         // roleId: z.string(),
+//       })).optional(),
+// })
 
 // Handler para GET (listar servicios con paginación)
 export async function GET(req: Request, { params }: { params: { domainId: string; projectId: string } }) {
@@ -90,28 +93,28 @@ export async function GET(req: Request, { params }: { params: { domainId: string
   }
 }
 
-// Handler para POST (crear un servicio)
-export async function POST(req: Request, { params }: { params: { domainId: string; projectId: string } }) {
-  try {
-    const { projectId } = params
+// // Handler para POST (crear un servicio)
+// export async function POST(req: Request, { params }: { params: { domainId: string; projectId: string } }) {
+//   try {
+//     const { projectId } = params
 
-    // Parsear el cuerpo de la solicitud
-    const body = await req.json()
-    const parsedBody = createServiceBodySchema.safeParse({ ...body, projectId })
+//     // Parsear el cuerpo de la solicitud
+//     const body = await req.json()
+//     const parsedBody = createServiceBodySchema.safeParse({ ...body, projectId })
 
-    if (!parsedBody.success) {
-      return NextResponse.json({ error: "API Validation error", issues: parsedBody.error.format() }, { status: 400 })
-    }
+//     if (!parsedBody.success) {
+//       return NextResponse.json({ error: "API Validation error", issues: parsedBody.error.format() }, { status: 400 })
+//     }
 
-    // Crear el servicio
-    const newService = await createService(parsedBody.data)
+//     // Crear el servicio
+//     const newService = await createService(parsedBody.data)
 
-    return NextResponse.json(newService, { status: 201 })
-  } catch (error) {
-    console.error("Error creating service:", error)
-    return NextResponse.json(
-      { error: "Internal Server Error", message: error instanceof Error ? error.message : String(error) },
-      { status: 500 },
-    )
-  }
-}
+//     return NextResponse.json(newService, { status: 201 })
+//   } catch (error) {
+//     console.error("Error creating service:", error)
+//     return NextResponse.json(
+//       { error: "Internal Server Error", message: error instanceof Error ? error.message : String(error) },
+//       { status: 500 },
+//     )
+//   }
+// }

@@ -1,5 +1,4 @@
 // 360
-
 export interface User {
   email: string
   firstName: string
@@ -65,7 +64,6 @@ export interface LotField {
 }
 
 // Settings
-
 export interface Protocol {
   domainId: string // FK a 360 Domain
   id: string
@@ -92,7 +90,6 @@ export interface Form {
 }
 
 // Projects & Services
-
 export interface Project {
   id: string
   domainId: string // FK a 360 Domain
@@ -100,6 +97,7 @@ export interface Project {
   language: string
   sourceSystem: string 
   projectId: string // FK to Task Manager Project 
+  requestTypeId: string 
   queueId: number // FK to Task Manager Default Queue
   name: string
   deleted: boolean
@@ -109,8 +107,7 @@ export interface Service {
   id: string
   projectId: string 
   serviceName: string
-  // sourceSystem: string 
-  externalTemplateId: string // FK to Task Manager Service Template ID 'TEM-57' 
+  externalTemplateId: string // FK to Task Manager GeoAgro Service Template ID 'TEM-57' 
   externalServiceKey: string 
   workspaceId: string
   workspaceName?: string 
@@ -125,6 +122,7 @@ export interface Service {
   progress?: number 
   fields?: ServiceField[] 
   tasks?: ServiceTask[]
+  createdAt?: string  
 }
 
 export interface ServiceField {
@@ -135,38 +133,28 @@ export interface ServiceField {
   hectares?: number
   crop?: string
   hybrid?: string
-  // name?: string
 }
 
 export interface ServiceTask {
   id: string
-  serviceId: string // FK local a Service
-  externalTemplateId: string // Referencia al sub-template del task manager (opcional, si existen)
-  taskName?: string // Nombre de la tarea (opcional, según el esquema)
+  serviceId: string // FK local to Service
+  externalTemplateId: string // KK to task manager sub-template 
+  taskType: string // ex.: administrative, fieldvisit, tillage
+  taskName: string 
+  // formSchema: Record<string, any> // json object
+  formData: Record<string, any> // json object
   userEmail: string
-  //id: string // ID de la tarea
-  //sourceSystem: string // Ej.: "jira"
-  // roleId: string // FK local a Role (asignado manualmente)
-  // userId: string // FK local a 360 User (asignado manualmente)
-  // role: {
-  //   id: string
-  //   name: string
-  // } // Objeto role devuelto por listServicesByProject y getServiceDetail
-  // user: {
-  //   id: string
-  //   name: string
-  //   email: string
-  // } // Objeto user devuelto por listServicesByProject y getServiceDetail
 }
 
 export interface TaskAssignment {
   task: string
+  taskType: string  // administrative, fieldvisit, tillage
+  // taskDetail: Record<string, any> // json object
   assignedTo: string
   //role: string
 }
 
 //  Jira
-
 export interface JiraCustomerData {
   displayName: string
   email: string
@@ -197,16 +185,7 @@ export interface JiraRequestData {
 export interface JiraRequest {
   summary: string
   description: string
-  //customfield_10076: string
 }
-
-// export interface QueueIssuesResponse {
-//   issues: any[]
-//   values: any[]
-//   total: number
-//   maxResults: number
-//   startAt: number
-// }
 
 export interface QueueIssueResponse {
   _expands: any[]
@@ -355,4 +334,12 @@ export interface JiraSubtaskResponse {
   key: string;
   self: string;
   [key: string]: any;
+}
+
+export interface PaginatedResponse {
+  services: Service[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
 }

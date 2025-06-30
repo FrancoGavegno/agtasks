@@ -1,0 +1,56 @@
+{
+  "type": "object",
+  "properties": {
+    "tipo": {
+      "type": "string",
+      "title": "Tipo",
+      "enum": ["Aplicación", "Cosecha", "Siembra"]
+    },
+    "contratista": {
+      "type": "string",
+      "title": "Contratista",
+      "enum": []
+    },
+    "comoLlegar": {
+      "type": "string",
+      "title": "Como llegar",
+      "format": "uri"
+    },
+    "mapaDeFondo": {
+      "type": "string",
+      "title": "Mapa de fondo",
+      "format": "uri"
+    },
+    "insumos": {
+      "type": "array",
+      "title": "Insumos",
+      "items": {
+        "type": "object",
+        "properties": {
+          "insumo": {
+            "type": "string",
+            "title": "Insumo",
+            "enum": ["Insumo 1", "Insumo 2"]
+          },
+          "dosis": {
+            "type": "number",
+            "title": "Dosis",
+            "minimum": 0
+          },
+          "unidad": {
+            "type": "string",
+            "title": "Unidad",
+            "enum": ["Kg/Ha", "Lt/Ha"]
+          },
+          "hectareas": {
+            "type": "number",
+            "title": "Hectáreas",
+            "minimum": 0
+          }
+        },
+        "required": ["insumo", "dosis", "unidad", "hectareas"]
+      }
+    }
+  },
+  "required": ["tipo", "responsable", "contratista", "comoLlegar", "mapaDeFondo", "insumos"]
+}

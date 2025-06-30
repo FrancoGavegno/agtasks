@@ -31,28 +31,32 @@ const schema = a
     // User: a.model({
     //   name: a.string().required(),
     //   email: a.string().required(),
-    //   tasks: a.hasMany("ServiceTask", "userId"),
+    //   tmInvitationStatus: a.enum(["notsent", "sent", "accepted", "rejected"]), // A date time scalar type that is represented server-side as an extended ISO 8601 date and time string in the format YYYY-MM-DDThh:mm:ss.sssZ
+    //   tmInvitationSent: a.datetime(),
+    //   tmInvitationAnswered: a.datetime(),
+    //   tmAccountId: a.string().required(),
+    //   tmAccountType: a.enum(["customer", "agent", "admin"])
     // }),
 
     Project: a.model({
-      domainId: a.string().required(), 
+      domainId: a.string().required(), // FK to 360 Domain
       areaId: a.string().required(), // FK to 360 Area
-      language: a.string().required(),  
-      sourceSystem: a.string().required(), // Task Manager 'jira'
-      projectId: a.string().required(), // FK to Task Manager Project 
-      queueId: a.integer().required(),  // FK to Task Manager Default Queue
-      // id: a.string().required(), 
+      sourceSystem: a.string().required(), // Task Manager, ex.: 'jira'
+      projectId: a.string().required(), // FK to Task Manager // serviceDeskId  
+      requestTypeId: a.string().required(),
+      queueId: a.integer().required(), // FK to Task Manager Default Queue
       name: a.string().required(),
+      language: a.string().required(),  
       deleted: a.boolean().default(false).required(),
       services: a.hasMany("Service", "projectId"),
     }),
 
     Service: a.model({
+      project: a.belongsTo("Project", "projectId"),
       projectId: a.string().required(), // FK to Project
       serviceName: a.string().required(),
-      // sourceSystem: a.string().required(), // 'jira'
       externalTemplateId: a.string().required(), // FK to Task Manager Service Template ID 'TEM-57'
-      externalServiceKey: a.string().required(), // TO DO: Completar cuando cree el Request en Jira 
+      externalServiceKey: a.string().required(),  
       workspaceId: a.string().required(), // FK to 360 Workspace
       workspaceName: a.string(),
       campaignId: a.string().required(), // FK to 360 Season
@@ -62,33 +66,30 @@ const schema = a
       totalArea: a.float().required(),
       startDate: a.string().required(),
       endDate: a.string(),
-      project: a.belongsTo("Project", "projectId"),
-      fields: a.hasMany("ServiceField", "serviceId"),
-      tasks: a.hasMany("ServiceTask", "serviceId"),
+      fields: a.hasMany("ServiceField", "serviceId"), // ServiceField[]
+      tasks: a.hasMany("ServiceTask", "serviceId"), // ServiceTask[]
     }),
 
     ServiceField: a.model({
+      service: a.belongsTo("Service", "serviceId"),
       serviceId: a.string().required(), // FK to Service
       fieldId: a.string().required(), // FK to 360 Field
       fieldName: a.string().required(),
       hectares: a.integer(),
       crop: a.string(),
       hybrid: a.string(),
-      service: a.belongsTo("Service", "serviceId"),
     }),
 
     ServiceTask: a.model({
+      service: a.belongsTo("Service", "serviceId"),
       serviceId: a.string().required(), // FK to Service
       externalTemplateId: a.string().required(), // FK to Task Manager Task Template ID 'TEM-58'
+      taskType: a.string(), // ex.: tillage, fieldvisit, administrative 
       taskName: a.string().required(), 
-      userEmail: a.string().required(), // FK to 360 User 'fgavegno@geoagro.com'
-      service: a.belongsTo("Service", "serviceId"),
-      // sourceSystem: a.string().required(),
-      // roleId: a.string().required(),
-      // role: a.belongsTo("Role", "roleId"),
-      // userId: a.string().required(),
-      // user: a.belongsTo("User", "userId"),
-    })
+      formData: a.json(),  // form data submitted
+      userEmail: a.string().required(), // FK to 360 User, ex.: fgavegno@geoagro.com
+    }),
+
   })
   .authorization((allow) => [allow.publicApiKey()]);
 
