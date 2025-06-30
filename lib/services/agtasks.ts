@@ -1,13 +1,12 @@
 import { Amplify } from "aws-amplify";
 import outputs from "@/amplify_outputs.json";
 import { generateClient } from "aws-amplify/api";
-import { data, type Schema } from "@/amplify/data/resource";
+import { type Schema } from "@/amplify/data/resource";
 import type {
   Project,
   Service,
   Role,
-  ServiceTask,
-  ServiceField
+  ServiceTask
 } from "@/lib/interfaces";
 import {
   type CreateServiceFormValues,
@@ -464,7 +463,6 @@ export const createServiceTasks = async (
 export const getServiceTask = async (taskId: string): Promise<ServiceTask> => {
   const client = getClient();
 
-  // obtengo ServiceTask
   const taskResponse: {
     data: Schema["ServiceTask"]["type"] | null; errors?: any[]
   } = await client.models.ServiceTask.get({ id: taskId });

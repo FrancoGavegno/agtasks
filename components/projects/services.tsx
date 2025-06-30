@@ -18,24 +18,10 @@ import {
 } from "@/components/ui/table"
 import {
   Search,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
   SquareArrowOutUpRight,
   RefreshCw,
   Plus,
 } from "lucide-react"
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select"
 import type { 
   PaginatedResponse, 
   Service, 
@@ -54,7 +40,7 @@ export function ServicesPageDetails() {
   const [refreshing, setRefreshing] = useState(false)
   const [visibleCount, setVisibleCount] = useState(10)
 
-  // Fetch all services once (no backend pagination/search)
+  // Fetch all services once 
   const fetchAllServices = async () => {
     try {
       setLoading(true)
@@ -95,12 +81,12 @@ export function ServicesPageDetails() {
     }
   }, [projectId, domainId])
 
-  // Reset visibleCount cuando cambia la búsqueda
+  // Reset visibleCount 
   useEffect(() => {
     setVisibleCount(10)
   }, [searchQuery])
 
-  // Filtrar en el frontend
+  // frontend filter
   const filteredServices = services.filter(service => {
     if (!searchQuery) return true
     const q = searchQuery.toLowerCase()
@@ -113,7 +99,7 @@ export function ServicesPageDetails() {
     )
   })
 
-  // Limitar por visibleCount
+  // Limit from visibleCount
   const displayedServices = filteredServices.slice(0, visibleCount)
 
   if (loading && !refreshing) {
@@ -202,7 +188,7 @@ export function ServicesPageDetails() {
                   <TableCell>
                     <Link
                       target="_blank"
-                      href={`https://geoagro1.atlassian.net/browse/${service.externalServiceKey}`}>
+                      href={`${process.env.NEXT_PUBLIC_JIRA_API_URL}/browse/${service.externalServiceKey}`}>
                       <SquareArrowOutUpRight />
                     </Link>
                   </TableCell>
