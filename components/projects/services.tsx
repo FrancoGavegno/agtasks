@@ -18,24 +18,10 @@ import {
 } from "@/components/ui/table"
 import {
   Search,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
   SquareArrowOutUpRight,
   RefreshCw,
   Plus,
 } from "lucide-react"
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select"
 import type { 
   PaginatedResponse, 
   Service, 
@@ -51,63 +37,31 @@ export function ServicesPageDetails() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [currentPage, setCurrentPage] = useState(1)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
-  const [totalItems, setTotalItems] = useState(0)
-  const [totalPages, setTotalPages] = useState(1)
-  const [sortBy, setSortBy] = useState<keyof Service>("createdAt")
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
   const [refreshing, setRefreshing] = useState(false)
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("")
+  const [visibleCount, setVisibleCount] = useState(10)
 
-  // Debounce search query
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery)
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [searchQuery])
-
-  // Reset to first page when search query or rows per page changes
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [debouncedSearchQuery, rowsPerPage])
-
-  // Fetch services with pagination
-  const fetchServices = async () => {
+  // Fetch all services once 
+  const fetchAllServices = async () => {
     try {
       setLoading(true)
       setError(null)
-
-      // Construir la URL con los parámetros de paginación y ordenación
-      const url = new URL(`/api/v1/agtasks/domains/${domainId}/projects/${projectId}/services`, window.location.origin)
-      
-      url.searchParams.append("page", currentPage.toString())
-      url.searchParams.append("pageSize", rowsPerPage.toString())
-      url.searchParams.append("search", debouncedSearchQuery)
-      url.searchParams.append("sortBy", sortBy.toString())
-      url.searchParams.append("sortDirection", sortDirection)
-
-      console.log("url: ", url.toString())
-      const response = await fetch(url.toString())
-
+      const url = `/api/v1/agtasks/domains/${domainId}/projects/${projectId}/services`
+      const response = await fetch(url)
       if (!response.ok) {
         const errorData = await response.json()
-        console.error("API Error:", errorData)
         throw new Error(`Error: ${response.status} - ${errorData.error || "Unknown error"}`)
       }
-
       const data: PaginatedResponse = await response.json()
-
-      setServices(data.services)
-      setTotalItems(data.total)
-      setTotalPages(data.totalPages)
+      // Ordenar por createdAt descendente
+      const sorted = [...data.services].sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt ?? '').getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt ?? '').getTime() : 0;
+        return dateB - dateA;
+      })
+      setServices(sorted)
     } catch (err) {
-      console.error("Failed to fetch services:", err)
       setError(`Error al cargar servicios: ${err instanceof Error ? err.message : "Error desconocido"}`)
       setServices([])
-      setTotalItems(0)
-      setTotalPages(1)
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -117,80 +71,36 @@ export function ServicesPageDetails() {
   // Refresh services
   const handleRefresh = () => {
     setRefreshing(true)
-    fetchServices()
+    fetchAllServices()
   }
 
-  // Load services when parameters change
+  // Load all services on mount or when domain/project changes
   useEffect(() => {
-    if (projectId) {
-      fetchServices()
+    if (projectId && domainId) {
+      fetchAllServices()
     }
-  }, [projectId, domainId, currentPage, rowsPerPage, debouncedSearchQuery, sortBy, sortDirection])
+  }, [projectId, domainId])
 
-  // Handle sorting
-  const requestSort = (key: keyof Service) => {
-    if (sortBy === key) {
-      // Toggle direction if same column
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
-    } else {
-      // Set new column and default to ascending
-      setSortBy(key)
-      setSortDirection("asc")
-    }
-  }
+  // Reset visibleCount 
+  useEffect(() => {
+    setVisibleCount(10)
+  }, [searchQuery])
 
-  // Get sort icon based on current sort state
-  const getSortIcon = (key: keyof Service) => {
-    if (sortBy !== key) {
-      return <ArrowUpDown className="ml-2 h-4 w-4" />
-    }
+  // frontend filter
+  const filteredServices = services.filter(service => {
+    if (!searchQuery) return true
+    const q = searchQuery.toLowerCase()
+    return (
+      service.serviceName?.toLowerCase().includes(q) ||
+      service.externalServiceKey?.toLowerCase().includes(q) ||
+      service.workspaceName?.toLowerCase().includes(q) ||
+      service.campaignName?.toLowerCase().includes(q) ||
+      service.farmName?.toLowerCase().includes(q)
+    )
+  })
 
-    return sortDirection === "asc" ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />
-  }
-
-  // Handle page change
-  const goToPage = (page: number) => {
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)))
-  }
-
-  const goToFirstPage = () => goToPage(1)
-  const goToPreviousPage = () => goToPage(currentPage - 1)
-  const goToNextPage = () => goToPage(currentPage + 1)
-  const goToLastPage = () => goToPage(totalPages)
-
-  // Handle rows per page change
-  const handleRowsPerPageChange = (value: string) => {
-    setRowsPerPage(Number(value))
-    setCurrentPage(1) // Reset to first page when changing rows per page
-  }
-
-  // Create a sortable header component
-  const SortableHeader = ({ column, label }: { column: keyof Service; label: string }) => (
-    <TableHead className="cursor-pointer" onClick={() => requestSort(column)}>
-      <div className="flex items-center">
-        {label}
-        {getSortIcon(column)}
-      </div>
-    </TableHead>
-  )
-
-  // Handle service status change
-  const handleStatusChange = async (serviceId: string, newStatus: string) => {
-    try {
-      // Implementar en el futuro
-      toast({
-        title: "Cambio de estado",
-        description: `Esta funcionalidad será implementada en una versión futura.`,
-      })
-    } catch (err) {
-      console.error("Failed to update service status:", err)
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el estado del servicio.",
-        variant: "destructive",
-      })
-    }
-  }
+  // Limit from visibleCount
+  const displayedServices = filteredServices.slice(0, visibleCount)
 
   if (loading && !refreshing) {
     return <div className="flex justify-center items-center h-64">Cargando servicios...</div>
@@ -207,7 +117,7 @@ export function ServicesPageDetails() {
     )
   }
 
-  if (services.length === 0 && !debouncedSearchQuery) {
+  if (services.length === 0 && !searchQuery) {
     return (
       <div className="text-center h-64 flex flex-col items-center justify-center">
         <p className="text-lg text-muted-foreground mb-4">No hay servicios disponibles</p>
@@ -250,30 +160,24 @@ export function ServicesPageDetails() {
         <Table>
           <TableHeader>
             <TableRow>
-              <SortableHeader column="externalServiceKey" label="Key" />
-              <SortableHeader column="serviceName" label="Servicio" />
-              <SortableHeader column="workspaceName" label="Espacio de trabajo" />
-              <SortableHeader column="campaignName" label="Campaña" />
-              <SortableHeader column="farmName" label="Establecimiento" />
-              <SortableHeader column="totalArea" label="Tot. Has" />
-              {/* 
-              <SortableHeader column="createdAt" label="Fecha creación" />
-              <SortableHeader column="progress" label="Progreso" />
-              <SortableHeader column="startDate" label="Fecha Inicio" />
-              <SortableHeader column="status" label="Estado" /> 
-              */}
+              <TableHead>Key</TableHead>
+              <TableHead>Servicio</TableHead>
+              <TableHead>Espacio de trabajo</TableHead>
+              <TableHead>Campaña</TableHead>
+              <TableHead>Establecimiento</TableHead>
+              <TableHead>Tot. Has</TableHead>
               <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {services.length === 0 ? (
+            {displayedServices.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="text-center py-6 text-muted-foreground">
                   No se encontraron servicios que coincidan con su búsqueda
                 </TableCell>
               </TableRow>
             ) : (
-              services.map((service) => (
+              displayedServices.map((service) => (
                 <TableRow key={service.id}>
                   <TableCell>{service.externalServiceKey}</TableCell>
                   <TableCell className="font-medium">{service.serviceName}</TableCell>
@@ -281,53 +185,13 @@ export function ServicesPageDetails() {
                   <TableCell>{service.campaignName || "-"}</TableCell>
                   <TableCell>{service.farmName || service.farmId}</TableCell>
                   <TableCell>{service.totalArea} ha</TableCell>
-                  {/* <TableCell>{service.createdAt ? new Date(service.createdAt).toLocaleString() : "-"}</TableCell> */}
-                  {/* <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Progress value={service.progress} className="h-2 w-[60px]" />
-                      <span className="text-xs text-muted-foreground">{service.progress}%</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{service.startDate ? new Date(service.startDate).toLocaleDateString() : "-"}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${service.status === "Finalizado"
-                          ? "bg-green-100 text-green-800"
-                          : service.status === "En progreso"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
-                    >
-                      {service.status}
-                    </span>
-                  </TableCell> */}
                   <TableCell>
                     <Link
                       target="_blank"
-                      href={`https://geoagro1.atlassian.net/browse/${service.externalServiceKey}`}>
+                      href={`${process.env.NEXT_PUBLIC_JIRA_API_URL}/browse/${service.externalServiceKey}`}>
                       <SquareArrowOutUpRight />
                     </Link>
                   </TableCell>
-                  {/* <TableCell>
-                    <div className="flex gap-2">
-                      {service.status === "Planificado" && (
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleStatusChange(service.id, "En progreso")}
-                          title="Iniciar servicio"
-                        >
-                          <Play className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Link href={`/domains/${domainId}/projects/${projectId}/services/${service.id}`}>
-                        <Button variant="outline" size="icon" className="h-8 w-8" title="Editar servicio">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </Link> 
-                    </div>
-                  </TableCell> */}
                 </TableRow>
               ))
             )}
@@ -335,76 +199,11 @@ export function ServicesPageDetails() {
         </Table>
       </div>
 
-      <div className="flex items-center justify-between space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {totalItems > 0 ? (
-            <p>
-              Mostrando {(currentPage - 1) * rowsPerPage + 1}-{Math.min(currentPage * rowsPerPage, totalItems)} de{" "}
-              {totalItems} servicios
-            </p>
-          ) : (
-            <p>No hay resultados.</p>
-          )}
+      {displayedServices.length < filteredServices.length && (
+        <div className="flex justify-center py-4">
+          <Button onClick={() => setVisibleCount(visibleCount + 10)}>Ver más</Button>
         </div>
-        <div className="flex items-center space-x-6 lg:space-x-8">
-          <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Filas por página</p>
-            <Select value={rowsPerPage.toString()} onValueChange={handleRowsPerPageChange}>
-              <SelectTrigger className="h-8 w-[70px]">
-                <SelectValue placeholder={rowsPerPage} />
-              </SelectTrigger>
-              <SelectContent side="top">
-                {[5, 10, 20, 30, 40, 50].map((pageSize) => (
-                  <SelectItem key={pageSize} value={pageSize.toString()}>
-                    {pageSize}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-            Página {currentPage} de {totalPages || 1}
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              className="hidden h-8 w-8 p-0 lg:flex"
-              onClick={goToFirstPage}
-              disabled={currentPage === 1 || totalPages === 0}
-            >
-              <span className="sr-only">Ir a la primera página</span>
-              <ChevronsLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              className="h-8 w-8 p-0"
-              onClick={goToPreviousPage}
-              disabled={currentPage === 1 || totalPages === 0}
-            >
-              <span className="sr-only">Ir a la página anterior</span>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              className="h-8 w-8 p-0"
-              onClick={goToNextPage}
-              disabled={currentPage === totalPages || totalPages === 0}
-            >
-              <span className="sr-only">Ir a la página siguiente</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              className="hidden h-8 w-8 p-0 lg:flex"
-              onClick={goToLastPage}
-              disabled={currentPage === totalPages || totalPages === 0}
-            >
-              <span className="sr-only">Ir a la última página</span>
-              <ChevronsRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
