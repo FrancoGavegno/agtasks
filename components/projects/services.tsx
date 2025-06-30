@@ -47,7 +47,6 @@ export function ServicesPageDetails() {
   const domainId = params.domain as string 
   const projectId = params.project as string
   const { toast } = useToast()
-  // Estado para los servicios y la paginación
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -56,8 +55,8 @@ export function ServicesPageDetails() {
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [totalItems, setTotalItems] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
-  const [sortBy, setSortBy] = useState<keyof Service>("serviceName")
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
+  const [sortBy, setSortBy] = useState<keyof Service>("createdAt")
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
   const [refreshing, setRefreshing] = useState(false)
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("")
 
@@ -91,8 +90,6 @@ export function ServicesPageDetails() {
 
       console.log("url: ", url.toString())
       const response = await fetch(url.toString())
-
-
 
       if (!response.ok) {
         const errorData = await response.json()
@@ -259,9 +256,12 @@ export function ServicesPageDetails() {
               <SortableHeader column="campaignName" label="Campaña" />
               <SortableHeader column="farmName" label="Establecimiento" />
               <SortableHeader column="totalArea" label="Tot. Has" />
-              {/* <SortableHeader column="progress" label="Progreso" />
+              {/* 
+              <SortableHeader column="createdAt" label="Fecha creación" />
+              <SortableHeader column="progress" label="Progreso" />
               <SortableHeader column="startDate" label="Fecha Inicio" />
-              <SortableHeader column="status" label="Estado" /> */}
+              <SortableHeader column="status" label="Estado" /> 
+              */}
               <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -281,6 +281,7 @@ export function ServicesPageDetails() {
                   <TableCell>{service.campaignName || "-"}</TableCell>
                   <TableCell>{service.farmName || service.farmId}</TableCell>
                   <TableCell>{service.totalArea} ha</TableCell>
+                  {/* <TableCell>{service.createdAt ? new Date(service.createdAt).toLocaleString() : "-"}</TableCell> */}
                   {/* <TableCell>
                     <div className="flex items-center gap-2">
                       <Progress value={service.progress} className="h-2 w-[60px]" />

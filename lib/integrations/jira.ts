@@ -158,54 +158,53 @@ export const generateDescriptionField = async (data: CreateServiceFormValues): P
   };
 };
 
-// Service Desk Customers
-export async function getCustomer(email: string, serviceDeskId: string): Promise<JiraResponse> {
+
+// Get Customer 
+// https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-users/#api-rest-api-3-users-search-get
+// FG Note 2025-06-30: I couldn't use the 'Get User' and 'Get Customer' methods. 
+// I had to use 'Get Users' instead.
+// The 'Get User' method only accept AccountId (i don´t have it) and the 'Get Customer' 
+// method is in experimental mode.
+export async function getCustomer(email: string): Promise<string | null> {
   try {
-    // const endpoint = `/rest/servicedeskapi/customer`
-    const endpoint = `/rest/servicedeskapi/servicedesk/${serviceDeskId}/customer`
-    const response = await jiraApi.get(endpoint, {
-      params: {
-        query: encodeURIComponent(email),
-        start: 0,
-        limit: 5
+    const response = await fetch(
+      `${JIRA_API_URL}/rest/api/3/user/search?query=${encodeURIComponent(email)}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: `Basic ${JIRA_API_TOKEN}`,
+        },
       }
-    })
+    );
 
-    // Check if customer exists in the response
-    const customers = response.data.values || []
-    const customer = customers.find((c: any) => c.emailAddress === email)
-
-    if (customer) {
-      return {
-        success: true,
-        data: customer
-      }
+    if (!response.ok) {
+      console.error(`Error buscando usuario Jira: ${response.status} ${response.statusText}`);
+      return null;
     }
 
-    return {
-      success: false,
-      error: "Customer not found"
+    const users = await response.json();
+    if (Array.isArray(users) && users.length > 0) {
+      return users[0].accountId;
     }
+
+    console.error(`No se encontró el usuario con email: ${email}`);
+    return null;
+
   } catch (error) {
-    let errorMessage: string
-
-    if (axios.isAxiosError(error)) {
-      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
-    } else {
-      errorMessage = "Unknown error occurred while fetching Jira customer"
-    }
-
-    return {
-      success: false,
-      error: errorMessage
-    }
+    console.error('Error en lookupAccountId:', error);
+    return null;
   }
 }
 
-export async function createCustomer(customerData: JiraCustomerData, serviceDeskId: string): Promise<JiraResponse> {
+// Create Customer
+// https://developer.atlassian.com/cloud/jira/service-desk/rest/api-group-customer/#api-rest-servicedeskapi-customer-post
+export async function createCustomer(customerData: JiraCustomerData): Promise<JiraResponse> {
   try {
-    // const endpoint = "/rest/servicedeskapi/customer"
-    const endpoint = `/rest/servicedeskapi/servicedesk/${serviceDeskId}/customer`
+    //const endpoint = `/rest/servicedeskapi/servicedesk/${serviceDeskId}/customer`
+
+    const endpoint = "/rest/servicedeskapi/customer"
     const response = await jiraApi.post(endpoint, customerData)
 
     return {
@@ -229,43 +228,20 @@ export async function createCustomer(customerData: JiraCustomerData, serviceDesk
 }
 
 // Protocol Templates & Services
-export async function listServicesByProject(
-  domainId: string, 
-  serviceDeskId: string, 
-  queueId: string
-): Promise<JiraResponse> {
-  try {
-    const endpoint = `/rest/servicedeskapi/servicedesk/${serviceDeskId}/queue/${queueId}/issue`
-    const response = await jiraApi.get<QueueIssueResponse>(endpoint)
-    
-    return {
-      success: true,
-      data: response.data,
-    }
-  } catch (error) {
-    let errorMessage: string
-
-    if (axios.isAxiosError(error)) {
-      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
-    } else {
-      errorMessage = "Unknown error occurred while fetching Jira queue issues"
-    }
-    return {
-      success: false,
-      error: errorMessage,
-    }
-  }
-}
-
 export async function createService(
   serviceName: string,
   jiraDescription: string,
   userEmail: string,
   serviceDeskId: string,
-  requestTypeId: string 
+  requestTypeId: string
 ): Promise<JiraServiceResponse> {
   try {
+
+    // Create Request Participants
     const endpoint = "/rest/servicedeskapi/request";
+
+    // const requestParticipants = await handleParticipants(["francogavegno@gmail.com", "gavegnofranco@gmail.com"])
+    // console.log("requestParticipants: ", requestParticipants)
 
     const payload = {
       serviceDeskId: parseInt(serviceDeskId, 10),
@@ -274,7 +250,8 @@ export async function createService(
         summary: serviceName,
         description: jiraDescription,
       },
-      raiseOnBehalfOf: userEmail
+      raiseOnBehalfOf: userEmail,
+      // requestParticipants: requestParticipants
     };
 
     // console.log('Creating Jira service with payload:', JSON.stringify(payload, null, 2));
@@ -289,7 +266,7 @@ export async function createService(
   } catch (error) {
     let errorMessage: string;
     let errorDetails: Record<string, unknown> = {};
-    
+
     if (axios.isAxiosError(error)) {
       errorDetails = {
         status: error.response?.status,
@@ -325,7 +302,8 @@ export async function createService(
   }
 }
 
-// Tasks
+// Create SubTasks
+// https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-post
 export async function createSubtask(
   parentIssueKey: string,
   summary: string,
@@ -336,7 +314,40 @@ export async function createSubtask(
   serviceDeskId: string
 ): Promise<JiraSubtaskResponse | void> {
   try {
-    // Create the subtask
+
+    // Reporter field 
+    let reporterData = {}
+    let accountId: string | null = null
+
+    // Get Customer 
+    accountId = await getCustomer(userEmail);
+    // console.log("accountId: ", accountId)
+
+    // Create Customer If not Exist  
+    if (!accountId) {
+      const customerData: JiraCustomerData = {
+        displayName: encodeURIComponent(userEmail),
+        email: encodeURIComponent(userEmail),
+      }
+
+      const createCustomerResult = await createCustomer(customerData);
+      if (createCustomerResult && createCustomerResult.success && createCustomerResult.data && createCustomerResult.data.accountId) {
+        accountId = createCustomerResult.data.accountId;
+      } else {
+        // If customer creation failed, return or throw error
+        throw new Error(
+          `Failed to create Jira customer for ${userEmail}: ${createCustomerResult?.error || "Unknown error"}`
+        );
+      }
+    }
+
+    if (accountId) {
+      reporterData = {
+        id: accountId
+      }
+    }
+
+    // Create Service Desk Subtask 
     const payload = {
       fields: {
         project: {
@@ -366,74 +377,45 @@ export async function createSubtask(
         },
         customfield_10305: userEmail,
         customfield_10338: agtasksUrl,
-        customfield_10371: taskType,        
+        customfield_10371: taskType,
+        reporter: reporterData
       }
     }
 
     const endpoint = `${JIRA_API_URL}/rest/api/3/issue`
     const response = await jiraApi.post(endpoint, payload)
-    const subtaskKey = response.data.key
-    
-    if (userEmail !== ""){    
-      // let participantsToSubmitInJira: string[] = []
-      let customerId: string = ""
-
-      // Usar GetCustomer para buscar el cliente existente
-      const customerResult = await getCustomer(userEmail, serviceDeskId);
-      
-      if (customerResult.success && customerResult.data) {
-        customerId = customerResult.data.accountId
-        // participantsToSubmitInJira.push(customerResult.data.accountId);
-
-        console.log("Encontré este customer: ", userEmail)
-      } else {
-
-        // Crear cliente si no existe usando CreateCustomer
-        const customerData: JiraCustomerData = {
-          displayName: encodeURIComponent(userEmail),
-          email: encodeURIComponent(userEmail),
-        }
-
-        const createCustomerResult = await createCustomer(customerData, serviceDeskId)
-        if (createCustomerResult.success && createCustomerResult.data) {
-          // participantsToSubmitInJira.push(createCustomerResult.data.accountId)
-          customerId = customerResult.data.accountId
-
-          console.log("Tuve que crear este customer: ", userEmail)
-        } else {
-          throw new Error(
-            `Failed to create customer for participant: ${userEmail}. Error: ${createCustomerResult.error}`,
-          )
-        }
-
-      }
-
-      if (customerId !== "") {
-        const participantEndpoint = `/rest/servicedeskapi/request/${subtaskKey}/participant`
-        const participantPayload = {
-          accountIds: customerId
-        }
-
-        await jiraApi.post(participantEndpoint, participantPayload)
-
-      }
-
-      // const participants = await processParticipants([userEmail], serviceDeskId)
-      
-      // if (participants.length > 0) {
-      //   const participantEndpoint = `/rest/servicedeskapi/request/${subtaskKey}/participant`
-      //   const participantPayload = {
-      //     accountIds: participants
-      //   }
-      //   await jiraApi.post(participantEndpoint, participantPayload)
-      // }
-
-    }
-
     return response.data
   } catch (err) {
     console.error("Error creating subtask:", err)
     throw err
+  }
+}
+
+export async function listServicesByProject(
+  domainId: string,
+  serviceDeskId: string,
+  queueId: string
+): Promise<JiraResponse> {
+  try {
+    const endpoint = `/rest/servicedeskapi/servicedesk/${serviceDeskId}/queue/${queueId}/issue`
+    const response = await jiraApi.get<QueueIssueResponse>(endpoint)
+
+    return {
+      success: true,
+      data: response.data,
+    }
+  } catch (error) {
+    let errorMessage: string
+
+    if (axios.isAxiosError(error)) {
+      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
+    } else {
+      errorMessage = "Unknown error occurred while fetching Jira queue issues"
+    }
+    return {
+      success: false,
+      error: errorMessage,
+    }
   }
 }
 
@@ -444,7 +426,7 @@ export async function listTasksbyService(
   try {
     const endpoint = `/rest/api/3/issue/${issueIdOrKey}`
     const response = await jiraApi.get<JiraIssue>(endpoint)
-    
+
     const issueData = response.data
     const subtasks = issueData.fields?.subtasks || []
 
@@ -458,7 +440,7 @@ export async function listTasksbyService(
           const response = await jiraApi.get<JiraSubtask>(
             `/rest/api/3/issue/${subtask.key}?fields=${fieldsQuery}`
           )
-          
+
           customFieldsData = response.data.fields
         }
 
@@ -519,3 +501,96 @@ export async function getIssue(issueIdOrKey: string): Promise<JiraResponse> {
     }
   }
 }
+
+
+// export async function getCustomer(email: string, serviceDeskId: string): Promise<JiraResponse> {
+//   try {
+//     // const endpoint = `/rest/servicedeskapi/customer`
+//     const endpoint = `/rest/servicedeskapi/servicedesk/${serviceDeskId}/customer`
+//     const response = await jiraApi.get(endpoint, {
+//       params: {
+//         query: email,
+//       }
+//     })
+
+//     // Check if customer exists in the response
+//     const customers = response.data.values || []
+//     const customer = customers.find((c: any) => c.emailAddress === email)
+
+//     if (customer) {
+//       return {
+//         success: true,
+//         data: customer
+//       }
+//     }
+
+//     return {
+//       success: false,
+//       error: "Customer not found"
+//     }
+//   } catch (error) {
+//     let errorMessage: string
+
+//     if (axios.isAxiosError(error)) {
+//       errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
+//     } else {
+//       errorMessage = "Unknown error occurred while fetching Jira customer"
+//     }
+
+//     return {
+//       success: false,
+//       error: errorMessage
+//     }
+//   }
+// }
+
+// Replaced by lookupAccountId
+// async function getCustomer(
+//   serviceDeskId: string,
+//   query: string,
+//   start = 0,
+//   limit = 10000
+// ): Promise<{ accountId: string; displayName: string; emailAddress?: string }[]> {
+
+//   const endpoint = `${JIRA_API_URL}/rest/servicedeskapi/servicedesk/${serviceDeskId}/participant` 
+//   console.log("endpoint getCustomer: ", endpoint)
+
+//   const res = await fetch(endpoint +
+//       `?query=${encodeURIComponent(query)}` +
+//       `&start=${start}&limit=${limit}`,
+//     {
+//       method: 'GET',
+//       headers: {
+//         "Authorization": `Basic ${JIRA_API_TOKEN}`,
+//         "Accept": "application/json",
+//         "Content-Type": "application/json",
+//       },
+//     }
+//   )
+
+//   if (!res.ok) {
+//     console.log("Jira API error", res.body)
+//     throw new Error(`Jira API error ${res.status}`)
+//   }
+
+//   const data = await res.json()
+//   return data.values
+// }
+
+// async function handleParticipants(participants: string[]) {
+//   const serviceDeskId = '140'
+//   const participantsToSubmit: string[] = []
+
+//   for (const p of participants) {
+//     const email = p.trim().toLowerCase()
+//     const customers = await getCustomer(serviceDeskId, email)
+
+//     if (customers.length > 0) {
+//       participantsToSubmit.push(customers[0].accountId)
+//     } else {
+//       // si no existe, llamarías a otro endpoint para crearlo
+//     }
+//   }
+
+//   return participantsToSubmit
+// }

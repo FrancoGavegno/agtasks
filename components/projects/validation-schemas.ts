@@ -44,19 +44,24 @@ export type Step2FormValues = z.infer<typeof step2Schema>
 
 // Step 3 Users of Tasks Selection
 export const step3Schema = z.object({
-  taskAssignments: z.array(taskAssignmentSchema),
+  taskAssignments: z.array(taskAssignmentSchema).refine(
+    (tasks) => tasks.every((task) => !!task.assignedTo && task.assignedTo.length > 0),
+    {
+      message: "Todas las tareas deben tener un usuario asignado",
+      path: ["taskAssignments"],
+    },
+  )
+  // taskAssignments: z.array(taskAssignmentSchema).refine(
+  //   (tasks) => {
+  //     const tasksWithUser = tasks.filter((task) => task.assignedTo.length > 0)
+  //     return tasksWithUser
+  //   },
+  //   {
+  //     message: "Todas las tareas deben tener un usuario asignado",
+  //     path: ["taskAssignments"],
+  //   },
+  // )
 })
-
-// .refine(
-//   (tasks) => {
-//     const tasksWithUser = tasks.filter((task) => task.assignedTo.length > 0)
-//     return tasksWithUser
-//   },
-//   {
-//     message: "Todas las tareas deben tener un usuario asignado",
-//     path: ["taskAssignments"],
-//   },
-// )
 
 export type Step3FormValues = z.infer<typeof step3Schema>
 

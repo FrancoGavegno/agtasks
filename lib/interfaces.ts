@@ -122,6 +122,7 @@ export interface Service {
   progress?: number 
   fields?: ServiceField[] 
   tasks?: ServiceTask[]
+  createdAt?: string  
 }
 
 export interface ServiceField {

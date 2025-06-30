@@ -31,7 +31,11 @@ const schema = a
     // User: a.model({
     //   name: a.string().required(),
     //   email: a.string().required(),
-    //   tasks: a.hasMany("ServiceTask", "userId"),
+    //   tmInvitationStatus: a.enum(["notsent", "sent", "accepted", "rejected"]), // A date time scalar type that is represented server-side as an extended ISO 8601 date and time string in the format YYYY-MM-DDThh:mm:ss.sssZ
+    //   tmInvitationSent: a.datetime(),
+    //   tmInvitationAnswered: a.datetime(),
+    //   tmAccountId: a.string().required(),
+    //   tmAccountType: a.enum(["customer", "agent", "admin"])
     // }),
 
     Project: a.model({
@@ -82,7 +86,6 @@ const schema = a
       externalTemplateId: a.string().required(), // FK to Task Manager Task Template ID 'TEM-58'
       taskType: a.string(), // ex.: tillage, fieldvisit, administrative 
       taskName: a.string().required(), 
-      // formSchema: a.json(), 
       formData: a.json(),  // form data submitted
       userEmail: a.string().required(), // FK to 360 User, ex.: fgavegno@geoagro.com
     }),

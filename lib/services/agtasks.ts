@@ -406,58 +406,53 @@ export const createServiceTasks = async (
 ): Promise<string[]> => {
   try {
     const client = getClient();
-    const taskResults = await Promise.all(
-      tasks.map(async (task: any) => {
+    const taskResults: string[] = [];
+    for (const task of tasks) {
+      // Create ServiceTask in Agtasks 
+      const response: {
+        data: { id: string } | null; errors?: any[]
+      } = await client.models.ServiceTask.create({
+        serviceId,
+        externalTemplateId: task.externalTemplateId,
+        taskName: task.taskName,
+        taskType: task.taskType,
+        userEmail: task.userEmail,
+      });
 
-        // Create ServiceTask in Agtasks 
-        const response: {
-          data: { id: string } | null; errors?: any[]
-        } = await client.models.ServiceTask.create({
-          serviceId,
-          externalTemplateId: task.externalTemplateId,
-          taskName: task.taskName,
-          taskType: task.taskType,
-          userEmail: task.userEmail,
-        });
+      if (!response.data) {
+        throw new Error(`Failed to create task: ${task.taskName}`);
+      }
 
-        if (!response.data) {
-          throw new Error(`Failed to create task: ${task.taskName}`);
+      const taskId = response.data.id;
+
+      // Create Subtask in Jira 
+      if (task.parentIssueKey && task.description) {
+        try {
+          const baseUrl = process.env.NODE_ENV === 'production'
+            ? process.env.NEXT_PUBLIC_SITE_URL
+            : 'http://localhost:3000'
+
+          const agtasksUrl = `${baseUrl}/${locale}/domains/${domain}/projects/${project}/tasks/${taskId}`;
+
+          await createSubtask(
+            task.parentIssueKey,
+            task.taskName,
+            task.userEmail,
+            task.description,
+            agtasksUrl,
+            task.taskType,
+            serviceDeskId
+          );
+        } catch (error) {
+          console.error(`Failed to create Jira subtask for task ${task.taskName}:`, error);
+          // No lanzamos error para permitir que el proceso continúe
         }
+      } else {
+        console.warn(`Skipping Jira subtask creation for task ${task.taskName}: missing parentIssueKey or description`);
+      }
 
-        const taskId = response.data.id;
-
-        // Create Subtask in Jira 
-        if (task.parentIssueKey && task.description) {
-          try {
-
-            const baseUrl = process.env.NODE_ENV === 'production'
-              ? process.env.NEXT_PUBLIC_SITE_URL
-              : 'http://localhost:3000'
-
-            const agtasksUrl = `${baseUrl}/${locale}/domains/${domain}/projects/${project}/tasks/${taskId}`;
-
-            await createSubtask(
-              task.parentIssueKey,
-              task.taskName,
-              task.userEmail,
-              task.description,
-              agtasksUrl,
-              task.taskType,
-              serviceDeskId
-            );
-            // console.log(`Jira subtask created for task ${task.taskName}`);
-          } catch (error) {
-            console.error(`Failed to create Jira subtask for task ${task.taskName}:`, error);
-            // No lanzamos error para permitir que el proceso continúe
-          }
-        } else {
-          console.warn(`Skipping Jira subtask creation for task ${task.taskName}: missing parentIssueKey or description`);
-        }
-
-        return taskId;
-      })
-    );
-
+      taskResults.push(taskId);
+    }
     return taskResults;
   } catch (error) {
     console.error("Error creating service tasks in Amplify:", error);
@@ -617,14 +612,21 @@ export const listServicesByProject = async (
           endDate: service.endDate,
           // status,
           progress,
+          createdAt: service.createdAt,
         } as Service;
       }),
     );
 
     const sortedServices = servicesWithRelations.sort((a, b) => {
-      const valueA = a[sortBy]?.toString().toLowerCase() || "";
-      const valueB = b[sortBy]?.toString().toLowerCase() || "";
-      return sortDirection === "asc" ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+      if (sortBy === 'createdAt') {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+      } else {
+        const valueA = a[sortBy]?.toString().toLowerCase() || "";
+        const valueB = b[sortBy]?.toString().toLowerCase() || "";
+        return sortDirection === "asc" ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+      }
     });
 
     return { services: sortedServices, total };

@@ -99,22 +99,19 @@ export default function CreateService({ userEmail }: Props) {
         isValid = await methods.trigger(["workspace", "campaign", "establishment", "selectedLots"])
         break
       case 3:
-        const taskAssignments = methods.getValues("taskAssignments")
-
-        // At least 1 task with user assigned
-        const tasksWithUser = taskAssignments.filter((task) => task.assignedTo)
-        if (tasksWithUser.length === 0) {
+        // Validar que todas las tareas tengan usuario asignado usando el schema
+        isValid = await methods.trigger("taskAssignments");
+        if (!isValid) {
+          const errorMsg = methods.formState.errors.taskAssignments?.message || "Todas las tareas deben tener un usuario asignado";
           toast({
             title: "Asignación incompleta",
-            description: "Por favor, asigne al menos un usuario a una tarea",
+            description: errorMsg,
             variant: "destructive",
-          })
-          return
+          });
+          return;
         }
-
-        isValid = true
-        onSubmit(methods.getValues())
-        return 
+        onSubmit(methods.getValues());
+        return;
     }
 
     if (isValid) {
@@ -145,7 +142,7 @@ export default function CreateService({ userEmail }: Props) {
         requestTypeId = res.requestTypeId
       }
       // console.log(serviceDeskId, requestTypeId)
-    
+          
       // Create Service in Jira
       const jiraResponse = await createService(
         serviceName, 
@@ -171,6 +168,7 @@ export default function CreateService({ userEmail }: Props) {
       // Create Service Fields in Agtasks 
       await createServiceFields(id, data.selectedLots)
       
+      // Create Service Tasks in Agtasks and Jira
       const tasks = data.taskAssignments.map((task) => ({
         externalTemplateId: data.protocol,
         taskName: task.task,
@@ -180,7 +178,6 @@ export default function CreateService({ userEmail }: Props) {
         description: descriptionPlain,
       }));
 
-      // Create Service Tasks in Agtasks first and then in Jira
       if (tasks.length > 0) {
         await createServiceTasks(
           id, 

@@ -19,7 +19,7 @@ import {
 import { toast } from "@/hooks/use-toast"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+// import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
@@ -33,11 +33,15 @@ export default function TaskPage() {
     const [taskData, setTaskData] = useState<ServiceTask>()
 
     useEffect(() => {
+        // TO DO fetch Jira SubTask Information
+        // We'll need Reporter field information
+
+
+        // Fetch ServiceTask Information 
         async function fetchTask(task: string) {
             const taskData = await getServiceTask(task)
-
-            console.log("taskData: ", taskData)
             setTaskData(taskData)
+            // console.log("taskData: ", taskData)
         }
 
         fetchTask(Array.isArray(task) ? task[0] : task)

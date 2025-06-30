@@ -1,34 +1,50 @@
 import { NextResponse } from 'next/server'
-import { getCustomer } from '@/lib/integrations/jira'
+import { 
+  getCustomer, 
+  createCustomer 
+} from "@/lib/integrations/jira"
+import type { JiraCustomerData } from '@/lib/interfaces'
 
 export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const email = searchParams.get('email')
-    const serviceDeskId = searchParams.get('serviceDeskId')
-
-    if (!email || !serviceDeskId) {
+    try {
+      const { searchParams } = new URL(request.url);
+      const email = searchParams.get('email');
+  
+      if (!email) {
+        return NextResponse.json(
+          { error: 'Missing email parameter' },
+          { status: 400 }
+        );
+      }
+  
+      const accountId = await getCustomer(email);
+      if (!accountId) {
+        return NextResponse.json(
+          { error: `No se encontró accountId para el email: ${email}` },
+          { status: 404 }
+        );
+      }
+  
+      return NextResponse.json({ accountId });
+    } catch (error) {
+      console.error('Error en /customer route:', error);
       return NextResponse.json(
-        { error: 'Email and serviceDeskId are required' },
-        { status: 400 }
-      )
+        { error: 'Error interno del servidor' },
+        { status: 500 }
+      );
     }
-
-    const result = await getCustomer(email, serviceDeskId)
-
-    if (!result.success) {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json(result.data)
-  } catch (error) {
-    console.error('Error in GET /api/v1/integrations/jira/customer:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
   }
-}
+
+  export async function POST(request: Request) {
+    try {
+      const body = await request.json()
+      const customerData: JiraCustomerData = {
+        displayName: body.displayName,
+        email: body.email,
+      }
+      const result = await createCustomer(customerData)
+      return NextResponse.json(result, { status: result.success ? 200 : 400 })
+    } catch (error) {
+      return NextResponse.json({ success: false, error: (error as Error).message || 'Unknown error' }, { status: 500 })
+    }
+  }
