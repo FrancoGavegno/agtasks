@@ -514,68 +514,37 @@ export const listServicesByProject = async (
 ): Promise<{ services: Service[]; total: number }> => {
   try {
     const client = getClient();
-    const { page, pageSize, searchQuery = "", sortBy = "serviceName", sortDirection = "asc" } = options;
+    const { pageSize, searchQuery = "", sortBy = "createdAt", sortDirection = "desc" } = options;
 
     const filter: any = { projectId: { eq: projectId } };
     if (searchQuery) {
       filter.serviceName = { contains: searchQuery.toLowerCase() };
     }
 
-    const totalResponse: { data: Schema["Service"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.Service.list({ filter });
-    const total = totalResponse.data.length;
-
-    let currentToken: string | null | undefined = undefined;
-    let currentPage = 1;
-    let services: Schema["Service"]["type"][] = [];
-
-    while (currentPage <= page) {
-      const servicesResponse: { data: Schema["Service"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.Service.list({
+    // Obtener todos los servicios sin paginación real si pageSize es grande
+    let allServices: Schema["Service"]["type"][] = [];
+    let nextToken: string | null | undefined = undefined;
+    do {
+      const response: { data: Schema["Service"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.Service.list({
         filter,
         limit: pageSize,
-        ...(currentToken && { nextToken: currentToken }),
+        ...(nextToken && { nextToken }),
       });
+      allServices = allServices.concat(response.data);
+      nextToken = response.nextToken;
+    } while (nextToken);
 
-      if (!servicesResponse.data.length) {
-        console.error(`No services found for project ${projectId}`);
-        return { services: [], total: 0 };
-      }
-
-      if (currentPage === page) {
-        services = servicesResponse.data;
-        break;
-      }
-
-      currentToken = servicesResponse.nextToken;
-      currentPage++;
-
-      if (!currentToken) {
-        return { services: [], total };
-      }
-    }
+    const total = allServices.length;
 
     const servicesWithRelations = await Promise.all(
-      services.map(async (service) => {
+      allServices.map(async (service) => {
         const fieldsResponse = await service.fields();
         const lots = fieldsResponse.data.map((field) => field.fieldId).join(", ") || "Sin lotes asignados";
 
         const tasksResponse = await service.tasks();
         const tasks = await Promise.all(
           tasksResponse.data.map(async (task) => {
-            // const role = await task.role();
-            // const user = await task.user();
             return task;
-            // return {
-            //   id: task.id,
-            //   // sourceSystem: task.sourceSystem,
-            //   externalTemplateId: task.externalTemplateId,
-            //   taskName: task.taskName,
-            //   // role: role?.data
-            //   //   ? { id: role.data.id, name: role.data.name }
-            //   //   : { id: task.roleId, name: "Unknown Role" },
-            //   // user: user?.data
-            //   //   ? { id: user.data.id, name: user.data.name, email: user.data.email }
-            //   //   : { id: task.userId, name: "Unknown User", email: "" },
-            // };
           }),
         );
 
@@ -583,23 +552,12 @@ export const listServicesByProject = async (
         const completedTasks = 0;
         const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-        // const now = new Date();
-        // const startDate = service.startDate ? new Date(service.startDate) : null;
-        // const endDate = service.endDate ? new Date(service.endDate) : null;
-        // let status = "Planificado";
-        // if (progress === 100) {
-        //   status = "Finalizado";
-        // } else if (startDate && now >= startDate) {
-        //   status = "En progreso";
-        // }
-
         return {
           id: service.id,
           projectId: service.projectId,
           serviceName: service.serviceName,
           externalTemplateId: service.externalTemplateId,
           externalServiceKey: service.externalServiceKey,
-          //sourceSystem: service.sourceSystem,
           workspaceId: service.workspaceId,
           workspaceName: service.workspaceName,
           campaignId: service.campaignId,
@@ -610,7 +568,6 @@ export const listServicesByProject = async (
           totalArea: service.totalArea,
           startDate: service.startDate,
           endDate: service.endDate,
-          // status,
           progress,
           createdAt: service.createdAt,
         } as Service;
