@@ -18,7 +18,7 @@ export async function GET(req: Request, { params }: { params: { serviceId: strin
         }
         const result = await listTasksbyService(serviceId, [
             "customfield_10371", // Task Type
-            "customfield_10140" // Task Detail
+            // "customfield_10140" // Task Detail
         ]);
 
         return NextResponse.json(result, { status: 200 });

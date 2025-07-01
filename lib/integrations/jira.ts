@@ -375,7 +375,7 @@ export async function createSubtask(
         parent: {
           key: parentIssueKey
         },
-        customfield_10305: userEmail,
+        // customfield_10305: userEmail,
         customfield_10338: agtasksUrl,
         customfield_10371: taskType,
         reporter: reporterData

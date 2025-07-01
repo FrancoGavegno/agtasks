@@ -9,6 +9,8 @@ import { useServiceForm } from "@/lib/contexts/service-form-context"
 // import type { Role } from "@/lib/interfaces"
 import { User } from "@/lib/interfaces"
 import { listUsersByDomain } from "@/lib/integrations/360"
+import { Input } from "@/components/ui/input"
+import ReactSelect, { SingleValue } from 'react-select'
 
 export default function Step3Tasks() {
   const { domain } = useParams<{ domain: string }>()
@@ -30,6 +32,8 @@ export default function Step3Tasks() {
   // Estados de error
   // const [rolesError, setRolesError] = useState<string | null>(null)
   const [usersError, setUsersError] = useState<string | null>(null)
+
+  const [userSearch, setUserSearch] = useState<{ [index: number]: string }>({})
 
   // Cargar roles desde la API
   // useEffect(() => {
@@ -241,34 +245,26 @@ export default function Step3Tasks() {
                 </td> */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <div className="space-y-1">
-                    <Select
-                      value={assignment.assignedTo || ""}
-                      onValueChange={(value) => handleUserAssignment(index, value)}
-                      // disabled={!assignment.role || usersLoading}
-                      disabled={usersLoading}
-                    >
-                      <SelectTrigger className={`w-full ${getFieldError(index, "assignedTo") ? "border-red-500" : ""}`}>
-                        <SelectValue placeholder={usersLoading ? "Cargando..." : "Seleccionar usuario"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {usersError ? (
-                          <div className="p-2 text-red-500 text-sm">{usersError}</div>
-                        ) : users.length === 0 ? (
-                          <div className="p-2 text-muted-foreground text-sm">No hay usuarios disponibles</div>
-                        ) : (
-                          users.map((user) => (
-                            <SelectItem key={user.email} value={user.email}>
-                              {`${user.firstName} ${user.lastName} <${user.email}>`.trim()} 
-                            </SelectItem>
-                          ))
-                          // getUsersByRole(assignment.role).map((user) => (
-                          //   <SelectItem key={user.email} value={user.email}>
-                          //     {`${user.firstName} ${user.lastName}`.trim()}
-                          //   </SelectItem>
-                          // ))
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <ReactSelect
+                      classNamePrefix="react-select"
+                      isClearable
+                      isSearchable
+                      isDisabled={usersLoading}
+                      value={users.find(u => u.email === assignment.assignedTo) ? {
+                        value: assignment.assignedTo,
+                        label: `${users.find(u => u.email === assignment.assignedTo)?.firstName || ''} ${users.find(u => u.email === assignment.assignedTo)?.lastName || ''} <${users.find(u => u.email === assignment.assignedTo)?.email || ''}>`.trim()
+                      } : undefined}
+                      onChange={(option: SingleValue<{ value: string; label: string }>) => handleUserAssignment(index, option ? option.value : "")}
+                      options={users.map(user => ({
+                        value: user.email,
+                        label: `${user.firstName} ${user.lastName} <${user.email}>`.trim()
+                      }))}
+                      placeholder={usersLoading ? "Cargando..." : "Seleccionar usuario"}
+                      noOptionsMessage={() => usersLoading ? "Cargando..." : "No hay usuarios disponibles"}
+                      menuPortalTarget={typeof window !== "undefined" ? document.body : undefined}
+                      menuPosition="fixed"
+                      styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                    />
                     {getFieldError(index, "assignedTo") && (
                       <p className="text-red-500 text-xs">{getFieldError(index, "assignedTo")}</p>
                     )}

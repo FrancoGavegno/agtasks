@@ -141,7 +141,6 @@ export default function CreateService({ userEmail }: Props) {
         serviceDeskId = res.projectId
         requestTypeId = res.requestTypeId
       }
-      // console.log(serviceDeskId, requestTypeId)
           
       // Create Service in Jira
       const jiraResponse = await createService(
@@ -177,6 +176,8 @@ export default function CreateService({ userEmail }: Props) {
         parentIssueKey: issueKey,
         description: descriptionPlain,
       }));
+
+
 
       if (tasks.length > 0) {
         await createServiceTasks(
