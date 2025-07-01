@@ -10,6 +10,7 @@ import type { Step2FormValues, SelectedLotDetail } from "./validation-schemas"
 import { useServiceForm } from "@/lib/contexts/service-form-context"
 import { listWorkspaces, listSeasons, listFarms, listFields } from "@/lib/integrations/360"
 import type { Workspace, Season, Farm, LotField } from "@/lib/interfaces"
+import * as React from "react"
 
 interface Props {
   userEmail: string
@@ -46,6 +47,19 @@ export default function Step2Lots({ userEmail }: Props) {
   const campaign = form.watch ? form.watch("campaign") : ""
   const establishment = form.watch ? form.watch("establishment") : ""
   const selectedLots = form.watch ? form.watch("selectedLots") : []
+
+  const allLotIds = fields.map(field => field.id.toString())
+  const selectedLotIds = selectedLots.map(lot => lot.fieldId)
+  const allSelected = allLotIds.length > 0 && allLotIds.every(id => selectedLotIds.includes(id))
+  const someSelected = allLotIds.some(id => selectedLotIds.includes(id)) && !allSelected
+
+  const selectAllRef = React.useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someSelected
+    }
+  }, [someSelected])
 
   // Fetch workspaces from 360 API
   useEffect(() => {
@@ -255,6 +269,26 @@ export default function Step2Lots({ userEmail }: Props) {
     console.log("Lotes seleccionados actualizados:", newLots)
   }
 
+  // Nueva función para seleccionar/deseleccionar todos los lotes
+  const handleToggleAllLots = () => {
+    if (allSelected) {
+      // Deseleccionar todos
+      form.setValue("selectedLots", [], { shouldValidate: true, shouldDirty: true, shouldTouch: true })
+      updateFormValues({ selectedLots: [] })
+    } else {
+      // Seleccionar todos
+      const newLots = fields.map(selectedField => ({
+        fieldId: selectedField.id.toString(),
+        fieldName: selectedField.name,
+        hectares: selectedField.hectares,
+        cropName: selectedField.cropName,
+        hybridName: selectedField.hybridName || "",
+      }))
+      form.setValue("selectedLots", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
+      updateFormValues({ selectedLots: newLots })
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -380,7 +414,15 @@ export default function Step2Lots({ userEmail }: Props) {
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      Seleccionar
+                      <input
+                        type="checkbox"
+                        ref={selectAllRef}
+                        checked={allSelected}
+                        onChange={handleToggleAllLots}
+                        aria-label="Seleccionar todos los lotes"
+                        className="h-4 w-4 accent-primary rounded-sm border border-primary shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      />
+                      <span className="ml-2">Seleccionar</span>
                     </th>
                     {/* <th
                       scope="col"
