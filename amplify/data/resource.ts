@@ -52,44 +52,79 @@ const schema = a
     }),
 
     Service: a.model({
+      // FK to Project
       project: a.belongsTo("Project", "projectId"),
-      projectId: a.string().required(), // FK to Project
-      serviceName: a.string().required(),
-      externalTemplateId: a.string().required(), // FK to Task Manager Service Template ID 'TEM-57'
-      externalServiceKey: a.string().required(),  
-      workspaceId: a.string().required(), // FK to 360 Workspace
+      projectId: a.string().required(), 
+      
+      // FK to Task Manager 
+      externalTemplateId: a.string().required(), // Request Template ID 
+      externalServiceKey: a.string().required(),  // Request ID 
+      
+      // FK to 360 
+      workspaceId: a.string().required(), 
       workspaceName: a.string(),
-      campaignId: a.string().required(), // FK to 360 Season
+      campaignId: a.string().required(), 
       campaignName: a.string(),
-      farmId: a.string().required(), // FK to 360 Farm
+      farmId: a.string().required(), 
       farmName: a.string(),
+      
       totalArea: a.float().required(),
+      serviceName: a.string().required(),
       startDate: a.string().required(),
       endDate: a.string(),
-      fields: a.hasMany("ServiceField", "serviceId"), // ServiceField[]
-      tasks: a.hasMany("ServiceTask", "serviceId"), // ServiceTask[]
+
+      // ServiceField[]
+      fields: a.hasMany("ServiceField", "serviceId"),
+
+      // ServiceTask[]
+      tasks: a.hasMany("ServiceTask", "serviceId"), 
+    }),
+
+    ServiceTask: a.model({
+      // FK to Project
+      project: a.belongsTo("Project", "projectId"),
+      projectId: a.string(), 
+      
+      // FK to Service
+      service: a.belongsTo("Service", "serviceId"),
+      serviceId: a.string(), 
+      
+      // FK to Task Manager 
+      externalTemplateId: a.string().required(), // SubTask Template ID 
+      
+      // FK to 360 
+      workspaceId: a.string(), 
+      workspaceName: a.string(),
+      campaignId: a.string(), 
+      campaignName: a.string(),
+      farmId: a.string(), 
+      farmName: a.string(),
+
+      totalArea: a.float(),
+      taskName: a.string().required(), 
+      taskType: a.string(), // ex.: tillage, fieldvisit, administrative 
+      userEmail: a.string().required(), 
+      
+      // Submitted Form Data
+      formData: a.json(),  
     }),
 
     ServiceField: a.model({
+      // FK to Service
       service: a.belongsTo("Service", "serviceId"),
-      serviceId: a.string().required(), // FK to Service
-      fieldId: a.string().required(), // FK to 360 Field
+      serviceId: a.string(), 
+      
+      // FK To ServiceTask
+      task: a.belongsTo("ServiceTask", "taskId"),      
+      taskId: a.string(), 
+      
+      // FK to 360 Field
+      fieldId: a.string().required(), 
       fieldName: a.string().required(),
       hectares: a.integer(),
       crop: a.string(),
       hybrid: a.string(),
     }),
-
-    ServiceTask: a.model({
-      service: a.belongsTo("Service", "serviceId"),
-      serviceId: a.string().required(), // FK to Service
-      externalTemplateId: a.string().required(), // FK to Task Manager Task Template ID 'TEM-58'
-      taskType: a.string(), // ex.: tillage, fieldvisit, administrative 
-      taskName: a.string().required(), 
-      formData: a.json(),  // form data submitted
-      userEmail: a.string().required(), // FK to 360 User, ex.: fgavegno@geoagro.com
-    }),
-
   })
   .authorization((allow) => [allow.publicApiKey()]);
 

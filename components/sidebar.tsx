@@ -68,6 +68,12 @@ export function AppSidebar({ user }: Props) {
       icon: LayoutList,
       description: t("projectNavItems-2-description")
     },
+    {
+      title: t("projectNavItems-3-title"),
+      href: "/tasks",
+      icon: LayoutList,
+      description: t("projectNavItems-3-description")
+    },
   ]
 
   const [domains, setDomains] = useState<Domain[]>([])

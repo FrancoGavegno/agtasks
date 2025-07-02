@@ -373,133 +373,6 @@ export const createService = async (
   }
 };
 
-export const createServiceFields = async (serviceId: string, fields: any[]): Promise<void> => {
-  try {
-    const client = getClient();
-
-    await Promise.all(
-      fields.map((field: SelectedLotDetail) =>
-        client.models.ServiceField.create({
-          serviceId,
-          fieldId: field.fieldId,
-          fieldName: field.fieldName,
-          hectares: field.hectares,
-          crop: field.cropName,
-          hybrid: field.hybridName,
-        }),
-      ),
-    );
-  } catch (error) {
-    console.error("Error creating service fields in Amplify:", error);
-    throw new Error(`Failed to create service fields: ${error instanceof Error ? error.message : String(error)}`);
-  }
-};
-
-export const createServiceTasks = async (
-  serviceId: string,
-  tasks: any[],
-  locale: string,
-  domain: string,
-  project: string,
-  serviceDeskId: string
-): Promise<string[]> => {
-  try {
-    const client = getClient();
-    const taskResults: string[] = [];
-    for (const task of tasks) {
-      // Create ServiceTask in Agtasks 
-      const response: {
-        data: { id: string } | null; errors?: any[]
-      } = await client.models.ServiceTask.create({
-        serviceId,
-        externalTemplateId: task.externalTemplateId,
-        taskName: task.taskName,
-        taskType: task.taskType,
-        userEmail: task.userEmail,
-      });
-
-      if (!response.data) {
-        throw new Error(`Failed to create task: ${task.taskName}`);
-      }
-
-      const taskId = response.data.id;
-
-      // Create Subtask in Jira 
-      if (task.parentIssueKey && task.description) {
-        try {
-          const baseUrl = process.env.NODE_ENV === 'production'
-            ? process.env.NEXT_PUBLIC_SITE_URL
-            : 'http://localhost:3000'
-
-          const agtasksUrl = `${baseUrl}/${locale}/domains/${domain}/projects/${project}/tasks/${taskId}`;
-
-          await createSubtask(
-            task.parentIssueKey,
-            task.taskName,
-            task.userEmail,
-            task.description,
-            agtasksUrl,
-            task.taskType,
-            serviceDeskId
-          );
-        } catch (error) {
-          console.error(`Failed to create Jira subtask for task ${task.taskName}:`, error);
-          // No lanzamos error para permitir que el proceso continúe
-        }
-      } else {
-        console.warn(`Skipping Jira subtask creation for task ${task.taskName}: missing parentIssueKey or description`);
-      }
-
-      taskResults.push(taskId);
-    }
-    return taskResults;
-  } catch (error) {
-    console.error("Error creating service tasks in Amplify:", error);
-    throw new Error(`Failed to create service tasks: ${error instanceof Error ? error.message : String(error)}`);
-  }
-};
-
-// Tasks
-export const getServiceTask = async (taskId: string): Promise<ServiceTask> => {
-  const client = getClient();
-
-  const taskResponse: {
-    data: Schema["ServiceTask"]["type"] | null; errors?: any[]
-  } = await client.models.ServiceTask.get({ id: taskId });
-
-  if (!taskResponse.data) {
-    throw new Error(`Task with ID ${taskId} not found`);
-  }
-
-  return {
-    ...taskResponse.data,
-    taskType: taskResponse.data?.taskType ?? "",
-  } as ServiceTask;
-}
-
-export const updateServiceTask = async (
-  taskId: string, 
-  formData: Record<string, any>
-): Promise<{ success: boolean; data?: any; error?: any }> => {
-  const client = getClient();
-
-  try {
-    const response = await client.models.ServiceTask.update({
-      id: taskId,
-      formData: JSON.stringify(formData),
-    });
-
-    if (!response.data) {
-      return { success: false, error: "No se pudo actualizar la tarea" };
-    }
-
-    return { success: true, data: response.data };
-  } catch (error) {
-    console.error("Ocurrió un error al intentar actualizar la tarea: ", error);
-    return { success: false, error };
-  }
-};
-
 export const listServicesByProject = async (
   projectId: string,
   options: {
@@ -590,4 +463,159 @@ export const listServicesByProject = async (
     throw new Error(`Failed to fetch services: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
+
+// Service Fields
+export const createServiceFields = async (serviceId: string, fields: any[]): Promise<void> => {
+  try {
+    const client = getClient();
+
+    await Promise.all(
+      fields.map((field: SelectedLotDetail) =>
+        client.models.ServiceField.create({
+          serviceId,
+          fieldId: field.fieldId,
+          fieldName: field.fieldName,
+          hectares: field.hectares,
+          crop: field.cropName,
+          hybrid: field.hybridName,
+        }),
+      ),
+    );
+  } catch (error) {
+    console.error("Error creating service fields in Amplify:", error);
+    throw new Error(`Failed to create service fields: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+
+// Service Tasks
+export const createServiceTasks = async (
+  serviceId: string,
+  tasks: any[],
+  locale: string,
+  domain: string,
+  project: string,
+  serviceDeskId: string
+): Promise<string[]> => {
+  try {
+    const client = getClient();
+    const taskResults: string[] = [];
+    for (const task of tasks) {
+      // Create ServiceTask in Agtasks 
+      const response: {
+        data: { id: string } | null; errors?: any[]
+      } = await client.models.ServiceTask.create({
+        serviceId,
+        externalTemplateId: task.externalTemplateId,
+        taskName: task.taskName,
+        taskType: task.taskType,
+        userEmail: task.userEmail,
+      });
+
+      if (!response.data) {
+        throw new Error(`Failed to create task: ${task.taskName}`);
+      }
+
+      const taskId = response.data.id;
+
+      // Create Subtask in Jira 
+      if (task.parentIssueKey && task.description) {
+        try {
+          const baseUrl = process.env.NODE_ENV === 'production'
+            ? process.env.NEXT_PUBLIC_SITE_URL
+            : 'http://localhost:3000'
+
+          const agtasksUrl = `${baseUrl}/${locale}/domains/${domain}/projects/${project}/tasks/${taskId}`;
+
+          await createSubtask(
+            task.parentIssueKey,
+            task.taskName,
+            task.userEmail,
+            task.description,
+            agtasksUrl,
+            task.taskType,
+            serviceDeskId
+          );
+        } catch (error) {
+          console.error(`Failed to create Jira subtask for task ${task.taskName}:`, error);
+          // No lanzamos error para permitir que el proceso continúe
+        }
+      } else {
+        console.warn(`Skipping Jira subtask creation for task ${task.taskName}: missing parentIssueKey or description`);
+      }
+
+      taskResults.push(taskId);
+    }
+    return taskResults;
+  } catch (error) {
+    console.error("Error creating service tasks in Amplify:", error);
+    throw new Error(`Failed to create service tasks: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+
+export const getServiceTask = async (taskId: string): Promise<ServiceTask> => {
+  const client = getClient();
+
+  const taskResponse: {
+    data: Schema["ServiceTask"]["type"] | null; errors?: any[]
+  } = await client.models.ServiceTask.get({ id: taskId });
+
+  if (!taskResponse.data) {
+    throw new Error(`Task with ID ${taskId} not found`);
+  }
+
+  return {
+    ...taskResponse.data,
+    taskType: taskResponse.data?.taskType ?? "",
+  } as ServiceTask;
+}
+
+export const updateServiceTask = async (
+  taskId: string, 
+  formData: Record<string, any>
+): Promise<{ success: boolean; data?: any; error?: any }> => {
+  const client = getClient();
+
+  try {
+    const response = await client.models.ServiceTask.update({
+      id: taskId,
+      formData: JSON.stringify(formData),
+    });
+
+    if (!response.data) {
+      return { success: false, error: "No se pudo actualizar la tarea" };
+    }
+
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Ocurrió un error al intentar actualizar la tarea: ", error);
+    return { success: false, error };
+  }
+};
+
+export const listTasksByProject = async (projectId: string): Promise<ServiceTask[]> => {
+  const client = getClient();
+  // 1. Obtener todos los servicios del proyecto
+  const servicesResponse = await client.models.Service.list({ filter: { projectId: { eq: projectId } } });
+  const services = servicesResponse.data;
+  const serviceIds = services.map(s => s.id);
+
+  // 2. Obtener todas las ServiceTasks que:
+  // - tengan projectId igual al dado y serviceId vacío/undefined
+  // - o tengan serviceId de un servicio del proyecto
+  let allTasks: ServiceTask[] = [];
+  let nextToken: string | null | undefined = undefined;
+  do {
+    const response: { data: any[]; nextToken?: string | null } = await client.models.ServiceTask.list({
+      limit: 1000,
+      ...(nextToken ? { nextToken } : {}),
+    });
+    const filtered = response.data.filter((task: any) =>
+      (task?.projectId === projectId && (!task?.serviceId || task?.serviceId === "")) ||
+      (task?.serviceId && serviceIds.includes(task.serviceId))
+    );
+    allTasks = allTasks.concat(filtered as ServiceTask[]);
+    nextToken = response.nextToken;
+  } while (nextToken);
+  return allTasks;
+}
 
