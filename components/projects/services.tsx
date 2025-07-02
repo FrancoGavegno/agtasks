@@ -184,7 +184,7 @@ export function ServicesPageDetails() {
                   <TableCell>{service.workspaceName || "-"}</TableCell>
                   <TableCell>{service.campaignName || "-"}</TableCell>
                   <TableCell>{service.farmName || service.farmId}</TableCell>
-                  <TableCell>{service.totalArea} ha</TableCell>
+                  <TableCell>{service.totalArea.toPrecision(2)} ha</TableCell>
                   <TableCell>
                     <Link
                       target="_blank"
