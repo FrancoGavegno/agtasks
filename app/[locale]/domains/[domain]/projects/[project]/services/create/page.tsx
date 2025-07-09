@@ -21,7 +21,7 @@ export default async function Page({
 
     return (
         <div className="container w-full pt-4 pb-4">
-            <Breadcrumb>
+            <Breadcrumb className="mb-4">
                 <BreadcrumbList>
                     <BreadcrumbItem>
                         <Link href={`/domains/${params.domain}/projects/${params.project}/services`}>
