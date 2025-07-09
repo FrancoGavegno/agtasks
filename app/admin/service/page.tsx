@@ -5,18 +5,18 @@ import { serializeModelData } from "@/lib/serialization-utils"
 export default async function ServicesPage() {
   const [{ data: services }, { data: projects }] = await Promise.all([
     client.models.Service.list({
-      filter: {
-        deleted: {
+    filter: {
+      deleted: {
           ne: true,
-        },
       },
+    },
     }),
     client.models.Project.list({
-      filter: {
-        deleted: {
-          ne: true,
-        },
+    filter: {
+      deleted: {
+        ne: true,
       },
+    },
     }),
   ])
 

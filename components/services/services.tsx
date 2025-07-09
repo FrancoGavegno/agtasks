@@ -179,7 +179,7 @@ export function ServicesPageDetails() {
                     {service.requestId ? (
                       <Link
                         target="_blank"
-                        href={`https://jira.geoagro.com/browse/${service.requestId}`}
+                        href={`${process.env.NEXT_PUBLIC_JIRA_API_URL}/browse/${service.requestId}`}
                         className="inline-flex items-center gap-1 text-primary hover:underline"
                       >
                         <SquareArrowOutUpRight className="h-4 w-4" />

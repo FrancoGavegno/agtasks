@@ -94,8 +94,6 @@ export default function Step1Protocol({
       if (data && data.success && data.data) {
         const tasks = data.data.subtasks || []
 
-        //console.log("fetched tasks...", tasks)
-
         setProtocolTasks((prev) => ({
           ...prev,
           [protocolId]: tasks,
@@ -131,38 +129,31 @@ export default function Step1Protocol({
     const selectedProtocolObj = protocols.find((p) => p.tmProtocolId === value)
     onSelectProtocolName(selectedProtocolObj?.name ?? "") // Update protocol name state
 
+    // Limpiar tareas si cambia el protocolo
+    form.setValue("taskAssignments", [], { shouldValidate: true })
+    updateFormValues({
+      protocol: value as any,
+      taskAssignments: [],
+    })
+
     if (value) {
-      if (protocolTasks[value]) {
-        const tasks = protocolTasks[value]
+      let tasks = protocolTasks[value]
+      if (!tasks) {
+        tasks = await fetchProtocolTasks(value)
+      }
+      if (tasks && tasks.length > 0) {
         const newAssignments: TaskAssignment[] = tasks.map((task: any) => ({
-          task: task.summary,
-          taskType: task.customFields.customfield_10371,
-          taskDetail: task.customFields.customfield_10140,
+          task: task.summary || "",
+          taskType: task.customFields?.customfield_10371 || "",
+          taskDetail: task.customFields?.customfield_10140 || "",
           role: "",
           assignedTo: "",
         }))
-        form.setValue("taskAssignments", newAssignments)
+        form.setValue("taskAssignments", newAssignments, { shouldValidate: true })
         updateFormValues({
           protocol: value as any,
           taskAssignments: newAssignments,
         })
-      } else {
-        const tasks = await fetchProtocolTasks(value)
-        if (tasks && tasks.length > 0) {
-          // const newAssignments: TaskAssignment[] = tasks.map((task: string) => ({
-          const newAssignments: TaskAssignment[] = tasks.map((task: any) => ({
-            task: task.summary,
-            taskType: task.customFields.customfield_10371,
-            taskDetail: task.customFields.customfield_10140,
-            role: "",
-            assignedTo: "",
-          }))
-          form.setValue("taskAssignments", newAssignments)
-          updateFormValues({
-            protocol: value as any,
-            taskAssignments: newAssignments,
-          })
-        }
       }
     }
   }

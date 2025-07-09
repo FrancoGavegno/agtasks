@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useLocale, useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +21,7 @@ export function LanguageSelector() {
   const router = useRouter();
   const pathname = usePathname();
   const currentLocale = useLocale();
-  const t = useTranslations("LanguageSelector"); // Opcional: para traducciones
+  // const t = useTranslations("LanguageSelector"); // Opcional: para traducciones
 
   // console.log('LanguageSelector - Current Locale:', currentLocale);
   // console.log('LanguageSelector - Current Pathname:', pathname);

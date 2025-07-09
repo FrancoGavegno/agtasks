@@ -18,17 +18,32 @@ import {
 } from "@/components/ui/table"
 import {
   Search,
-  SquareArrowOutUpRight,
   RefreshCw,
-  Plus,
 } from "lucide-react"
 import type { 
   PaginatedResponse, 
   Service, 
-  ServiceTask 
+  Task 
 } from "@/lib/interfaces"
 import { useToast } from "@/hooks/use-toast"
 import { listTasksByProject } from "@/lib/services/agtasks"
+
+// Utilidad para limpiar y tipar correctamente los tasks
+function cleanTask(raw: any): Task {
+  return {
+    id: raw.id,
+    projectId: raw.projectId ?? undefined,
+    serviceId: raw.serviceId ?? undefined,
+    tmpSubtaskId: raw.tmpSubtaskId,
+    subtaskId: raw.subtaskId ?? undefined,
+    taskName: raw.taskName,
+    taskType: raw.taskType ?? undefined,
+    taskData: raw.taskData ?? undefined,
+    userEmail: raw.userEmail,
+    deleted: raw.deleted ?? undefined,
+    taskFields: Array.isArray(raw.taskFields) ? raw.taskFields : undefined,
+  }
+}
 
 export function TasksPageDetails() {
   const params = useParams()
@@ -36,7 +51,7 @@ export function TasksPageDetails() {
   const projectId = params.project as string
   const { toast } = useToast()
   const [services, setServices] = useState<Service[]>([])
-  const [tasks, setTasks] = useState<ServiceTask[]>([])
+  const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
@@ -65,7 +80,8 @@ export function TasksPageDetails() {
       setServices(sortedServices)
       // 2. Obtener todas las ServiceTasks del proyecto usando listTasksByProject
       const tasksData = await listTasksByProject(projectId)
-      setTasks(tasksData)
+      // Ensure taskType is always string or undefined (never null)
+      setTasks(tasksData.map(cleanTask))
     } catch (err) {
       setError(`Error al cargar tareas: ${err instanceof Error ? err.message : "Error desconocido"}`)
       setServices([])
@@ -155,7 +171,7 @@ export function TasksPageDetails() {
           >
             <option value="all">Todas las tareas</option>
             {services.map(service => (
-              <option key={service.id} value={service.id}>{service.serviceName}</option>
+              <option key={service.id} value={service.id}>{service.name}</option>
             ))}
           </select>
           <Button onClick={handleRefresh} variant="outline" disabled={refreshing}>
@@ -191,7 +207,7 @@ export function TasksPageDetails() {
                     <TableCell className="font-medium">{task.taskName}</TableCell>
                     <TableCell>{task.taskType || "-"}</TableCell>
                     <TableCell>{task.userEmail}</TableCell>
-                    <TableCell>{service ? service.serviceName : "(Sin servicio)"}</TableCell>
+                    <TableCell>{service ? service.name : "(Sin servicio)"}</TableCell>
                     <TableCell>
                       {/* Acciones, links, etc. */}
                     </TableCell>

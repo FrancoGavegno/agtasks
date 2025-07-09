@@ -3,6 +3,9 @@
 import { Link } from "@/i18n/routing"
 import { useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { useEffect, useState } from 'react'
+import { getDomain } from '@/lib/integrations/360'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,49 +14,35 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import TabsNavigation from "@/components/settings/tabs-navigation"
-import { useState, useEffect } from 'react'
-import { listProjectsByDomain } from '@/lib/services/agtasks'
-import type { Project } from '@/lib/interfaces'
 
 export default function SettingsPage() {
-  const { domain, project } = useParams<{ domain: string, project?: string }>();
+  const { domain } = useParams<{ domain: string }>();
   const t = useTranslations("SettingsPage")
-  const [selectedProject, setSelectedProject] = useState<Project | undefined>(undefined)
+  const [domainName, setDomainName] = useState<string>("");
+  const [loadingDomain, setLoadingDomain] = useState(true);
 
   useEffect(() => {
-    async function fetchProject() {
-      if (domain && project) {
-        const projectsRaw = await listProjectsByDomain(domain)
-        // Map to Project interface
-        const projects: Project[] = projectsRaw.map((p: any) => ({
-          id: p.id ?? p.projectId,
-          projectId: p.projectId ?? p.id,
-          name: p.name,
-          domainId: p.domainId,
-          areaId: p.areaId,
-          serviceDeskId: p.serviceDeskId,
-          requestTypeId: p.requestTypeId,
-          sourceSystem: p.sourceSystem ?? "unknown", // default if missing
-          language: p.language ?? "en", // default language
-          queueId: p.queueId ?? p.serviceDeskId ?? "",
-          deleted: p.deleted ?? false,
-          // ...add any other required fields, with defaults if missing
-        }))
-        const found: Project | undefined = projects.find((p) => p.id?.toString() === project.toString())
-        setSelectedProject(found)
-      } else {
-        setSelectedProject(undefined)
-      }
+    let mounted = true;
+    setLoadingDomain(true);
+    if (!domain) {
+      setDomainName("");
+      setLoadingDomain(false);
+      return;
     }
-    fetchProject()
-  }, [domain, project])
+    getDomain(Number(domain)).then((data) => {
+      if (mounted) setDomainName(data?.name || "");
+    }).finally(() => { if (mounted) setLoadingDomain(false); });
+    return () => { mounted = false; };
+  }, [domain]);
 
   return (
     <div className="container w-full pt-4 pb-4">
       <Breadcrumb className="mb-4">
         <BreadcrumbList>
           <BreadcrumbItem>
-            <Link href={`/domains/${domain}/settings`}>{t("BreadcrumbLink")}</Link>
+            <Link href={`/domains/${domain}/settings`}>
+              {loadingDomain ? <Skeleton className="inline-block h-4 w-24 align-middle" /> : domainName}
+            </Link>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -69,7 +58,7 @@ export default function SettingsPage() {
         </div>
       </div> */}
 
-      <TabsNavigation selectedProject={selectedProject} />
+      <TabsNavigation />
     </div>
   )
 }

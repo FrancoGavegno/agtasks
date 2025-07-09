@@ -2,15 +2,6 @@ import { Amplify } from "aws-amplify";
 import outputs from "@/amplify_outputs.json";
 import { generateClient } from "aws-amplify/api";
 import { type Schema } from "@/amplify/data/resource";
-import type {
-  Project,
-  Service,
-  Role,
-  ServiceTask
-} from "@/lib/interfaces";
-import {
-  createSubtask
-} from "@/lib/integrations/jira"
 
 // Amplify configuration - Singleton Client
 let clientInstance: ReturnType<typeof generateClient<Schema>> | null = null;
@@ -21,11 +12,9 @@ export function getClient() {
     Amplify.configure(outputs);
     configured = true;
   }
-
   if (!clientInstance) {
     clientInstance = generateClient<Schema>();
   }
-
   return clientInstance;
 }
 
@@ -157,7 +146,7 @@ export async function createProject(data: {
   queueId?: string
   deleted?: boolean
 }) {
-  const client = getClient();
+    const client = getClient();
   // queueId debe ser string, y los campos requeridos deben estar presentes
   const response = await client.models.Project.create({
     ...data,
@@ -186,23 +175,23 @@ export async function updateProject(id: string, data: Partial<{
 }>) {
   const client = getClient();
   const response = await client.models.Project.update({ id, ...data });
-  return response.data;
+    return response.data;
 }
 
 /**
  * Elimina lógicamente un Project (soft delete)
  */
 export async function deleteProject(id: string) {
-  const client = getClient();
+    const client = getClient();
   const response = await client.models.Project.update({ id, deleted: true });
-  return response.data;
+    return response.data;
 }
 
 /**
  * Obtiene un Project por ID, incluyendo sus Services y Tasks relacionados
  */
 export async function getProject(id: string) {
-  const client = getClient();
+    const client = getClient();
   const response = await client.models.Project.get({ id });
   if (!response.data) return null;
   let servicesData: any[] = [];
@@ -220,13 +209,13 @@ export async function getProject(id: string) {
     services: servicesData,
     tasks: tasksData,
   };
-}
+  }
 
 /**
  * Lista todos los proyectos de un dominio
  */
 export async function listProjectsByDomain(domainId: string) {
-  const client = getClient();
+    const client = getClient();
   const response = await client.models.Project.list({
     filter: { domainId: { eq: domainId }, deleted: { ne: true } },
   });
@@ -246,7 +235,7 @@ export async function createService(data: {
 }) {
   const client = getClient();
   const response = await client.models.Service.create({ ...data, deleted: data.deleted ?? false });
-  return response.data;
+    return response.data;
 }
 
 /**
@@ -259,10 +248,10 @@ export async function updateService(id: string, data: Partial<{
   requestId: string
   deleted: boolean
 }>) {
-  const client = getClient();
+    const client = getClient();
   const response = await client.models.Service.update({ id, ...data });
   return response.data;
-}
+    }
 
 /**
  * Elimina lógicamente un Service (soft delete)
@@ -289,13 +278,13 @@ export async function getService(id: string) {
   if (typeof response.data.tasks === 'function') {
     const tasks = await response.data.tasks();
     tasksData = tasks.data ?? [];
-  }
+      }
   return {
     ...response.data,
     project: projectData,
     tasks: tasksData,
   };
-}
+  }
 
 // --- TASK CRUD ---
 /**
@@ -312,7 +301,7 @@ export async function createTask(data: {
   userEmail: string
   deleted?: boolean
 }) {
-  const client = getClient();
+    const client = getClient();
   const response = await client.models.Task.create({ ...data, deleted: data.deleted ?? false });
   return response.data;
 }
@@ -366,12 +355,23 @@ export async function listTasksByProject(projectId: string) {
   return response.data || [];
 }
 
+/**
+ * Crea un nuevo TaskField
+ */
+export async function createTaskField(data: {
+  taskId: string
+  fieldId: string
+}) {
+  const client = getClient();
+  const response = await client.models.TaskField.create(data);
+  return response.data;
+}
+
 // --- FIELD CRUD ---
 /**
  * Crea un nuevo Field
  */
 export async function createField(data: {
-  taskId: string
   workspaceId: string
   workspaceName?: string
   campaignId: string
@@ -386,7 +386,7 @@ export async function createField(data: {
   deleted?: boolean
 }) {
   const client = getClient();
-  const response = await client.models.Field.create({ ...data, deleted: data.deleted ?? false });
+  const response = await client.models.Field.create(data);
   return response.data;
 }
 

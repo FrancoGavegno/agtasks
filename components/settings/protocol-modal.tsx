@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
+import { createDomainProtocol, deleteDomainProtocol } from '@/lib/services/agtasks'
 import type { Protocol } from "@/lib/interfaces"
 import { listDomainProtocols } from "@/lib/services/agtasks"
 
@@ -85,18 +86,7 @@ export function ModalProtocols({
       // 3. Eliminar protocolos deseleccionados
       const deletePromises = protocolsToDelete.map(async ({ id }) => {
         try {
-          // console.log(`Deleting protocol with id ${id}`)
-          const response = await fetch(`/api/v1/agtasks/domains/${domain}/protocols/${id}`, {
-            method: "DELETE",
-          })
-
-          if (!response.ok) {
-            const errorData = await response.json()
-            console.error(`Error al eliminar protocolo ${id}:`, errorData)
-            throw new Error(`Error al eliminar protocolo: ${errorData.message || response.statusText}`)
-          }
-
-          return await response.json()
+          await deleteDomainProtocol(domain, id)
         } catch (error) {
           console.error(`Error al eliminar protocolo ${id}:`, error)
           toast({
@@ -117,29 +107,11 @@ export function ModalProtocols({
         }
 
         try {
-          // console.log(`Creating protocol with tmProtocolId ${protocolId}`, protocolData)
-          const response = await fetch(`/api/v1/agtasks/domains/${domain}/protocols`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              domainId: domain,
-              tmProtocolId: protocolData.tmProtocolId,
-              name: protocolData.name,
-              language: protocolData.language || "ES",
-            }),
+          await createDomainProtocol(domain, {
+            tmProtocolId: protocolData.tmProtocolId,
+            name: protocolData.name,
+            language: protocolData.language || "ES",
           })
-
-          if (!response.ok) {
-            const errorData = await response.json()
-            console.error(`Error al crear protocolo ${protocolId}:`, errorData)
-            throw new Error(`Error al crear protocolo: ${errorData.message || response.statusText}`)
-          }
-
-          const result = await response.json()
-          // console.log(`Protocol created successfully:`, result)
-          return result
         } catch (error) {
           console.error(`Error al crear protocolo ${protocolId}:`, error)
           toast({

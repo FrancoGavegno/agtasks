@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/hooks/use-toast"
+import { createDomainForm, deleteDomainForm } from '@/lib/services/agtasks'
 import type { Form } from "@/lib/interfaces"
 import { listDomainForms } from "@/lib/services/agtasks"
 
@@ -58,18 +59,7 @@ export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onS
       // 3. Eliminar formularios deseleccionados
       const deletePromises = formsToDeleteIds.map(async (formId) => {
         try {
-          // console.log(`Eliminando formulario con ID ${formId}`)
-          const response = await fetch(`/api/v1/agtasks/domains/${domain}/forms/${formId}`, {
-            method: "DELETE",
-          })
-
-          if (!response.ok) {
-            const errorData = await response.json()
-            console.error(`Error al eliminar formulario ${formId}:`, errorData)
-            throw new Error(`Error al eliminar formulario: ${errorData.message || response.statusText}`)
-          }
-
-          return await response.json()
+          await deleteDomainForm(domain, formId)
         } catch (error) {
           console.error(`Error al eliminar formulario ${formId}:`, error)
           toast({
@@ -90,27 +80,11 @@ export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onS
         }
 
         try {
-          // console.log(`Creando formulario: ${JSON.stringify(formData)}`)
-          const response = await fetch(`/api/v1/agtasks/domains/${domain}/forms`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              domainId: domain,
-              name: formData.name,
-              language: formData.language || "ES",
-              ktFormId: formData.ktFormId || formData.id,
-            }),
+          await createDomainForm(domain, {
+            name: formData.name,
+            language: formData.language || "ES",
+            ktFormId: formData.ktFormId || formData.id,
           })
-
-          if (!response.ok) {
-            const errorData = await response.json()
-            console.error(`Error al crear formulario ${formId}:`, errorData)
-            throw new Error(`Error al crear formulario: ${errorData.message || response.statusText}`)
-          }
-
-          return await response.json()
         } catch (error) {
           console.error(`Error al crear formulario ${formId}:`, error)
           toast({

@@ -4,7 +4,6 @@ import { z } from "zod"
 export const taskAssignmentSchema = z.object({
   task: z.string(),
   taskType: z.string(),
-  // taskDetail: z.record(z.any()), // o z.unknown() si quieres aceptar cualquier cosa
   assignedTo: z.string(),
 });
 
@@ -51,16 +50,6 @@ export const step3Schema = z.object({
       path: ["taskAssignments"],
     },
   )
-  // taskAssignments: z.array(taskAssignmentSchema).refine(
-  //   (tasks) => {
-  //     const tasksWithUser = tasks.filter((task) => task.assignedTo.length > 0)
-  //     return tasksWithUser
-  //   },
-  //   {
-  //     message: "Todas las tareas deben tener un usuario asignado",
-  //     path: ["taskAssignments"],
-  //   },
-  // )
 })
 
 export type Step3FormValues = z.infer<typeof step3Schema>

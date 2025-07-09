@@ -74,13 +74,6 @@ export interface Protocol {
   updatedAt?: string
 }
 
-export interface Role {
-  domainId?: string // FK a 360 Domain
-  id: string
-  language: string
-  name: string
-}
-
 export interface Form {
   domainId: string // FK a 360 Domain
   id: string
@@ -89,69 +82,77 @@ export interface Form {
   language: string
 }
 
-// Projects & Services
+// Services / Tasks
 export interface Project {
   id: string
-  domainId: string // FK a 360 Domain
-  areaId: string // FK 360 Area
-  language: string
-  sourceSystem: string 
-  projectId: string // FK to Task Manager Project 
-  requestTypeId: string 
-  queueId: number // FK to Task Manager Default Queue
-  name: string
+  domainId: string
+  areaId: string 
+  tmpSourceSystem?: string
+	tmpServiceDeskId?: string 
+	tmpRequestTypeId?: string
+  tmpQueueId?: string
+  serviceDeskId: string  
+  requestTypeId: string
+  queueId: string
+  name?: string
+  language: string  
   deleted: boolean
+  services?: Service[]
+  tasks?: Task[]
 }
 
 export interface Service {
   id: string
-  projectId: string 
-  serviceName: string
-  externalTemplateId: string // FK to Task Manager GeoAgro Service Template ID 'TEM-57' 
-  externalServiceKey: string 
-  workspaceId: string
-  workspaceName?: string 
-  campaignId: string
-  campaignName?: string 
-  farmId: string
-  farmName?: string 
-  totalArea: number
-  startDate: string
-  endDate?: string
-  status?: string 
-  progress?: number 
-  fields?: ServiceField[] 
-  tasks?: ServiceTask[]
+  projectId?: string 
+  tmpRequestId?: string
+	requestId?: string
+  name: string
+  tasks?: Task[]
   createdAt?: string  
+  deleted?: boolean 
 }
 
-export interface ServiceField {
+export interface Task {
   id: string
-  serviceId: string // FK local a Service
-  fieldId: string // ID del Field en 360 (referencia externa)
-  fieldName: string // Nombre del campo (opcional, según el esquema)
+  projectId?: string
+  serviceId?: string 
+  tmpSubtaskId: string  
+  subtaskId?: string  
+  taskName: string 
+  taskType?: string // ex.: administrative, fieldvisit, tillage
+  taskData?: Record<string, any> 
+  userEmail: string
+  deleted?: boolean
+  taskFields?: TaskField[]
+}
+
+export interface Field {
+  id: string
+  workspaceId: string
+  workspaceName?: string
+  campaignId: string
+  campaignName?: string
+  farmId: string
+  farmName?: string
+  fieldId: string
+  fieldName: string
   hectares?: number
   crop?: string
   hybrid?: string
+  deleted?: boolean
+  taskFields?: TaskField[] 
 }
 
-export interface ServiceTask {
-  id: string
-  serviceId: string // FK local to Service
-  externalTemplateId: string // KK to task manager sub-template 
-  taskType: string // ex.: administrative, fieldvisit, tillage
-  taskName: string 
-  // formSchema: Record<string, any> // json object
-  formData: Record<string, any> // json object
-  userEmail: string
+export interface TaskField {
+  taskId: string
+  fieldId: string
 }
 
+// validation-schemas.ts
 export interface TaskAssignment {
   task: string
   taskType: string  // administrative, fieldvisit, tillage
-  // taskDetail: Record<string, any> // json object
   assignedTo: string
-  //role: string
 }
 
 //  Jira

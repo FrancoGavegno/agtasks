@@ -29,15 +29,15 @@ export default function Protocols() {
 
   // Efecto para actualizar los protocolos mostrados cuando cambian los datos
   useEffect(() => {
-    console.log("Protocols in component:", protocols)
-    console.log("Selected protocols:", selectedProtocols)
+    // console.log("Protocols in component:", protocols)
+    // console.log("Selected protocols:", selectedProtocols)
 
     // Usar directamente los protocolos del dominio
     if (protocols.length > 0) {
-      console.log("Using domain protocols")
+      // console.log("Using domain protocols")
       setDisplayedProtocols(protocols)
     } else {
-      console.log("No domain protocols found")
+      // console.log("No domain protocols found")
       setDisplayedProtocols([])
     }
   }, [protocols, selectedProtocols])
@@ -69,26 +69,28 @@ export default function Protocols() {
 
   return (
     <div className="w-full space-y-4">
+
       <div className="flex justify-between items-center">
-        {/* <div className="space-y-1">
+        <div className="space-y-1">
           <h2 className="text-xl font-semibold tracking-tight">Protocolos</h2>
           <p className="text-sm text-muted-foreground">Administra tus protocolos de servicio</p>
-        </div> */}
-        <div className="flex items-center justify-between">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Filtrar protocolos..."
-              className="pl-8"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-            />
-          </div>
         </div>
         <Button size="sm" onClick={() => setIsModalOpen(true)}>
           Editar
         </Button>
+      </div>
+
+      <div className="flex items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Filtrar protocolos..."
+            className="pl-8"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
+        </div>
       </div>
 
       <div className="rounded-md border">
@@ -123,9 +125,8 @@ export default function Protocols() {
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
           {filteredProtocols.length > 0
-            ? `Mostrando ${startIndex + 1} a ${Math.min(startIndex + rowsPerPage, filteredProtocols.length)} de ${
-                filteredProtocols.length
-              } protocolos`
+            ? `Mostrando ${startIndex + 1} a ${Math.min(startIndex + rowsPerPage, filteredProtocols.length)} de ${filteredProtocols.length
+            } protocolos`
             : "No se encontraron protocolos"}
         </div>
         <div className="flex items-center space-x-6">

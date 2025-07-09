@@ -59,6 +59,25 @@ const graphqlRequest = async <T>(
   }
 };
 
+export const getDomain = async (domainId: number): Promise<Domain> => {
+  const query = `query ($domainId: Int!) {
+    get_domain(domainId: $domainId) {
+      deleted
+      domainUrl
+      hasLogo
+      id
+      languageId
+      name
+    }
+  }`
+
+  return graphqlRequest<Domain>(
+    query,
+    { domainId: domainId },
+    'get_domain',
+  );
+}
+
 // Listar dominios por email de usuario
 export const listDomainsByUserEmail = async (user: string): Promise<Domain[]> => {
   const query = `

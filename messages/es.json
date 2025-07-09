@@ -114,5 +114,9 @@
   },
   "Footer": {
     "poweredBy": "Desarrollador por"
+  },
+  "LanguageSelector": {
+    "label": "Idioma",
+    "select": "Seleccionar idioma"
   }
 }

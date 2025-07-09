@@ -88,14 +88,10 @@ const schema = a
       userEmail: a.string().required(), 
       deleted: a.boolean().default(false),
       
-      // Field[]
-      fields: a.hasMany("Field", "taskId")
+      taskFields: a.hasMany("TaskField", "taskId"),
     }),
 
     Field: a.model({
-      task: a.belongsTo("Task", "taskId"),      
-      taskId: a.string().required(), 
-      
       // 360
       workspaceId: a.string().required(), 
       workspaceName: a.string(),
@@ -109,7 +105,16 @@ const schema = a
       crop: a.string(),
       hybrid: a.string(),
       deleted: a.boolean().default(false),
+
+      taskFields: a.hasMany("TaskField", "fieldId"),
     }),
+
+    TaskField: a.model({
+      taskId: a.string().required(),
+      fieldId: a.string().required(),
+      task: a.belongsTo("Task", "taskId"),
+      field: a.belongsTo("Field", "fieldId"),
+    })
   })
   .authorization((allow) => [allow.publicApiKey()]);
 

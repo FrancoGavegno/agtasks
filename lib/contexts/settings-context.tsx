@@ -6,9 +6,7 @@ import type { Protocol, Role, Form, User } from "@/lib/interfaces"
 import { listAssets } from "@/lib/integrations/kobotoolbox"
 import { listUsersByDomain } from "@/lib/integrations/360"
 import { listDomainProtocols, listDomainForms } from "@/lib/services/agtasks"
-import { client } from "@/lib/amplify-client"
-
-// projectId y queueId ahora se obtienen del Project seleccionado
+// import { client } from "@/lib/amplify-client"
 
 // Interfaz genérica para el contexto de configuraciones
 interface SettingsContextType {
@@ -57,9 +55,10 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 export function SettingsProvider({ children, selectedProject }: { children: ReactNode, selectedProject?: any }) {
   const { domain } = useParams<{ domain: string }>()
-  // projectId y queueId del Project seleccionado
-  const projectId = selectedProject?.tmpServiceDeskId || undefined
-  const queueId = selectedProject?.tmpQueueId || undefined
+  
+  // En settings todavía no existe projectId y queueId
+  const projectId = selectedProject?.tmpServiceDeskId || process.env.NEXT_PUBLIC_JIRA_PROTOCOLS_PROJECT_ID
+  const queueId = selectedProject?.tmpQueueId || process.env.NEXT_PUBLIC_JIRA_PROTOCOLS_QUEUE_ID
 
   // Estado para protocolos
   const [protocols, setProtocols] = useState<Protocol[]>([])
@@ -122,9 +121,14 @@ export function SettingsProvider({ children, selectedProject }: { children: Reac
   // Fetch All Jira Protocols
   useEffect(() => {
     const fetchAllProtocols = async () => {
+      console.log("URL: ", `/api/v1/integrations/jira/domains/${domain}/projects/${projectId}/services/queues/${queueId}`)
+      
+      
       if (!domain || !projectId || !queueId) return;
 
       try {
+
+
         const res = await fetch(
           `/api/v1/integrations/jira/domains/${domain}/projects/${projectId}/services/queues/${queueId}`,
         );

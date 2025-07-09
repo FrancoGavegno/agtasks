@@ -5,24 +5,28 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import CreateService from "@/components/projects/create-service"
+import CreateService from "@/components/services/create-service"
 import { Link } from "@/i18n/routing"
 import { cookies } from 'next/headers'
+import { getProject } from '@/lib/services/agtasks'
 
-export default function Page({
+export default async function Page({
     params,
 }: {
     params: { domain: string; project: string };
 }) {
     const cookiesList = cookies();
     const userEmail = cookiesList.get('user-email')?.value || "";
+    const projectData = await getProject(params.project);
 
     return (
         <div className="container w-full pt-4 pb-4">
             <Breadcrumb>
                 <BreadcrumbList>
                     <BreadcrumbItem>
-                        <Link href="/">Home</Link>
+                        <Link href={`/domains/${params.domain}/projects/${params.project}/services`}>
+                            {projectData?.name || 'Proyecto'}
+                        </Link>
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
                     <BreadcrumbItem>
@@ -30,7 +34,7 @@ export default function Page({
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
                     <BreadcrumbItem>
-                        <BreadcrumbPage>Create Service</BreadcrumbPage>
+                        <BreadcrumbPage>Crear Servicio</BreadcrumbPage>
                     </BreadcrumbItem>
                 </BreadcrumbList>
             </Breadcrumb>

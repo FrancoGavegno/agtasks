@@ -6,7 +6,7 @@ import {
 } from "react"
 import { useParams } from "next/navigation"
 import type { FieldSchema } from "@/components/dynamic-form/types"
-import { ServiceTask } from "@/lib/interfaces"
+import { Task } from "@/lib/interfaces"
 import {
     getTask,
     updateTask
@@ -30,18 +30,18 @@ export default function TaskPage() {
     const [loadedSchema, setLoadedSchema] = useState<FieldSchema[] | null>(null)
     const [isLoadingSchema, setIsLoadingSchema] = useState(true)
     const [errorSchema, setErrorSchema] = useState<string | null>(null)
-    const [taskData, setTaskData] = useState<ServiceTask>()
+    const [taskData, setTaskData] = useState<Task>()
 
     useEffect(() => {
         // TO DO fetch Jira SubTask Information
         // We'll need Reporter field information
 
 
-        // Fetch ServiceTask Information 
+        // Fetch Task Information 
         async function fetchTask(task: string) {
             const taskData = await getTask(task)
             if (taskData && 'externalTemplateId' in taskData && 'formData' in taskData) {
-                setTaskData(taskData as ServiceTask)
+                setTaskData({ ...taskData, taskFields: Array.isArray(taskData.taskFields) ? taskData.taskFields : [] } as Task)
             } else {
                 setTaskData(undefined)
             }
@@ -117,8 +117,8 @@ export default function TaskPage() {
     // Set Initial Form Values
     let initialFormValues = {}
 
-    if (typeof taskData?.formData === "string" && taskData.formData) {
-        initialFormValues = JSON.parse(taskData.formData);
+    if (typeof taskData?.taskData === "string" && taskData.taskData) {
+        initialFormValues = JSON.parse(taskData.taskData);
     }
 
     if (isLoadingSchema) {

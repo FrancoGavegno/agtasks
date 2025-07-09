@@ -242,7 +242,7 @@ export default function Step2Lots({ userEmail }: Props) {
     })
   }
 
-  // Modificar handleLotSelection para guardar también los nombres de los lotes
+  // Modificar handleLotSelection para guardar también los nombres de los lotes y todos los campos requeridos
   const handleLotSelection = (lotId: string) => {
     const currentLots = form.getValues("selectedLots") || []
     const selectedField = fields.find((field) => field.id.toString() === lotId)
@@ -251,11 +251,18 @@ export default function Step2Lots({ userEmail }: Props) {
 
     const lotDetail: SelectedLotDetail = {
       fieldId: selectedField.id.toString(),
-      fieldName: selectedField.name,
-      hectares: selectedField.hectares,
-      cropName: selectedField.cropName,
+      fieldName: selectedField.name || "",
+      hectares: selectedField.hectares || 0,
+      cropName: selectedField.cropName || "",
       hybridName: selectedField.hybridName || "",
-    }
+      // Campos extra para el modelo Field
+      workspaceId: workspace || "",
+      workspaceName: workspaces.find(w => w.id.toString() === workspace)?.name || "",
+      campaignId: campaign || "",
+      campaignName: seasons.find(s => s.id.toString() === campaign)?.name || "",
+      farmId: establishment || "",
+      farmName: farms.find(f => f.id.toString() === establishment)?.name || "",
+    } as any // para que no rompa el tipado si hay campos extra
 
     let newLots: SelectedLotDetail[]
     if (currentLots.some((lot) => lot.fieldId === lotId)) {
@@ -266,7 +273,6 @@ export default function Step2Lots({ userEmail }: Props) {
 
     form.setValue("selectedLots", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
     updateFormValues({ selectedLots: newLots })
-    console.log("Lotes seleccionados actualizados:", newLots)
   }
 
   // Nueva función para seleccionar/deseleccionar todos los lotes

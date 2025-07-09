@@ -51,8 +51,12 @@ export function DomainProtocolDialog({ open, onOpenChange, domainProtocol }: Dom
     setIsLoading(true)
 
     try {
-      await createDomainProtocol(formData)
-      onOpenChange(false)
+      await createDomainProtocol(formData.domainId, {
+        tmProtocolId: formData.tmProtocolId,
+        name: formData.name,
+        language: formData.language,
+      })
+        onOpenChange(false)
     } catch (error) {
       alert("An unexpected error occurred")
     } finally {
