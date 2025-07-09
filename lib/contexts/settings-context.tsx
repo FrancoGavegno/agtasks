@@ -2,11 +2,10 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useParams } from "next/navigation"
-import type { Protocol, Role, Form, User } from "@/lib/interfaces"
+import type { Protocol, Form, User } from "@/lib/interfaces"
 import { listAssets } from "@/lib/integrations/kobotoolbox"
 import { listUsersByDomain } from "@/lib/integrations/360"
 import { listDomainProtocols, listDomainForms } from "@/lib/services/agtasks"
-// import { client } from "@/lib/amplify-client"
 
 // Interfaz genérica para el contexto de configuraciones
 interface SettingsContextType {
@@ -19,16 +18,6 @@ interface SettingsContextType {
   setSelectedProtocols: (ids: string[]) => void
   refreshProtocols: () => void
   isRefreshingProtocols: boolean
-
-  roles: Role[]
-  allRoles: Role[]
-  selectedRoles: string[]
-  rolesLoading: boolean
-  setRoles: (roles: Role[]) => void
-  setAllRoles: (roles: Role[]) => void
-  setSelectedRoles: (ids: string[]) => void
-  refreshRoles: () => void
-  isRefreshingRoles: boolean
 
   forms: Form[]
   allForms: Form[]
@@ -67,14 +56,6 @@ export function SettingsProvider({ children, selectedProject }: { children: Reac
   const [protocolsLoading, setProtocolsLoading] = useState(true)
   const [isRefreshingProtocols, setIsRefreshingProtocols] = useState(false)
   const [shouldRefetchProtocols, setShouldRefetchProtocols] = useState(true)
-
-  // Estado para roles
-  const [roles, setRoles] = useState<Role[]>([])
-  const [allRoles, setAllRoles] = useState<Role[]>([])
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([])
-  const [rolesLoading, setRolesLoading] = useState(true)
-  const [isRefreshingRoles, setIsRefreshingRoles] = useState(false)
-  const [shouldRefetchRoles, setShouldRefetchRoles] = useState(true)
 
   // Estado para formularios
   const [forms, setForms] = useState<Form[]>([])
@@ -128,7 +109,6 @@ export function SettingsProvider({ children, selectedProject }: { children: Reac
 
       try {
 
-
         const res = await fetch(
           `/api/v1/integrations/jira/domains/${domain}/projects/${projectId}/services/queues/${queueId}`,
         );
@@ -167,34 +147,6 @@ export function SettingsProvider({ children, selectedProject }: { children: Reac
 
     fetchAllProtocols();
   }, [protocols, domain, projectId, queueId]);
-
-  // Fetch Domain Roles
-  useEffect(() => {
-    const fetchDomainRoles = async () => {
-      if (!shouldRefetchRoles || !domain) return
-
-      try {
-        // Eliminado: fetch de roles por dominio
-      } catch (error) {
-        console.error("Error fetching domain roles:", error)
-        setRoles([])
-        setSelectedRoles([])
-      } finally {
-        setRolesLoading(false)
-      }
-    }
-
-    fetchDomainRoles()
-  }, [shouldRefetchRoles, domain])
-
-  // Fetch All Agtasks Roles
-  useEffect(() => {
-    const fetchAllRoles = async () => {
-      // Eliminado: fetch de todos los roles
-    };
-
-    fetchAllRoles();
-  }, [roles, domain]);
 
   // Fetch Domain Forms
   useEffect(() => {
@@ -293,12 +245,6 @@ export function SettingsProvider({ children, selectedProject }: { children: Reac
     setIsRefreshingProtocols(false)
   }
 
-  const refreshRoles = () => {
-    setIsRefreshingRoles(true)
-    setShouldRefetchRoles(true)
-    setIsRefreshingRoles(false)
-  }
-
   const refreshForms = () => {
     setIsRefreshingForms(true)
     setShouldRefetchForms(true)
@@ -323,15 +269,6 @@ export function SettingsProvider({ children, selectedProject }: { children: Reac
         setSelectedProtocols,
         refreshProtocols,
         isRefreshingProtocols,
-        roles,
-        allRoles,
-        selectedRoles,
-        rolesLoading,
-        setRoles,
-        setAllRoles,
-        setSelectedRoles,
-        refreshRoles,
-        isRefreshingRoles,
         forms,
         allForms,
         selectedForms,

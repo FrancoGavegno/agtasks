@@ -48,11 +48,6 @@ export function FieldsClient({ fields, tasks }: FieldsClientProps) {
       header: "Field Name",
     },
     {
-      accessorKey: "taskId",
-      header: "Task",
-      cell: ({ row }) => getTaskName(row.original.taskId),
-    },
-    {
       accessorKey: "workspaceName",
       header: "Workspace",
     },

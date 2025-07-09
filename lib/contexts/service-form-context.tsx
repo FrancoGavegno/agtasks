@@ -9,7 +9,7 @@ import {
 import type { 
   CreateServiceFormValues, 
   SelectedLotDetail 
-} from "@/components/projects/validation-schemas"
+} from "@/components/services/validation-schemas"
 
 // Define the protocol tasks data structure
 interface ProtocolTasks {

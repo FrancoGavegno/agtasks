@@ -3,7 +3,12 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -41,7 +46,7 @@ export function FieldDialog({ open, onOpenChange, field, tasks }: FieldDialogPro
   useEffect(() => {
     if (field) {
       setFormData({
-        taskId: field.taskId || "",
+        taskId: (field as any).taskId || "",
         workspaceId: field.workspaceId || "",
         workspaceName: field.workspaceName || "",
         campaignId: field.campaignId || "",

@@ -3,12 +3,6 @@
 import axios, { type AxiosError, type AxiosResponse } from "axios"
 import type {
   JiraCustomerData,
-  // JiraResponse,
-  // JiraRequestData,
-  // JiraRequest,
-  // JiraCustomerRequestData,
-  // JiraServiceRequest,
-  // JiraRequest,
   QueueIssueResponse,
   JiraProjectRequest,
   JiraProjectResponse,
@@ -19,7 +13,7 @@ import type {
 import {
   type CreateServiceFormValues,
   type SelectedLotDetail
-} from "@/components/projects/validation-schemas"
+} from "@/components/services/validation-schemas"
 
 // Interfaces 
 interface JiraStatus {
@@ -157,7 +151,6 @@ export const generateDescriptionField = async (data: CreateServiceFormValues): P
     descriptionPlain
   };
 };
-
 
 // Get Customer 
 // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-users/#api-rest-api-3-users-search-get
@@ -501,96 +494,3 @@ export async function getIssue(issueIdOrKey: string): Promise<JiraResponse> {
     }
   }
 }
-
-
-// export async function getCustomer(email: string, serviceDeskId: string): Promise<JiraResponse> {
-//   try {
-//     // const endpoint = `/rest/servicedeskapi/customer`
-//     const endpoint = `/rest/servicedeskapi/servicedesk/${serviceDeskId}/customer`
-//     const response = await jiraApi.get(endpoint, {
-//       params: {
-//         query: email,
-//       }
-//     })
-
-//     // Check if customer exists in the response
-//     const customers = response.data.values || []
-//     const customer = customers.find((c: any) => c.emailAddress === email)
-
-//     if (customer) {
-//       return {
-//         success: true,
-//         data: customer
-//       }
-//     }
-
-//     return {
-//       success: false,
-//       error: "Customer not found"
-//     }
-//   } catch (error) {
-//     let errorMessage: string
-
-//     if (axios.isAxiosError(error)) {
-//       errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`
-//     } else {
-//       errorMessage = "Unknown error occurred while fetching Jira customer"
-//     }
-
-//     return {
-//       success: false,
-//       error: errorMessage
-//     }
-//   }
-// }
-
-// Replaced by lookupAccountId
-// async function getCustomer(
-//   serviceDeskId: string,
-//   query: string,
-//   start = 0,
-//   limit = 10000
-// ): Promise<{ accountId: string; displayName: string; emailAddress?: string }[]> {
-
-//   const endpoint = `${JIRA_API_URL}/rest/servicedeskapi/servicedesk/${serviceDeskId}/participant` 
-//   console.log("endpoint getCustomer: ", endpoint)
-
-//   const res = await fetch(endpoint +
-//       `?query=${encodeURIComponent(query)}` +
-//       `&start=${start}&limit=${limit}`,
-//     {
-//       method: 'GET',
-//       headers: {
-//         "Authorization": `Basic ${JIRA_API_TOKEN}`,
-//         "Accept": "application/json",
-//         "Content-Type": "application/json",
-//       },
-//     }
-//   )
-
-//   if (!res.ok) {
-//     console.log("Jira API error", res.body)
-//     throw new Error(`Jira API error ${res.status}`)
-//   }
-
-//   const data = await res.json()
-//   return data.values
-// }
-
-// async function handleParticipants(participants: string[]) {
-//   const serviceDeskId = '140'
-//   const participantsToSubmit: string[] = []
-
-//   for (const p of participants) {
-//     const email = p.trim().toLowerCase()
-//     const customers = await getCustomer(serviceDeskId, email)
-
-//     if (customers.length > 0) {
-//       participantsToSubmit.push(customers[0].accountId)
-//     } else {
-//       // si no existe, llamarías a otro endpoint para crearlo
-//     }
-//   }
-
-//   return participantsToSubmit
-// }
