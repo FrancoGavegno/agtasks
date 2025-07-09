@@ -18,6 +18,10 @@ import {
   RefreshCw,
   Plus,
   SquareArrowOutUpRight,
+  ChevronsLeft,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsRight,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { client } from "@/lib/amplify-client"
@@ -35,7 +39,8 @@ export function ServicesPageDetails() {
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [refreshing, setRefreshing] = useState(false)
-  const [visibleCount, setVisibleCount] = useState(10)
+  const [page, setPage] = useState(1)
+  const [rowsPerPage, setRowsPerPage] = useState(10)
 
   // Fetch all services using GraphQL (Amplify)
   const fetchAllServices = async () => {
@@ -77,9 +82,9 @@ export function ServicesPageDetails() {
     }
   }, [projectId, domainId])
 
-  // Reset visibleCount
+  // Reset visibleCount y página al cambiar búsqueda
   useEffect(() => {
-    setVisibleCount(10)
+    setPage(1)
   }, [searchQuery])
 
   // frontend filter
@@ -93,8 +98,10 @@ export function ServicesPageDetails() {
     )
   })
 
-  // Limit from visibleCount
-  const displayedServices = filteredServices.slice(0, visibleCount)
+  // Paginación
+  const totalPages = Math.ceil(filteredServices.length / rowsPerPage)
+  const startIndex = (page - 1) * rowsPerPage
+  const paginatedServices = filteredServices.slice(startIndex, startIndex + rowsPerPage)
 
   if (loading && !refreshing) {
     return <div className="flex justify-center items-center h-64">Cargando servicios...</div>
@@ -154,27 +161,29 @@ export function ServicesPageDetails() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
+              {/* <TableHead>ID</TableHead> */}
               <TableHead>Nombre</TableHead>
               <TableHead>Template Request ID</TableHead>
               <TableHead>Request ID</TableHead>
+              <TableHead>Created At</TableHead>
               <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {displayedServices.length === 0 ? (
+            {paginatedServices.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
                   No se encontraron servicios que coincidan con su búsqueda
                 </TableCell>
               </TableRow>
             ) : (
-              displayedServices.map((service) => (
+              paginatedServices.map((service) => (
                 <TableRow key={service.id}>
-                  <TableCell>{service.id}</TableCell>
+                  {/* <TableCell>{service.id}</TableCell> */}
                   <TableCell className="font-medium">{service.name}</TableCell>
                   <TableCell>{service.tmpRequestId || "-"}</TableCell>
                   <TableCell>{service.requestId || "-"}</TableCell>
+                  <TableCell>{service.createdAt}</TableCell>
                   <TableCell>
                     {service.requestId ? (
                       <Link
@@ -191,6 +200,71 @@ export function ServicesPageDetails() {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Footer de paginación */}
+      <div className="flex items-center justify-between mt-4">
+        <div className="text-sm text-muted-foreground">
+          {filteredServices.length > 0
+            ? `Mostrando ${startIndex + 1} a ${Math.min(startIndex + rowsPerPage, filteredServices.length)} de ${filteredServices.length} servicios`
+            : "No se encontraron servicios"}
+        </div>
+        <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-2">
+            <p className="text-sm font-medium">Filas por página</p>
+            <select
+              className="border rounded px-2 py-1 text-sm"
+              value={rowsPerPage}
+              onChange={e => {
+                setRowsPerPage(Number(e.target.value))
+                setPage(1)
+              }}
+            >
+              {[5, 10, 15, 20].map((pageSize) => (
+                <option key={pageSize} value={pageSize}>{pageSize}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPage(1)} disabled={page === 1}>
+              <ChevronsLeft className="h-4 w-4" />
+              <span className="sr-only">Primera página</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setPage(page - 1)}
+              disabled={page === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="sr-only">Página anterior</span>
+            </Button>
+            <span className="text-sm">
+              Página {page} de {totalPages || 1}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setPage(page + 1)}
+              disabled={page === totalPages || totalPages === 0}
+            >
+              <ChevronRight className="h-4 w-4" />
+              <span className="sr-only">Página siguiente</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setPage(totalPages)}
+              disabled={page === totalPages || totalPages === 0}
+            >
+              <ChevronsRight className="h-4 w-4" />
+              <span className="sr-only">Última página</span>
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   )

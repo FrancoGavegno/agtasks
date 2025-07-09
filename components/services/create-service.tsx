@@ -51,6 +51,28 @@ interface Props {
   userEmail: string
 }
 
+const STEPS = [1, 2, 3];
+
+function StepperBubbles({ currentStep }: { currentStep: number }) {
+  return (
+    <div className="flex items-center justify-center gap-8 mb-8">
+      {STEPS.map((step, idx) => (
+        <div key={step} className="flex items-center gap-2">
+          <div
+            className={`flex items-center justify-center rounded-full border-2 w-9 h-9 text-lg font-semibold transition-colors
+              ${currentStep === step ? 'bg-black text-white border-black' : 'bg-white text-gray-400 border-gray-300'}`}
+          >
+            {step}
+          </div>
+          {idx < STEPS.length - 1 && (
+            <div className="w-16 h-0.5 bg-gray-200" />
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function CreateService({ userEmail }: Props) {
   const router = useRouter()
   const params = useParams()
@@ -294,110 +316,32 @@ export default function CreateService({ userEmail }: Props) {
     router.push(`/${locale}/domains/${domain}/projects/${project}/services`)
   }
 
-  // Renderizar el paso actual del wizard
-  const renderStep = () => {
-    switch (currentStep) {
-      case 1:
-        return <Step1Protocol
-          selectedProtocol={selectedProtocol}
-          onSelectProtocol={setSelectedProtocol}
-          selectedProtocolName={selectedProtocolName}
-          onSelectProtocolName={setSelectedProtocolName} />
-      case 2:
-        return <Step2Lots userEmail={userEmail} />
-      case 3:
-        return <Step3Tasks />
-      default:
-        return null
-    }
-  }
-
+  // Nuevo renderizado con Card y Stepper visual
   return (
     <ServiceFormProvider>
-      <Card className="w-full max-w-6xl mx-auto border-none shadow-none min-h-[600px]">
-        <CardHeader>
-          <CardTitle>{t("CardTitle")}</CardTitle>
-          <CardDescription>{t("CardDescription")}</CardDescription>
-
-          <div className="flex items-center justify-between mt-4">
-            <div className="flex items-center space-x-2">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 1 ? "bg-primary text-primary-foreground" : "bg-gray-200 text-gray-500"}`}
-              >
-                1
-              </div>
-              <div className={`w-16 h-1 ${currentStep >= 2 ? "bg-primary" : "bg-gray-200"}`}></div>
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 2 ? "bg-primary text-primary-foreground" : "bg-gray-200 text-gray-500"}`}
-              >
-                2
-              </div>
-              <div className={`w-16 h-1 ${currentStep >= 3 ? "bg-primary" : "bg-gray-200"}`}></div>
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 3 ? "bg-primary text-primary-foreground" : "bg-gray-200 text-gray-500"}`}
-              >
-                3
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent>
-          {isSuccess ? (
-            <div className="flex flex-col items-center justify-center py-12 space-y-6">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-8 w-8 text-green-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-medium text-center">{t("title")}</h3>
-              <p className="text-center text-muted-foreground">{t("subtitle")}</p>
-              <div className="flex space-x-4">
-                <Button variant="outline" onClick={goToServicesList}>
-                  {t("Button-1")}
-                </Button>
-                <Button onClick={createNewService}>
-                  {t("Button-2")}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <FormProvider {...methods}>{renderStep()}</FormProvider>
-          )}
-        </CardContent>
-
-        <CardFooter className="flex justify-between">
-          {!isSuccess && (
-            <>
-              {currentStep > 1 ? (
-                <Button variant="outline" onClick={prevStep} disabled={isSubmitting}>
-                  <ChevronLeft className="mr-2 h-4 w-4" />
-                  {t("Button-3")}
-                </Button>
-              ) : (
-                <div></div>
-              )}
-
-              {currentStep < 3 ? (
-                <Button onClick={nextStep} disabled={isSubmitting}>
-                  {t("Button-4")}
-                  <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
-              ) : (
-                <Button onClick={nextStep} disabled={isSubmitting}>
-                  {isSubmitting ? t("isSubmitting") : t("isSubmitting-2")}
-                </Button>
-              )}
-            </>
-          )}
-        </CardFooter>
-      </Card>
+      <div className="flex justify-center items-center min-h-[80vh]">
+        <Card className="w-[90%] max-w-4xl h-[80vh] flex flex-col justify-between shadow-md border border-gray-200">
+          <CardHeader className="pb-0">
+            <StepperBubbles currentStep={currentStep} />
+          </CardHeader>
+          <CardContent className="flex-1 overflow-y-auto pt-0">
+            <FormProvider {...methods}>
+              <form onSubmit={methods.handleSubmit(onSubmit)} className="h-full flex flex-col">
+                <div className="flex-1">
+                  {currentStep === 1 && <><h2 className="text-xl font-semibold mb-4">Paso 1: Protocolo</h2><Step1Protocol selectedProtocol={selectedProtocol} onSelectProtocol={setSelectedProtocol} selectedProtocolName={selectedProtocolName} onSelectProtocolName={setSelectedProtocolName} /></>}
+                  {currentStep === 2 && <><h2 className="text-xl font-semibold mb-4">Paso 2: Selección de lotes</h2><Step2Lots userEmail={userEmail} /></>}
+                  {currentStep === 3 && <><h2 className="text-xl font-semibold mb-4">Paso 3: Tareas</h2><Step3Tasks /></>}
+                </div>
+              </form>
+            </FormProvider>
+          </CardContent>
+          <CardFooter className="flex justify-end gap-2 bg-white sticky bottom-0 z-10 border-t border-gray-100 pt-4 pb-4">
+            {currentStep > 1 && <Button type="button" variant="outline" onClick={prevStep}><ChevronLeft className="w-4 h-4 mr-1" /> Anterior</Button>}
+            {currentStep < 3 && <Button type="button" onClick={nextStep}><ChevronRight className="w-4 h-4 ml-1" /> Siguiente</Button>}
+            {currentStep === 3 && <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Creando..." : "Crear Servicio"}</Button>}
+          </CardFooter>
+        </Card>
+      </div>
     </ServiceFormProvider>
   )
 }

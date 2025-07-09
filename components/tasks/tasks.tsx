@@ -19,14 +19,17 @@ import {
 import {
   Search,
   RefreshCw,
+  ChevronsLeft,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsRight,
 } from "lucide-react"
-import type { 
-  PaginatedResponse, 
+import type {  
   Service, 
   Task 
 } from "@/lib/interfaces"
 import { useToast } from "@/hooks/use-toast"
-import { listTasksByProject } from "@/lib/services/agtasks"
+import { listTasksByProject, listServicesByProject } from "@/lib/services/agtasks"
 
 // Utilidad para limpiar y tipar correctamente los tasks
 function cleanTask(raw: any): Task {
@@ -58,29 +61,29 @@ export function TasksPageDetails() {
   const [refreshing, setRefreshing] = useState(false)
   const [visibleCount, setVisibleCount] = useState(10)
   const [selectedService, setSelectedService] = useState<string>("all")
+  const [page, setPage] = useState(1)
+  const [rowsPerPage, setRowsPerPage] = useState(10)
 
   // Fetch all services and tasks once
   const fetchAllData = async () => {
     try {
       setLoading(true)
       setError(null)
-      // 1. Obtener todos los servicios del proyecto
-      const servicesUrl = `/api/v1/agtasks/domains/${domainId}/projects/${projectId}/services`
-      const servicesResponse = await fetch(servicesUrl)
-      if (!servicesResponse.ok) {
-        const errorData = await servicesResponse.json()
-        throw new Error(`Error: ${servicesResponse.status} - ${errorData.error || "Unknown error"}`)
-      }
-      const servicesData: PaginatedResponse = await servicesResponse.json()
-      const sortedServices = [...servicesData.services].sort((a, b) => {
+      // 1. Obtener todos los servicios del proyecto usando función centralizada
+      const servicesData = await listServicesByProject(projectId)
+      // Asegurarse de que cada servicio tenga un projectId de tipo string o undefined
+      const cleanedServices: Service[] = servicesData.map((service: any) => ({
+        ...service,
+        projectId: service.projectId ?? undefined,
+      }))
+      const sortedServices: Service[] = [...cleanedServices].sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt ?? '').getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt ?? '').getTime() : 0;
         return dateB - dateA;
       })
       setServices(sortedServices)
-      // 2. Obtener todas las ServiceTasks del proyecto usando listTasksByProject
+      // 2. Obtener todas las tareas del proyecto usando listTasksByProject
       const tasksData = await listTasksByProject(projectId)
-      // Ensure taskType is always string or undefined (never null)
       setTasks(tasksData.map(cleanTask))
     } catch (err) {
       setError(`Error al cargar tareas: ${err instanceof Error ? err.message : "Error desconocido"}`)
@@ -105,7 +108,7 @@ export function TasksPageDetails() {
   }, [projectId, domainId])
 
   useEffect(() => {
-    setVisibleCount(10)
+    setPage(1)
   }, [searchQuery, selectedService])
 
   // Filtrar tareas según búsqueda y servicio seleccionado
@@ -124,7 +127,17 @@ export function TasksPageDetails() {
     )
   })
 
-  const displayedTasks = filteredTasks.slice(0, visibleCount)
+  // Paginación
+  const totalPages = Math.ceil(filteredTasks.length / rowsPerPage)
+  const startIndex = (page - 1) * rowsPerPage
+  const paginatedTasks = filteredTasks.slice(startIndex, startIndex + rowsPerPage)
+
+  // Reset página al cambiar búsqueda o filtro
+  useEffect(() => {
+    setPage(1)
+  }, [searchQuery, selectedService])
+
+  const displayedTasks = paginatedTasks
 
   if (loading && !refreshing) {
     return <div className="flex justify-center items-center h-64">Cargando tareas...</div>
@@ -178,6 +191,11 @@ export function TasksPageDetails() {
             <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
             Actualizar
           </Button>
+          <Link href={`/domains/${domainId}/projects/${projectId}/tasks/create`}>
+            <Button type="button" variant="default">
+              + Crear Tarea
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -218,11 +236,71 @@ export function TasksPageDetails() {
           </TableBody>
         </Table>
       </div>
-      {displayedTasks.length < filteredTasks.length && (
-        <div className="flex justify-center py-4">
-          <Button onClick={() => setVisibleCount(visibleCount + 10)}>Ver más</Button>
+
+      {/* Footer de paginación */}
+      <div className="flex items-center justify-between mt-4">
+        <div className="text-sm text-muted-foreground">
+          {filteredTasks.length > 0
+            ? `Mostrando ${startIndex + 1} a ${Math.min(startIndex + rowsPerPage, filteredTasks.length)} de ${filteredTasks.length} tareas`
+            : "No se encontraron tareas"}
         </div>
-      )}
+        <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-2">
+            <p className="text-sm font-medium">Filas por página</p>
+            <select
+              className="border rounded px-2 py-1 text-sm"
+              value={rowsPerPage}
+              onChange={e => {
+                setRowsPerPage(Number(e.target.value))
+                setPage(1)
+              }}
+            >
+              {[5, 10, 15, 20].map((pageSize) => (
+                <option key={pageSize} value={pageSize}>{pageSize}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPage(1)} disabled={page === 1}>
+              <ChevronsLeft className="h-4 w-4" />
+              <span className="sr-only">Primera página</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setPage(page - 1)}
+              disabled={page === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="sr-only">Página anterior</span>
+            </Button>
+            <span className="text-sm">
+              Página {page} de {totalPages || 1}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setPage(page + 1)}
+              disabled={page === totalPages || totalPages === 0}
+            >
+              <ChevronRight className="h-4 w-4" />
+              <span className="sr-only">Página siguiente</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setPage(totalPages)}
+              disabled={page === totalPages || totalPages === 0}
+            >
+              <ChevronsRight className="h-4 w-4" />
+              <span className="sr-only">Última página</span>
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

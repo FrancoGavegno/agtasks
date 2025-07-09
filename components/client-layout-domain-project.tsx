@@ -35,17 +35,22 @@ export default function ClientLayoutWithDomainProject({ userEmail, children }: {
       if (!selectedDomain && domainsData.length > 0) setSelectedDomain(domainsData[0]);
     };
     fetchDomains();
-    // eslint-disable-next-line
   }, [userEmail, domainIdFromUrl]);
 
   useEffect(() => {
     const fetchProjects = async () => {
       if (selectedDomain) {
-        const projectsData = await listProjectsByDomain(selectedDomain.id.toString());
+        const result = await listProjectsByDomain(selectedDomain.id.toString());
+        const projectsData: Project[] = Array.isArray(result)
+          ? result.map((p: any) => ({
+              ...p,
+              tmpSourceSystem: p.tmpSourceSystem ?? "", 
+            }))
+          : [];
         setProjects(projectsData);
         // Si hay projectId en la URL, seleccionarlo
         if (projectIdFromUrl) {
-          const found = projectsData.find(p => p.id.toString() === projectIdFromUrl.toString());
+          const found = projectsData.find((p: Project) => p.id?.toString() === projectIdFromUrl.toString());
           if (found) {
             setSelectedProject(found);
             return;

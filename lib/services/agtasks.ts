@@ -286,6 +286,17 @@ export async function getService(id: string) {
   };
   }
 
+/**
+ * Lista todos los servicios de un proyecto
+ */
+export async function listServicesByProject(projectId: string) {
+  const client = getClient();
+  const response = await client.models.Service.list({
+    filter: { projectId: { eq: projectId }, deleted: { ne: true } },
+  });
+  return response.data || [];
+}
+
 // --- TASK CRUD ---
 /**
  * Crea un nuevo Task

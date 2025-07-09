@@ -46,13 +46,6 @@ export default function ServicesPage() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      {/* <div className="flex justify-between items-center mt-5 mb-5">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight">{t("title")}</h2>
-          <p className="text-muted-foreground">{t("subtitle")}</p>
-        </div>
-      </div> */}
-
       <ServicesPageDetails />
     </div>
   )

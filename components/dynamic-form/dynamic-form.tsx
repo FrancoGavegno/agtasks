@@ -117,22 +117,25 @@ export function DynamicForm({
   schema,
   onSubmit,
   initialData = {},
-  submitButtonText = "Confirmar",
+  submitButtonText = "",
   className,
-}: DynamicFormProps) {
+  onChange,
+}: DynamicFormProps & { onChange?: (formData: Record<string, any>) => void }) {
   const [formData, setFormData] = useState<Record<string, any>>(() => initializeFormData(schema, initialData))
 
   useEffect(() => {
     setFormData(initializeFormData(schema, initialData))
+    if (onChange) onChange(initializeFormData(schema, initialData))
   }, [schema, JSON.stringify(initialData)])
 
   const handleStateChange = useCallback((path: string, value: any) => {
     setFormData((prevData) => {
       const newData = JSON.parse(JSON.stringify(prevData))
       setByPath(newData, path, value)
+      if (onChange) onChange(newData)
       return newData
     })
-  }, [])
+  }, [onChange])
 
   const addSubFormEntry = useCallback(
     (subFormPath: string, subFormSchemaDef: SubFormFieldSchema) => {
@@ -442,9 +445,11 @@ export function DynamicForm({
       {schema.map((field: FieldSchema) => (
         <div key={field.name}>{renderField(field)}</div>
       ))}
-      <Button type="submit" className="w-full sm:w-auto">
-      {submitButtonText}
-      </Button>
+      {submitButtonText !== "" && (
+        <Button type="submit" className="w-full sm:w-auto">
+          {submitButtonText}
+        </Button>
+      )}
     </form>
   )
 }

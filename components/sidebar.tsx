@@ -1,41 +1,17 @@
 "use client"
 
-import {
-  useEffect,
-  useState
-} from "react"
 import { Link } from "@/i18n/routing"
 import { useTranslations } from 'next-intl'
 import { useParams } from 'next/navigation'
 import { usePathname } from 'next/navigation'
-// import {
-//   Sidebar,
-//   SidebarContent,
-//   SidebarGroup,
-//   SidebarGroupContent,
-//   SidebarGroupLabel,
-//   SidebarMenu,
-//   SidebarMenuButton,
-//   SidebarMenuItem,
-//   SidebarRail,
-// } from "@/components/ui/sidebar"
 import {
   Settings,
-  // FolderCheck,
-  // ClipboardCheck,
-  // Folder,
   LayoutList
 } from "lucide-react"
 import {
   Domain,
   Project
 } from "@/lib/interfaces"
-// import {
-//   listDomainsByUserEmail
-// } from "@/lib/integrations/360"
-// import {
-//   listProjectsByDomain
-// } from "@/lib/services/agtasks"
 
 interface Props {
   user: string
@@ -46,18 +22,8 @@ interface Props {
 }
 
 export function AppSidebar({ user, selectedDomain, selectedProject, domains, projects }: Props) {
-  // const { domain } = useParams<{ domain: string }>();
   const t = useTranslations("AppSidebar")
   const pathname = usePathname();
-
-  // const sidebarNavItems = [
-  //   {
-  //     title: t("sidebarNavItems-1-title"),
-  //     href: "/settings",
-  //     icon: Settings,
-  //     description: t("sidebarNavItems-1-description")
-  //   }
-  // ]
 
   const projectNavItems = [
     {
@@ -81,7 +47,6 @@ export function AppSidebar({ user, selectedDomain, selectedProject, domains, pro
         <div className="flex items-center justify-between text-xs text-gray-400 font-semibold tracking-wide px-2 mb-1">
           <span>{selectedProject?.name}</span>
         </div>
-        {/* <div className="text-sm text-gray-700 font-bold px-2 mb-2 truncate" title={selectedProject?.name}>{selectedProject?.name ?? "-"}</div> */}
         {selectedProject && (
           <nav className="flex flex-col gap-1">
             {projectNavItems.map((item) => {
