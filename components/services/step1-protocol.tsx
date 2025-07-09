@@ -27,6 +27,7 @@ import {
   Protocol, 
   TaskAssignment 
 } from "@/lib/interfaces"
+import { listDomainProtocols } from "@/lib/services/agtasks"
 
 interface Props {
   selectedProtocol: string
@@ -62,13 +63,8 @@ export default function Step1Protocol({
     const fetchProtocols = async () => {
       try {
         setLoading(true)
-        const res = await fetch(`/api/v1/agtasks/domains/${domainId}/protocols`)
-        if (!res.ok) {
-          throw new Error(`Error fetching protocols: ${res.status}`)
-        }
-        
-        const data = await res.json()
-        const protocolsData = Array.isArray(data) ? data : []
+        const protocols = await listDomainProtocols(domainId)
+        const protocolsData = Array.isArray(protocols) ? protocols : []
         setProtocols(protocolsData)
       } catch (err) {
         console.error("Failed to fetch protocols:", err)

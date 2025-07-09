@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { createService, updateService } from "@/lib/admin-actions"
+import { createService, updateService } from "@/lib/services/agtasks"
 import type { Schema } from "@/amplify/data/resource"
 
 type Service = Schema["Service"]["type"]
@@ -54,15 +54,14 @@ export function ServiceDialog({ open, onOpenChange, service, projects }: Service
     setIsLoading(true)
 
     try {
-      const result = service ? await updateService(service.id, formData) : await createService(formData)
-
-      if (result.success) {
-        onOpenChange(false)
+      if (service) {
+        await updateService(service.id, formData)
       } else {
-        alert(result.error || "An error occurred")
+        await createService(formData)
       }
+      onOpenChange(false)
     } catch (error) {
-      alert("An unexpected error occurred")
+      alert(error instanceof Error ? error.message : "An unexpected error occurred")
     } finally {
       setIsLoading(false)
     }

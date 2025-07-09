@@ -8,8 +8,8 @@ import { useParams } from "next/navigation"
 import type { FieldSchema } from "@/components/dynamic-form/types"
 import { ServiceTask } from "@/lib/interfaces"
 import {
-    getServiceTask,
-    updateServiceTask
+    getTask,
+    updateTask
 } from "@/lib/services/agtasks"
 import { DynamicForm } from "@/components/dynamic-form/dynamic-form"
 import {
@@ -39,8 +39,12 @@ export default function TaskPage() {
 
         // Fetch ServiceTask Information 
         async function fetchTask(task: string) {
-            const taskData = await getServiceTask(task)
-            setTaskData(taskData)
+            const taskData = await getTask(task)
+            if (taskData && 'externalTemplateId' in taskData && 'formData' in taskData) {
+                setTaskData(taskData as ServiceTask)
+            } else {
+                setTaskData(undefined)
+            }
             // console.log("taskData: ", taskData)
         }
 
@@ -86,23 +90,19 @@ export default function TaskPage() {
             // console.log("task: ", task)
             // console.log("data: ", data)
 
-            const response = await updateServiceTask(task as string, data);
-
-            if (!response.success) {
+            const updated = await updateTask(task as string, data);
+            if (!updated) {
                 toast({
-                    title: "Error al enviar el formulario",
-                    description: response.error ? response.error.toString() : "Ocurrió un error al intentar actualizar la tarea.",
-                    duration: 5000,
-                    variant: "destructive",
-                });
-                return;
+                    title: "Error al guardar",
+                    description: "No se pudo actualizar la tarea",
+                    variant: "destructive"
+                })
+            } else {
+                toast({
+                    title: "Guardado exitoso",
+                    description: "Los datos de la tarea fueron actualizados.",
+                })
             }
-
-            toast({
-                title: "Formulario enviado!",
-                description: "La tarea ha sido actualizada",
-                duration: 5000,
-            });
         } catch (error) {
             console.error("Error en handleSubmit:", error);
             toast({

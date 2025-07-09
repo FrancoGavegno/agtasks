@@ -70,26 +70,25 @@ export default function Protocols() {
   return (
     <div className="w-full space-y-4">
       <div className="flex justify-between items-center">
-        <div className="space-y-1">
+        {/* <div className="space-y-1">
           <h2 className="text-xl font-semibold tracking-tight">Protocolos</h2>
           <p className="text-sm text-muted-foreground">Administra tus protocolos de servicio</p>
+        </div> */}
+        <div className="flex items-center justify-between">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Filtrar protocolos..."
+              className="pl-8"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            />
+          </div>
         </div>
         <Button size="sm" onClick={() => setIsModalOpen(true)}>
           Editar
         </Button>
-      </div>
-
-      <div className="flex items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Filtrar protocolos..."
-            className="pl-8"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          />
-        </div>
       </div>
 
       <div className="rounded-md border">

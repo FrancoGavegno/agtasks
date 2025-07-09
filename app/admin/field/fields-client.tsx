@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { DataTable } from "@/components/admin/data-table"
 import { FieldDialog } from "./field-dialog"
-import { deleteField } from "@/lib/admin-actions"
+import { deleteField } from "@/lib/services/agtasks"
 import type { Schema } from "@/amplify/data/resource"
 
 type Field = Schema["Field"]["type"]
@@ -30,7 +30,10 @@ export function FieldsClient({ fields, tasks }: FieldsClientProps) {
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this field?")) {
-      await deleteField(id)
+      const result = await deleteField(id)
+      if (!result) {
+        alert("Error deleting field")
+      }
     }
   }
 

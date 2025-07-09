@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { DataTable } from "@/components/admin/data-table"
 import { DomainProtocolDialog } from "./protocol-dialog"
-import { deleteDomainProtocol } from "@/lib/admin-actions"
+import { deleteDomainProtocol } from "@/lib/services/agtasks"
 import type { Schema } from "@/amplify/data/resource"
 
 type DomainProtocol = Schema["DomainProtocol"]["type"]
@@ -26,10 +26,8 @@ export function DomainProtocolsClient({ domainProtocols }: DomainProtocolsClient
     setIsDialogOpen(true)
   }
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this domain protocol?")) {
-      await deleteDomainProtocol(id)
-    }
+  const handleDelete = async (domainId: string, protocolId: string) => {
+    await deleteDomainProtocol(domainId, protocolId)
   }
 
   const columns: ColumnDef<DomainProtocol>[] = [
@@ -66,7 +64,7 @@ export function DomainProtocolsClient({ domainProtocols }: DomainProtocolsClient
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDelete(domainProtocol.id)} className="text-destructive">
+              <DropdownMenuItem onClick={() => handleDelete(domainProtocol.domainId, domainProtocol.id)} className="text-destructive">
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>

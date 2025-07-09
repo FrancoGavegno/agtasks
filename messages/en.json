@@ -18,8 +18,8 @@
     "help-description": "Get help and documentation"
   },
   "AppSidebar": {
-    "SidebarGroupLabel-1": "Domains",
-    "SidebarGroupLabel-2": "Projects",
+    "SidebarGroupLabel-1": "Domain",
+    "SidebarGroupLabel-2": "Project",
     "sidebarNavItems-1-title": "Settings",
     "sidebarNavItems-1-description": "Manage your domain settings",
     "projectNavItems-1-title": "Project",

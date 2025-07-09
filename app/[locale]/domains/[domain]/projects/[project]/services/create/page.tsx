@@ -25,14 +25,6 @@ export default function Page({
                         <Link href="/">Home</Link>
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
-                    {/* <BreadcrumbItem>
-                        <BreadcrumbLink href="/en/domains/8644/projects">Projects</BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator />
-                    <BreadcrumbItem>
-                        <BreadcrumbLink href="/en/domains/8644/projects/1">01 - Tandil</BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator /> */}
                     <BreadcrumbItem>
                         <Link href={`/domains/${params.domain}/projects/${params.project}/services`}>Services</Link>
                     </BreadcrumbItem>

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { DataTable } from "@/components/admin/data-table"
 import { ServiceDialog } from "./service-dialog"
-import { deleteService } from "@/lib/admin-actions"
+import { deleteService } from "@/lib/services/agtasks"
 import type { Schema } from "@/amplify/data/resource"
 
 type Service = Schema["Service"]["type"]
@@ -34,21 +34,23 @@ export function ServicesClient({ services, projects }: ServicesClientProps) {
     }
   }
 
-  const getProjectName = (projectId?: string | null) => {
-    if (!projectId) return "No Project"
-    const project = projects.find((p) => p.id === projectId)
-    return project?.name || "Unknown Project"
+  const getProjectName = (service: Service) => {
+    if (service.projectId) {
+      const project = projects.find((p) => p.id === service.projectId)
+      return project?.name || "Unknown Project"
+    }
+    return "No Project"
   }
 
   const columns: ColumnDef<Service>[] = [
     {
-      accessorKey: "name",
-      header: "Name",
+      id: "project",
+      header: "Project",
+      cell: ({ row }) => getProjectName(row.original),
     },
     {
-      accessorKey: "projectId",
-      header: "Project",
-      cell: ({ row }) => getProjectName(row.original.projectId),
+      accessorKey: "name",
+      header: "Name",
     },
     {
       accessorKey: "tmpRequestId",
@@ -57,6 +59,10 @@ export function ServicesClient({ services, projects }: ServicesClientProps) {
     {
       accessorKey: "requestId",
       header: "Request ID",
+    },
+    {
+      accessorKey: "deleted",
+      header: "deleted?"
     },
     {
       id: "actions",

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { DataTable } from "@/components/admin/data-table"
 import { ProjectDialog } from "./project-dialog"
-import { deleteProject } from "@/lib/admin-actions"
+import { deleteProject } from "@/lib/services/agtasks"
 import type { Schema } from "@/amplify/data/resource"
 
 type Project = Schema["Project"]["type"]

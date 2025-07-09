@@ -3,23 +3,24 @@ import { ServicesClient } from "./services-client"
 import { serializeModelData } from "@/lib/serialization-utils"
 
 export default async function ServicesPage() {
-  const { data: services } = await client.models.Service.list({
-    filter: {
-      deleted: {
-        ne: true,
+  const [{ data: services }, { data: projects }] = await Promise.all([
+    client.models.Service.list({
+      filter: {
+        deleted: {
+          ne: true,
+        },
       },
-    },
-  })
-
-  const { data: projects } = await client.models.Project.list({
-    filter: {
-      deleted: {
-        ne: true,
+    }),
+    client.models.Project.list({
+      filter: {
+        deleted: {
+          ne: true,
+        },
       },
-    },
-  })
+    }),
+  ])
 
-  // Serialize the data to remove function properties
+  // Serialización robusta
   const serializedServices = services?.map((service) => serializeModelData(service)) || []
   const serializedProjects = projects?.map((project) => serializeModelData(project)) || []
 

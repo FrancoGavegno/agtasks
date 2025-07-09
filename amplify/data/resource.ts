@@ -9,11 +9,11 @@ const schema = a
       language: a.string().required(),
     }),
 
-    DomainRole: a.model({
-      domainId: a.string().required(),
-      name: a.string().required(),
-      language: a.string().required(),
-    }),
+    // DomainRole: a.model({
+    //   domainId: a.string().required(),
+    //   name: a.string().required(),
+    //   language: a.string().required(),
+    // }),
 
     DomainForm: a.model({
       domainId: a.string().required(),
@@ -22,11 +22,11 @@ const schema = a
       language: a.string().required(),
     }),
 
-    Role: a.model({
-      name: a.string().required(),
-      language: a.string().required(),
-      // tasks: a.hasMany("ServiceTask", "roleId"),
-    }),
+    // Role: a.model({
+    //   name: a.string().required(),
+    //   language: a.string().required(),
+    //   // tasks: a.hasMany("ServiceTask", "roleId"),
+    // }),
     
     Project: a.model({
       // 360 

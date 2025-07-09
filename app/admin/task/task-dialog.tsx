@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { createTask, updateTask } from "@/lib/admin-actions"
+import { createTask, updateTask } from "@/lib/services/agtasks"
 import type { Schema } from "@/amplify/data/resource"
 
 type Task = Schema["Task"]["type"]
@@ -114,10 +114,10 @@ export function TaskDialog({ open, onOpenChange, task, projects, services }: Tas
 
       const result = task ? await updateTask(task.id, submitData) : await createTask(submitData)
 
-      if (result.success) {
+      if (result) {
         onOpenChange(false)
       } else {
-        alert(result.error || "An error occurred")
+        alert("An error occurred")
       }
     } catch (error) {
       alert("An unexpected error occurred")

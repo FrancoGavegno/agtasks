@@ -1,36 +1,33 @@
 "use client"
 
-import { 
-  useState, 
-  useEffect 
-} from "react"
+import { useState, useEffect } from "react"
 import { Link } from "@/i18n/routing"
 import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table"
 import {
   Search,
-  SquareArrowOutUpRight,
   RefreshCw,
   Plus,
+  SquareArrowOutUpRight,
 } from "lucide-react"
-import type { 
-  PaginatedResponse, 
-  Service, 
-} from "@/lib/interfaces"
 import { useToast } from "@/hooks/use-toast"
+import { client } from "@/lib/amplify-client"
+import type { Schema } from "@/amplify/data/resource"
+
+type Service = Schema["Service"]["type"]
 
 export function ServicesPageDetails() {
   const params = useParams()
-  const domainId = params.domain as string 
+  const domainId = params.domain as string
   const projectId = params.project as string
   const { toast } = useToast()
   const [services, setServices] = useState<Service[]>([])
@@ -40,25 +37,24 @@ export function ServicesPageDetails() {
   const [refreshing, setRefreshing] = useState(false)
   const [visibleCount, setVisibleCount] = useState(10)
 
-  // Fetch all services once 
+  // Fetch all services using GraphQL (Amplify)
   const fetchAllServices = async () => {
     try {
       setLoading(true)
       setError(null)
-      const url = `/api/v1/agtasks/domains/${domainId}/projects/${projectId}/services`
-      const response = await fetch(url)
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(`Error: ${response.status} - ${errorData.error || "Unknown error"}`)
-      }
-      const data: PaginatedResponse = await response.json()
-      // Ordenar por createdAt descendente
-      const sorted = [...data.services].sort((a, b) => {
+      const response = await client.models.Service.list({
+        filter: { projectId: { eq: projectId } }
+      })
+      const raw = response.data || []
+      // Filtrar solo los datos planos (sin métodos)
+      const plain = raw.filter((s: any) => typeof s.id === 'string' && typeof s.name === 'string')
+      // Ordenar por createdAt descendente si existe
+      const sorted = [...plain].sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt ?? '').getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt ?? '').getTime() : 0;
         return dateB - dateA;
       })
-      setServices(sorted)
+      setServices(sorted as Service[])
     } catch (err) {
       setError(`Error al cargar servicios: ${err instanceof Error ? err.message : "Error desconocido"}`)
       setServices([])
@@ -81,7 +77,7 @@ export function ServicesPageDetails() {
     }
   }, [projectId, domainId])
 
-  // Reset visibleCount 
+  // Reset visibleCount
   useEffect(() => {
     setVisibleCount(10)
   }, [searchQuery])
@@ -91,11 +87,9 @@ export function ServicesPageDetails() {
     if (!searchQuery) return true
     const q = searchQuery.toLowerCase()
     return (
-      service.serviceName?.toLowerCase().includes(q) ||
-      service.externalServiceKey?.toLowerCase().includes(q) ||
-      service.workspaceName?.toLowerCase().includes(q) ||
-      service.campaignName?.toLowerCase().includes(q) ||
-      service.farmName?.toLowerCase().includes(q)
+      service.name?.toLowerCase().includes(q) ||
+      service.tmpRequestId?.toLowerCase().includes(q) ||
+      service.requestId?.toLowerCase().includes(q)
     )
   })
 
@@ -160,37 +154,37 @@ export function ServicesPageDetails() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Key</TableHead>
-              <TableHead>Servicio</TableHead>
-              <TableHead>Espacio de trabajo</TableHead>
-              <TableHead>Campaña</TableHead>
-              <TableHead>Establecimiento</TableHead>
-              <TableHead>Tot. Has</TableHead>
+              <TableHead>ID</TableHead>
+              <TableHead>Nombre</TableHead>
+              <TableHead>Template Request ID</TableHead>
+              <TableHead>Request ID</TableHead>
               <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {displayedServices.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-6 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
                   No se encontraron servicios que coincidan con su búsqueda
                 </TableCell>
               </TableRow>
             ) : (
               displayedServices.map((service) => (
                 <TableRow key={service.id}>
-                  <TableCell>{service.externalServiceKey}</TableCell>
-                  <TableCell className="font-medium">{service.serviceName}</TableCell>
-                  <TableCell>{service.workspaceName || "-"}</TableCell>
-                  <TableCell>{service.campaignName || "-"}</TableCell>
-                  <TableCell>{service.farmName || service.farmId}</TableCell>
-                  <TableCell>{Number(service.totalArea).toFixed(2)} ha</TableCell>
+                  <TableCell>{service.id}</TableCell>
+                  <TableCell className="font-medium">{service.name}</TableCell>
+                  <TableCell>{service.tmpRequestId || "-"}</TableCell>
+                  <TableCell>{service.requestId || "-"}</TableCell>
                   <TableCell>
-                    <Link
-                      target="_blank"
-                      href={`${process.env.NEXT_PUBLIC_JIRA_API_URL}/browse/${service.externalServiceKey}`}>
-                      <SquareArrowOutUpRight />
-                    </Link>
+                    {service.requestId ? (
+                      <Link
+                        target="_blank"
+                        href={`https://jira.geoagro.com/browse/${service.requestId}`}
+                        className="inline-flex items-center gap-1 text-primary hover:underline"
+                      >
+                        <SquareArrowOutUpRight className="h-4 w-4" />
+                      </Link>
+                    ) : null}
                   </TableCell>
                 </TableRow>
               ))
@@ -198,12 +192,6 @@ export function ServicesPageDetails() {
           </TableBody>
         </Table>
       </div>
-
-      {displayedServices.length < filteredServices.length && (
-        <div className="flex justify-center py-4">
-          <Button onClick={() => setVisibleCount(visibleCount + 10)}>Ver más</Button>
-        </div>
-      )}
     </div>
   )
 }

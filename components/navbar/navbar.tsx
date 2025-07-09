@@ -1,27 +1,52 @@
 "use client"
 
-import { 
-  SignedIn, 
-  SignedOut, 
-  SignInButton, 
-  SignUpButton, 
-  UserButton 
-} from "@clerk/nextjs"
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs"
 import { Link } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
 import { LanguageSelector } from "@/components/language-selector"
-// import { MainNav } from "@/components/navbar/main-nav"
+import DomainProjectSelector from "@/components/navbar/domain-selector"
+import { Domain, Project } from "@/lib/interfaces"
 
-export function Navbar() {
+interface NavbarProps {
+  domains: Domain[]
+  projects: Project[]
+  selectedDomain?: Domain
+  selectedProject?: Project
+  setSelectedDomain: (domain: Domain) => void
+  setSelectedProject: (project: Project) => void
+}
+
+export function Navbar({
+  domains,
+  projects,
+  selectedDomain,
+  selectedProject,
+  setSelectedDomain,
+  setSelectedProject
+}: NavbarProps) {
   const t = useTranslations("Navbar")
+
+  const handleCreateProject = () => {
+    // Aquí puedes abrir un modal o redirigir a la página de creación de proyecto
+    alert('Crear Proyecto')
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center mx-auto">
-        <Link href="/" className="font-bold">
+        <Link href="/" className="font-bold mr-auto">
           Agtasks
         </Link>
-        <div className="flex flex-1 items-center justify-end space-x-4">
+        <div className="flex items-center space-x-4">
+          <DomainProjectSelector
+            domains={domains}
+            projects={projects}
+            selectedDomain={selectedDomain}
+            selectedProject={selectedProject}
+            onDomainSelect={setSelectedDomain}
+            onProjectSelect={setSelectedProject}
+            onCreateProject={handleCreateProject}
+          />
           <nav>
             <div className="flex items-center space-x-4">
               <SignedOut>
@@ -29,12 +54,7 @@ export function Navbar() {
                 <SignUpButton />
               </SignedOut>
               <SignedIn>
-                {/* <Button variant="ghost" size="icon">
-                  <Bell className="h-5 w-5" />
-                  <span className="sr-only">{t("notifications")}</span>
-                </Button> */}
                 <LanguageSelector />
-                {/* <MainNav /> */}
                 <UserButton />
               </SignedIn>
             </div>

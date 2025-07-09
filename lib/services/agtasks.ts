@@ -9,10 +9,6 @@ import type {
   ServiceTask
 } from "@/lib/interfaces";
 import {
-  type CreateServiceFormValues,
-  type SelectedLotDetail
-} from "@/components/projects/validation-schemas"
-import {
   createSubtask
 } from "@/lib/integrations/jira"
 
@@ -88,57 +84,6 @@ export async function listDomainProtocols(domainId: string) {
   }
 }
 
-// Domain Roles 
-export async function createDomainRole(domainId: string, data: { name: string; language: string }) {
-  try {
-    const client = getClient();
-    const response: { data: Schema["DomainRole"]["type"] | null; errors?: any[] } = await client.models.DomainRole.create({
-      domainId,
-      name: data.name,
-      language: data.language,
-    });
-
-    if (!response.data) {
-      throw new Error("Failed to create domain role");
-    }
-
-    return response.data;
-  } catch (error) {
-    console.error("Error creating domain role in Amplify:", error);
-    throw new Error(`Failed to create domain role: ${error instanceof Error ? error.message : String(error)}`);
-  }
-}
-
-export async function deleteDomainRole(domainId: string, roleId: string) {
-  try {
-    const client = getClient();
-    const response: { data: Schema["DomainRole"]["type"] | null; errors?: any[] } = await client.models.DomainRole.delete({ id: roleId });
-
-    if (!response.data) {
-      throw new Error(`Failed to delete domain role with ID ${roleId}`);
-    }
-
-    return response.data;
-  } catch (error) {
-    console.error("Error deleting domain role from Amplify:", error);
-    throw new Error(`Failed to delete domain role: ${error instanceof Error ? error.message : String(error)}`);
-  }
-}
-
-export async function listDomainRoles(domainId: string) {
-  try {
-    const client = getClient();
-    const response: { data: Schema["DomainRole"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.DomainRole.list({
-      filter: { domainId: { eq: domainId } },
-    });
-
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching domain roles from Amplify:", error);
-    throw new Error(`Failed to fetch domain roles: ${error instanceof Error ? error.message : String(error)}`);
-  }
-}
-
 // Domain Forms 
 export async function createDomainForm(
   domainId: string,
@@ -194,428 +139,296 @@ export async function listDomainForms(domainId: string) {
   }
 }
 
-// Roles
-export const createRole = async (data: { name: string; language: string }): Promise<Role> => {
-  try {
-    const client = getClient();
-    const response: { data: Schema["Role"]["type"] | null; errors?: any[] } = await client.models.Role.create({
-      name: data.name,
-      language: data.language,
-    });
-    if (!response.data) {
-      throw new Error("Failed to create role");
-    }
-    return {
-      ...response.data,
-      language: response.data.language || "ES", // Default to "ES" if language is undefined
-    };
-  } catch (error) {
-    console.error("Error creating role in Amplify:", error);
-    throw new Error(`Failed to create role: ${error instanceof Error ? error.message : String(error)}`);
-  }
-};
-
-export const deleteRole = async (roleId: string) => {
-  try {
-    const client = getClient();
-    const response: {
-      data: Schema["Role"]["type"] | null; errors?: any[]
-    } = await client.models.Role.delete({ id: roleId });
-    if (!response.data) {
-      throw new Error(`Failed to delete role with ID ${roleId}`);
-    }
-    return response.data;
-  }
-  catch (error) {
-    console.error("Error deleting role from Amplify:", error);
-    throw new Error(`Failed to delete role: ${error instanceof Error ? error.message : String(error)}`);
-  }
-};
-
-export const listRoles = async (language: string): Promise<Role[]> => {
-  try {
-    const client = getClient();
-
-    const response: { data: Schema["Role"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.Role.list({
-      filter: { language: { eq: language } },
-    });
-
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching roles from Amplify:", error);
-    throw new Error(`Failed to fetch roles: ${error instanceof Error ? error.message : String(error)}`);
-  }
-};
-
-export const listAllRoles = async (): Promise<Role[]> => {
-  try {
-    const client = getClient();
-
-    const response: {
-      data: Schema["Role"]["type"][]; nextToken?: string | null; errors?: any[]
-    } = await client.models.Role.list()
-
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching roles from Amplify:", error);
-    throw new Error(`Failed to fetch roles: ${error instanceof Error ? error.message : String(error)}`);
-  }
-};
-
-// Projects
-export const createProject = async (
-  domainId: string,
-  data: {
-    areaId: string;
-    language: string;
-    sourceSystem: string;
-    projectId: string;
-    requestTypeId: string;
-    queueId: number;
-    name: string;
-  },
-) => {
-  try {
-    const client = getClient();
-    const response: { data: Schema["Project"]["type"] | null; errors?: any[] } = await client.models.Project.create({
-      domainId,
-      areaId: data.areaId,
-      language: data.language,
-      sourceSystem: data.sourceSystem,
-      projectId: data.projectId,
-      requestTypeId: data.requestTypeId,
-      queueId: data.queueId,
-      name: data.name,
-      deleted: false,
-    });
-
-    if (!response.data) {
-      throw new Error(`Failed to create project`);
-    }
-
-    return response.data;
-  } catch (error) {
-    console.error("Error creating project in Amplify:", error);
-    throw new Error(`Failed to create project: ${error instanceof Error ? error.message : String(error)}`);
-  }
-};
-
-export const getProject = async (projectId: string): Promise<Project> => {
-  try {
-    const client = getClient();
-    const response: { data: Schema["Project"]["type"] | null; errors?: any[] } = await client.models.Project.get({ id: projectId });
-
-    if (!response.data) {
-      throw new Error(`Project with ID ${projectId} not found`);
-    }
-
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching project from Amplify:", error);
-    throw new Error(`Failed to fetch project: ${error instanceof Error ? error.message : String(error)}`);
-  }
-};
-
-export const listProjectsByDomain = async (domainId: string): Promise<Project[]> => {
-  try {
-    const client = getClient();
-    const response: { data: Schema["Project"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.Project.list({
-      filter: {
-        domainId: { eq: domainId },
-        deleted: { ne: true },
-      },
-    });
-
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching projects from Amplify:", error);
-    throw new Error(`Failed to fetch projects: ${error instanceof Error ? error.message : String(error)}`);
-  }
-};
-
-// Services
-export const createService = async (
-  data: CreateServiceFormValues,
-  projectId: string,
-  serviceName: string,
-  issueKey: string
-) => {
-  try {
-    const client = getClient();
-
-    const totalArea: number = data.selectedLots.reduce((sum: number, lot: SelectedLotDetail) => sum + (lot.hectares || 0), 0);
-
-    const serviceData = {
-      projectId: projectId,
-      serviceName: serviceName,
-      externalServiceKey: issueKey,
-      externalTemplateId: data.protocol,
-      workspaceId: data.workspace,
-      workspaceName: data.workspaceName,
-      campaignId: data.campaign,
-      campaignName: data.campaignName,
-      farmId: data.establishment,
-      farmName: data.establishmentName,
-      totalArea: totalArea,
-      startDate: new Date().toISOString(),
-    };
-
-    const response: { data: Schema["Service"]["type"] | null; errors?: any[] } = await client.models.Service.create(serviceData);
-
-    if (!response.data) {
-      throw new Error("Failed to create service");
-    }
-
-    return response.data;
-  } catch (error) {
-    console.error("Error creating service in Amplify:", error);
-    throw new Error(`Failed to create service: ${error instanceof Error ? error.message : String(error)}`);
-  }
-};
-
-export const listServicesByProject = async (
-  projectId: string,
-  options: {
-    page: number;
-    pageSize: number;
-    searchQuery?: string;
-    sortBy?: keyof Service;
-    sortDirection?: "asc" | "desc";
-  },
-): Promise<{ services: Service[]; total: number }> => {
-  try {
-    const client = getClient();
-    const { pageSize, searchQuery = "", sortBy = "createdAt", sortDirection = "desc" } = options;
-
-    const filter: any = { projectId: { eq: projectId } };
-    if (searchQuery) {
-      filter.serviceName = { contains: searchQuery.toLowerCase() };
-    }
-
-    // Obtener todos los servicios sin paginación real si pageSize es grande
-    let allServices: Schema["Service"]["type"][] = [];
-    let nextToken: string | null | undefined = undefined;
-    do {
-      const response: { data: Schema["Service"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.Service.list({
-        filter,
-        limit: pageSize,
-        ...(nextToken && { nextToken }),
-      });
-      allServices = allServices.concat(response.data);
-      nextToken = response.nextToken;
-    } while (nextToken);
-
-    const total = allServices.length;
-
-    const servicesWithRelations = await Promise.all(
-      allServices.map(async (service) => {
-        const fieldsResponse = await service.fields();
-        const lots = fieldsResponse.data.map((field) => field.fieldId).join(", ") || "Sin lotes asignados";
-
-        const tasksResponse = await service.tasks();
-        const tasks = await Promise.all(
-          tasksResponse.data.map(async (task) => {
-            return task;
-          }),
-        );
-
-        const totalTasks = tasks.length;
-        const completedTasks = 0;
-        const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-
-        return {
-          id: service.id,
-          projectId: service.projectId,
-          serviceName: service.serviceName,
-          externalTemplateId: service.externalTemplateId,
-          externalServiceKey: service.externalServiceKey,
-          workspaceId: service.workspaceId,
-          workspaceName: service.workspaceName,
-          campaignId: service.campaignId,
-          campaignName: service.campaignName,
-          farmId: service.farmId,
-          farmName: service.farmName,
-          lots: lots,
-          totalArea: service.totalArea,
-          startDate: service.startDate,
-          endDate: service.endDate,
-          progress,
-          createdAt: service.createdAt,
-        } as Service;
-      }),
-    );
-
-    const sortedServices = servicesWithRelations.sort((a, b) => {
-      if (sortBy === 'createdAt') {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
-      } else {
-        const valueA = a[sortBy]?.toString().toLowerCase() || "";
-        const valueB = b[sortBy]?.toString().toLowerCase() || "";
-        return sortDirection === "asc" ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
-      }
-    });
-
-    return { services: sortedServices, total };
-  } catch (error) {
-    console.error("Error fetching services from Amplify:", error);
-    throw new Error(`Failed to fetch services: ${error instanceof Error ? error.message : String(error)}`);
-  }
-};
-
-// Service Fields
-export const createServiceFields = async (serviceId: string, fields: any[]): Promise<void> => {
-  try {
-    const client = getClient();
-
-    await Promise.all(
-      fields.map((field: SelectedLotDetail) =>
-        client.models.ServiceField.create({
-          serviceId,
-          fieldId: field.fieldId,
-          fieldName: field.fieldName,
-          hectares: field.hectares,
-          crop: field.cropName,
-          hybrid: field.hybridName,
-        }),
-      ),
-    );
-  } catch (error) {
-    console.error("Error creating service fields in Amplify:", error);
-    throw new Error(`Failed to create service fields: ${error instanceof Error ? error.message : String(error)}`);
-  }
-};
-
-// Service Tasks
-export const createServiceTasks = async (
-  serviceId: string,
-  tasks: any[],
-  locale: string,
-  domain: string,
-  project: string,
+// --- PROJECT CRUD ---
+/**
+ * Crea un nuevo Project
+ */
+export async function createProject(data: {
+  domainId: string
+  areaId: string
   serviceDeskId: string
-): Promise<string[]> => {
-  try {
-    const client = getClient();
-    const taskResults: string[] = [];
-    for (const task of tasks) {
-      // Create ServiceTask in Agtasks 
-      const response: {
-        data: { id: string } | null; errors?: any[]
-      } = await client.models.ServiceTask.create({
-        serviceId,
-        externalTemplateId: task.externalTemplateId,
-        taskName: task.taskName,
-        taskType: task.taskType,
-        userEmail: task.userEmail,
-      });
-
-      if (!response.data) {
-        throw new Error(`Failed to create task: ${task.taskName}`);
-      }
-
-      const taskId = response.data.id;
-
-      // Create Subtask in Jira 
-      if (task.parentIssueKey && task.description) {
-        try {
-          const baseUrl = process.env.NODE_ENV === 'production'
-            ? process.env.NEXT_PUBLIC_SITE_URL
-            : 'http://localhost:3000'
-
-          const agtasksUrl = `${baseUrl}/${locale}/domains/${domain}/projects/${project}/tasks/${taskId}`;
-
-          await createSubtask(
-            task.parentIssueKey,
-            task.taskName,
-            task.userEmail,
-            task.description,
-            agtasksUrl,
-            task.taskType,
-            serviceDeskId
-          );
-        } catch (error) {
-          console.error(`Failed to create Jira subtask for task ${task.taskName}:`, error);
-          // No lanzamos error para permitir que el proceso continúe
-        }
-      } else {
-        console.warn(`Skipping Jira subtask creation for task ${task.taskName}: missing parentIssueKey or description`);
-      }
-
-      taskResults.push(taskId);
-    }
-    return taskResults;
-  } catch (error) {
-    console.error("Error creating service tasks in Amplify:", error);
-    throw new Error(`Failed to create service tasks: ${error instanceof Error ? error.message : String(error)}`);
-  }
-};
-
-export const getServiceTask = async (taskId: string): Promise<ServiceTask> => {
+  requestTypeId: string
+  name: string
+  language?: string
+  tmpSourceSystem?: string
+  tmpServiceDeskId?: string
+  tmpRequestTypeId?: string
+  tmpQueueId?: string
+  queueId?: string
+  deleted?: boolean
+}) {
   const client = getClient();
-
-  const taskResponse: {
-    data: Schema["ServiceTask"]["type"] | null; errors?: any[]
-  } = await client.models.ServiceTask.get({ id: taskId });
-
-  if (!taskResponse.data) {
-    throw new Error(`Task with ID ${taskId} not found`);
-  }
-
-  return {
-    ...taskResponse.data,
-    taskType: taskResponse.data?.taskType ?? "",
-  } as ServiceTask;
+  // queueId debe ser string, y los campos requeridos deben estar presentes
+  const response = await client.models.Project.create({
+    ...data,
+    queueId: data.queueId ? String(data.queueId) : undefined,
+    deleted: data.deleted ?? false,
+  });
+  return response.data;
 }
 
-export const updateServiceTask = async (
-  taskId: string, 
-  formData: Record<string, any>
-): Promise<{ success: boolean; data?: any; error?: any }> => {
+/**
+ * Actualiza un Project existente
+ */
+export async function updateProject(id: string, data: Partial<{
+  domainId: string
+  areaId: string
+  serviceDeskId: string
+  requestTypeId: string
+  name: string
+  language: string
+  tmpSourceSystem: string
+  tmpServiceDeskId: string
+  tmpRequestTypeId: string
+  tmpQueueId: string
+  queueId: string
+  deleted: boolean
+}>) {
   const client = getClient();
+  const response = await client.models.Project.update({ id, ...data });
+  return response.data;
+}
 
-  try {
-    const response = await client.models.ServiceTask.update({
-      id: taskId,
-      formData: JSON.stringify(formData),
-    });
+/**
+ * Elimina lógicamente un Project (soft delete)
+ */
+export async function deleteProject(id: string) {
+  const client = getClient();
+  const response = await client.models.Project.update({ id, deleted: true });
+  return response.data;
+}
 
-    if (!response.data) {
-      return { success: false, error: "No se pudo actualizar la tarea" };
-    }
-
-    return { success: true, data: response.data };
-  } catch (error) {
-    console.error("Ocurrió un error al intentar actualizar la tarea: ", error);
-    return { success: false, error };
+/**
+ * Obtiene un Project por ID, incluyendo sus Services y Tasks relacionados
+ */
+export async function getProject(id: string) {
+  const client = getClient();
+  const response = await client.models.Project.get({ id });
+  if (!response.data) return null;
+  let servicesData: any[] = [];
+  let tasksData: any[] = [];
+  if (typeof response.data.services === 'function') {
+    const services = await response.data.services();
+    servicesData = services.data ?? [];
   }
-};
+  if (typeof response.data.tasks === 'function') {
+    const tasks = await response.data.tasks();
+    tasksData = tasks.data ?? [];
+  }
+  return {
+    ...response.data,
+    services: servicesData,
+    tasks: tasksData,
+  };
+}
 
-export const listTasksByProject = async (projectId: string): Promise<ServiceTask[]> => {
+/**
+ * Lista todos los proyectos de un dominio
+ */
+export async function listProjectsByDomain(domainId: string) {
   const client = getClient();
-  // 1. Obtener todos los servicios del proyecto
-  const servicesResponse = await client.models.Service.list({ filter: { projectId: { eq: projectId } } });
-  const services = servicesResponse.data;
-  const serviceIds = services.map(s => s.id);
+  const response = await client.models.Project.list({
+    filter: { domainId: { eq: domainId }, deleted: { ne: true } },
+  });
+  return response.data || [];
+}
 
-  // 2. Obtener todas las ServiceTasks que:
-  // - tengan projectId igual al dado y serviceId vacío/undefined
-  // - o tengan serviceId de un servicio del proyecto
-  let allTasks: ServiceTask[] = [];
-  let nextToken: string | null | undefined = undefined;
-  do {
-    const response: { data: any[]; nextToken?: string | null } = await client.models.ServiceTask.list({
-      limit: 1000,
-      ...(nextToken ? { nextToken } : {}),
-    });
-    const filtered = response.data.filter((task: any) =>
-      (task?.projectId === projectId && (!task?.serviceId || task?.serviceId === "")) ||
-      (task?.serviceId && serviceIds.includes(task.serviceId))
-    );
-    allTasks = allTasks.concat(filtered as ServiceTask[]);
-    nextToken = response.nextToken;
-  } while (nextToken);
-  return allTasks;
+// --- SERVICE CRUD ---
+/**
+ * Crea un nuevo Service
+ */
+export async function createService(data: {
+  projectId?: string
+  name: string
+  tmpRequestId?: string
+  requestId?: string
+  deleted?: boolean
+}) {
+  const client = getClient();
+  const response = await client.models.Service.create({ ...data, deleted: data.deleted ?? false });
+  return response.data;
+}
+
+/**
+ * Actualiza un Service existente
+ */
+export async function updateService(id: string, data: Partial<{
+  projectId: string
+  name: string
+  tmpRequestId: string
+  requestId: string
+  deleted: boolean
+}>) {
+  const client = getClient();
+  const response = await client.models.Service.update({ id, ...data });
+  return response.data;
+}
+
+/**
+ * Elimina lógicamente un Service (soft delete)
+ */
+export async function deleteService(id: string) {
+  const client = getClient();
+  const response = await client.models.Service.update({ id, deleted: true });
+  return response.data;
+}
+
+/**
+ * Obtiene un Service por ID, incluyendo su Project y Tasks relacionados
+ */
+export async function getService(id: string) {
+  const client = getClient();
+  const response = await client.models.Service.get({ id });
+  if (!response.data) return null;
+  let projectData = null;
+  let tasksData: any[] = [];
+  if (typeof response.data.project === 'function') {
+    const project = await response.data.project();
+    projectData = project.data ?? null;
+  }
+  if (typeof response.data.tasks === 'function') {
+    const tasks = await response.data.tasks();
+    tasksData = tasks.data ?? [];
+  }
+  return {
+    ...response.data,
+    project: projectData,
+    tasks: tasksData,
+  };
+}
+
+// --- TASK CRUD ---
+/**
+ * Crea un nuevo Task
+ */
+export async function createTask(data: {
+  projectId?: string
+  serviceId?: string
+  tmpSubtaskId: string
+  subtaskId?: string
+  taskName: string
+  taskType?: string
+  taskData?: any
+  userEmail: string
+  deleted?: boolean
+}) {
+  const client = getClient();
+  const response = await client.models.Task.create({ ...data, deleted: data.deleted ?? false });
+  return response.data;
+}
+
+/**
+ * Actualiza un Task existente
+ */
+export async function updateTask(id: string, data: Partial<{
+  projectId: string
+  serviceId: string
+  tmpSubtaskId: string
+  subtaskId: string
+  taskName: string
+  taskType: string
+  taskData: any
+  userEmail: string
+  deleted: boolean
+}>) {
+  const client = getClient();
+  const response = await client.models.Task.update({ id, ...data });
+  return response.data;
+}
+
+/**
+ * Elimina lógicamente un Task (soft delete)
+ */
+export async function deleteTask(id: string) {
+  const client = getClient();
+  const response = await client.models.Task.update({ id, deleted: true });
+  return response.data;
+}
+
+/**
+ * Obtiene un Task por ID
+ */
+export async function getTask(id: string) {
+  const client = getClient();
+  const response = await client.models.Task.get({ id });
+  if (!response.data) return null;
+  return response.data;
+}
+
+/**
+ * Lista todas las ServiceTasks de un proyecto
+ */
+export async function listTasksByProject(projectId: string) {
+  const client = getClient();
+  const response = await client.models.Task.list({
+    filter: { projectId: { eq: projectId }, deleted: { ne: true } },
+  });
+  return response.data || [];
+}
+
+// --- FIELD CRUD ---
+/**
+ * Crea un nuevo Field
+ */
+export async function createField(data: {
+  taskId: string
+  workspaceId: string
+  workspaceName?: string
+  campaignId: string
+  campaignName?: string
+  farmId: string
+  farmName?: string
+  fieldId: string
+  fieldName: string
+  hectares?: number
+  crop?: string
+  hybrid?: string
+  deleted?: boolean
+}) {
+  const client = getClient();
+  const response = await client.models.Field.create({ ...data, deleted: data.deleted ?? false });
+  return response.data;
+}
+
+/**
+ * Actualiza un Field existente
+ */
+export async function updateField(id: string, data: Partial<{
+  taskId: string
+  workspaceId: string
+  workspaceName: string
+  campaignId: string
+  campaignName: string
+  farmId: string
+  farmName: string
+  fieldId: string
+  fieldName: string
+  hectares: number
+  crop: string
+  hybrid: string
+  deleted: boolean
+}>) {
+  const client = getClient();
+  const response = await client.models.Field.update({ id, ...data });
+  return response.data;
+}
+
+/**
+ * Elimina lógicamente un Field (soft delete)
+ */
+export async function deleteField(id: string) {
+  const client = getClient();
+  const response = await client.models.Field.update({ id, deleted: true });
+  return response.data;
+}
+
+/**
+ * Obtiene un Field por ID
+ */
+export async function getField(id: string) {
+  const client = getClient();
+  const response = await client.models.Field.get({ id });
+  if (!response.data) return null;
+  return response.data;
 }
 

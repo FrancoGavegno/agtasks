@@ -9,15 +9,20 @@ import {
 } from "@/components/ui/tabs"
 import Protocols from "./protocols"
 import Users from "./users"
-import Roles from "./roles"
+// import Roles from "./roles"
 import Forms from "./forms"
 import { SettingsProvider } from "@/lib/contexts/settings-context"
+import type { Project } from '@/lib/interfaces'
 
-export default function TabsNavigation() {
+interface TabsNavigationProps {
+  selectedProject?: Project
+}
+
+export default function TabsNavigation({ selectedProject }: TabsNavigationProps) {
   const t = useTranslations("SettingsTabsNavigation")
 
   return (
-    <SettingsProvider>
+    <SettingsProvider selectedProject={selectedProject}>
       <div className="w-full">
         <Tabs defaultValue="protocols" className="w-full">
           <TabsList className="grid grid-cols-3 w-full bg-muted/60 p-1 rounded-lg">
@@ -43,9 +48,9 @@ export default function TabsNavigation() {
             <Users />
           </TabsContent>
 
-          <TabsContent value="roles" className="mt-6">
+          {/* <TabsContent value="roles" className="mt-6">
             <Roles />
-          </TabsContent>
+          </TabsContent> */}
 
           <TabsContent value="forms" className="mt-6">
             <Forms />

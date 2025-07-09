@@ -12,13 +12,13 @@ import {
 } from "@/components/ui/breadcrumb"
 import { TasksPageDetails } from "@/components/tasks/tasks"
 
-export default function ServicesPage() {
+export default function TasksPage() {
   const { domain, project } = useParams<{ domain: string, project: string }>();
   const t = useTranslations("TasksPage")
 
   return (
     <div className="container w-full pt-4 pb-4">
-      <Breadcrumb>
+      <Breadcrumb className="mb-4">
         <BreadcrumbList>
           <BreadcrumbItem>
             <Link href={`/domains/${domain}/settings`}>{t("BreadcrumbItem-1")}</Link>
@@ -30,12 +30,12 @@ export default function ServicesPage() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="flex justify-between items-center mt-5 mb-5">
+      {/* <div className="flex justify-between items-center mt-5 mb-5">
       <div>
           <h2 className="text-2xl font-semibold tracking-tight">{t("title")}</h2>
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
-      </div>
+      </div> */}
 
       <TasksPageDetails />
     </div>

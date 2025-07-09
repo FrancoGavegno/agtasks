@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { createField, updateField } from "@/lib/admin-actions"
+import { createField, updateField } from "@/lib/services/agtasks"
 import type { Schema } from "@/amplify/data/resource"
 
 type Field = Schema["Field"]["type"]
@@ -85,10 +85,10 @@ export function FieldDialog({ open, onOpenChange, field, tasks }: FieldDialogPro
 
       const result = field ? await updateField(field.id, submitData) : await createField(submitData)
 
-      if (result.success) {
+      if (result) {
         onOpenChange(false)
       } else {
-        alert(result.error || "An error occurred")
+        alert("An error occurred")
       }
     } catch (error) {
       alert("An unexpected error occurred")

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { createProject, updateProject } from "@/lib/admin-actions"
+import { createProject, updateProject } from "@/lib/services/agtasks"
 import type { Schema } from "@/amplify/data/resource"
 
 type Project = Schema["Project"]["type"]
@@ -74,10 +74,10 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
     try {
       const result = project ? await updateProject(project.id, formData) : await createProject(formData)
 
-      if (result.success) {
+      if (result) {
         onOpenChange(false)
       } else {
-        alert(result.error || "An error occurred")
+        alert("An error occurred")
       }
     } catch (error) {
       alert("An unexpected error occurred")

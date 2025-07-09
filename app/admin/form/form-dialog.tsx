@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { createDomainForm, updateDomainForm } from "@/lib/admin-actions"
+import { createDomainForm } from "@/lib/services/agtasks"
 import type { Schema } from "@/amplify/data/resource"
 
 type DomainForm = Schema["DomainForm"]["type"]
@@ -51,13 +51,12 @@ export function DomainFormDialog({ open, onOpenChange, domainForm }: DomainFormD
     setIsLoading(true)
 
     try {
-      const result = domainForm ? await updateDomainForm(domainForm.id, formData) : await createDomainForm(formData)
-
-      if (result.success) {
-        onOpenChange(false)
+      if (domainForm) {
+        await createDomainForm(domainForm.domainId, formData)
       } else {
-        alert(result.error || "An error occurred")
+        await createDomainForm(formData.domainId, formData)
       }
+      onOpenChange(false)
     } catch (error) {
       alert("An unexpected error occurred")
     } finally {

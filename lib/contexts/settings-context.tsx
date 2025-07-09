@@ -5,9 +5,10 @@ import { useParams } from "next/navigation"
 import type { Protocol, Role, Form, User } from "@/lib/interfaces"
 import { listAssets } from "@/lib/integrations/kobotoolbox"
 import { listUsersByDomain } from "@/lib/integrations/360"
+import { listDomainProtocols, listDomainForms } from "@/lib/services/agtasks"
+import { client } from "@/lib/amplify-client"
 
-const projectId = process.env.NEXT_PUBLIC_JIRA_PROTOCOLS_PROJECT_ID || "TEM"
-const queueId = process.env.NEXT_PUBLIC_JIRA_PROTOCOLS_QUEUE_ID || "82"
+// projectId y queueId ahora se obtienen del Project seleccionado
 
 // Interfaz genérica para el contexto de configuraciones
 interface SettingsContextType {
@@ -48,12 +49,17 @@ interface SettingsContextType {
   isRefreshingUsers: boolean
   sentInvitationEmails: Set<string>
   setSentInvitationEmails: (emails: Set<string>) => void
+  projectId?: string // Project.tmpServiceDeskId
+  queueId?: string   // Project.tmpQueueId
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined)
 
-export function SettingsProvider({ children }: { children: ReactNode }) {
+export function SettingsProvider({ children, selectedProject }: { children: ReactNode, selectedProject?: any }) {
   const { domain } = useParams<{ domain: string }>()
+  // projectId y queueId del Project seleccionado
+  const projectId = selectedProject?.tmpServiceDeskId || undefined
+  const queueId = selectedProject?.tmpQueueId || undefined
 
   // Estado para protocolos
   const [protocols, setProtocols] = useState<Protocol[]>([])
@@ -93,15 +99,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
       try {
         setProtocolsLoading(true)
-        const res = await fetch(`/api/v1/agtasks/domains/${domain}/protocols`)
-        if (!res.ok) {
-          throw new Error(`Failed to fetch protocols: ${res.statusText}`)
-        }
-        const data = await res.json()
-        const protocolsData = Array.isArray(data) ? data : []
-
-        // Ordenar alfabéticamente 
-        const sortedValues = protocolsData.sort((a: any, b: any) =>
+        const protocols = await listDomainProtocols(domain)
+        const sortedValues = protocols.sort((a: any, b: any) =>
           a.name.localeCompare(b.name)
         );
 
@@ -171,20 +170,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       if (!shouldRefetchRoles || !domain) return
 
       try {
-        setRolesLoading(true)
-        const res = await fetch(`/api/v1/agtasks/domains/${domain}/roles`)
-        if (!res.ok) {
-          throw new Error(`Failed to fetch domain roles: ${res.statusText}`)
-        }
-        const data = await res.json()
-        const rolesData = Array.isArray(data) ? data : []
-        // Ordenar alfabéticamente 
-        const sortedValues = rolesData.sort((a: any, b: any) =>
-          a.name.localeCompare(b.name)
-        );
-        setRoles(sortedValues)
-        setSelectedRoles(sortedValues.map((r: Role) => r.id))
-        setShouldRefetchRoles(false)
+        // Eliminado: fetch de roles por dominio
       } catch (error) {
         console.error("Error fetching domain roles:", error)
         setRoles([])
@@ -200,35 +186,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   // Fetch All Agtasks Roles
   useEffect(() => {
     const fetchAllRoles = async () => {
-      try {
-        const res = await fetch(`/api/v1/agtasks/roles`);
-        if (!res.ok) {
-          throw new Error(`Failed to fetch all roles: ${res.statusText}`);
-        }
-        const data = await res.json()
-        // Aseguramos que data sea un array y filtramos los elementos null
-        const rolesData = Array.isArray(data) ? data.filter((role: any) => role !== null) : [];
-        // Ordenar alfabéticamente 
-        const sortedValues = rolesData.sort((a: any, b: any) =>
-          a.name.localeCompare(b.name)
-        );
-        // Mapeamos los roles válidos
-        const newRoles = sortedValues.map((role: any) => {
-          const matchingRole = roles.find(
-            (r) => r.name === role.name && r.language.toLowerCase() === role.language.toLowerCase(),
-          );
-          return {
-            domainId: domain,
-            id: matchingRole ? matchingRole.id : role.id.toString(),
-            name: role.name,
-            language: role.language,
-          } as Role;
-        });
-        setAllRoles(newRoles);
-      } catch (error) {
-        console.error("Error fetching all roles:", error);
-        setAllRoles([]);
-      }
+      // Eliminado: fetch de todos los roles
     };
 
     fetchAllRoles();
@@ -241,14 +199,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
       try {
         setFormsLoading(true)
-        const res = await fetch(`/api/v1/agtasks/domains/${domain}/forms`)
-        if (!res.ok) {
-          throw new Error(`Failed to fetch domain forms: ${res.statusText}`)
-        }
-        const data = await res.json()
-        const formsData = Array.isArray(data) ? data : []
-        // Ordenar alfabéticamente 
-        const sortedValues = formsData.sort((a: any, b: any) =>
+        const forms = await listDomainForms(domain)
+        const sortedValues = forms.sort((a: any, b: any) =>
           a.name.localeCompare(b.name)
         );
         setForms(sortedValues)
@@ -367,7 +319,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setSelectedProtocols,
         refreshProtocols,
         isRefreshingProtocols,
-
         roles,
         allRoles,
         selectedRoles,
@@ -377,7 +328,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setSelectedRoles,
         refreshRoles,
         isRefreshingRoles,
-
         forms,
         allForms,
         selectedForms,
@@ -387,7 +337,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setSelectedForms,
         refreshForms,
         isRefreshingForms,
-
         users,
         usersLoading,
         setUsers,
@@ -395,6 +344,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         isRefreshingUsers,
         sentInvitationEmails,
         setSentInvitationEmails,
+        projectId,
+        queueId,
       }}
     >
       {children}

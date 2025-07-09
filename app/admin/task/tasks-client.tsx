@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { DataTable } from "@/components/admin/data-table"
 import { TaskDialog } from "./task-dialog"
-import { deleteTask } from "@/lib/admin-actions"
+import { deleteTask } from "@/lib/services/agtasks"
 import type { Schema } from "@/amplify/data/resource"
 
 type Task = Schema["Task"]["type"]
@@ -32,7 +32,10 @@ export function TasksClient({ tasks, projects, services }: TasksClientProps) {
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this task?")) {
-      await deleteTask(id)
+      const result = await deleteTask(id)
+      if (!result) {
+        alert("Error deleting task")
+      }
     }
   }
 

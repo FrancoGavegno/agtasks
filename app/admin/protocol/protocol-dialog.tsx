@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { createDomainProtocol, updateDomainProtocol } from "@/lib/admin-actions"
+import { createDomainProtocol } from "@/lib/services/agtasks"
 import type { Schema } from "@/amplify/data/resource"
 
 type DomainProtocol = Schema["DomainProtocol"]["type"]
@@ -51,15 +51,8 @@ export function DomainProtocolDialog({ open, onOpenChange, domainProtocol }: Dom
     setIsLoading(true)
 
     try {
-      const result = domainProtocol
-        ? await updateDomainProtocol(domainProtocol.id, formData)
-        : await createDomainProtocol(formData)
-
-      if (result.success) {
-        onOpenChange(false)
-      } else {
-        alert(result.error || "An error occurred")
-      }
+      await createDomainProtocol(formData)
+      onOpenChange(false)
     } catch (error) {
       alert("An unexpected error occurred")
     } finally {
