@@ -9,22 +9,23 @@ import { Checkbox } from "@/components/ui/checkbox"
 import type { Step2FormValues, SelectedLotDetail } from "./validation-schemas"
 import { useServiceForm } from "@/lib/contexts/service-form-context"
 import { listWorkspaces, listSeasons, listFarms, listFields } from "@/lib/integrations/360"
-import type { Workspace, Season, Farm, LotField } from "@/lib/interfaces"
+import type { Workspace, Season, Farm, LotField, Project } from "@/lib/interfaces"
 import * as React from "react"
+import { getProject } from "@/lib/services/agtasks"
 
 interface Props {
   userEmail: string
 }
 
 export default function Step2Lots({ userEmail }: Props) {
-  const { domain } = useParams<{ domain: string }>()
-  //const domainId = domain || "8644" // Fallback to "8644" if domain is not in URL
-  const domainId = domain
+  const { domain, project } = useParams<{ domain: string, project: string }>()
+  const domainId = Number(domain)
 
   const form = useFormContext<Step2FormValues>()
   const { updateFormValues } = useServiceForm()
 
   // State for API data
+  const [areaId, setAreaId] = useState<number>(0)
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
   const [seasons, setSeasons] = useState<Season[]>([])
   const [farms, setFarms] = useState<Farm[]>([])
@@ -61,17 +62,36 @@ export default function Step2Lots({ userEmail }: Props) {
     }
   }, [someSelected])
 
+  useEffect(() => {
+    const fetchProject = async (project: string) => {
+      const projectData : Project = await getProject(project);
+      // console.log("projectData: ", projectData)
+      setAreaId(Number(projectData.areaId))
+    }
+
+    fetchProject(project)
+  }, [])
+
   // Fetch workspaces from 360 API
   useEffect(() => {
     const fetchWorkspaces = async () => {
       try {
         setWorkspacesLoading(true)
-        const workspacesData = await listWorkspaces(userEmail, domainId)
-        // Filtrar workspaces no eliminados y ordenar alfabéticamente
-        const filteredAndSorted = workspacesData
-          .filter((workspace) => workspace.deleted === false)
-          .sort((a, b) => a.name.localeCompare(b.name))
-        setWorkspaces(filteredAndSorted)
+        
+        if (userEmail &&  domainId && areaId) {
+          console.log(userEmail, domainId, areaId)
+          const workspacesData = await listWorkspaces(userEmail, domainId, areaId)
+          
+          
+          // console.log("workspacesData: ", workspacesData)
+
+          // Filtrar workspaces no eliminados y ordenar alfabéticamente
+          const filteredAndSorted = workspacesData
+            .filter((workspace) => workspace.deleted === false)
+            .sort((a, b) => a.name.localeCompare(b.name))
+          setWorkspaces(filteredAndSorted)
+        }
+        
         setWorkspacesError(null)
       } catch (error) {
         console.error("Error fetching workspaces:", error)
@@ -83,7 +103,7 @@ export default function Step2Lots({ userEmail }: Props) {
     }
 
     fetchWorkspaces()
-  }, [userEmail, domainId])
+  }, [userEmail, domainId, areaId])
 
   // Fetch seasons when workspace changes
   useEffect(() => {
