@@ -8,9 +8,12 @@ import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
-import { createDomainProtocol, deleteDomainProtocol } from '@/lib/services/agtasks'
+import { 
+  createDomainProtocol, 
+  deleteDomainProtocol 
+} from '@/lib/services/agtasks'
 import type { Protocol } from "@/lib/interfaces"
-import { listDomainProtocols } from "@/lib/services/agtasks"
+// import { listDomainProtocols } from "@/lib/services/agtasks"
 
 interface ModalProtocolsProps {
   isOpen: boolean

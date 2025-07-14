@@ -19,8 +19,13 @@ import Step1Protocol from "./step1-protocol"
 import Step2Lots from "./step2-lots"
 import Step3Tasks from "./step3-tasks"
 import {
-  createServiceSchema,
-  type CreateServiceFormValues,
+  serviceFormSchema,
+  tasksArraySchema,
+  fieldsArraySchema,
+  type ServiceFormFullValues,
+  type TaskFormValues,
+  type FieldFormValues,
+  type TaskFieldFormValues,
 } from "./validation-schemas"
 import { ServiceFormProvider } from "@/lib/contexts/service-form-context"
 import { 
@@ -38,13 +43,15 @@ import {
   createTaskField 
 } from "@/lib/services/agtasks"
 
-const defaultValues: CreateServiceFormValues = {
-  protocol: "",
-  workspace: "",
-  campaign: "",
-  establishment: "",
-  selectedLots: [],
-  taskAssignments: [],
+const defaultValues: ServiceFormFullValues = {
+  name: "",
+  projectId: "",
+  protocolId: "",
+  tmpRequestId: "",
+  requestId: "",
+  deleted: false,
+  tasks: [],
+  fields: [],
 }
 
 interface Props {
@@ -85,8 +92,8 @@ export default function CreateService({ userEmail }: Props) {
   const [selectedProtocol, setSelectedProtocol] = useState<string>("")
   const [selectedProtocolName, setSelectedProtocolName] = useState<string>("")
 
-  const methods = useForm<CreateServiceFormValues>({
-    resolver: zodResolver(createServiceSchema),
+  const methods = useForm<ServiceFormFullValues>({
+    resolver: zodResolver(serviceFormSchema),
     defaultValues: {
       ...defaultValues,
     },
@@ -97,16 +104,33 @@ export default function CreateService({ userEmail }: Props) {
     let isValid = false
     switch (currentStep) {
       case 1:
-        isValid = await methods.trigger("protocol")
+        isValid = await methods.trigger(["protocolId"])
+        if (!isValid) {
+          const errorMsg = methods.formState.errors.protocolId?.message || "Debes seleccionar un protocolo";
+          toast({
+            title: "Formulario incompleto",
+            description: errorMsg,
+            variant: "destructive",
+          });
+          return;
+        }
         break
       case 2:
-        methods.setValue("selectedLots", methods.getValues("selectedLots"), { shouldDirty: true })
-        isValid = await methods.trigger(["workspace", "campaign", "establishment", "selectedLots"])
+        isValid = await methods.trigger(["fields"])
+        if (!isValid) {
+          const errorMsg = methods.formState.errors.fields?.message || "Debes seleccionar al menos un lote";
+          toast({
+            title: "Formulario incompleto",
+            description: errorMsg,
+            variant: "destructive",
+          });
+          return;
+        }
         break
       case 3:
-        isValid = await methods.trigger("taskAssignments");
+        isValid = await methods.trigger("tasks");
         if (!isValid) {
-          const errorMsg = methods.formState.errors.taskAssignments?.message || "Todas las tareas deben tener un usuario asignado";
+          const errorMsg = methods.formState.errors.tasks?.message || "Todas las tareas deben tener un usuario asignado";
           toast({
             title: "Asignación incompleta",
             description: errorMsg,
@@ -135,11 +159,13 @@ export default function CreateService({ userEmail }: Props) {
   }
 
   // 2. Crear Service en DB
-  async function createServiceInDB(data: CreateServiceFormValues, projectId: string, serviceName: string, issueKey: string) {
-    const serviceData = {
+  async function createServiceInDB(data: ServiceFormFullValues, projectId: string, serviceName: string, issueKey: string) {
+    const serviceData: ServiceFormFullValues = {
+      ...data,
       projectId,
       name: serviceName,
-      tmpRequestId: data.protocol,
+      protocolId: data.protocolId,
+      tmpRequestId: data.tmpRequestId || "",
       requestId: issueKey,
       deleted: false,
     }
@@ -148,27 +174,15 @@ export default function CreateService({ userEmail }: Props) {
     return response.id as string
   }
 
-  // 3. Crear Fields en DB (una sola vez por Service)
-  async function createServiceFieldsInDB(serviceId: string, lots: any[]) {
+  // 3. Crear Fields en DB 
+  async function createServiceFieldsInDB(serviceId: string, lots: FieldFormValues[]) {
     const createdFields = await Promise.all(lots.map(async (field, idx) => {
       try {
-        const fieldData = {
-          workspaceId: field.workspaceId,
-          workspaceName: field.workspaceName,
-          campaignId: field.campaignId,
-          campaignName: field.campaignName,
-          farmId: field.farmId,
-          farmName: field.farmName,
-          fieldId: field.fieldId,
-          fieldName: field.fieldName,
-          hectares: field.hectares,
-          crop: field.cropName || "",
-          hybrid: field.hybridName || "",
+        const fieldData: FieldFormValues = {
+          ...field,
           deleted: false,
         };
-        console.log('Intentando crear Field en DB:', { idx, fieldData });
         const res = await createField(fieldData);
-        console.log('Field creado OK:', res);
         if (!res) throw new Error("Failed to create field in DB");
         return res.id as string;
       } catch (err) {
@@ -180,17 +194,15 @@ export default function CreateService({ userEmail }: Props) {
   }
 
   // 4. Crear Tasks en DB
-  async function createServiceTasksInDB(serviceId: string, tasks: any[]) {
+  async function createServiceTasksInDB(serviceId: string, tasks: TaskFormValues[]) {
     const createdTasks: { id: string; taskName: string; taskType: string; userEmail: string }[] = [];
     for (const task of tasks) {
-      const response = await createTask({
+      const taskData: TaskFormValues = {
+        ...task,
         serviceId,
-        taskName: task.taskName,
-        taskType: task.taskType,
-        userEmail: task.userEmail,
-        tmpSubtaskId: task.externalTemplateId,
         deleted: false,
-      });
+      };
+      const response = await createTask(taskData);
       if (!response) throw new Error(`Failed to create task: ${task.taskName}`);
       createdTasks.push({
         id: response.id as string,
@@ -205,13 +217,14 @@ export default function CreateService({ userEmail }: Props) {
   // 5. Asociar cada Field a cada Task mediante TaskField
   async function associateFieldsToTasks(taskIds: string[], fieldIds: string[]) {
     await Promise.all(taskIds.flatMap(taskId =>
-      fieldIds.map(fieldId =>
-        createTaskField({ taskId, fieldId })
-      )
+      fieldIds.map(fieldId => {
+        const tf: TaskFieldFormValues = { taskId, fieldId };
+        return createTaskField(tf);
+      })
     ));
   }
 
-  // 5. Crear Subtasks en JIRA (en orden)
+  // 6. Crear Subtasks en JIRA (en orden)
   async function createJiraSubtasks(issueKey: string, tasks: any[], description: string, locale: string, domain: string, project: string, serviceDeskId: string, serviceId: string, createdTasks: any[]) {
     for (let i = 0; i < tasks.length; i++) {
       const task = tasks[i]
@@ -236,19 +249,22 @@ export default function CreateService({ userEmail }: Props) {
   }
 
   // --- PROCESO PRINCIPAL ---
-  const onSubmit = async (data: CreateServiceFormValues) => {
+  const onSubmit = async (data: any) => {
     try {
       setIsSubmitting(true);
-      const serviceName = `${selectedProtocolName} - ${data.workspaceName} - ${data.establishmentName}`;
+      // Generar el nombre del servicio antes de enviar
+      const serviceName = `${selectedProtocolName} - ${data.fields[0]?.workspaceName || ''} - ${data.fields[0]?.farmName || ''}`;
+      data.name = serviceName;
+      
       const { description, descriptionPlain } = await generateDescriptionField(data);
       
       // Obtener datos del proyecto
-      let serviceDeskId = "" // "140"
-      let requestTypeId = "" // "252"
+      let serviceDeskId = "";
+      let requestTypeId = "";
       const res = await getProject(project as string);
       if (res && res.id) {
-        serviceDeskId = res.serviceDeskId;
-        requestTypeId = res.requestTypeId;
+        serviceDeskId = res.serviceDeskId || "";
+        requestTypeId = res.requestTypeId || "";
       }
 
       // 1. Crear Service en JIRA
@@ -267,23 +283,28 @@ export default function CreateService({ userEmail }: Props) {
       // 2. Crear Service en DB
       const serviceId = await createServiceInDB(data, project as string, serviceName, issueKey)
       
-      // 3. Crear Fields en DB (una sola vez por Service)
-      const fieldIds = await createServiceFieldsInDB(serviceId, data.selectedLots);
+      // 3. Crear Fields en DB 
+      const fieldIds = await createServiceFieldsInDB(serviceId, data.fields);
 
       // 4. Crear Tasks en DB
-      const tasks = data.taskAssignments.map((task) => ({
-        externalTemplateId: data.protocol,
-        taskName: task.task,
-        taskType: task.taskType,
-        userEmail: task.assignedTo,
+      // Adaptar las tareas al nuevo modelo
+      const tasks: TaskFormValues[] = (data.tasks || []).map((task: any) => ({
+        tmpSubtaskId: data.tmpRequestId || "",
+        taskName: task.taskName || task.task || "",
+        taskType: task.taskType || "",
+        userEmail: task.userEmail || task.assignedTo || "",
+        formId: task.formId,
+        deleted: false,
       }));
       const createdTasks = await createServiceTasksInDB(serviceId, tasks);
 
       // 5. Asociar cada Field a cada Task mediante TaskField
       await associateFieldsToTasks(createdTasks.map(t => t.id), fieldIds);
       
-      // 5. Crear Subtasks en JIRA (en orden)
-      await createJiraSubtasks(issueKey, tasks, descriptionPlain, locale as string, domain as string, project as string, serviceDeskId, serviceId, createdTasks)
+      // 6. Crear Subtasks en JIRA (en orden)
+      await createJiraSubtasks(issueKey, tasks, descriptionPlain, locale as string, domain as string, project as string, serviceDeskId, serviceId || "", createdTasks)
+      
+      
       toast({
         title: "Servicio creado exitosamente",
         description: "El servicio y sus tareas fueron creados correctamente.",
@@ -328,9 +349,9 @@ export default function CreateService({ userEmail }: Props) {
             <FormProvider {...methods}>
               <form onSubmit={methods.handleSubmit(onSubmit)} className="h-full flex flex-col">
                 <div className="flex-1">
-                  {currentStep === 1 && <><h2 className="text-xl font-semibold mb-4">Paso 1: Protocolo</h2><Step1Protocol selectedProtocol={selectedProtocol} onSelectProtocol={setSelectedProtocol} selectedProtocolName={selectedProtocolName} onSelectProtocolName={setSelectedProtocolName} /></>}
+                  {currentStep === 1 && <><h2 className="text-xl font-semibold mb-4">Paso 1: Selección de protocolo de servicio</h2><Step1Protocol selectedProtocol={selectedProtocol} onSelectProtocol={setSelectedProtocol} selectedProtocolName={selectedProtocolName} onSelectProtocolName={setSelectedProtocolName} /></>}
                   {currentStep === 2 && <><h2 className="text-xl font-semibold mb-4">Paso 2: Selección de lotes</h2><Step2Lots userEmail={userEmail} /></>}
-                  {currentStep === 3 && <><h2 className="text-xl font-semibold mb-4">Paso 3: Tareas</h2><Step3Tasks /></>}
+                  {currentStep === 3 && <><h2 className="text-xl font-semibold mb-4">Paso 3: Asignación de tareas</h2><Step3Tasks /></>}
                 </div>
               </form>
             </FormProvider>
@@ -338,7 +359,26 @@ export default function CreateService({ userEmail }: Props) {
           <CardFooter className="flex justify-end gap-2 bg-white sticky bottom-0 z-10 border-t border-gray-100 pt-4 pb-4">
             {currentStep > 1 && <Button type="button" variant="outline" onClick={prevStep}><ChevronLeft className="w-4 h-4 mr-1" /> Anterior</Button>}
             {currentStep < 3 && <Button type="button" onClick={nextStep}><ChevronRight className="w-4 h-4 ml-1" /> Siguiente</Button>}
-            {currentStep === 3 && <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Creando..." : "Crear Servicio"}</Button>}
+            {currentStep === 3 && (
+              <Button
+                type="button"
+                disabled={isSubmitting}
+                onClick={async () => {
+                  const valid = await methods.trigger();
+                  if (valid) {
+                    methods.handleSubmit(onSubmit)();
+                  } else {
+                    toast({
+                      title: "Formulario incompleto",
+                      description: "Por favor, completa todos los campos requeridos.",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+              >
+                {isSubmitting ? "Creando..." : "Crear Servicio"}
+              </Button>
+            )}
           </CardFooter>
         </Card>
       </div>

@@ -6,10 +6,6 @@ import {
   useState, 
   type ReactNode 
 } from "react"
-import type { 
-  CreateServiceFormValues, 
-  SelectedLotDetail 
-} from "@/components/services/validation-schemas"
 
 // Define the protocol tasks data structure
 interface ProtocolTasks {
@@ -61,16 +57,14 @@ interface User {
 
 interface ServiceFormContextType {
   formValues: {
-    protocol?: string
-    taskAssignments?: any[]
+    tasks: any[]
+    fields: any[]
     workspace?: string
     workspaceName?: string
     campaign?: string
     campaignName?: string
     establishment?: string
     establishmentName?: string
-    selectedLots?: SelectedLotDetail[]
-    selectedLotsNames?: Record<string, string>
   }
   updateFormValues: (values: Partial<ServiceFormContextType["formValues"]>) => void
   resetForm: () => void
@@ -86,16 +80,14 @@ interface ServiceFormContextType {
 // Initial form values
 const initialContext: ServiceFormContextType = {
   formValues: {
-    protocol: "",
-    taskAssignments: [],
+    tasks: [],
+    fields: [],
     workspace: "",
     workspaceName: "",
     campaign: "",
     campaignName: "",
     establishment: "",
     establishmentName: "",
-    selectedLots: [],
-    selectedLotsNames: {},
   },
   updateFormValues: () => {},
   resetForm: () => {},
@@ -108,15 +100,7 @@ const initialContext: ServiceFormContextType = {
   users: [],
 }
 
-// Default form values
-const defaultFormValues: CreateServiceFormValues = {
-  protocol: "",
-  workspace: "",
-  campaign: "",
-  establishment: "",
-  selectedLots: [],
-  taskAssignments: [], // Asegurarse de que esto esté inicializado como un array vacío
-}
+// Default form values eliminados porque ya no se usan
 
 // Create the context
 const ServiceFormContext = createContext<ServiceFormContextType | undefined>(undefined)

@@ -10,10 +10,7 @@ import type {
   JiraSubtaskResponse,
 } from "@/lib/interfaces"
 
-import {
-  type CreateServiceFormValues,
-  type SelectedLotDetail
-} from "@/components/services/validation-schemas"
+import { type ServiceFormFullValues, type FieldFormValues } from "@/components/services/validation-schemas"
 
 // Interfaces 
 interface JiraStatus {
@@ -112,19 +109,20 @@ export async function createProject(projectData: JiraProjectRequest): Promise<Ji
 }
 
 // Service y Task Description Field Formatting
-export const generateDescriptionField = async (data: CreateServiceFormValues): Promise<JiraDescriptionFields> => {
-  const totalArea: number | string = data.selectedLots.reduce((sum: number, lot: SelectedLotDetail) => sum + (lot.hectares || 0), 0) || '0';
+export const generateDescriptionField = async (data: ServiceFormFullValues): Promise<JiraDescriptionFields> => {
+  const fields: FieldFormValues[] = data.fields ?? [];
+  const totalArea: number | string = fields.reduce((sum: number, lot: FieldFormValues) => sum + (lot.hectares || 0), 0) || '0';
 
   const fieldsTable: string = `
   ||Lote||Hectáreas||Cultivo||Híbrido||
-  ${data.selectedLots.map((lot: SelectedLotDetail) => `| ${lot.fieldName || '-'} | ${lot.hectares || '-'} | ${lot.cropName || '-'} | ${lot.hybridName || '-'} |
+  ${fields.map((lot: FieldFormValues) => `| ${lot.fieldName || '-'} | ${lot.hectares || '-'} | ${lot.crop || '-'} | ${lot.hybrid || '-'} |
   `).join('')}
   `;
 
   const description: string = `
-  *Espacio de trabajo:* ${data.workspaceName || 'No especificado'}
-  *Campaña:* ${data.campaignName || 'No especificado'} 
-  *Establecimiento:* ${data.establishmentName || 'No especificado'}
+  *Espacio de trabajo:* ${fields[0]?.workspaceName || 'No especificado'}
+  *Campaña:* ${fields[0]?.campaignName || 'No especificado'} 
+  *Establecimiento:* ${fields[0]?.farmName || 'No especificado'}
   *Hectáreas totales:* ${totalArea} h
   *Lotes:*
   ${fieldsTable}
@@ -132,17 +130,17 @@ export const generateDescriptionField = async (data: CreateServiceFormValues): P
 
   // Formato de lista vertical (más legible para muchos lotes)
   const descriptionPlain: string = `
-  • Espacio de trabajo: ${data.workspaceName || 'No especificado'}
-  • Campaña: ${data.campaignName || 'No especificado'}
-  • Establecimiento: ${data.establishmentName || 'No especificado'}
+  • Espacio de trabajo: ${fields[0]?.workspaceName || 'No especificado'}
+  • Campaña: ${fields[0]?.campaignName || 'No especificado'}
+  • Establecimiento: ${fields[0]?.farmName || 'No especificado'}
   • Hectáreas totales: ${totalArea} h
   • Lotes:
-  ${data.selectedLots.map((lot: SelectedLotDetail, index: number) =>
+  ${fields.map((lot: FieldFormValues, index: number) =>
     `Lote ${index + 1}:
      - Nombre: ${lot.fieldName || '-'}
      - Hectáreas: ${lot.hectares || '-'}
-     - Cultivo: ${lot.cropName || '-'}
-     - Híbrido: ${lot.hybridName || '-'}`
+     - Cultivo: ${lot.crop || '-'}
+     - Híbrido: ${lot.hybrid || '-'}`
   ).join('\n\n')}
   `;
 

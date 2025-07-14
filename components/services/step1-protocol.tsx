@@ -21,12 +21,9 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 import { useParams } from "next/navigation"
-import type { Step1FormValues } from "./validation-schemas"
+import type { TaskFormValues } from "./validation-schemas"
 import { useServiceForm } from "@/lib/contexts/service-form-context"
-import { 
-  Protocol, 
-  TaskAssignment 
-} from "@/lib/interfaces"
+import { Protocol } from "@/lib/interfaces"
 import { listDomainProtocols } from "@/lib/services/agtasks"
 
 interface Props {
@@ -42,7 +39,7 @@ export default function Step1Protocol({
   selectedProtocolName,
   onSelectProtocolName
 }: Props) {
-  const form = useFormContext<Step1FormValues>()
+  const form = useFormContext<any>()
   const { updateFormValues } = useServiceForm()
   const params = useParams()
   const projectId = params.project as string
@@ -123,17 +120,19 @@ export default function Step1Protocol({
   // Update form values and task assignments when protocol changes
   const handleProtocolChange = async (value: string) => {
     onSelectProtocol(value) // Update local state
-    form.setValue("protocol", value as any)
 
     // Find the protocol object to get the name
     const selectedProtocolObj = protocols.find((p) => p.tmProtocolId === value)
     onSelectProtocolName(selectedProtocolObj?.name ?? "") // Update protocol name state
 
+    // Setear el campo 'name' y 'protocolId' del formulario para que pase la validación y se guarde
+    form.setValue("name", selectedProtocolObj?.name ?? "", { shouldValidate: true })
+    form.setValue("protocolId", value, { shouldValidate: true })
+
     // Limpiar tareas si cambia el protocolo
-    form.setValue("taskAssignments", [], { shouldValidate: true })
+    form.setValue("tasks", [], { shouldValidate: true })
     updateFormValues({
-      protocol: value as any,
-      taskAssignments: [],
+      tasks: [],
     })
 
     if (value) {
@@ -142,17 +141,17 @@ export default function Step1Protocol({
         tasks = await fetchProtocolTasks(value)
       }
       if (tasks && tasks.length > 0) {
-        const newAssignments: TaskAssignment[] = tasks.map((task: any) => ({
-          task: task.summary || "",
+        const newTasks: TaskFormValues[] = tasks.map((task: any) => ({
+          taskName: task.summary || "",
           taskType: task.customFields?.customfield_10371 || "",
-          taskDetail: task.customFields?.customfield_10140 || "",
-          role: "",
-          assignedTo: "",
+          userEmail: "",
+          tmpSubtaskId: task.id?.toString() || "",
+          deleted: false,
+          formId: "",
         }))
-        form.setValue("taskAssignments", newAssignments, { shouldValidate: true })
+        form.setValue("tasks", newTasks, { shouldValidate: true })
         updateFormValues({
-          protocol: value as any,
-          taskAssignments: newAssignments,
+          tasks: newTasks,
         })
       }
     }
@@ -162,10 +161,10 @@ export default function Step1Protocol({
     <div className="space-y-6">
       <FormField
         control={form.control}
-        name="protocol"
+        name="protocolId"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-lg font-medium">Seleccione un protocolo</FormLabel>
+            {/* <FormLabel className="text-lg font-medium">Seleccione un protocolo</FormLabel> */}
             <FormControl>
               <Select
                 value={selectedProtocol || field.value}
@@ -202,11 +201,11 @@ export default function Step1Protocol({
             Tareas que incluye el protocolo: {selectedProtocolName || "Cargando..."}
           </h4>
           <ul className="space-y-2">
-            {form.watch("taskAssignments")?.map((task, index) => (
+            {form.watch("tasks")?.map((task: TaskFormValues, index: number) => (
               <li key={index} className="flex items-start space-x-2">
                 <Check className="h-5 w-5 text-green-500 mt-0.5" />
                 <span>
-                  {task.task} {/* task.taskType */}
+                  {task.taskName}
                 </span>
               </li>
             ))}

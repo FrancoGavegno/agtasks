@@ -99,10 +99,9 @@ export const listDomainsByUserEmail = async (user: string): Promise<Domain[]> =>
 };
 
 // Listar espacios de trabajo 
-export const listWorkspaces = async (email: string, parentId?: string): Promise<Workspace[]> => {
-  const query = `
-    query ($email: String!, $parentId: Int) {
-      list_workspaces(email: $email, parentId: $parentId) {
+export const listWorkspaces = async (email: string, domainId: number, parentId: number): Promise<Workspace[]> => {
+  const query = `query ($email: String!, $domainId: Int, $parentId: Int) {
+      list_workspaces(email: $email, domainId: $domainId, parentId: $parentId) {
         deleted
         hasLogo
         id
@@ -117,7 +116,7 @@ export const listWorkspaces = async (email: string, parentId?: string): Promise<
 
   return graphqlRequest<Workspace[]>(
     query,
-    { email, parentId: parentId ? parseInt(parentId) : undefined },
+    { email, domainId: domainId, parentId: parentId },
     'list_workspaces',
   );
 };

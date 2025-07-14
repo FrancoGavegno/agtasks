@@ -8,9 +8,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/hooks/use-toast"
-import { createDomainForm, deleteDomainForm } from '@/lib/services/agtasks'
+import { 
+  createDomainForm, 
+  deleteDomainForm 
+} from '@/lib/services/agtasks'
 import type { Form } from "@/lib/interfaces"
-import { listDomainForms } from "@/lib/services/agtasks"
+// import { listDomainForms } from "@/lib/services/agtasks"
 
 interface FormModalProps {
   isOpen: boolean

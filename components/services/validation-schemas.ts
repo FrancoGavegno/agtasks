@@ -1,67 +1,78 @@
 import { z } from "zod"
 
-// Tasks Schema
-export const taskAssignmentSchema = z.object({
-  task: z.string(),
+// Service Schema
+export const serviceSchema = z.object({
+  projectId: z.string().optional(),
+  tmpRequestId: z.string().optional(),
+  requestId: z.string().optional(),
+  name: z.string().min(1, "El nombre es requerido"),
+  protocolId: z.string().min(1, "El protocolo es requerido"),
+  deleted: z.boolean().optional(),
+  tasks: z.array(z.any()).optional(), // Relación, puede ser ajustada
+})
+export type ServiceFormValues = z.infer<typeof serviceSchema>
+
+// Task Schema
+export const taskSchema = z.object({
+  projectId: z.string().optional(),
+  serviceId: z.string().optional(),
+  tmpSubtaskId: z.string().min(1, "El template es requerido"),
+  subtaskId: z.string().optional(),
+  taskName: z.string().min(1, "El nombre de la tarea es requerido"),
   taskType: z.string(),
-  assignedTo: z.string(),
+  taskData: z.any().optional(),
+  userEmail: z.string().min(1, "El usuario es requerido"),
+  deleted: z.boolean().optional(),
+  formId: z.string().optional(),
+  taskFields: z.array(z.any()).optional(), // Relación, puede ser ajustada
+}).superRefine((data, ctx) => {
+  if (data.taskType === "fieldvisit" && (!data.formId || data.formId === "")) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "El formulario es requerido para tareas de tipo 'fieldvisit'",
+      path: ["formId"],
+    });
+  }
 });
+export type TaskFormValues = z.infer<typeof taskSchema>
 
-// Fields Schema
-export const selectedLotDetailSchema = z.object({
-  fieldId: z.string(),
-  fieldName: z.string(),
-  hectares: z.number(),
-  cropName: z.string(),
-  hybridName: z.string().optional(),
-})
-
-export type SelectedLotDetail = z.infer<typeof selectedLotDetailSchema>
-
-// Step 1 Protocol Selection
-export const step1Schema = z.object({
-  protocol: z.string({ required_error: "Por favor, seleccione un protocolo" }),
-  protocolName: z.string().optional(),
-  taskAssignments: z.array(taskAssignmentSchema),
-})
-
-export type Step1FormValues = z.infer<typeof step1Schema>
-
-// Step 2 Fields Selection
-export const step2Schema = z.object({
-  workspace: z.string().min(1, "Debe seleccionar un espacio de trabajo"),
+// Field Schema
+export const fieldSchema = z.object({
+  workspaceId: z.string().min(1, "El workspace es requerido"),
   workspaceName: z.string().optional(),
-  campaign: z.string().min(1, "Debe seleccionar una campaña"),
+  campaignId: z.string().min(1, "La campaña es requerida"),
   campaignName: z.string().optional(),
-  establishment: z.string().min(1, "Debe seleccionar un establecimiento"),
-  establishmentName: z.string().optional(),
-  selectedLots: z.array(selectedLotDetailSchema).min(1, "Debe seleccionar al menos un lote"),
-  selectedLotsNames: z.record(z.string()).optional(),
+  farmId: z.string().min(1, "El establecimiento es requerido"),
+  farmName: z.string().optional(),
+  fieldId: z.string().min(1, "El lote es requerido"),
+  fieldName: z.string().min(1, "El nombre del lote es requerido"),
+  hectares: z.number().optional(),
+  crop: z.string().optional(),
+  hybrid: z.string().optional(),
+  deleted: z.boolean().optional(),
+  taskFields: z.array(z.any()).optional(), // Relación, puede ser ajustada
 })
+export type FieldFormValues = z.infer<typeof fieldSchema>
 
-export type Step2FormValues = z.infer<typeof step2Schema>
-
-// Step 3 Users of Tasks Selection
-export const step3Schema = z.object({
-  taskAssignments: z.array(taskAssignmentSchema).refine(
-    (tasks) => tasks.every((task) => !!task.assignedTo && task.assignedTo.length > 0),
-    {
-      message: "Todas las tareas deben tener un usuario asignado",
-      path: ["taskAssignments"],
-    },
-  )
+// TaskField Schema
+export const taskFieldSchema = z.object({
+  taskId: z.string().min(1, "El taskId es requerido"),
+  fieldId: z.string().min(1, "El fieldId es requerido"),
+  // Relaciones omitidas para validación UI
 })
+export type TaskFieldFormValues = z.infer<typeof taskFieldSchema>
 
-export type Step3FormValues = z.infer<typeof step3Schema>
+// Array de tareas (tasks)
+export const tasksArraySchema = z.array(taskSchema).min(1, "Debe haber al menos una tarea")
+export type TasksArrayFormValues = z.infer<typeof tasksArraySchema>
 
-// Create Service Form Schema
-export const createServiceSchema = z.object({
-  protocol: step1Schema.shape.protocol,
-  workspace: step2Schema.shape.workspace,
-  campaign: step2Schema.shape.campaign,
-  establishment: step2Schema.shape.establishment,
-  selectedLots: step2Schema.shape.selectedLots,
-  taskAssignments: step3Schema.shape.taskAssignments,
+// Array de lotes/campos (fields)
+export const fieldsArraySchema = z.array(fieldSchema).min(1, "Debe seleccionar al menos un lote")
+export type FieldsArrayFormValues = z.infer<typeof fieldsArraySchema>
+
+// Esquema de formulario de servicio completo (para validación de todo el flujo)
+export const serviceFormSchema = serviceSchema.extend({
+  tasks: tasksArraySchema,
+  fields: fieldsArraySchema,
 })
-
-export type CreateServiceFormValues = Step1FormValues & Step2FormValues & Step3FormValues
+export type ServiceFormFullValues = z.infer<typeof serviceFormSchema>

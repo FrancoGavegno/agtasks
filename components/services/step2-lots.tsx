@@ -6,25 +6,26 @@ import { useFormContext } from "react-hook-form"
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import type { Step2FormValues, SelectedLotDetail } from "./validation-schemas"
+import type { FieldFormValues } from "./validation-schemas"
 import { useServiceForm } from "@/lib/contexts/service-form-context"
 import { listWorkspaces, listSeasons, listFarms, listFields } from "@/lib/integrations/360"
-import type { Workspace, Season, Farm, LotField } from "@/lib/interfaces"
+import type { Workspace, Season, Farm, LotField, Project } from "@/lib/interfaces"
 import * as React from "react"
+import { getProject } from "@/lib/services/agtasks"
 
 interface Props {
   userEmail: string
 }
 
 export default function Step2Lots({ userEmail }: Props) {
-  const { domain } = useParams<{ domain: string }>()
-  //const domainId = domain || "8644" // Fallback to "8644" if domain is not in URL
-  const domainId = domain
+  const { domain, project } = useParams<{ domain: string, project: string }>()
+  const domainId = Number(domain)
 
-  const form = useFormContext<Step2FormValues>()
+  const form = useFormContext<any>()
   const { updateFormValues } = useServiceForm()
 
   // State for API data
+  const [areaId, setAreaId] = useState<number>(0)
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
   const [seasons, setSeasons] = useState<Season[]>([])
   const [farms, setFarms] = useState<Farm[]>([])
@@ -46,10 +47,10 @@ export default function Step2Lots({ userEmail }: Props) {
   const workspace = form.watch ? form.watch("workspace") : ""
   const campaign = form.watch ? form.watch("campaign") : ""
   const establishment = form.watch ? form.watch("establishment") : ""
-  const selectedLots = form.watch ? form.watch("selectedLots") : []
+  const fieldsSelected: FieldFormValues[] = form.watch ? form.watch("fields") : []
 
   const allLotIds = fields.map(field => field.id.toString())
-  const selectedLotIds = selectedLots.map(lot => lot.fieldId)
+  const selectedLotIds = fieldsSelected.map((lot) => lot.fieldId)
   const allSelected = allLotIds.length > 0 && allLotIds.every(id => selectedLotIds.includes(id))
   const someSelected = allLotIds.some(id => selectedLotIds.includes(id)) && !allSelected
 
@@ -61,12 +62,23 @@ export default function Step2Lots({ userEmail }: Props) {
     }
   }, [someSelected])
 
+  useEffect(() => {
+    const fetchProject = async (project: string) => {
+      const projectData = await getProject(project);
+      if (projectData && projectData.areaId !== undefined && projectData.areaId !== null) {
+        setAreaId(Number(projectData.areaId));
+      }
+    }
+
+    fetchProject(project)
+  }, [])
+
   // Fetch workspaces from 360 API
   useEffect(() => {
     const fetchWorkspaces = async () => {
       try {
         setWorkspacesLoading(true)
-        const workspacesData = await listWorkspaces(userEmail, domainId)
+        const workspacesData = await listWorkspaces(userEmail, domainId, areaId)
         // Filtrar workspaces no eliminados y ordenar alfabéticamente
         const filteredAndSorted = workspacesData
           .filter((workspace) => workspace.deleted === false)
@@ -83,7 +95,7 @@ export default function Step2Lots({ userEmail }: Props) {
     }
 
     fetchWorkspaces()
-  }, [userEmail, domainId])
+  }, [userEmail, domainId, areaId])
 
   // Fetch seasons when workspace changes
   useEffect(() => {
@@ -182,10 +194,8 @@ export default function Step2Lots({ userEmail }: Props) {
     form.setValue("campaignName", "", { shouldValidate: true })
     form.setValue("establishment", "", { shouldValidate: true })
     form.setValue("establishmentName", "", { shouldValidate: true })
-    form.setValue("selectedLots", [], { shouldValidate: true })
-    form.setValue("selectedLotsNames", {}, { shouldValidate: true })
-
-    // Update context
+    form.setValue("fields", [], { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    form.trigger("fields");
     updateFormValues({
       workspace: value,
       workspaceName,
@@ -193,8 +203,7 @@ export default function Step2Lots({ userEmail }: Props) {
       campaignName: "",
       establishment: "",
       establishmentName: "",
-      selectedLots: [],
-      selectedLotsNames: {},
+      fields: [],
     })
   }
 
@@ -208,17 +217,14 @@ export default function Step2Lots({ userEmail }: Props) {
     form.setValue("campaignName", campaignName, { shouldValidate: true })
     form.setValue("establishment", "", { shouldValidate: true })
     form.setValue("establishmentName", "", { shouldValidate: true })
-    form.setValue("selectedLots", [], { shouldValidate: true })
-    form.setValue("selectedLotsNames", {}, { shouldValidate: true })
-
-    // Update context
+    form.setValue("fields", [], { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    form.trigger("fields");
     updateFormValues({
       campaign: value,
       campaignName,
       establishment: "",
       establishmentName: "",
-      selectedLots: [],
-      selectedLotsNames: {},
+      fields: [],
     })
   }
 
@@ -230,68 +236,73 @@ export default function Step2Lots({ userEmail }: Props) {
 
     form.setValue("establishment", value, { shouldValidate: true })
     form.setValue("establishmentName", establishmentName, { shouldValidate: true })
-    form.setValue("selectedLots", [], { shouldValidate: true })
-    form.setValue("selectedLotsNames", {}, { shouldValidate: true })
-
-    // Update context
+    form.setValue("fields", [], { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    form.trigger("fields");
     updateFormValues({
       establishment: value,
       establishmentName,
-      selectedLots: [],
-      selectedLotsNames: {},
+      fields: [],
     })
   }
 
   // Modificar handleLotSelection para guardar también los nombres de los lotes y todos los campos requeridos
   const handleLotSelection = (lotId: string) => {
-    const currentLots = form.getValues("selectedLots") || []
+    const currentLots: FieldFormValues[] = form.getValues("fields") || []
     const selectedField = fields.find((field) => field.id.toString() === lotId)
 
     if (!selectedField) return // No hacer nada si el campo no se encuentra
 
-    const lotDetail: SelectedLotDetail = {
-      fieldId: selectedField.id.toString(),
+    const lotDetail: FieldFormValues = {
+      workspaceId: String(selectedField.workspaceId ?? ""),
+      workspaceName: "",
+      campaignId: String(selectedField.seasonId ?? ""),
+      campaignName: "",
+      farmId: String(selectedField.farmId ?? ""),
+      farmName: "",
+      fieldId: String(selectedField.id ?? ""),
       fieldName: selectedField.name || "",
-      hectares: selectedField.hectares || 0,
-      cropName: selectedField.cropName || "",
-      hybridName: selectedField.hybridName || "",
-      // Campos extra para el modelo Field
-      workspaceId: workspace || "",
-      workspaceName: workspaces.find(w => w.id.toString() === workspace)?.name || "",
-      campaignId: campaign || "",
-      campaignName: seasons.find(s => s.id.toString() === campaign)?.name || "",
-      farmId: establishment || "",
-      farmName: farms.find(f => f.id.toString() === establishment)?.name || "",
-    } as any // para que no rompa el tipado si hay campos extra
+      hectares: typeof selectedField.hectares === 'number' ? selectedField.hectares : 0,
+      crop: selectedField.cropName || "",
+      hybrid: selectedField.hybridName || "",
+      deleted: false,
+    }
 
-    let newLots: SelectedLotDetail[]
+    let newLots: FieldFormValues[]
     if (currentLots.some((lot) => lot.fieldId === lotId)) {
       newLots = currentLots.filter((lot) => lot.fieldId !== lotId)
     } else {
       newLots = [...currentLots, lotDetail]
     }
 
-    form.setValue("selectedLots", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
-    updateFormValues({ selectedLots: newLots })
+    form.setValue("fields", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
+    updateFormValues({ fields: newLots })
+    // console.log("Lotes seleccionados actualizados:", newLots)
   }
 
   // Nueva función para seleccionar/deseleccionar todos los lotes
   const handleToggleAllLots = () => {
     if (allSelected) {
       // Deseleccionar todos
-      form.setValue("selectedLots", [], { shouldValidate: true, shouldDirty: true, shouldTouch: true })
-      updateFormValues({ selectedLots: [] })
+      form.setValue("fields", [], { shouldValidate: true, shouldDirty: true, shouldTouch: true })
+      updateFormValues({ fields: [] })
     } else {
       // Seleccionar todos
       const newLots = fields.map(selectedField => ({
-        fieldId: selectedField.id.toString(),
-        fieldName: selectedField.name,
-        hectares: selectedField.hectares,
-        cropName: selectedField.cropName,
-        hybridName: selectedField.hybridName || "",
+        workspaceId: String(selectedField.workspaceId ?? ""),
+        workspaceName: "",
+        campaignId: String(selectedField.seasonId ?? ""),
+        campaignName: "",
+        farmId: String(selectedField.farmId ?? ""),
+        farmName: "",
+        fieldId: String(selectedField.id ?? ""),
+        fieldName: selectedField.name || "",
+        hectares: typeof selectedField.hectares === 'number' ? selectedField.hectares : 0,
+        crop: selectedField.cropName || "",
+        hybrid: selectedField.hybridName || "",
+        deleted: false,
       }))
-      form.setValue("selectedLots", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
-      updateFormValues({ selectedLots: newLots })
+      form.setValue("fields", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
+      updateFormValues({ fields: newLots })
     }
   }
 
@@ -469,7 +480,7 @@ export default function Step2Lots({ userEmail }: Props) {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <Checkbox
                             id={`lot-${field.id}`}
-                            checked={selectedLots?.some((lot) => lot.fieldId === field.id.toString())}
+                            checked={fieldsSelected?.some((lot) => lot.fieldId === field.id.toString())}
                             onCheckedChange={() => handleLotSelection(field.id.toString())}
                           />
                         </td>
@@ -490,17 +501,19 @@ export default function Step2Lots({ userEmail }: Props) {
               </table>
             </div>
           )}
-          <FormField
-            control={form.control}
-            name="selectedLots"
-            render={({ fieldState }) => (
-              <FormItem>
-                {fieldState.invalid && fieldState.isTouched && <FormMessage className="text-red-500 mt-2" />}
-              </FormItem>
-            )}
-          />
         </div>
       )}
+      <FormField
+        control={form.control}
+        name="fields"
+        render={({ field, fieldState }) => (
+          <FormItem>
+            {typeof fieldState.error?.message === "string" && (
+              <FormMessage className="text-red-500 mb-2" />
+            )}
+          </FormItem>
+        )}
+      />
     </div>
   )
 }

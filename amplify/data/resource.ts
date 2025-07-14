@@ -20,26 +20,21 @@ const schema = a
       // 360 
       domainId: a.string().required(), 
       areaId: a.string().required(), 
-      
       // Jira "Protocols Template" 
       tmpSourceSystem: a.string().default("jira"),
 	    tmpServiceDeskId: a.string().default("TEM"), 
 	    tmpRequestTypeId: a.string().default("87"),
       tmpQueueId: a.string().default("82"),
-
       // Task Manager Client Project
       serviceDeskId: a.string().required(),  
       requestTypeId: a.string().required(),
       queueId: a.string(),
-      
       // Project
       name: a.string().required(),
       language: a.string(),  
       deleted: a.boolean().default(false),
-      
       // Service[]
       services: a.hasMany("Service", "projectId"),
-	    
       // Task[]
       tasks: a.hasMany("Task", "projectId"),
     }),
@@ -47,14 +42,13 @@ const schema = a
     Service: a.model({
       project: a.belongsTo("Project", "projectId"),
       projectId: a.string(), 
-      
       tmpRequestId: a.string(), // template
 			requestId: a.string(), // client
-
       // Service 
       name: a.string().required(),
 			deleted: a.boolean().default(false),
-            
+      // DomainProtocol
+      protocolId: a.string(),
       // Task[]
       tasks: a.hasMany("Task", "serviceId"),
     }),
@@ -62,20 +56,18 @@ const schema = a
     Task: a.model({
       project: a.belongsTo("Project", "projectId"),
       projectId: a.string(), 
-    
       service: a.belongsTo("Service", "serviceId"),
       serviceId: a.string(), 
-      
       tmpSubtaskId: a.string().required(), // template
       subtaskId: a.string(), // client 
-      
       // Task
       taskName: a.string().required(), 
-      taskType: a.string(), 
+      taskType: a.string().required(), 
       taskData: a.json(), // Submitted Form Data  
       userEmail: a.string().required(), 
       deleted: a.boolean().default(false),
-      
+      // DomainForm
+      formId: a.string(),
       taskFields: a.hasMany("TaskField", "taskId"),
     }),
 
@@ -93,7 +85,6 @@ const schema = a
       crop: a.string(),
       hybrid: a.string(),
       deleted: a.boolean().default(false),
-
       taskFields: a.hasMany("TaskField", "fieldId"),
     }),
 
