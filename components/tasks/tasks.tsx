@@ -111,13 +111,8 @@ export function TasksPageDetails() {
     setPage(1)
   }, [searchQuery, selectedService])
 
-  // Filtrar tareas según búsqueda y servicio seleccionado
+  // Filtrar tareas según búsqueda (sin filtrar por servicio)
   const filteredTasks = tasks.filter(task => {
-    // Filtrar por servicio
-    if (selectedService !== "all") {
-      if (task.serviceId !== selectedService) return false
-    }
-    // Filtrar por búsqueda
     if (!searchQuery) return true
     const q = searchQuery.toLowerCase()
     return (
@@ -181,6 +176,7 @@ export function TasksPageDetails() {
             className="border rounded px-2 py-1 text-sm"
             value={selectedService}
             onChange={e => setSelectedService(e.target.value)}
+            disabled
           >
             <option value="all">Todas las tareas</option>
             {services.map(service => (
@@ -203,11 +199,12 @@ export function TasksPageDetails() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Usuario</TableHead>
-              <TableHead>Servicio</TableHead>
-              <TableHead>Acciones</TableHead>
+            <TableHead>Key</TableHead>
+              <TableHead>Summary</TableHead>
+              <TableHead>Task Type</TableHead>
+              <TableHead>Assigned to</TableHead>
+              <TableHead>Service</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -222,7 +219,8 @@ export function TasksPageDetails() {
                 const service = services.find(s => s.id === task.serviceId)
                 return (
                   <TableRow key={task.id}>
-                    <TableCell className="font-medium">{task.taskName}</TableCell>
+                    <TableCell>{task.subtaskId}</TableCell>
+                    <TableCell>{task.taskName}</TableCell>
                     <TableCell>{task.taskType || "-"}</TableCell>
                     <TableCell>{task.userEmail}</TableCell>
                     <TableCell>{service ? service.name : "(Sin servicio)"}</TableCell>

@@ -2,6 +2,7 @@ import { Amplify } from "aws-amplify";
 import outputs from "@/amplify_outputs.json";
 import { generateClient } from "aws-amplify/api";
 import { type Schema } from "@/amplify/data/resource";
+import { ServiceFormFullValues } from "@/components/services/validation-schemas";
 
 // Amplify configuration - Singleton Client
 let clientInstance: ReturnType<typeof generateClient<Schema>> | null = null;
@@ -146,8 +147,7 @@ export async function createProject(data: {
   queueId?: string
   deleted?: boolean
 }) {
-    const client = getClient();
-  // queueId debe ser string, y los campos requeridos deben estar presentes
+  const client = getClient();
   const response = await client.models.Project.create({
     ...data,
     queueId: data.queueId ? String(data.queueId) : undefined,
@@ -160,38 +160,38 @@ export async function createProject(data: {
  * Actualiza un Project existente
  */
 export async function updateProject(id: string, data: Partial<{
-  domainId: string
-  areaId: string
-  serviceDeskId: string
-  requestTypeId: string
-  name: string
-  language: string
-  tmpSourceSystem: string
-  tmpServiceDeskId: string
-  tmpRequestTypeId: string
-  tmpQueueId: string
-  queueId: string
-  deleted: boolean
+  domainId?: string
+  areaId?: string
+  serviceDeskId?: string
+  requestTypeId?: string
+  name?: string
+  language?: string
+  tmpSourceSystem?: string
+  tmpServiceDeskId?: string
+  tmpRequestTypeId?: string
+  tmpQueueId?: string
+  queueId?: string
+  deleted?: boolean
 }>) {
   const client = getClient();
   const response = await client.models.Project.update({ id, ...data });
-    return response.data;
+  return response.data;
 }
 
 /**
  * Elimina lógicamente un Project (soft delete)
  */
 export async function deleteProject(id: string) {
-    const client = getClient();
+  const client = getClient();
   const response = await client.models.Project.update({ id, deleted: true });
-    return response.data;
+  return response.data;
 }
 
 /**
  * Obtiene un Project por ID, incluyendo sus Services y Tasks relacionados
  */
 export async function getProject(id: string) {
-    const client = getClient();
+  const client = getClient();
   const response = await client.models.Project.get({ id });
   if (!response.data) return null;
   let servicesData: any[] = [];
@@ -209,13 +209,13 @@ export async function getProject(id: string) {
     services: servicesData,
     tasks: tasksData,
   };
-  }
+}
 
 /**
  * Lista todos los proyectos de un dominio
  */
 export async function listProjectsByDomain(domainId: string) {
-    const client = getClient();
+  const client = getClient();
   const response = await client.models.Project.list({
     filter: { domainId: { eq: domainId }, deleted: { ne: true } },
   });
@@ -226,32 +226,34 @@ export async function listProjectsByDomain(domainId: string) {
 /**
  * Crea un nuevo Service
  */
-export async function createService(data: {
-  projectId?: string
-  name: string
-  tmpRequestId?: string
-  requestId?: string
-  deleted?: boolean
-}) {
+export async function createService(data: ServiceFormFullValues) {
   const client = getClient();
-  const response = await client.models.Service.create({ ...data, deleted: data.deleted ?? false });
-    return response.data;
+
+  const response = await client.models.Service.create({
+    name: data.name,
+    projectId: data.projectId || "",
+    tmpRequestId: data.tmpRequestId,
+		requestId: data.requestId,
+    protocolId: data.protocolId
+  });
+    
+  return response.data;
 }
 
 /**
  * Actualiza un Service existente
  */
 export async function updateService(id: string, data: Partial<{
-  projectId: string
-  name: string
-  tmpRequestId: string
-  requestId: string
-  deleted: boolean
+  projectId?: string
+  name?: string
+  tmpRequestId?: string
+  requestId?: string
+  deleted?: boolean
 }>) {
-    const client = getClient();
+  const client = getClient();
   const response = await client.models.Service.update({ id, ...data });
   return response.data;
-    }
+}
 
 /**
  * Elimina lógicamente un Service (soft delete)
@@ -278,13 +280,13 @@ export async function getService(id: string) {
   if (typeof response.data.tasks === 'function') {
     const tasks = await response.data.tasks();
     tasksData = tasks.data ?? [];
-      }
+  }
   return {
     ...response.data,
     project: projectData,
     tasks: tasksData,
   };
-  }
+}
 
 /**
  * Lista todos los servicios de un proyecto
@@ -307,13 +309,12 @@ export async function createTask(data: {
   tmpSubtaskId: string
   subtaskId?: string
   taskName: string
-  taskType?: string
-  taskData?: any
+  taskType: string
   userEmail: string
-  deleted?: boolean
+  formId?: string
 }) {
-    const client = getClient();
-  const response = await client.models.Task.create({ ...data, deleted: data.deleted ?? false });
+  const client = getClient();
+  const response = await client.models.Task.create(data);
   return response.data;
 }
 
@@ -321,15 +322,15 @@ export async function createTask(data: {
  * Actualiza un Task existente
  */
 export async function updateTask(id: string, data: Partial<{
-  projectId: string
-  serviceId: string
-  tmpSubtaskId: string
-  subtaskId: string
-  taskName: string
-  taskType: string
-  taskData: any
-  userEmail: string
-  deleted: boolean
+  projectId?: string
+  serviceId?: string
+  tmpSubtaskId?: string
+  subtaskId?: string
+  taskName?: string
+  taskType?: string
+  taskData?: any
+  userEmail?: string
+  deleted?: boolean
 }>) {
   const client = getClient();
   const response = await client.models.Task.update({ id, ...data });
@@ -381,7 +382,7 @@ export async function createTaskField(data: {
 // --- FIELD CRUD ---
 /**
  * Crea un nuevo Field
- */
+*/
 export async function createField(data: {
   workspaceId: string
   workspaceName?: string
@@ -394,7 +395,6 @@ export async function createField(data: {
   hectares?: number
   crop?: string
   hybrid?: string
-  deleted?: boolean
 }) {
   const client = getClient();
   const response = await client.models.Field.create(data);
@@ -405,19 +405,18 @@ export async function createField(data: {
  * Actualiza un Field existente
  */
 export async function updateField(id: string, data: Partial<{
-  taskId: string
-  workspaceId: string
-  workspaceName: string
-  campaignId: string
-  campaignName: string
-  farmId: string
-  farmName: string
-  fieldId: string
-  fieldName: string
-  hectares: number
-  crop: string
-  hybrid: string
-  deleted: boolean
+  workspaceId?: string
+  workspaceName?: string
+  campaignId?: string
+  campaignName?: string
+  farmId?: string
+  farmName?: string
+  fieldId?: string
+  fieldName?: string
+  hectares?: number
+  crop?: string
+  hybrid?: string
+  deleted?: boolean
 }>) {
   const client = getClient();
   const response = await client.models.Field.update({ id, ...data });

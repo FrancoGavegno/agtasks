@@ -37,6 +37,11 @@ const graphqlRequest = async <T>(
       variables,
     });
 
+    if (!response.data) {
+      console.error(`No data in GraphQL response for ${dataKey}:`, response);
+      throw new Error(`No data in GraphQL response for ${dataKey}`);
+    }
+
     if (response.data.errors) {
       throw new Error(JSON.stringify(response.data.errors));
     }

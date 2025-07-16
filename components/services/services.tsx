@@ -26,6 +26,8 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { client } from "@/lib/amplify-client"
 import type { Schema } from "@/amplify/data/resource"
+import { format } from 'date-fns'
+import { listDomainProtocols } from "@/lib/services/agtasks";
 
 type Service = Schema["Service"]["type"]
 
@@ -41,6 +43,8 @@ export function ServicesPageDetails() {
   const [refreshing, setRefreshing] = useState(false)
   const [page, setPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [protocols, setProtocols] = useState<any[]>([]);
+  const [protocolIdToName, setProtocolIdToName] = useState<Record<string, string>>({});
 
   // Fetch all services using GraphQL (Amplify)
   const fetchAllServices = async () => {
@@ -86,6 +90,17 @@ export function ServicesPageDetails() {
   useEffect(() => {
     setPage(1)
   }, [searchQuery])
+
+  useEffect(() => {
+    if (domainId) {
+      listDomainProtocols(domainId).then(protocols => {
+        setProtocols(protocols);
+        const map: Record<string, string> = {};
+        protocols.forEach(p => { map[p.id] = p.name; });
+        setProtocolIdToName(map);
+      });
+    }
+  }, [domainId]);
 
   // frontend filter
   const filteredServices = services.filter(service => {
@@ -162,11 +177,12 @@ export function ServicesPageDetails() {
           <TableHeader>
             <TableRow>
               {/* <TableHead>ID</TableHead> */}
-              <TableHead>Nombre</TableHead>
-              <TableHead>Template Request ID</TableHead>
-              <TableHead>Request ID</TableHead>
-              <TableHead>Created At</TableHead>
-              <TableHead>Acciones</TableHead>
+              <TableHead>Key</TableHead>
+              <TableHead>Summary</TableHead>
+              {/* <TableHead>Template Request ID</TableHead> */}
+              <TableHead>Protocol</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -180,10 +196,13 @@ export function ServicesPageDetails() {
               paginatedServices.map((service) => (
                 <TableRow key={service.id}>
                   {/* <TableCell>{service.id}</TableCell> */}
-                  <TableCell className="font-medium">{service.name}</TableCell>
-                  <TableCell>{service.tmpRequestId || "-"}</TableCell>
                   <TableCell>{service.requestId || "-"}</TableCell>
-                  <TableCell>{service.createdAt}</TableCell>
+                  <TableCell >{service.name}</TableCell>
+                  {/* <TableCell>{service.tmpRequestId || "-"}</TableCell> */}
+                  <TableCell>
+                    {service.protocolId ? (protocolIdToName[service.protocolId] || service.protocolId) : "-"}
+                  </TableCell>
+                  <TableCell>{service.createdAt ? format(new Date(service.createdAt), 'dd/MM/yyyy') : '-'}</TableCell>
                   <TableCell>
                     {service.requestId ? (
                       <Link

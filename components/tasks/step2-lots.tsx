@@ -8,16 +8,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { listWorkspaces, listSeasons, listFarms, listFields } from "@/lib/integrations/360"
 import type { Workspace, Season, Farm, LotField } from "@/lib/interfaces"
+import { getProject } from "@/lib/services/agtasks"
 
 interface Props {
     userEmail: string
 }
 
 export default function Step2Lots({ userEmail }: Props) {
-    const { domain } = useParams<{ domain: string }>()
+    const { domain, project } = useParams<{ domain: string, project: string }>()
+    const domainId = Number(domain)
+
     const form = useFormContext<any>()
 
     // State for API data
+    const [areaId, setAreaId] = useState<number>(0)
     const [workspaces, setWorkspaces] = useState<Workspace[]>([])
     const [seasons, setSeasons] = useState<Season[]>([])
     const [farms, setFarms] = useState<Farm[]>([])
@@ -54,12 +58,23 @@ export default function Step2Lots({ userEmail }: Props) {
         }
     }, [someSelected])
 
+    useEffect(() => {
+        const fetchProject = async (project: string) => {
+            const projectData = await getProject(project);
+            if (projectData && projectData.areaId !== undefined && projectData.areaId !== null) {
+                setAreaId(Number(projectData.areaId));
+            }
+        }
+
+        fetchProject(project)
+    }, [project])
+
     // Fetch workspaces from 360 API
     useEffect(() => {
         const fetchWorkspaces = async () => {
             try {
                 setWorkspacesLoading(true)
-                const workspacesData = await listWorkspaces(userEmail, domain)
+                const workspacesData = await listWorkspaces(userEmail, domainId, areaId)
                 const filteredAndSorted = workspacesData.filter((workspace) => workspace.deleted === false).sort((a, b) => a.name.localeCompare(b.name))
                 setWorkspaces(filteredAndSorted)
                 setWorkspacesError(null)
@@ -70,8 +85,10 @@ export default function Step2Lots({ userEmail }: Props) {
                 setWorkspacesLoading(false)
             }
         }
-        fetchWorkspaces()
-    }, [domain])
+        if (userEmail && domainId != 0 && areaId != 0) {
+            fetchWorkspaces()
+        }
+    }, [userEmail, domainId, areaId])
 
     useEffect(() => {
         const fetchSeasons = async () => {

@@ -3,13 +3,7 @@ import { ProjectsClient } from "./projects-client"
 import { serializeModelData } from "@/lib/serialization-utils"
 
 export default async function ProjectsPage() {
-  const { data: projects } = await client.models.Project.list({
-    filter: {
-      deleted: {
-        ne: true,
-      },
-    },
-  })
+  const { data: projects } = await client.models.Project.list()
 
   // Serialize the projects data to remove function properties
   const serializedProjects = projects?.map((project) => serializeModelData(project)) || []

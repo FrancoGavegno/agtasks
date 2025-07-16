@@ -6,7 +6,7 @@ export default async function FieldsPage() {
   const { data: fields } = await client.models.Field.list({
     filter: {
       deleted: {
-        ne: true,
+        eq: false,
       },
     },
   })
@@ -14,7 +14,7 @@ export default async function FieldsPage() {
   const { data: tasks } = await client.models.Task.list({
     filter: {
       deleted: {
-        ne: true,
+        eq: false,
       },
     },
   })

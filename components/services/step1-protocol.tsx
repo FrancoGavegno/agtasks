@@ -125,9 +125,10 @@ export default function Step1Protocol({
     const selectedProtocolObj = protocols.find((p) => p.tmProtocolId === value)
     onSelectProtocolName(selectedProtocolObj?.name ?? "") // Update protocol name state
 
-    // Setear el campo 'name' y 'protocolId' del formulario para que pase la validación y se guarde
+    // Setear el campo 'name', 'protocolId' y 'tmpRequestId' del formulario para que pase la validación y se guarde
     form.setValue("name", selectedProtocolObj?.name ?? "", { shouldValidate: true })
-    form.setValue("protocolId", value, { shouldValidate: true })
+    form.setValue("protocolId", selectedProtocolObj?.id ?? "", { shouldValidate: true })
+    form.setValue("tmpRequestId", selectedProtocolObj?.tmProtocolId ?? "", { shouldValidate: true })
 
     // Limpiar tareas si cambia el protocolo
     form.setValue("tasks", [], { shouldValidate: true })
@@ -145,9 +146,9 @@ export default function Step1Protocol({
           taskName: task.summary || "",
           taskType: task.customFields?.customfield_10371 || "",
           userEmail: "",
-          tmpSubtaskId: task.id?.toString() || "",
+          tmpSubtaskId: task.key || "",
           deleted: false,
-          formId: "",
+          formId: "", // Siempre inicializar como string vacío
         }))
         form.setValue("tasks", newTasks, { shouldValidate: true })
         updateFormValues({

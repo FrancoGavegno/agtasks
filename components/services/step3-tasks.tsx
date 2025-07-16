@@ -74,16 +74,16 @@ export default function Step3Tasks() {
     fetchForms()
   }, [domainId])
   
-  // Asegura que todas las tareas tengan formId inicializado
-  useEffect(() => {
-    if (tasks && tasks.length > 0) {
-      const fixed = (tasks as any[]).map((t: any) => ({
-        ...t,
-        formId: typeof t.formId === "string" ? t.formId : "",
-      }))
-      form.setValue("tasks", fixed, { shouldValidate: false })
-    }
-  }, [tasks])
+  // Eliminar este useEffect:
+  // useEffect(() => {
+  //   if (tasks && tasks.length > 0) {
+  //     const fixed = (tasks as any[]).map((t: any) => ({
+  //       ...t,
+  //       formId: typeof t.formId === "string" ? t.formId : "",
+  //     }))
+  //     form.setValue("tasks", fixed, { shouldValidate: false })
+  //   }
+  // }, [tasks])
 
   const getFieldError = (index: number, field: "userEmail") => {
     // Solo mostrar errores si el campo ha sido tocado o si se ha intentado enviar el formulario
@@ -208,6 +208,10 @@ export default function Step3Tasks() {
                       }}
                     />
                     {formsError && <p className="text-red-500 text-xs mt-1">{formsError}</p>}
+                    {/* Mostrar error de validación de formId si existe */}
+                    {errors?.tasks && Array.isArray(errors.tasks) && errors.tasks[index]?.formId && (
+                      <p className="text-red-500 text-xs mt-1">{errors.tasks[index].formId.message}</p>
+                    )}
                   </div>
                 ) : "" }
                 </td>

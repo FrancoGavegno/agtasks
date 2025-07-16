@@ -41,7 +41,7 @@ const schema = a
 
     Service: a.model({
       project: a.belongsTo("Project", "projectId"),
-      projectId: a.string(), 
+      projectId: a.string().required(), 
       tmpRequestId: a.string(), // template
 			requestId: a.string(), // client
       // Service 
@@ -81,7 +81,7 @@ const schema = a
       farmName: a.string(),
       fieldId: a.string().required(), 
       fieldName: a.string().required(),
-      hectares: a.integer(),
+      hectares: a.float(),
       crop: a.string(),
       hybrid: a.string(),
       deleted: a.boolean().default(false),

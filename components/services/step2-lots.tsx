@@ -71,13 +71,15 @@ export default function Step2Lots({ userEmail }: Props) {
     }
 
     fetchProject(project)
-  }, [])
+  }, [project])
 
   // Fetch workspaces from 360 API
   useEffect(() => {
     const fetchWorkspaces = async () => {
       try {
         setWorkspacesLoading(true)
+
+        // console.log("listWorkspaces: ", userEmail, domainId, areaId)
         const workspacesData = await listWorkspaces(userEmail, domainId, areaId)
         // Filtrar workspaces no eliminados y ordenar alfabéticamente
         const filteredAndSorted = workspacesData
@@ -94,7 +96,9 @@ export default function Step2Lots({ userEmail }: Props) {
       }
     }
 
-    fetchWorkspaces()
+    if (userEmail && domainId != 0 && areaId != 0) {
+      fetchWorkspaces()
+    }
   }, [userEmail, domainId, areaId])
 
   // Fetch seasons when workspace changes
@@ -252,13 +256,23 @@ export default function Step2Lots({ userEmail }: Props) {
 
     if (!selectedField) return // No hacer nada si el campo no se encuentra
 
+    // Obtener los valores seleccionados actualmente
+    const workspaceId = form.getValues("workspace")
+    const campaignId = form.getValues("campaign")
+    const farmId = form.getValues("establishment")
+
+    // Obtener nombres de los selects o del estado
+    const workspaceName = workspaces.find(w => w.id?.toString() === String(workspaceId))?.name || ""
+    const campaignName = seasons.find(s => s.id?.toString() === String(campaignId))?.name || ""
+    const farmName = farms.find(f => f.id?.toString() === String(farmId))?.name || ""
+
     const lotDetail: FieldFormValues = {
       workspaceId: String(selectedField.workspaceId ?? ""),
-      workspaceName: "",
+      workspaceName,
       campaignId: String(selectedField.seasonId ?? ""),
-      campaignName: "",
+      campaignName,
       farmId: String(selectedField.farmId ?? ""),
-      farmName: "",
+      farmName,
       fieldId: String(selectedField.id ?? ""),
       fieldName: selectedField.name || "",
       hectares: typeof selectedField.hectares === 'number' ? selectedField.hectares : 0,
@@ -287,13 +301,19 @@ export default function Step2Lots({ userEmail }: Props) {
       updateFormValues({ fields: [] })
     } else {
       // Seleccionar todos
+      const workspaceId = form.getValues("workspace")
+      const campaignId = form.getValues("campaign")
+      const farmId = form.getValues("establishment")
+      const workspaceName = workspaces.find(w => w.id?.toString() === String(workspaceId))?.name || ""
+      const campaignName = seasons.find(s => s.id?.toString() === String(campaignId))?.name || ""
+      const farmName = farms.find(f => f.id?.toString() === String(farmId))?.name || ""
       const newLots = fields.map(selectedField => ({
         workspaceId: String(selectedField.workspaceId ?? ""),
-        workspaceName: "",
+        workspaceName,
         campaignId: String(selectedField.seasonId ?? ""),
-        campaignName: "",
+        campaignName,
         farmId: String(selectedField.farmId ?? ""),
-        farmName: "",
+        farmName,
         fieldId: String(selectedField.id ?? ""),
         fieldName: selectedField.name || "",
         hectares: typeof selectedField.hectares === 'number' ? selectedField.hectares : 0,

@@ -7,14 +7,14 @@ export default async function ServicesPage() {
     client.models.Service.list({
     filter: {
       deleted: {
-          ne: true,
+        eq: false,
       },
     },
     }),
     client.models.Project.list({
     filter: {
       deleted: {
-        ne: true,
+        eq: false,
       },
     },
     }),

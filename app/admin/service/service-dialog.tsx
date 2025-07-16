@@ -56,9 +56,10 @@ export function ServiceDialog({ open, onOpenChange, service, projects }: Service
     try {
       if (service) {
         await updateService(service.id, formData)
-      } else {
-        await createService(formData)
-      }
+      } 
+      // else {
+      //   await createService(formData)
+      // }
       onOpenChange(false)
     } catch (error) {
       alert(error instanceof Error ? error.message : "An unexpected error occurred")

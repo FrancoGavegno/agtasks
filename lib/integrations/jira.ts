@@ -302,7 +302,7 @@ export async function createSubtask(
   description: string,
   agtasksUrl: string,
   taskType: string,
-  serviceDeskId: string
+  //serviceDeskId: string
 ): Promise<JiraSubtaskResponse | void> {
   try {
 
@@ -312,7 +312,6 @@ export async function createSubtask(
 
     // Get Customer 
     accountId = await getCustomer(userEmail);
-    // console.log("accountId: ", accountId)
 
     // Create Customer If not Exist  
     if (!accountId) {
@@ -332,11 +331,11 @@ export async function createSubtask(
       }
     }
 
-    if (accountId) {
-      reporterData = {
-        id: accountId
-      }
-    }
+    // if (accountId) {
+    //   reporterData = {
+    //     id: accountId
+    //   }
+    // }
 
     // Create Service Desk Subtask 
     const payload = {
@@ -369,7 +368,8 @@ export async function createSubtask(
         // customfield_10305: userEmail,
         customfield_10338: agtasksUrl,
         customfield_10371: taskType,
-        reporter: reporterData
+        // customfield_10437: 
+        ...(accountId ? { reporter: { id: accountId } } : {})
       }
     }
 

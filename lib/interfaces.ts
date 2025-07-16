@@ -103,10 +103,11 @@ export interface Project {
 
 export interface Service {
   id: string
-  projectId?: string 
-  tmpRequestId?: string
+  projectId: string 
+  tmpRequestId: string
 	requestId?: string
   name: string
+  protocolId: string
   tasks?: Task[]
   createdAt?: string  
   deleted?: boolean 
