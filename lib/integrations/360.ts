@@ -1,5 +1,14 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
-import { Domain, Workspace, Season, Farm, LotField, User } from "@/lib/interfaces";
+import axios, 
+{ AxiosInstance, 
+  AxiosError } from 'axios';
+import { 
+  Domain, 
+  Workspace, 
+  Season, 
+  Farm, 
+  LotField, 
+  User 
+} from "@/lib/interfaces";
 
 // Validar variables de entorno al inicio
 const apiUrl = process.env.NEXT_PUBLIC_FMS_API_URL;

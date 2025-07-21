@@ -20,16 +20,6 @@
       "type": "string",
       "title": "Mapa de fondo",
       "format": "uri"
-    },
-    "formularioTipo": {
-      "type": "string",
-      "title": "Tipo de formulario",
-      "enum": ["Control de Cosecha", "Control de Emergencia", "Estado de Cultivos", "Estimacion de Rindes", "Muestreos Simplificado", "Plagas y Enfermedades"]
-    },
-    "formularioUrl": {
-      "type": "string",
-      "title": "Formulario",
-      "format": "uri"
     }
   },
   "required": ["responsable", "contratista", "comoLlegar", "mapaDeFondo", "formulario"]

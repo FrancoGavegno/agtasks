@@ -1,32 +1,34 @@
 "use client"
 
 import { useState } from "react"
-import { useForm, FormProvider } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter, useParams } from "next/navigation"
+import { 
+  useForm, 
+  FormProvider 
+} from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
-  // CardDescription,
   CardFooter,
   CardHeader,
-  // CardTitle
 } from "@/components/ui/card"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { 
+  ChevronLeft, 
+  ChevronRight 
+} from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import Step1Protocol from "./step1-protocol"
 import Step2Lots from "./step2-lots"
 import Step3Tasks from "./step3-tasks"
 import {
   serviceFormSchema,
-  // tasksArraySchema,
-  // fieldsArraySchema,
   type ServiceFormFullValues,
   type TaskFormValues,
   type FieldFormValues,
   type TaskFieldFormValues,
-} from "./validation-schemas"
+} from "@/lib/schemas"
 import { ServiceFormProvider } from "@/lib/contexts/service-form-context"
 import {
   generateDescriptionField,
@@ -39,9 +41,9 @@ import {
   createService,
   createField,
   createTask,
-  createTaskField
+  createTaskField,
+  updateTask,
 } from "@/lib/services/agtasks"
-// import { json } from "stream/consumers"
 
 const defaultValues: ServiceFormFullValues = {
   name: "",
@@ -152,20 +154,20 @@ export default function CreateService({ userEmail }: Props) {
     setShouldScrollToTop(true)
   }
 
-  // 1. Crear Service en JIRA
+  // Crear Service en JIRA
   async function createServiceInJiraOnly(serviceName: string, description: string, userEmail: string, serviceDeskId: string, requestTypeId: string) {
     // Solo crea el Service en JIRA y retorna el issueKey
     return await createServiceInJira(serviceName, description, userEmail, serviceDeskId, requestTypeId)
   }
 
-  // 2. Crear Service en DB
+  // Crear Service en DB
   async function createServiceInDB(data: ServiceFormFullValues): Promise<string> {
     const response = await createService(data)
     if (!response) throw new Error("Failed to create service in DB")
     return response.id as string
   }
 
-  // 3. Crear Fields en DB 
+  // Crear Fields en DB 
   async function createServiceFieldsInDB(lots: FieldFormValues[]) {
     const createdFields = await Promise.all(lots.map(async (field, idx) => {
       try {
@@ -192,7 +194,7 @@ export default function CreateService({ userEmail }: Props) {
     return createdFields; // array de field IDs
   }
 
-  // 4. Crear Tasks en DB
+  // Crear Tasks en DB
   async function createServiceTasksInDB(tasks: TaskFormValues[]) {
     const createdTasks = await Promise.all(tasks.map(async (task, idx) => {
       try {
@@ -216,7 +218,7 @@ export default function CreateService({ userEmail }: Props) {
     return createdTasks; // array de field IDs
   }
 
-  // 5. Crear Subtasks en JIRA (en orden) y devolver los keys
+  // Crear Subtasks en JIRA (en orden) y devolver los keys
   async function createSubtasksInJira(
     issueKey: string, 
     tasks: any[], 
@@ -245,7 +247,7 @@ export default function CreateService({ userEmail }: Props) {
     return subtaskKeys;
   }
 
-  // 7. Asociar cada Field a cada Task mediante TaskField
+  // Asociar cada Field a cada Task mediante TaskField
   async function associateFieldsToTasks(taskIds: string[], fieldIds: string[]) {
     await Promise.all(taskIds.flatMap(taskId =>
       fieldIds.map(fieldId => {
@@ -274,7 +276,7 @@ export default function CreateService({ userEmail }: Props) {
         requestTypeId = response.requestTypeId;
       }
 
-      // 1. Crear Service en JIRA
+      // Crear Service en JIRA
       const jiraResponse = await createServiceInJiraOnly(
         serviceName,
         description,
@@ -287,7 +289,7 @@ export default function CreateService({ userEmail }: Props) {
       }
       const { issueKey } = jiraResponse.data;
 
-      // 2. Crear Service en DB
+      // Crear Service en DB
       const serviceId = await createServiceInDB({ 
           ...data,
           projectId: project as string,
@@ -295,10 +297,10 @@ export default function CreateService({ userEmail }: Props) {
           name: serviceName,
         });
 
-      // 3. Crear Fields en DB
+      // Crear Fields en DB
       const fieldIds = await createServiceFieldsInDB(data.fields);
 
-      // 4. Crear Tasks en DB
+      // Crear Tasks en DB (sin subtaskId)
       const tasks: TaskFormValues[] = (data.tasks || []).map((task: any) => ({
         ...task,
         projectId: project as string,
@@ -306,7 +308,7 @@ export default function CreateService({ userEmail }: Props) {
       }));
       const taskIds = await createServiceTasksInDB(tasks);
 
-      // 5. Crear Subtasks en JIRA y obtener los keys
+      // Crear Subtasks en JIRA y obtener los keys
       const subtaskKeys = await createSubtasksInJira(
         issueKey, 
         tasks, 
@@ -316,17 +318,13 @@ export default function CreateService({ userEmail }: Props) {
         project as string
       );
 
-      // 6. Asignar los keys a las tareas y guardar en DB
-      const tasksWithSubtaskId: TaskFormValues[] = tasks.map((task, idx) => ({
-        ...task,
-        subtaskId: subtaskKeys[idx],
-        projectId: project as string,
-        serviceId: serviceId,
-      }));
-      const taskIdsDB = await createServiceTasksInDB(tasksWithSubtaskId);
+      // Actualizar las tasks con el subtaskId de Jira
+      await Promise.all(taskIds.map((taskId, idx) =>
+        updateTask(taskId, { subtaskId: subtaskKeys[idx] })
+      ));
 
-      // 7. Asociar cada Field a cada Task mediante TaskField
-      await associateFieldsToTasks(taskIdsDB, fieldIds);
+      // Asociar cada Field a cada Task mediante TaskField
+      await associateFieldsToTasks(taskIds, fieldIds);
 
       toast({
         title: "Servicio creado exitosamente",

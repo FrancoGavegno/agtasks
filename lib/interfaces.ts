@@ -126,6 +126,7 @@ export interface Task {
   deleted?: boolean
   formId?: string
   taskFields?: TaskField[]
+  createdAt?: string 
 }
 
 export interface Field {

@@ -23,30 +23,20 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsRight,
+  SquareArrowOutUpRight,
 } from "lucide-react"
-import type {  
-  Service, 
-  Task 
-} from "@/lib/interfaces"
-import { useToast } from "@/hooks/use-toast"
-import { listTasksByProject, listServicesByProject } from "@/lib/services/agtasks"
 
-// Utilidad para limpiar y tipar correctamente los tasks
-function cleanTask(raw: any): Task {
-  return {
-    id: raw.id,
-    projectId: raw.projectId ?? undefined,
-    serviceId: raw.serviceId ?? undefined,
-    tmpSubtaskId: raw.tmpSubtaskId,
-    subtaskId: raw.subtaskId ?? undefined,
-    taskName: raw.taskName,
-    taskType: raw.taskType ?? undefined,
-    taskData: raw.taskData ?? undefined,
-    userEmail: raw.userEmail,
-    deleted: raw.deleted ?? undefined,
-    taskFields: Array.isArray(raw.taskFields) ? raw.taskFields : undefined,
-  }
-}
+import type { Schema } from "@/amplify/data/resource"
+import { format } from 'date-fns'
+
+type Service = Schema["Service"]["type"]
+type Task = Schema["Task"]["type"]
+
+import { useToast } from "@/hooks/use-toast"
+import { 
+  listTasksByProject, 
+  listServicesByProject 
+} from "@/lib/services/agtasks"
 
 export function TasksPageDetails() {
   const params = useParams()
@@ -69,22 +59,21 @@ export function TasksPageDetails() {
     try {
       setLoading(true)
       setError(null)
+      
       // 1. Obtener todos los servicios del proyecto usando función centralizada
       const servicesData = await listServicesByProject(projectId)
-      // Asegurarse de que cada servicio tenga un projectId de tipo string o undefined
-      const cleanedServices: Service[] = servicesData.map((service: any) => ({
-        ...service,
-        projectId: service.projectId ?? undefined,
-      }))
-      const sortedServices: Service[] = [...cleanedServices].sort((a, b) => {
+      setServices(servicesData as Service[])
+
+      // 2. Obtener todas las tareas del proyecto usando listTasksByProject
+      const tasksData = await listTasksByProject(projectId)
+      const sortedTasks: Task[] = [...tasksData].sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt ?? '').getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt ?? '').getTime() : 0;
         return dateB - dateA;
       })
-      setServices(sortedServices)
-      // 2. Obtener todas las tareas del proyecto usando listTasksByProject
-      const tasksData = await listTasksByProject(projectId)
-      setTasks(tasksData.map(cleanTask))
+      
+      //setTasks(tasksData.map(cleanTask))
+      setTasks(sortedTasks as Task[])
     } catch (err) {
       setError(`Error al cargar tareas: ${err instanceof Error ? err.message : "Error desconocido"}`)
       setServices([])
@@ -107,32 +96,34 @@ export function TasksPageDetails() {
     }
   }, [projectId, domainId])
 
+  // Reset página al cambiar búsqueda o filtro
   useEffect(() => {
     setPage(1)
   }, [searchQuery, selectedService])
 
   // Filtrar tareas según búsqueda (sin filtrar por servicio)
   const filteredTasks = tasks.filter(task => {
-    if (!searchQuery) return true
-    const q = searchQuery.toLowerCase()
+    // Si el filtro de servicio está activo, solo mostrar tasks de ese servicio
+    if (selectedService !== "all" && !task.serviceId?.includes(selectedService)) {
+      return false;
+    }
+    // Filtro de búsqueda general
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
     return (
+      task.subtaskId?.toLowerCase().includes(q) ||
       task.taskName?.toLowerCase().includes(q) ||
       task.taskType?.toLowerCase().includes(q) ||
-      task.userEmail?.toLowerCase().includes(q)
-    )
-  })
+      task.userEmail?.toLowerCase().includes(q) ||
+      task.createdAt?.toLowerCase().includes(q)
+    );
+  });
 
   // Paginación
   const totalPages = Math.ceil(filteredTasks.length / rowsPerPage)
   const startIndex = (page - 1) * rowsPerPage
-  const paginatedTasks = filteredTasks.slice(startIndex, startIndex + rowsPerPage)
-
-  // Reset página al cambiar búsqueda o filtro
-  useEffect(() => {
-    setPage(1)
-  }, [searchQuery, selectedService])
-
-  const displayedTasks = paginatedTasks
+  const displayedTasks = filteredTasks.slice(startIndex, startIndex + rowsPerPage)
+  // const displayedTasks = paginatedTasks
 
   if (loading && !refreshing) {
     return <div className="flex justify-center items-center h-64">Cargando tareas...</div>
@@ -153,7 +144,6 @@ export function TasksPageDetails() {
     return (
       <div className="text-center h-64 flex flex-col items-center justify-center">
         <p className="text-lg text-muted-foreground mb-4">No hay tareas disponibles</p>
-        {/* Aquí podrías agregar un botón para crear tarea si aplica */}
       </div>
     )
   }
@@ -172,21 +162,24 @@ export function TasksPageDetails() {
           />
         </div>
         <div className="flex gap-2">
+          
+          {/* Services Selector */}
           <select
             className="border rounded px-2 py-1 text-sm"
             value={selectedService}
             onChange={e => setSelectedService(e.target.value)}
-            disabled
           >
             <option value="all">Todas las tareas</option>
             {services.map(service => (
               <option key={service.id} value={service.id}>{service.name}</option>
             ))}
           </select>
+          
           <Button onClick={handleRefresh} variant="outline" disabled={refreshing}>
             <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
             Actualizar
           </Button>
+
           <Link href={`/domains/${domainId}/projects/${projectId}/tasks/create`}>
             <Button type="button" variant="default">
               + Crear Tarea
@@ -203,7 +196,8 @@ export function TasksPageDetails() {
               <TableHead>Summary</TableHead>
               <TableHead>Task Type</TableHead>
               <TableHead>Assigned to</TableHead>
-              <TableHead>Service</TableHead>
+              <TableHead>Created</TableHead>
+              {/* <TableHead>Service</TableHead>*/}
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -220,13 +214,27 @@ export function TasksPageDetails() {
                 return (
                   <TableRow key={task.id}>
                     <TableCell>{task.subtaskId}</TableCell>
-                    <TableCell>{task.taskName}</TableCell>
+                    <TableCell className="flex flex-col flex-1">
+                      {task.taskName}
+                      <span className="text-xs text-gray-400">
+                      {service ? service.name : "(Sin servicio asociado)"}
+                      </span>
+                    </TableCell>
                     <TableCell>{task.taskType || "-"}</TableCell>
                     <TableCell>{task.userEmail}</TableCell>
-                    <TableCell>{service ? service.name : "(Sin servicio)"}</TableCell>
+                    <TableCell>{task.createdAt ? format(new Date(task.createdAt), 'dd/MM/yyyy') : '-'}</TableCell>
+                    {/* <TableCell>{service ? service.name : "(Sin servicio asociado)"}</TableCell> */}
                     <TableCell>
-                      {/* Acciones, links, etc. */}
-                    </TableCell>
+                    {task.subtaskId ? (
+                      <Link
+                        target="_blank"
+                        href={`${process.env.NEXT_PUBLIC_JIRA_API_URL}/browse/${task.subtaskId}`}
+                        className="inline-flex items-center gap-1 text-primary hover:underline"
+                      >
+                        <SquareArrowOutUpRight className="h-4 w-4" />
+                      </Link>
+                    ) : null}
+                  </TableCell>
                   </TableRow>
                 )
               })

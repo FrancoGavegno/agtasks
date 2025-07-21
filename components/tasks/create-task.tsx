@@ -1,17 +1,31 @@
 "use client"
 
 import { useState } from "react"
-import { useForm, FormProvider } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter, useParams } from "next/navigation"
+import { 
+  useForm, 
+  FormProvider 
+} from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { 
+  Card, 
+  CardContent, 
+  CardFooter, 
+  CardHeader 
+} from "@/components/ui/card"
+import { 
+  ChevronLeft, 
+  ChevronRight 
+} from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import Step1TaskType from "./step1-task-type"
 import Step2Lots from "./step2-lots"
 import Step3Details from "./step3-details"
-import { createTaskStepperSchema, type CreateTaskStepperFormValues } from "./validation-schemas"
+import { 
+  createTaskStepperSchema, 
+  type CreateTaskStepperFormValues 
+} from "@/lib/schemas"
 import { createTask } from "@/lib/services/agtasks"
 import { createSubtask } from "@/lib/integrations/jira"
 
@@ -49,7 +63,17 @@ function StepperBubbles({ currentStep }: { currentStep: number }) {
   )
 }
 
-export default function CreateTaskStepper({ projectId, userEmail, services, projectName }: { projectId: string, userEmail: string, services: any[], projectName: string }) {
+export default function CreateTaskStepper({ 
+  projectId, 
+  userEmail, 
+  services, 
+  projectName 
+}: { 
+  projectId: string, 
+  userEmail: string, 
+  services: any[], 
+  projectName: string 
+}) {
   const router = useRouter()
   const params = useParams()
   const [currentStep, setCurrentStep] = useState(1)

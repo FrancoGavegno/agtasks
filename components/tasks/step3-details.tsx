@@ -1,10 +1,20 @@
 "use client"
+
+import { 
+  useEffect, 
+  useState 
+} from "react"
+import { useParams } from "next/navigation"
 import { useFormContext } from "react-hook-form"
-import { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useParams } from "next/navigation"
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select"
 import { listUsersByDomain } from "@/lib/integrations/360"
 import { User } from "@/lib/interfaces"
 import ReactSelect, { SingleValue } from 'react-select'
@@ -68,7 +78,7 @@ export default function Step3Details({ services, projectName }: { services: any[
           </SelectContent>
         </Select>
       </div>
-      <div>
+      <div className="text-sm">
         <Label>Usuario asignado *</Label>
         <ReactSelect
           classNamePrefix="react-select"

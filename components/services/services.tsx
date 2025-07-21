@@ -107,9 +107,9 @@ export function ServicesPageDetails() {
     if (!searchQuery) return true
     const q = searchQuery.toLowerCase()
     return (
+      service.requestId?.toLowerCase().includes(q) ||
       service.name?.toLowerCase().includes(q) ||
-      service.tmpRequestId?.toLowerCase().includes(q) ||
-      service.requestId?.toLowerCase().includes(q)
+      service.createdAt?.toLowerCase().includes(q)
     )
   })
 

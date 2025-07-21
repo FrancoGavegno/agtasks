@@ -1,6 +1,8 @@
 "use server"
 
-import axios, { type AxiosError, type AxiosResponse } from "axios"
+import axios, 
+{ type AxiosError, 
+  type AxiosResponse } from "axios"
 import type {
   JiraCustomerData,
   QueueIssueResponse,
@@ -9,8 +11,10 @@ import type {
   JiraServiceResponse,
   JiraSubtaskResponse,
 } from "@/lib/interfaces"
-
-import { type ServiceFormFullValues, type FieldFormValues } from "@/components/services/validation-schemas"
+import {
+   type ServiceFormFullValues, 
+   type FieldFormValues 
+  } from "@/lib/schemas"
 
 // Interfaces 
 interface JiraStatus {

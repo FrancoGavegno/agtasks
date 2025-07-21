@@ -1,9 +1,12 @@
 "use client"
 
+import { 
+  useState, 
+  useEffect 
+} from "react"
 import { useFormContext } from "react-hook-form"
-import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
-import type { TaskFormValues } from "./validation-schemas"
+// import type { TaskFormValues } from "@/lib/schemas"
 import { useServiceForm } from "@/lib/contexts/service-form-context"
 import { User } from "@/lib/interfaces"
 import { listUsersByDomain } from "@/lib/integrations/360"
@@ -73,17 +76,6 @@ export default function Step3Tasks() {
     }
     fetchForms()
   }, [domainId])
-  
-  // Eliminar este useEffect:
-  // useEffect(() => {
-  //   if (tasks && tasks.length > 0) {
-  //     const fixed = (tasks as any[]).map((t: any) => ({
-  //       ...t,
-  //       formId: typeof t.formId === "string" ? t.formId : "",
-  //     }))
-  //     form.setValue("tasks", fixed, { shouldValidate: false })
-  //   }
-  // }, [tasks])
 
   const getFieldError = (index: number, field: "userEmail") => {
     // Solo mostrar errores si el campo ha sido tocado o si se ha intentado enviar el formulario
@@ -146,12 +138,6 @@ export default function Step3Tasks() {
               >
                 Formulario
               </th>
-              {/* <th
-                scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Rol
-              </th> */}
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"

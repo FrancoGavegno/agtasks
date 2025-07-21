@@ -10,7 +10,6 @@ import {
   FormControl, 
   FormField, 
   FormItem, 
-  FormLabel, 
   FormMessage 
 } from "@/components/ui/form"
 import { 
@@ -21,7 +20,7 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 import { useParams } from "next/navigation"
-import type { TaskFormValues } from "./validation-schemas"
+import type { TaskFormValues } from "@/lib/schemas"
 import { useServiceForm } from "@/lib/contexts/service-form-context"
 import { Protocol } from "@/lib/interfaces"
 import { listDomainProtocols } from "@/lib/services/agtasks"

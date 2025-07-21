@@ -1,8 +1,8 @@
-import { Amplify } from "aws-amplify";
-import outputs from "@/amplify_outputs.json";
-import { generateClient } from "aws-amplify/api";
-import { type Schema } from "@/amplify/data/resource";
-import { ServiceFormFullValues } from "@/components/services/validation-schemas";
+import { Amplify } from "aws-amplify"
+import outputs from "@/amplify_outputs.json"
+import { generateClient } from "aws-amplify/api"
+import { type Schema } from "@/amplify/data/resource"
+import { ServiceFormFullValues, TaskFormValues } from "@/lib/schemas"
 
 // Amplify configuration - Singleton Client
 let clientInstance: ReturnType<typeof generateClient<Schema>> | null = null;
@@ -115,7 +115,7 @@ export async function deleteDomainForm(domainId: string, formId: string) {
   }
 }
 
-export async function listDomainForms(domainId: string) {
+export async function listDomainForms(domainId: string): Promise<Schema["DomainForm"]["type"][]> {
   try {
     const client = getClient();
     const response: { data: Schema["DomainForm"]["type"][]; nextToken?: string | null; errors?: any[] } = await client.models.DomainForm.list({
@@ -321,17 +321,7 @@ export async function createTask(data: {
 /**
  * Actualiza un Task existente
  */
-export async function updateTask(id: string, data: Partial<{
-  projectId?: string
-  serviceId?: string
-  tmpSubtaskId?: string
-  subtaskId?: string
-  taskName?: string
-  taskType?: string
-  taskData?: any
-  userEmail?: string
-  deleted?: boolean
-}>) {
+export async function updateTask(id: string, data: Partial<TaskFormValues>) {
   const client = getClient();
   const response = await client.models.Task.update({ id, ...data });
   return response.data;

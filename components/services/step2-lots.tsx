@@ -1,16 +1,37 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import { useFormContext } from "react-hook-form"
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import type { FieldFormValues } from "./validation-schemas"
+import { 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from "@/components/ui/form"
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select"
+import type { FieldFormValues } from "@/lib/schemas"
 import { useServiceForm } from "@/lib/contexts/service-form-context"
-import { listWorkspaces, listSeasons, listFarms, listFields } from "@/lib/integrations/360"
-import type { Workspace, Season, Farm, LotField, Project } from "@/lib/interfaces"
-import * as React from "react"
+import { 
+  listWorkspaces, 
+  listSeasons, 
+  listFarms, 
+  listFields 
+} from "@/lib/integrations/360"
+import type { 
+  Workspace, 
+  Season, 
+  Farm, 
+  LotField
+} from "@/lib/interfaces"
 import { getProject } from "@/lib/services/agtasks"
 
 interface Props {
@@ -69,7 +90,6 @@ export default function Step2Lots({ userEmail }: Props) {
         setAreaId(Number(projectData.areaId));
       }
     }
-
     fetchProject(project)
   }, [project])
 
@@ -78,8 +98,6 @@ export default function Step2Lots({ userEmail }: Props) {
     const fetchWorkspaces = async () => {
       try {
         setWorkspacesLoading(true)
-
-        // console.log("listWorkspaces: ", userEmail, domainId, areaId)
         const workspacesData = await listWorkspaces(userEmail, domainId, areaId)
         // Filtrar workspaces no eliminados y ordenar alfabéticamente
         const filteredAndSorted = workspacesData

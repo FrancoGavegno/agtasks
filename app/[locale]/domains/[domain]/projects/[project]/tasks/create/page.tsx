@@ -5,7 +5,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import CreateTaskStepper from "@/components/tasks/create-task-stepper"
+import CreateTaskStepper from "@/components/tasks/create-task"
 import { Link } from "@/i18n/routing"
 import { cookies } from 'next/headers'
 import { 
