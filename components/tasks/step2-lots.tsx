@@ -29,7 +29,7 @@ import type {
   Season,
   Farm,
   LotField
-} from "@/lib/interfaces"
+} from "@/lib/interfaces/360"
 import { getProject } from "@/lib/services/agtasks"
 
 interface Props {
@@ -97,19 +97,10 @@ export default function Step2Lots({ userEmail }: Props) {
         setWorkspacesLoading(true)
         // console.log(userEmail, domainId, areaId)
         const workspacesData = await listWorkspaces(userEmail, domainId, areaId)
-
-        console.log("workspacesData: ", workspacesData)
-
         const filteredAndSorted = workspacesData
           .filter((workspace) => workspace.deleted === false)
           .sort((a, b) => a.name.localeCompare(b.name))
-
-        console.log("filteredAndSorted: ", filteredAndSorted)
-
         setWorkspaces(filteredAndSorted)
-
-
-
         setWorkspacesError(null)
       } catch (error) {
         console.error("Error fetching workspaces:", error)
@@ -190,18 +181,16 @@ export default function Step2Lots({ userEmail }: Props) {
     form.setValue("establishment", "", { shouldValidate: true })
     form.setValue("establishmentName", "", { shouldValidate: true })
     form.setValue("selectedLots", [], { shouldValidate: true })
-    form.setValue("selectedLotsNames", {}, { shouldValidate: true })
   }
 
   const handleCampaignChange = (value: string) => {
-    const selectedCampaign = seasons.find((season) => season.id.toString() === value)
-    const campaignName = selectedCampaign ? selectedCampaign.name : ""
+    const selectedSeason = seasons.find((season) => season.id.toString() === value)
+    const campaignName = selectedSeason ? selectedSeason.name : ""
     form.setValue("campaign", value, { shouldValidate: true })
     form.setValue("campaignName", campaignName, { shouldValidate: true })
     form.setValue("establishment", "", { shouldValidate: true })
     form.setValue("establishmentName", "", { shouldValidate: true })
     form.setValue("selectedLots", [], { shouldValidate: true })
-    form.setValue("selectedLotsNames", {}, { shouldValidate: true })
   }
 
   const handleEstablishmentChange = (value: string) => {
@@ -210,7 +199,6 @@ export default function Step2Lots({ userEmail }: Props) {
     form.setValue("establishment", value, { shouldValidate: true })
     form.setValue("establishmentName", establishmentName, { shouldValidate: true })
     form.setValue("selectedLots", [], { shouldValidate: true })
-    form.setValue("selectedLotsNames", {}, { shouldValidate: true })
   }
 
   const handleLotSelection = (lotId: string) => {
@@ -249,6 +237,12 @@ export default function Step2Lots({ userEmail }: Props) {
         hectares: selectedField.hectares,
         cropName: selectedField.cropName,
         hybridName: selectedField.hybridName || "",
+        workspaceId: workspace || "",
+        workspaceName: workspaces.find(w => w.id.toString() === workspace)?.name || "",
+        campaignId: campaign || "",
+        campaignName: seasons.find(s => s.id.toString() === campaign)?.name || "",
+        farmId: establishment || "",
+        farmName: farms.find(f => f.id.toString() === establishment)?.name || "",
       }))
       form.setValue("selectedLots", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
     }

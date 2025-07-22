@@ -6,7 +6,8 @@ import { AppSidebar } from "@/components/sidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { listDomainsByUserEmail } from "@/lib/integrations/360";
 import { listProjectsByDomain } from "@/lib/services/agtasks";
-import { Domain, Project } from "@/lib/interfaces";
+import { Domain } from "@/lib/interfaces/360";
+import { Project } from "@/lib/interfaces/agtasks";
 import { useParams } from "next/navigation";
 
 export default function ClientLayoutWithDomainProject({ userEmail, children }: { userEmail: string, children: React.ReactNode }) {

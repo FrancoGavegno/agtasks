@@ -8,11 +8,11 @@ import {
   type ReactNode 
 } from "react"
 import { useParams } from "next/navigation"
-import type { 
+import { User } from "@/lib/interfaces/360"
+import { 
   Protocol, 
-  Form, 
-  User 
-} from "@/lib/interfaces"
+  Form
+} from "@/lib/interfaces/agtasks"
 import { listUsersByDomain } from "@/lib/integrations/360"
 import { listAssets } from "@/lib/integrations/kobotoolbox"
 import { 
@@ -20,7 +20,6 @@ import {
   listDomainForms 
 } from "@/lib/services/agtasks"
 
-// Interfaz genérica para el contexto de configuraciones
 interface SettingsContextType {
   protocols: Protocol[]
   allProtocols: Protocol[]

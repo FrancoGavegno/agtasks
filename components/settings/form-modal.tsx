@@ -12,7 +12,7 @@ import {
   createDomainForm, 
   deleteDomainForm 
 } from '@/lib/services/agtasks'
-import type { Form } from "@/lib/interfaces"
+import type { Form } from "@/lib/interfaces/agtasks"
 // import { listDomainForms } from "@/lib/services/agtasks"
 
 interface FormModalProps {

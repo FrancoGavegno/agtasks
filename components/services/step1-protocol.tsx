@@ -22,7 +22,7 @@ import {
 import { useParams } from "next/navigation"
 import type { TaskFormValues } from "@/lib/schemas"
 import { useServiceForm } from "@/lib/contexts/service-form-context"
-import { Protocol } from "@/lib/interfaces"
+import { Protocol } from "@/lib/interfaces/agtasks"
 import { listDomainProtocols } from "@/lib/services/agtasks"
 
 interface Props {

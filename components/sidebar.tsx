@@ -2,16 +2,14 @@
 
 import { Link } from "@/i18n/routing"
 import { useTranslations } from 'next-intl'
-import { useParams } from 'next/navigation'
+// import { useParams } from 'next/navigation'
 import { usePathname } from 'next/navigation'
 import {
-  Settings,
+  // Settings,
   LayoutList
 } from "lucide-react"
-import {
-  Domain,
-  Project
-} from "@/lib/interfaces"
+import { Domain } from "@/lib/interfaces/360"
+import { Project } from "@/lib/interfaces/agtasks"
 
 interface Props {
   user: string

@@ -31,7 +31,7 @@ import type {
   Season, 
   Farm, 
   LotField
-} from "@/lib/interfaces"
+} from "@/lib/interfaces/360"
 import { getProject } from "@/lib/services/agtasks"
 
 interface Props {

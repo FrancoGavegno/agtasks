@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2, Search } from "lucide-react"
 import { useSettings } from "@/lib/contexts/settings-context"
 import { Badge } from "@/components/ui/badge"
-import type { Form } from "@/lib/interfaces"
+import type { Form } from "@/lib/interfaces/agtasks"
 
 export default function Forms() {
   const { forms, allForms, selectedForms, formsLoading, setSelectedForms, refreshForms } = useSettings()

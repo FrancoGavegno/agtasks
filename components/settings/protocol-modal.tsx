@@ -12,7 +12,7 @@ import {
   createDomainProtocol, 
   deleteDomainProtocol 
 } from '@/lib/services/agtasks'
-import type { Protocol } from "@/lib/interfaces"
+import type { Protocol } from "@/lib/interfaces/agtasks"
 // import { listDomainProtocols } from "@/lib/services/agtasks"
 
 interface ModalProtocolsProps {

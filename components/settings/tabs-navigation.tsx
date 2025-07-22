@@ -11,7 +11,7 @@ import Protocols from "./protocols"
 import Users from "./users"
 import Forms from "./forms"
 import { SettingsProvider } from "@/lib/contexts/settings-context"
-import type { Project } from '@/lib/interfaces'
+import type { Project } from '@/lib/interfaces/agtasks'
 
 interface TabsNavigationProps {
   selectedProject?: Project

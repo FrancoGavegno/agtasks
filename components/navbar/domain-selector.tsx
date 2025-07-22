@@ -16,7 +16,8 @@ import {
   PopoverContent,
   PopoverTrigger
 } from "@/components/ui/popover"
-import { Domain, Project } from "@/lib/interfaces"
+import { Domain } from "@/lib/interfaces/360"
+import { Project } from "@/lib/interfaces/agtasks"
 import { Link } from "@/i18n/routing"
 
 interface Props {

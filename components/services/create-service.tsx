@@ -1,7 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter, useParams } from "next/navigation"
+import { 
+  useRouter, 
+  useParams 
+} from "next/navigation"
 import { 
   useForm, 
   FormProvider 
@@ -132,9 +135,9 @@ export default function CreateService({ userEmail }: Props) {
       case 3:
         isValid = await methods.trigger("tasks");
         if (!isValid) {
-          const errorMsg = methods.formState.errors.tasks?.message || "Todas las tareas deben tener un usuario asignado";
+          const errorMsg = methods.formState.errors.tasks?.message || "Todas las tareas deben estar completas";
           toast({
-            title: "Asignación incompleta",
+            title: "Formulario incompleto",
             description: errorMsg,
             variant: "destructive",
           });
@@ -154,9 +157,13 @@ export default function CreateService({ userEmail }: Props) {
     setShouldScrollToTop(true)
   }
 
+  const goToServicesList = () => {
+    router.push(`/${locale}/domains/${domain}/projects/${project}/services`)
+  }
+
   // Crear Service en JIRA
   async function createServiceInJiraOnly(serviceName: string, description: string, userEmail: string, serviceDeskId: string, requestTypeId: string) {
-    // Solo crea el Service en JIRA y retorna el issueKey
+    // Crea el Service en JIRA y retorna el issueKey
     return await createServiceInJira(serviceName, description, userEmail, serviceDeskId, requestTypeId)
   }
 
@@ -256,7 +263,7 @@ export default function CreateService({ userEmail }: Props) {
       })
     ));
   }
-
+  
   const onSubmit = async (data: any) => {
     try {
       setIsSubmitting(true);
@@ -345,20 +352,7 @@ export default function CreateService({ userEmail }: Props) {
     }
   }
 
-  // Función para reiniciar el formulario 
-  // const createNewService = () => {
-  //   // Reiniciar el formulario
-  //   methods.reset(defaultValues)
-  //   // Reiniciar el paso
-  //   setCurrentStep(1)
-  //   // Ocultar el mensaje de éxito
-  //   setIsSuccess(false)
-  // }
-
-  // Añadir una función para volver a la lista de servicios
-  const goToServicesList = () => {
-    router.push(`/${locale}/domains/${domain}/projects/${project}/services`)
-  }
+  
 
   return (
     <ServiceFormProvider>

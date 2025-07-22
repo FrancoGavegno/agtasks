@@ -5,7 +5,8 @@ import { Link } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
 import { LanguageSelector } from "@/components/language-selector"
 import DomainProjectSelector from "@/components/navbar/domain-selector"
-import { Domain, Project } from "@/lib/interfaces"
+import { Domain } from "@/lib/interfaces/360"
+import { Project } from "@/lib/interfaces/agtasks"
 
 interface NavbarProps {
   domains: Domain[]

@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2, Search } from "lucide-react"
 import { useSettings } from "@/lib/contexts/settings-context"
-import type { User } from "@/lib/interfaces"
+import type { User } from "@/lib/interfaces/360"
 
 export default function Users() {
   const { users, usersLoading, refreshUsers, sentInvitationEmails, setSentInvitationEmails } = useSettings()

@@ -16,7 +16,7 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 import { listUsersByDomain } from "@/lib/integrations/360"
-import { User } from "@/lib/interfaces"
+import { User } from "@/lib/interfaces/360"
 import ReactSelect, { SingleValue } from 'react-select'
 
 export default function Step3Details({ services, projectName }: { services: any[], projectName: string }) {

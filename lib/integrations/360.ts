@@ -8,7 +8,7 @@ import {
   Farm, 
   LotField, 
   User 
-} from "@/lib/interfaces";
+} from "@/lib/interfaces/360";
 
 // Validar variables de entorno al inicio
 const apiUrl = process.env.NEXT_PUBLIC_FMS_API_URL;

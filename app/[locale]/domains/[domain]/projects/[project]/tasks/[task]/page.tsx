@@ -6,7 +6,7 @@ import {
 } from "react"
 import { useParams } from "next/navigation"
 import type { FieldSchema } from "@/components/dynamic-form/types"
-import { Task } from "@/lib/interfaces"
+import { Task } from "@/lib/interfaces/agtasks"
 import {
     getTask,
     updateTask

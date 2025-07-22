@@ -8,11 +8,11 @@ import { useFormContext } from "react-hook-form"
 import { useParams } from "next/navigation"
 // import type { TaskFormValues } from "@/lib/schemas"
 import { useServiceForm } from "@/lib/contexts/service-form-context"
-import { User } from "@/lib/interfaces"
+import { User } from "@/lib/interfaces/360"
 import { listUsersByDomain } from "@/lib/integrations/360"
 import ReactSelect, { SingleValue } from 'react-select'
 import { listDomainForms } from "@/lib/services/agtasks"
-import type { Form as DomainForm } from "@/lib/interfaces"
+import type { Form as DomainForm } from "@/lib/interfaces/agtasks"
 
 export default function Step3Tasks() {
   const { domain } = useParams<{ domain: string }>()
