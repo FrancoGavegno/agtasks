@@ -25,6 +25,7 @@ import {
   ChevronsRight,
   SquareArrowOutUpRight,
   Plus,
+  Edit,
 } from "lucide-react"
 
 import type { Schema } from "@/amplify/data/resource"
@@ -63,7 +64,13 @@ export function TasksPageDetails() {
 
       // 1. Obtener todos los servicios del proyecto usando función centralizada
       const servicesData = await listServicesByProject(projectId)
-      setServices(servicesData as Service[])
+      // Ordenar servicios por requestId descendente
+      const sortedServices = [...servicesData].sort((a, b) => {
+        const requestIdA = a.requestId || '';
+        const requestIdB = b.requestId || '';
+        return requestIdB.localeCompare(requestIdA);
+      });
+      setServices(sortedServices as Service[])
 
       // 2. Obtener todas las tareas del proyecto usando listTasksByProject
       const tasksData = await listTasksByProject(projectId)
@@ -177,7 +184,7 @@ export function TasksPageDetails() {
           >
             <option value="all">Todas las tareas</option>
             {services.map(service => (
-              <option key={service.id} value={service.id}>{service.name}</option>
+              <option key={service.id} value={service.id}>{service.requestId} {service.name}</option>
             ))}
           </select>
 
@@ -231,15 +238,23 @@ export function TasksPageDetails() {
                     <TableCell>{task.createdAt ? format(new Date(task.createdAt), 'dd/MM/yyyy') : '-'}</TableCell>
                     {/* <TableCell>{service ? service.name : "(Sin servicio asociado)"}</TableCell> */}
                     <TableCell>
-                      {task.subtaskId ? (
+                      <div className="flex items-center gap-2">
                         <Link
-                          target="_blank"
-                          href={`${process.env.NEXT_PUBLIC_JIRA_API_URL}/browse/${task.subtaskId}`}
+                          href={`/domains/${domainId}/projects/${projectId}/tasks/${task.id}`}
                           className="inline-flex items-center gap-1 text-primary hover:underline"
                         >
-                          <SquareArrowOutUpRight className="h-4 w-4" />
+                          <Edit className="h-4 w-4" />
                         </Link>
-                      ) : null}
+                        {task.subtaskId ? (
+                          <Link
+                            target="_blank"
+                            href={`${process.env.NEXT_PUBLIC_JIRA_API_URL}/browse/${task.subtaskId}`}
+                            className="inline-flex items-center gap-1 text-primary hover:underline"
+                          >
+                            <SquareArrowOutUpRight className="h-4 w-4" />
+                          </Link>
+                        ) : null}
+                      </div>
                     </TableCell>
                   </TableRow>
                 )

@@ -307,16 +307,50 @@ export async function createTask(data: {
   taskName: string
   taskType: string
   userEmail: string
-  taskData?: string
+  taskData?: any
   projectId?: string
   serviceId?: string
   formId?: string
   tmpSubtaskId?: string
   subtaskId?: string
 }) {
-  const client = getClient();
-  const response = await client.models.Task.create(data);
-  return response.data;
+  try {
+    const client = getClient();
+    
+    // Limpiar datos antes de enviar a Amplify
+    const cleanData = {
+      ...data,
+      // Remover serviceId si es string vacío o undefined
+      ...(data.serviceId && data.serviceId.trim() !== "" ? { serviceId: data.serviceId } : {}),
+      // Remover formId si es string vacío
+      ...(data.formId && data.formId.trim() !== "" ? { formId: data.formId } : {}),
+      // Remover tmpSubtaskId si es string vacío
+      ...(data.tmpSubtaskId && data.tmpSubtaskId.trim() !== "" ? { tmpSubtaskId: data.tmpSubtaskId } : {}),
+      // Remover subtaskId si es string vacío
+      ...(data.subtaskId && data.subtaskId.trim() !== "" ? { subtaskId: data.subtaskId } : {}),
+    };
+    
+    const response = await client.models.Task.create(cleanData);
+    
+    if (response.errors && response.errors.length > 0) {
+      console.error("Amplify errors:", response.errors);
+      throw new Error(`Amplify errors: ${response.errors.map((e: any) => e.message).join(', ')}`);
+    }
+    
+    if (!response.data) {
+      console.error("No data in response:", response);
+      throw new Error("No data returned from Amplify");
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error("Error creating task in Amplify:", error);
+    if (error instanceof Error) {
+      throw new Error(`Failed to create task in DB: ${error.message}`);
+    } else {
+      throw new Error(`Failed to create task in DB: ${String(error)}`);
+    }
+  }
 }
 
 /**
@@ -365,9 +399,29 @@ export async function createTaskField(data: {
   taskId: string
   fieldId: string
 }) {
-  const client = getClient();
-  const response = await client.models.TaskField.create(data);
-  return response.data;
+  try {
+    const client = getClient();
+    const response = await client.models.TaskField.create(data);
+    
+    if (response.errors && response.errors.length > 0) {
+      console.error("Amplify task field errors:", response.errors);
+      throw new Error(`Amplify task field errors: ${response.errors.map((e: any) => e.message).join(', ')}`);
+    }
+    
+    if (!response.data) {
+      console.error("No data in task field response:", response);
+      throw new Error("No data returned from Amplify for task field");
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error("Error creating task field in Amplify:", error);
+    if (error instanceof Error) {
+      throw new Error(`Failed to create task field in DB: ${error.message}`);
+    } else {
+      throw new Error(`Failed to create task field in DB: ${String(error)}`);
+    }
+  }
 }
 
 // --- FIELD CRUD ---
@@ -387,9 +441,29 @@ export async function createField(data: {
   crop?: string
   hybrid?: string
 }) {
-  const client = getClient();
-  const response = await client.models.Field.create(data);
-  return response.data;
+  try {
+    const client = getClient();
+    const response = await client.models.Field.create(data);
+    
+    if (response.errors && response.errors.length > 0) {
+      console.error("Amplify field errors:", response.errors);
+      throw new Error(`Amplify field errors: ${response.errors.map((e: any) => e.message).join(', ')}`);
+    }
+    
+    if (!response.data) {
+      console.error("No data in field response:", response);
+      throw new Error("No data returned from Amplify for field");
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error("Error creating field in Amplify:", error);
+    if (error instanceof Error) {
+      throw new Error(`Failed to create field in DB: ${error.message}`);
+    } else {
+      throw new Error(`Failed to create field in DB: ${String(error)}`);
+    }
+  }
 }
 
 /**

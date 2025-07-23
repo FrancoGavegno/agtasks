@@ -6,12 +6,12 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import CreateTaskStepper from "@/components/tasks/create-task"
-import { Link } from "@/i18n/routing"
 import { cookies } from 'next/headers'
 import { 
   getProject, 
   listServicesByProject 
 } from '@/lib/services/agtasks'
+import { Link } from "@/i18n/routing"
 
 export default async function Page({ 
   params 
@@ -53,6 +53,7 @@ export default async function Page({
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
+
       <CreateTaskStepper
         projectId={projectId}
         userEmail={userEmail}

@@ -155,12 +155,17 @@ export default function CreateTaskStepper({
   // Crear Task en DB
   async function createTaskInDB(data: any): Promise<string> {
 
+    // Limpiar y validar taskData - por ahora omitir taskData problemático
+    let cleanTaskData = null;
+    // TODO: Implementar limpieza de taskData cuando se resuelva el problema de validación de Amplify
+
     const task: TaskFormValues = {
       taskName: data.taskName,
       taskType: data.taskType,
       userEmail: data.userEmail,
-      taskData: data.taskData ? JSON.stringify(data.taskData) : null,
+      taskData: cleanTaskData,
       projectId: data.projectId,
+      serviceId: data.serviceId || undefined, // Usar undefined en lugar de string vacío
       formId: data.formId,
       tmpSubtaskId: data.tmpSubtaskId || "",
     }
@@ -189,7 +194,7 @@ export default function CreateTaskStepper({
         if (!response) throw new Error("Failed to create field in DB");
         return response.id as string;
       } catch (err) {
-        console.error('Error creando Field en DB:', { idx, error: err });
+        console.error('Error creando Field en DB:', { idx, field, error: err });
         throw err;
       }
     }));
@@ -198,9 +203,15 @@ export default function CreateTaskStepper({
 
   // Asociar cada Field a la Task mediante TaskField
   async function associateFieldsToTask(taskId: string, fieldIds: string[]) {
-    await Promise.all(fieldIds.map(fieldId => {
-      const tf: TaskFieldFormValues = { taskId, fieldId };
-      return createTaskField(tf);
+    await Promise.all(fieldIds.map(async (fieldId, idx) => {
+      try {
+        const tf: TaskFieldFormValues = { taskId, fieldId };
+        const response = await createTaskField(tf);
+        return response;
+      } catch (err) {
+        console.error('Error associating field to task:', { taskId, fieldId, error: err });
+        throw err;
+      }
     }));
   }
 
@@ -226,24 +237,40 @@ export default function CreateTaskStepper({
     
     try {
       setIsSubmitting(true);
+      
+      // Validate required fields
+      if (!data.taskName || !data.taskType || !data.userEmail) {
+        throw new Error("Missing required fields: taskName, taskType, or userEmail");
+      }
+      
+      if (!data.fields || data.fields.length === 0) {
+        throw new Error("No fields selected");
+      }
 
       // Generar la descripción
-      // const { description, descriptionPlain } = await generateDescriptionField({
-      //   name: data.taskName,
-      //   projectId: data.projectId,
-      //   protocolId: "",
-      //   tmpRequestId: "",
-      //   requestId: "",
-      //   deleted: false,
-      //   tasks: [{
-      //     taskName: data.taskName,
-      //     taskType: data.taskType,
-      //     userEmail: data.userEmail,
-      //     tmpSubtaskId: data.tmpSubtaskId || "",
-      //   }],
-      //   fields: data.fields
-      // });
+      const { description, descriptionPlain } = await generateDescriptionField({
+        name: data.taskName,
+        projectId: data.projectId,
+        protocolId: "",
+        tmpRequestId: "",
+        requestId: "",
+        deleted: false,
+        tasks: [{
+          taskName: data.taskName,
+          taskType: data.taskType,
+          userEmail: data.userEmail,
+          tmpSubtaskId: data.tmpSubtaskId || "",
+          projectId: data.projectId,
+          serviceId: data.serviceId,
+          taskData: data.taskData,
+          subtaskId: data.subtaskId,
+          deleted: false,
+          formId: data.formId,
+        }],
+        fields: data.fields
+      });
 
+      // 1. Crear Task en DB
       // 1. Crear Task en DB
       const taskId = await createTaskInDB(data);
 
@@ -257,8 +284,8 @@ export default function CreateTaskStepper({
       const jiraResponse = await createIssueInJira(
         "TAN",
         data.taskName,
-        "Descripcion de ejemplo...", // descriptionPlain,
-        data.userEmail
+        data.userEmail,
+        descriptionPlain
       );
 
       // 5. Actualizar Task con el issueKey de Jira

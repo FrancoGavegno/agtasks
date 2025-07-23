@@ -112,7 +112,16 @@ export function ServiceFormProvider({ children }: { children: ReactNode }) {
 
   // Update form values
   const updateFormValues = (values: Partial<ServiceFormContextType["formValues"]>) => {
-    setFormValues((prev) => ({ ...prev, ...values }))
+    setFormValues((prev) => {
+      // Si se están actualizando las tareas, asegurar que no haya duplicados
+      if (values.tasks && Array.isArray(values.tasks)) {
+        const uniqueTasks = values.tasks.filter((task, index, self) => 
+          index === self.findIndex((t) => t.tmpSubtaskId === task.tmpSubtaskId)
+        );
+        return { ...prev, ...values, tasks: uniqueTasks };
+      }
+      return { ...prev, ...values };
+    });
   }
 
   // Reset form

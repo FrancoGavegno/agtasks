@@ -19,8 +19,14 @@ import {
 } from "@/lib/utils"
 import { listDomainForms } from "@/lib/services/agtasks"
 import { type Schema } from "@/amplify/data/resource";
+import { Task } from "@/lib/interfaces/agtasks";
 
-export default function Step1TaskType() {
+interface Step1TaskTypeProps {
+  mode?: 'create' | 'edit'
+  initialData?: Task
+}
+
+export default function Step1TaskType({ mode = 'create', initialData }: Step1TaskTypeProps) {
   const { 
     register, 
     setValue, 
@@ -35,6 +41,27 @@ export default function Step1TaskType() {
   const taskData = watch("taskData")
   const [localTaskData, setLocalTaskData] = useState<any>(taskData || {})
   const [domainForms, setDomainForms] = useState<Schema["DomainForm"]["type"][]>([])
+  const isEditMode = mode === 'edit'
+
+  // Pre-llenar datos si es modo edición
+  useEffect(() => {
+    if (isEditMode && initialData) {
+      setValue("taskName", initialData.taskName || "")
+      setValue("taskType", initialData.taskType || "")
+      setValue("formId", initialData.formId || "")
+      if (initialData.taskData) {
+        try {
+          const parsedData = typeof initialData.taskData === 'string' 
+            ? JSON.parse(initialData.taskData) 
+            : initialData.taskData
+          setValue("taskData", parsedData)
+          setLocalTaskData(parsedData)
+        } catch (error) {
+          console.error("Error parsing task data:", error)
+        }
+      }
+    }
+  }, [isEditMode, initialData, setValue])
 
   useEffect(() => {
     async function fetchTaskTypes() {
@@ -86,7 +113,11 @@ export default function Step1TaskType() {
     <div className="space-y-4">
       <div>
         <Label>Nombre de la Tarea *</Label>
-        <Input {...register("taskName", { required: true })} />
+        <Input 
+          {...register("taskName", { required: true })} 
+          disabled={isEditMode}
+          className={isEditMode ? "bg-gray-50" : ""}
+        />
       </div>
 
       <div>
@@ -94,8 +125,9 @@ export default function Step1TaskType() {
         <Select 
           value={selectedType} 
           onValueChange={v => setValue("taskType", v)} 
+          disabled={isEditMode}
           required>
-          <SelectTrigger>
+          <SelectTrigger className={isEditMode ? "bg-gray-50" : ""}>
             <SelectValue placeholder="Selecciona un tipo de tarea" />
           </SelectTrigger>
           <SelectContent>
@@ -112,8 +144,9 @@ export default function Step1TaskType() {
           <Select 
             value={selectedForm}
             onValueChange={v => setValue("formId", v)} 
+            disabled={isEditMode}
           >
-            <SelectTrigger>
+            <SelectTrigger className={isEditMode ? "bg-gray-50" : ""}>
               <SelectValue placeholder="Selecciona un tipo de formulario" />
             </SelectTrigger>
             <SelectContent>

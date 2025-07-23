@@ -27,6 +27,14 @@ import {
 const JIRA_API_URL = process.env.NEXT_PUBLIC_JIRA_API_URL
 const JIRA_API_TOKEN = process.env.NEXT_PUBLIC_JIRA_API_TOKEN
 
+// Validate environment variables
+if (!JIRA_API_URL || !JIRA_API_TOKEN) {
+  console.error("Missing Jira API configuration:", {
+    JIRA_API_URL: !!JIRA_API_URL,
+    JIRA_API_TOKEN: !!JIRA_API_TOKEN
+  });
+}
+
 export const jiraApi = axios.create({
   baseURL: JIRA_API_URL,
   headers: {
@@ -363,12 +371,40 @@ export async function createIssue(
   summary: string,
   userEmail: string,
   description: string,
-  // agtasksUrl?: string,
-  // taskType?: string,
+  agtasksUrl?: string,
+  taskType?: string,
   serviceDeskId?: string
 ): Promise<JiraSubtaskResponse | void> {
   try {
+    // Validate required parameters
+    if (!parentIssueKey || !summary || !userEmail || !description) {
+      throw new Error("Missing required parameters for Jira issue creation");
+    }
     
+    // Reporter field 
+    let accountId: string | null = null
+
+    // Get Customer 
+    accountId = await getCustomer(userEmail);
+
+    // Create Customer If not Exist  
+    if (!accountId) {
+      const customerData: JiraCustomerData = {
+        displayName: encodeURIComponent(userEmail),
+        email: encodeURIComponent(userEmail),
+      }
+
+      const createCustomerResult = await createCustomer(customerData);
+      if (createCustomerResult && createCustomerResult.success && createCustomerResult.data && createCustomerResult.data.accountId) {
+        accountId = createCustomerResult.data.accountId;
+      } else {
+        // If customer creation failed, return or throw error
+        throw new Error(
+          `Failed to create Jira customer for ${userEmail}: ${createCustomerResult?.error || "Unknown error"}`
+        );
+      }
+    }
+
     const payload = {
       fields: {
         project: {
@@ -390,23 +426,26 @@ export async function createIssue(
             }
           ]
         },
-        // issuetype: {
-        //   name: "Sub-task"
-        // },
         issuetype: {
-          id: "10002"
+          name: "Task"
+          //id: "10002"
         },
-        // parent: {
-        //   key: parentIssueKey
-        // },
+        customfield_10338: agtasksUrl,
+        customfield_10371: taskType,
+        ...(accountId ? { reporter: { id: accountId } } : {})
       }
     }
     
     const endpoint = `${JIRA_API_URL}/rest/api/3/issue`
     const response = await jiraApi.post(endpoint, payload)
+    
+    if (!response.data) {
+      throw new Error("No response data from Jira API");
+    }
+    
     return response.data
   } catch (err) {
-    console.error("Error creating subtask:", err)
+    console.error("Error creating Jira issue:", err)
     throw err
   }
   

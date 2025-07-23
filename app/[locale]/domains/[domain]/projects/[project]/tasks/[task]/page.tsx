@@ -1,203 +1,111 @@
-"use client"
-
-import {
-    useEffect,
-    useState
-} from "react"
-import { useParams } from "next/navigation"
-import type { FieldSchema } from "@/components/dynamic-form/types"
+import { cookies } from 'next/headers'
 import { Task } from "@/lib/interfaces/agtasks"
 import {
     getTask,
-    updateTask
+    getProject,
+    listServicesByProject
 } from "@/lib/services/agtasks"
-import { DynamicForm } from "@/components/dynamic-form/dynamic-form"
+import EditTaskStepper from "@/components/task/edit-task-stepper"
 import {
-    convertJSONSchemaToFields,
-    isJSONSchema
-} from "@/components/dynamic-form/utils"
-import { toast } from "@/hooks/use-toast"
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-// import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-
-
-export default function TaskPage() {
-    const params = useParams()
-    const { locale, task } = params
-    const [loadedSchema, setLoadedSchema] = useState<FieldSchema[] | null>(null)
-    const [isLoadingSchema, setIsLoadingSchema] = useState(true)
-    const [errorSchema, setErrorSchema] = useState<string | null>(null)
-    const [taskData, setTaskData] = useState<Task>()
-
-    useEffect(() => {
-        // TO DO fetch Jira SubTask Information
-        // We'll need Reporter field information
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import { Button } from "@/components/ui/button"
+import { ArrowLeft } from "lucide-react"
+import { Link } from "@/i18n/routing"
 
 
-        // Fetch Task Information 
-        async function fetchTask(task: string) {
-            const taskData = await getTask(task)
-            if (taskData && 'externalTemplateId' in taskData && 'formData' in taskData) {
-                setTaskData({ ...taskData, taskFields: Array.isArray(taskData.taskFields) ? taskData.taskFields : [] } as Task)
-            } else {
-                setTaskData(undefined)
-            }
-            // console.log("taskData: ", taskData)
+export default async function TaskPage({ 
+    params 
+}: { 
+    params: { locale: string; domain: string; project: string; task: string } 
+}) {
+    const cookiesList = cookies();
+    const userEmail = cookiesList.get('user-email')?.value || "";
+    const taskId = Array.isArray(params.task) ? params.task[0] : params.task;
+    const domainId = params.domain;
+    const projectId = params.project;
+    
+    try {
+        // Cargar tarea
+        const taskData = await getTask(taskId);
+        if (!taskData) {
+            throw new Error("No se encontró la tarea");
         }
 
-        fetchTask(Array.isArray(task) ? task[0] : task)
-    }, [task])
+        // Limpiar taskData de funciones para poder pasarlo al cliente
+        const cleanTaskData = {
+            ...Object.fromEntries(Object.entries(taskData).filter(([_, v]) => typeof v !== 'function')),
+            taskFields: Array.isArray(taskData.taskFields) ? taskData.taskFields : []
+        } as unknown as Task;
 
-    useEffect(() => {
-        async function fetchSchema() {
-            try {
-                setIsLoadingSchema(true)
-                setErrorSchema(null)
+        console.log("Debug - TaskPage taskData.taskFields:", taskData.taskFields)
+        console.log("Debug - TaskPage cleanTaskData.taskFields:", cleanTaskData.taskFields)
 
-                // console.log("taskData: ", taskData)
-                // console.log("taskType: ", taskData?.taskType)
-                let formType = taskData?.taskType || "administrative"
+        // Cargar proyecto
+        const projectData = await getProject(taskData.projectId || projectId);
+        const cleanProjectData = projectData
+            ? Object.fromEntries(Object.entries(projectData).filter(([_, v]) => typeof v !== 'function'))
+            : null;
 
-                const response = await fetch(`/schemas/${formType}-${locale}.json`)
-                if (!response.ok) {
-                    throw new Error(`Error al cargar el esquema: ${response.status} ${response.statusText}`)
-                }
+        // Cargar servicios
+        const services = await listServicesByProject(projectId);
+        const cleanServices = Array.isArray(services)
+            ? services.map(s => Object.fromEntries(Object.entries(s).filter(([_, v]) => typeof v !== 'function')))
+            : [];
 
-                const rawData = await response.json()
-                // const rawData = taskData?.formSchema; 
+        const projectName = typeof cleanProjectData?.name === 'string' ? cleanProjectData.name : "Proyecto";
 
-                if (!isJSONSchema(rawData)) {
-                    throw new Error("El archivo debe seguir el formato JSON Schema estándar")
-                }
-
-                const convertedSchema = await convertJSONSchemaToFields(rawData)
-                setLoadedSchema(convertedSchema)
-            } catch (error) {
-                console.error("Error fetching schema:", error)
-                setErrorSchema(error instanceof Error ? error.message : "Error desconocido al cargar el esquema.")
-            } finally {
-                setIsLoadingSchema(false)
-            }
-        }
-        fetchSchema()
-    }, [taskData])
-
-    const handleSubmit = async (data: Record<string, any>) => {
-        try {
-            // console.log("task: ", task)
-            // console.log("data: ", data)
-
-            const updated = await updateTask(task as string, data);
-            if (!updated) {
-                toast({
-                    title: "Error al guardar",
-                    description: "No se pudo actualizar la tarea",
-                    variant: "destructive"
-                })
-            } else {
-                toast({
-                    title: "Guardado exitoso",
-                    description: "Los datos de la tarea fueron actualizados.",
-                })
-            }
-        } catch (error) {
-            console.error("Error en handleSubmit:", error);
-            toast({
-                title: "Error inesperado",
-                description: error instanceof Error ? error.message : "Ocurrió un error inesperado al enviar el formulario.",
-                duration: 5000,
-                variant: "destructive",
-            });
-        }
-    }
-
-    // Set Initial Form Values
-    let initialFormValues = {}
-
-    if (typeof taskData?.taskData === "string" && taskData.taskData) {
-        initialFormValues = JSON.parse(taskData.taskData);
-    }
-
-    if (isLoadingSchema) {
         return (
-            <div className="min-h-screen bg-background flex flex-col items-center justify-center py-8 px-4">
-                <p className="text-xl text-foreground">Cargando esquema del formulario...</p>
-            </div>
-        )
-    }
+            <div className="container w-full pt-4 pb-4">
+                <Breadcrumb className="mb-4">
+                    <BreadcrumbList>
+                        <BreadcrumbItem>
+                            <Link href={`/domains/${domainId}/projects/${projectId}/tasks`}>
+                                {projectName}
+                            </Link>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                            <Link href={`/domains/${domainId}/projects/${projectId}/tasks`}>Tareas</Link>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                            <BreadcrumbPage>Editar Tarea</BreadcrumbPage>
+                        </BreadcrumbItem>
+                    </BreadcrumbList>
+                </Breadcrumb>
 
-    if (errorSchema) {
+                <EditTaskStepper
+                    taskData={cleanTaskData}
+                    projectName={projectName}
+                    services={cleanServices}
+                    userEmail={userEmail}
+                />
+            </div>
+        );
+    } catch (error) {
         return (
-            <div className="min-h-screen bg-background flex flex-col items-center justify-center py-8 px-4 space-y-4">
-                <p className="text-xl text-destructive">Error: {errorSchema}</p>
-                <p className="text-sm text-muted-foreground text-center max-w-md">
-                    El archivo debe seguir el formato JSON Schema estándar con propiedades como `type`, `properties`, etc.
-                </p>
+            <div className="min-h-screen bg-background flex flex-col px-4">
+                <div className="w-full max-w-6xl mx-auto space-y-6 py-6">
+                    <div className="flex items-center gap-4">
+                        <Link href={`/domains/${domainId}/projects/${projectId}/tasks`}>
+                            <Button variant="ghost" size="sm">
+                                <ArrowLeft className="mr-2 h-4 w-4" />
+                            </Button>
+                        </Link>
+                        <div>
+                            <h1 className="text-2xl font-bold text-destructive">Error al cargar la tarea</h1>
+                            <p className="text-muted-foreground">
+                                {error instanceof Error ? error.message : "Error al cargar los datos"}
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
-        )
+        );
     }
-
-    if (!loadedSchema) {
-        return (
-            <div className="min-h-screen bg-background flex flex-col items-center justify-center py-8 px-4">
-                <p className="text-xl text-foreground">No se pudo cargar el esquema del formulario.</p>
-            </div>
-        )
-    }
-
-    return (
-        <div className="min-h-screen bg-background flex flex-col px-4">
-            <div className="w-full max-w-4xl space-y-6">
-
-                {/* Encabezado */}
-                <Card className="shadow-none border-none">
-                    <CardHeader>
-                        <CardTitle className="text-2xl font-semibold">
-                            {taskData?.taskName}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4 text-sm">
-                        <h2 className="text-md font-semibold">Description</h2>
-
-                        <ul className="space-y-2">
-                            <li className="space-y-1">
-                                {/* <span className="font-medium text-foreground">Task type:</span> */}
-                                <Label htmlFor="tasktype">Task type <span className="text-destructive">*</span></Label>
-                                <Input
-                                    id="tasktype"
-                                    type="text"
-                                    value={taskData?.taskType}
-                                    disabled
-                                />
-                            </li>
-                            <li className="space-y-1">
-                                {/* <span className="font-medium text-foreground">Assigned to:</span> */}
-                                <Label htmlFor="useremail">Assigned to {/* <span className="text-destructive">*</span> */} </Label>
-                                <Input
-                                    id="useremail"
-                                    type="email"
-                                    value={taskData?.userEmail}
-                                    disabled
-                                />
-                            </li>
-                        </ul>
-
-                        {/* <h2 className="text-md font-semibold pt-2">Information</h2> */}
-                        <DynamicForm
-                            schema={loadedSchema}
-                            initialData={initialFormValues}
-                            onSubmit={handleSubmit}
-                            submitButtonText="Confirmar"
-                            className="space-y-4"
-                        />
-                    </CardContent>
-                </Card>
-
-            </div>
-        </div>
-
-    )
 }

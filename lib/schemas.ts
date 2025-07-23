@@ -19,7 +19,7 @@ export const taskSchema = z.object({
   tmpSubtaskId: z.string().optional(),
   subtaskId: z.string().optional(),
   taskName: z.string().min(1, "El taskName es requerido"),
-  taskType: z.string(),
+  taskType: z.string().min(1, "El tipo de tarea es requerido"),
   taskData: z.any().optional(),
   userEmail: z.string().min(1, "El userEmail es requerido"),
   deleted: z.boolean().optional(),

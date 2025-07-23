@@ -34,9 +34,11 @@ import { getProject } from "@/lib/services/agtasks"
 
 interface Props {
   userEmail: string
+  mode?: 'create' | 'edit'
+  initialFields?: any[]
 }
 
-export default function Step2Lots({ userEmail }: Props) {
+export default function Step2Lots({ userEmail, mode = 'create', initialFields = [] }: Props) {
   const { domain, project } = useParams<{ domain: string, project: string }>()
   const domainId = Number(domain)
 
@@ -66,6 +68,14 @@ export default function Step2Lots({ userEmail }: Props) {
   const [campaign, setCampaign] = useState<string>("")
   const [establishment, setEstablishment] = useState<string>("")
   const selectedLots = form.watch("fields") || []
+  const isEditMode = mode === 'edit'
+
+  // Pre-llenar campos si es modo edición
+  useEffect(() => {
+    if (isEditMode && initialFields.length > 0) {
+      form.setValue("fields", initialFields)
+    }
+  }, [isEditMode, initialFields, form])
 
   const allLotIds = fields.map(field => field.id.toString())
   const selectedLotIds = selectedLots.map((lot: any) => lot.fieldId)
@@ -95,13 +105,14 @@ export default function Step2Lots({ userEmail }: Props) {
     const fetchWorkspaces = async () => {
       try {
         setWorkspacesLoading(true)
-        // console.log(userEmail, domainId, areaId)
         const workspacesData = await listWorkspaces(userEmail, domainId, areaId)
         const filteredAndSorted = workspacesData
           .filter((workspace) => workspace.deleted === false)
           .sort((a, b) => a.name.localeCompare(b.name))
         setWorkspaces(filteredAndSorted)
         setWorkspacesError(null)
+        
+
       } catch (error) {
         console.error("Error fetching workspaces:", error)
         setWorkspacesError("Failed to load workspaces. Please try again later.")
@@ -124,6 +135,8 @@ export default function Step2Lots({ userEmail }: Props) {
         const filteredAndSorted = seasonsData.filter((season) => season.deleted === false).sort((a, b) => a.name.localeCompare(b.name))
         setSeasons(filteredAndSorted)
         setSeasonsError(null)
+        
+
       } catch (error) {
         setSeasonsError("Failed to load seasons. Please try again later.")
         setSeasons([])
@@ -143,6 +156,8 @@ export default function Step2Lots({ userEmail }: Props) {
         const filteredAndSorted = farmsData.filter((farm) => farm.deleted === false).sort((a, b) => a.name.localeCompare(b.name))
         setFarms(filteredAndSorted)
         setFarmsError(null)
+        
+
       } catch (error) {
         setFarmsError("Failed to load farms. Please try again later.")
         setFarms([])
@@ -235,6 +250,8 @@ export default function Step2Lots({ userEmail }: Props) {
       form.setValue("fields", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
     }
   }
+
+
 
   return (
     <div className="space-y-6">

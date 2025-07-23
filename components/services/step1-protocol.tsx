@@ -141,7 +141,12 @@ export default function Step1Protocol({
         tasks = await fetchProtocolTasks(value)
       }
       if (tasks && tasks.length > 0) {
-        const newTasks: TaskFormValues[] = tasks.map((task: any) => ({
+        // Filtrar tareas duplicadas basándose en tmpSubtaskId
+        const uniqueTasks = tasks.filter((task: any, index: number, self: any[]) => 
+          index === self.findIndex((t: any) => t.key === task.key)
+        );
+        
+        const newTasks: TaskFormValues[] = uniqueTasks.map((task: any) => ({
           taskName: task.summary || "",
           taskType: task.customFields?.customfield_10371 || "",
           userEmail: "",

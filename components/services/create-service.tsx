@@ -268,6 +268,11 @@ export default function CreateService({ userEmail }: Props) {
     try {
       setIsSubmitting(true);
 
+      // Verificar que no se esté ejecutando múltiples veces
+      if (isSubmitting) {
+        return;
+      }
+
       // Generar el nombre del servicio
       const serviceName = `${selectedProtocolName} - ${data.fields[0]?.workspaceName || ''} - ${data.fields[0]?.farmName || ''}`;
 
@@ -307,8 +312,12 @@ export default function CreateService({ userEmail }: Props) {
       // Crear Fields en DB
       const fieldIds = await createServiceFieldsInDB(data.fields);
 
-      // Crear Tasks en DB (sin subtaskId)
-      const tasks: TaskFormValues[] = (data.tasks || []).map((task: any) => ({
+      // Crear Tasks en DB (sin subtaskId) - Filtrar tareas duplicadas
+      const uniqueTasks = (data.tasks || []).filter((task: any, index: number, self: any[]) => 
+        index === self.findIndex((t: any) => t.tmpSubtaskId === task.tmpSubtaskId)
+      );
+      
+      const tasks: TaskFormValues[] = uniqueTasks.map((task: any) => ({
         ...task,
         projectId: project as string,
         serviceId: serviceId,
@@ -372,6 +381,11 @@ export default function CreateService({ userEmail }: Props) {
                   });
                 })}
                 className="h-full flex flex-col"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && isSubmitting) {
+                    e.preventDefault();
+                  }
+                }}
               >
                 <div className="flex-1">
                   {currentStep === 1 && <><h2 className="text-xl font-semibold mb-4">Paso 1: Selección de protocolo de servicio</h2><Step1Protocol selectedProtocol={selectedProtocol} onSelectProtocol={setSelectedProtocol} selectedProtocolName={selectedProtocolName} onSelectProtocolName={setSelectedProtocolName} /></>}
@@ -385,6 +399,12 @@ export default function CreateService({ userEmail }: Props) {
                     <Button
                       type="submit"
                       disabled={isSubmitting}
+                      onClick={(e) => {
+                        if (isSubmitting) {
+                          e.preventDefault();
+                          return;
+                        }
+                      }}
                     >
                       {isSubmitting ? "Creando..." : "Crear Servicio"}
                     </Button>

@@ -13,7 +13,7 @@ import type {
   DynamicFormProps, 
   SubFormFieldSchema, 
   SelectFieldSchema 
-} from "./types"
+} from "@/lib/interfaces/agtasks"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
@@ -452,7 +452,7 @@ export function DynamicForm({
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    onSubmit(formData)
+    onSubmit?.(formData)
   }
 
   const content = (
@@ -464,7 +464,7 @@ export function DynamicForm({
         <Button 
           type={useFormWrapper ? "submit" : "button"}
           className="w-full sm:w-auto"
-          onClick={!useFormWrapper ? () => onSubmit(formData) : undefined}
+          onClick={!useFormWrapper ? () => onSubmit?.(formData) : undefined}
         >
           {submitButtonText}
         </Button>

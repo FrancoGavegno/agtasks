@@ -18,8 +18,16 @@ import {
 import { listUsersByDomain } from "@/lib/integrations/360"
 import { User } from "@/lib/interfaces/360"
 import ReactSelect, { SingleValue } from 'react-select'
+import { Task } from "@/lib/interfaces/agtasks"
 
-export default function Step3Details({ services, projectName }: { services: any[], projectName: string }) {
+interface Step3DetailsProps {
+  services: any[]
+  projectName: string
+  mode?: 'create' | 'edit'
+  initialData?: Task
+}
+
+export default function Step3Details({ services, projectName, mode = 'create', initialData }: Step3DetailsProps) {
   const { register, setValue, watch } = useFormContext()
   const { domain } = useParams<{ domain: string }>()
   const [users, setUsers] = useState<User[]>([])
@@ -27,6 +35,15 @@ export default function Step3Details({ services, projectName }: { services: any[
   const [usersError, setUsersError] = useState<string | null>(null)
   const selectedService = watch("serviceId")
   const selectedUserEmail = watch("userEmail")
+  const isEditMode = mode === 'edit'
+
+  // Pre-llenar datos si es modo edición
+  useEffect(() => {
+    if (isEditMode && initialData) {
+      setValue("serviceId", initialData.serviceId || undefined)
+      setValue("userEmail", initialData.userEmail || "")
+    }
+  }, [isEditMode, initialData, setValue])
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -64,7 +81,7 @@ export default function Step3Details({ services, projectName }: { services: any[
         <Label>Servicio</Label>
         <Select
           value={selectedService || "none"}
-          onValueChange={v => setValue("serviceId", v === "none" ? "" : v)}
+          onValueChange={v => setValue("serviceId", v === "none" ? undefined : v)}
           required={false}
         >
           <SelectTrigger>
