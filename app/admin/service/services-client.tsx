@@ -61,6 +61,10 @@ export function ServicesClient({ services, projects }: ServicesClientProps) {
       header: "Request ID",
     },
     {
+      accessorKey: "protocolId",
+      header: "Protocol ID",
+    },
+    {
       accessorKey: "deleted",
       header: "deleted?"
     },

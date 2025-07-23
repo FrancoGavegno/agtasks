@@ -27,6 +27,7 @@ export function ServiceDialog({ open, onOpenChange, service, projects }: Service
     projectId: "",
     tmpRequestId: "",
     requestId: "",
+    protocolId: "",
   })
 
   // Auto-populate form when editing
@@ -37,6 +38,7 @@ export function ServiceDialog({ open, onOpenChange, service, projects }: Service
         projectId: service.projectId || "",
         tmpRequestId: service.tmpRequestId || "",
         requestId: service.requestId || "",
+        protocolId: service.protocolId || "",
       })
     } else {
       // Reset form for create mode
@@ -45,6 +47,7 @@ export function ServiceDialog({ open, onOpenChange, service, projects }: Service
         projectId: "",
         tmpRequestId: "",
         requestId: "",
+        protocolId: "",
       })
     }
   }, [service, open])
@@ -120,6 +123,15 @@ export function ServiceDialog({ open, onOpenChange, service, projects }: Service
               id="requestId"
               value={formData.requestId}
               onChange={(e) => setFormData({ ...formData, requestId: e.target.value })}
+              disabled={isLoading}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="protocolId">Protocol ID</Label>
+            <Input
+              id="protocolId"
+              value={formData.protocolId}
+              onChange={(e) => setFormData({ ...formData, protocolId: e.target.value })}
               disabled={isLoading}
             />
           </div>

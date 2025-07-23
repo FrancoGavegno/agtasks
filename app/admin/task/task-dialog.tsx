@@ -34,6 +34,7 @@ export function TaskDialog({ open, onOpenChange, task, projects, services }: Tas
     tmpSubtaskId: "",
     subtaskId: "",
     taskData: "",
+    formId: "",
   })
   const [filteredServices, setFilteredServices] = useState<Service[]>([])
 
@@ -49,6 +50,7 @@ export function TaskDialog({ open, onOpenChange, task, projects, services }: Tas
         tmpSubtaskId: task.tmpSubtaskId || "",
         subtaskId: task.subtaskId || "",
         taskData: task.taskData ? JSON.stringify(task.taskData, null, 2) : "",
+        formId: task.formId || "",
       })
     } else {
       // Reset form for create mode
@@ -61,6 +63,7 @@ export function TaskDialog({ open, onOpenChange, task, projects, services }: Tas
         tmpSubtaskId: "",
         subtaskId: "",
         taskData: "",
+        formId: "",
       })
     }
   }, [task, open])
@@ -224,6 +227,15 @@ export function TaskDialog({ open, onOpenChange, task, projects, services }: Tas
                 disabled={isLoading}
               />
             </div>
+          <div className="space-y-2">
+            <Label htmlFor="formId">Form ID</Label>
+            <Input
+              id="formId"
+              value={formData.formId}
+              onChange={(e) => setFormData({ ...formData, formId: e.target.value })}
+              disabled={isLoading}
+            />
+          </div>
           <div className="space-y-2">
             <Label htmlFor="taskData">Task Data (JSON)</Label>
             <Textarea
