@@ -58,7 +58,7 @@ const schema = a
       projectId: a.string(), 
       service: a.belongsTo("Service", "serviceId"),
       serviceId: a.string(), 
-      tmpSubtaskId: a.string().required(), // template
+      tmpSubtaskId: a.string(), // template
       subtaskId: a.string(), // client 
       // Task
       taskName: a.string().required(), 

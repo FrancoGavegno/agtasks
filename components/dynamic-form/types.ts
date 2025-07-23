@@ -78,6 +78,7 @@ export interface DynamicFormProps {
   submitButtonText?: string
   className?: string
   onChange?: (formData: Record<string, any>) => void
+  useFormWrapper?: boolean
 }
 
 // JSON Schema types

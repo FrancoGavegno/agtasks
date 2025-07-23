@@ -87,6 +87,7 @@ export function TasksClient({ tasks, projects, services }: TasksClientProps) {
       accessorKey: "formId",
       header: "Form Id"
     },
+
     {
       id: "actions",
       cell: ({ row }) => {
@@ -115,23 +116,13 @@ export function TasksClient({ tasks, projects, services }: TasksClientProps) {
     },
   ]
 
-  // Orden personalizado por tmpSubtaskId
-  const tmpSubtaskOrder = ["TEM-58", "TEM-60", "TEM-61"];
-  const sortedTasks = [...tasks].sort((a, b) => {
-    const idxA = tmpSubtaskOrder.indexOf(a.tmpSubtaskId ?? "");
-    const idxB = tmpSubtaskOrder.indexOf(b.tmpSubtaskId ?? "");
-    // Si alguno no está en la lista, lo manda al final
-    if (idxA === -1 && idxB === -1) return 0;
-    if (idxA === -1) return 1;
-    if (idxB === -1) return -1;
-    return idxA - idxB;
-  });
+
 
   return (
     <>
       <DataTable
         columns={columns}
-        data={sortedTasks}
+        data={tasks}
         searchKey="taskName"
         onAdd={() => {
           setEditingTask(null)

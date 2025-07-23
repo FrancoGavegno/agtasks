@@ -3,17 +3,16 @@
 import type React from "react"
 import { 
   useState, 
-  useEffect, 
   useCallback,
-  useContext
+  useEffect
 } from "react"
-import { FormProvider, useFormContext } from "react-hook-form"
+import { useFormContext } from "react-hook-form"
 import type { 
   FieldSchema, 
   DynamicFormProps, 
   SubFormFieldSchema, 
   SelectFieldSchema 
-} from "./types"
+} from "@/lib/interfaces/agtasks"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
@@ -24,96 +23,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { CalendarIcon, PlusCircle, Trash2 } from "lucide-react"
 import { format, parseISO, isValid } from "date-fns"
-import { cn } from "@/lib/utils"
+import { cn, getByPath, setByPath, initializeFormData } from "@/lib/utils"
 import type { JSX } from "react"
-
-const getByPath = (obj: any, path: string): any => {
-  const keys = path.split(".")
-  let current = obj
-  for (const key of keys) {
-    if (current === null || current === undefined) return undefined
-    const numKey = Number(key)
-    if (Number.isInteger(numKey) && Array.isArray(current)) {
-      current = current[numKey]
-    } else if (typeof current === "object" && key in current) {
-      current = current[key]
-    } else {
-      return undefined
-    }
-  }
-  return current
-}
-
-const setByPath = (obj: any, path: string, value: any): void => {
-  const keys = path.split(".")
-  let current = obj
-  for (let i = 0; i < keys.length - 1; i++) {
-    const key = keys[i]
-    const numKey = Number(key)
-    if (Number.isInteger(numKey) && Array.isArray(current)) {
-      if (!current[numKey]) {
-        const nextKeyIsNumber = Number.isInteger(Number(keys[i + 1]))
-        current[numKey] = nextKeyIsNumber ? [] : {}
-      }
-      current = current[numKey]
-    } else {
-      if (!current[key] || typeof current[key] !== "object") {
-        const nextKeyIsNumber = Number.isInteger(Number(keys[i + 1]))
-        current[key] = nextKeyIsNumber ? [] : {}
-      }
-      current = current[key]
-    }
-  }
-  const lastKey = keys[keys.length - 1]
-  const lastNumKey = Number(lastKey)
-  if (Number.isInteger(lastNumKey) && Array.isArray(current)) {
-    current[lastNumKey] = value
-  } else {
-    current[lastKey] = value
-  }
-}
-
-const initializeFormData = (schema: FieldSchema[], existingData?: Record<string, any>): Record<string, any> => {
-  const data: Record<string, any> = existingData ? JSON.parse(JSON.stringify(existingData)) : {}
-
-  schema.forEach((field) => {
-    const currentFieldValue = getByPath(data, field.name)
-    if (currentFieldValue === undefined) {
-      const defaultValue = field.defaultValue
-      if (field.type === "subform") {
-        const subFormSchema = field as SubFormFieldSchema
-        const initialEntries: any[] = []
-        const numEntries = subFormSchema.initialEntries || 0
-
-        if (Array.isArray(defaultValue)) {
-          defaultValue.forEach((entry) => {
-            initialEntries.push(initializeFormData(subFormSchema.fields, entry))
-          })
-        } else {
-          for (let i = 0; i < numEntries; i++) {
-            initialEntries.push(initializeFormData(subFormSchema.fields, {}))
-          }
-        }
-        setByPath(data, field.name, initialEntries)
-      } else if (field.type === "checkbox") {
-        setByPath(data, field.name, defaultValue !== undefined ? defaultValue : false)
-      } else if (field.type === "date") {
-        const dateVal = defaultValue ? parseISO(defaultValue as string) : undefined
-        setByPath(data, field.name, dateVal && isValid(dateVal) ? dateVal : undefined)
-      } else {
-        setByPath(data, field.name, defaultValue !== undefined ? defaultValue : "")
-      }
-    } else if (field.type === "date" && typeof currentFieldValue === "string") {
-      const dateVal = parseISO(currentFieldValue as string)
-      setByPath(data, field.name, dateVal && isValid(dateVal) ? dateVal : undefined)
-    } else if (field.type === "subform" && Array.isArray(currentFieldValue)) {
-      const subFormSchema = field as SubFormFieldSchema
-      const initializedSubFormData = currentFieldValue.map((entry) => initializeFormData(subFormSchema.fields, entry))
-      setByPath(data, field.name, initializedSubFormData)
-    }
-  })
-  return data
-}
 
 export function DynamicForm({
   schema,
@@ -121,37 +32,22 @@ export function DynamicForm({
   initialData = {},
   submitButtonText = "",
   className,
-  onChange,
-  useFormWrapper = true,
-}: DynamicFormProps & { 
-  onChange?: (formData: Record<string, any>) => void
-  useFormWrapper?: boolean
-}) {
+}: DynamicFormProps) {
   const [formData, setFormData] = useState<Record<string, any>>(() => initializeFormData(schema, initialData))
-  
-  // Check if we're inside a FormProvider context
-  let isInsideFormProvider = false
-  try {
-    useFormContext()
-    isInsideFormProvider = true
-  } catch {
-    isInsideFormProvider = false
-  }
-
-  useEffect(() => {
-    setFormData(initializeFormData(schema, initialData))
-    if (onChange) onChange(initializeFormData(schema, initialData))
-  }, [schema, JSON.stringify(initialData)])
+  const { setValue } = useFormContext()
 
   const handleStateChange = useCallback((path: string, value: any) => {
     setFormData((prevData) => {
       const newData = JSON.parse(JSON.stringify(prevData))
       setByPath(newData, path, value)
-      // Only call onChange if we're not inside a FormProvider to avoid infinite loops
-      if (onChange && !isInsideFormProvider) onChange(newData)
       return newData
     })
-  }, [onChange, isInsideFormProvider])
+  }, [])
+
+  // Sync with parent form when formData changes
+  useEffect(() => {
+    setValue("taskData", formData)
+  }, [formData, setValue])
 
   const addSubFormEntry = useCallback(
     (subFormPath: string, subFormSchemaDef: SubFormFieldSchema) => {
@@ -450,39 +346,11 @@ export function DynamicForm({
     )
   }
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    onSubmit(formData)
-  }
-
-  const content = (
-    <>
+  return (
+    <div className={cn("space-y-6", className)}>
       {schema.map((field: FieldSchema) => (
         <div key={field.name}>{renderField(field)}</div>
       ))}
-      {submitButtonText !== "" && (
-        <Button 
-          type={useFormWrapper ? "submit" : "button"}
-          className="w-full sm:w-auto"
-          onClick={!useFormWrapper ? () => onSubmit(formData) : undefined}
-        >
-          {submitButtonText}
-        </Button>
-      )}
-    </>
-  )
-
-  if (useFormWrapper) {
-    return (
-      <form onSubmit={handleSubmit} className={cn("space-y-6", className)}>
-        {content}
-      </form>
-    )
-  }
-
-  return (
-    <div className={cn("space-y-6", className)}>
-      {content}
     </div>
   )
-}
+} 

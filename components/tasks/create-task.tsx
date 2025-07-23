@@ -23,8 +23,8 @@ import Step1TaskType from "./step1-task-type"
 import Step2Lots from "./step2-lots"
 import Step3Details from "./step3-details"
 import {
-  createTaskStepperSchema,
-  type CreateTaskStepperFormValues,
+  taskFormSchema,
+  type TaskFormFullValues,
   type TaskFormValues,
   type FieldFormValues,
   type TaskFieldFormValues,
@@ -42,16 +42,18 @@ import {
   createIssue
 } from "@/lib/integrations/jira"
 
-const defaultValues: CreateTaskStepperFormValues = {
-  name: "",
+const defaultValues: TaskFormFullValues = {
+  taskName: "",
   taskType: "",
-  workspace: "",
-  campaign: "",
-  establishment: "",
-  selectedLots: [],
+  fields: [],
   projectId: "",
   serviceId: "",
   userEmail: "",
+  tmpSubtaskId: "",
+  subtaskId: "",
+  taskData: null,
+  deleted: false,
+  formId: "",
 }
 
 const STEPS = [1, 2, 3]
@@ -94,8 +96,8 @@ export default function CreateTaskStepper({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
 
-  const methods = useForm<CreateTaskStepperFormValues>({
-    resolver: zodResolver(createTaskStepperSchema),
+  const methods = useForm<TaskFormFullValues>({
+    resolver: zodResolver(taskFormSchema),
     defaultValues: {
       ...defaultValues,
       projectId,
@@ -107,9 +109,9 @@ export default function CreateTaskStepper({
     let isValid = false
     switch (currentStep) {
       case 1:
-        isValid = await methods.trigger(["name", "taskType"])
+        isValid = await methods.trigger(["taskName", "taskType"])
         if (!isValid) {
-          const errorMsg = methods.formState.errors.name?.message || methods.formState.errors.taskType?.message || "Debes completar el nombre y tipo de tarea";
+          const errorMsg = methods.formState.errors.taskName?.message || methods.formState.errors.taskType?.message || "Debes completar el nombre y tipo de tarea";
           toast({
             title: "Formulario incompleto",
             description: String(errorMsg),
@@ -119,9 +121,9 @@ export default function CreateTaskStepper({
         }
         break
       case 2:
-        isValid = await methods.trigger(["selectedLots"])
+        isValid = await methods.trigger(["fields"])
         if (!isValid) {
-          const errorMsg = methods.formState.errors.selectedLots?.message || "Debes seleccionar al menos un lote";
+          const errorMsg = methods.formState.errors.fields?.message || "Debes seleccionar al menos un lote";
           toast({
             title: "Formulario incompleto",
             description: String(errorMsg),
@@ -141,8 +143,7 @@ export default function CreateTaskStepper({
           });
           return;
         }
-        onSubmit(methods.getValues());
-        return;
+        break;
     }
     if (isValid) {
       setCurrentStep(currentStep + 1)
@@ -153,16 +154,17 @@ export default function CreateTaskStepper({
 
   // Crear Task en DB
   async function createTaskInDB(data: any): Promise<string> {
-    const taskData: TaskFormValues = {
-      projectId: data.projectId,
-      serviceId: data.serviceId || "",
-      taskName: data.name,
+
+    const task: TaskFormValues = {
+      taskName: data.taskName,
       taskType: data.taskType,
       userEmail: data.userEmail,
-      tmpSubtaskId: "",
-      subtaskId: "",
+      taskData: data.taskData ? JSON.stringify(data.taskData) : null,
+      projectId: data.projectId,
+      formId: data.formId,
+      tmpSubtaskId: data.tmpSubtaskId || "",
     }
-    const response = await createTask(taskData)
+    const response = await createTask(task)
     if (!response) throw new Error("Failed to create task in DB")
     return response.id as string
   }
@@ -203,9 +205,14 @@ export default function CreateTaskStepper({
   }
 
   // Crear Issue en Jira
-  async function createIssueInJira(taskName: string, description: string, userEmail: string) {
+  async function createIssueInJira(
+    parentIssueKey: string,
+    taskName: string, 
+    userEmail: string,
+    description: string, 
+  ) {
     const response = await createIssue(
-      "", // parentIssueKey (no es subtask)
+      parentIssueKey, 
       taskName,
       userEmail,
       description
@@ -216,40 +223,41 @@ export default function CreateTaskStepper({
 
   const onSubmit = async (data: any) => {
     console.log("data: ", data)
-
+    
     try {
       setIsSubmitting(true);
 
       // Generar la descripción
-      const { description, descriptionPlain } = await generateDescriptionField({
-        name: data.name,
-        projectId: data.projectId,
-        protocolId: "",
-        tmpRequestId: "",
-        requestId: "",
-        deleted: false,
-        tasks: [{
-          taskName: data.name,
-          taskType: data.taskType,
-          userEmail: data.userEmail,
-          tmpSubtaskId: "",
-        }],
-        fields: data.selectedLots
-      });
+      // const { description, descriptionPlain } = await generateDescriptionField({
+      //   name: data.taskName,
+      //   projectId: data.projectId,
+      //   protocolId: "",
+      //   tmpRequestId: "",
+      //   requestId: "",
+      //   deleted: false,
+      //   tasks: [{
+      //     taskName: data.taskName,
+      //     taskType: data.taskType,
+      //     userEmail: data.userEmail,
+      //     tmpSubtaskId: data.tmpSubtaskId || "",
+      //   }],
+      //   fields: data.fields
+      // });
 
       // 1. Crear Task en DB
       const taskId = await createTaskInDB(data);
 
       // 2. Crear Fields en DB
-      const fieldIds = await createTaskFieldsInDB(data.selectedLots);
+      const fieldIds = await createTaskFieldsInDB(data.fields);
 
       // 3. Asociar cada Field a la Task mediante TaskField
       await associateFieldsToTask(taskId, fieldIds);
 
       // 4. Crear Issue en Jira
       const jiraResponse = await createIssueInJira(
-        data.name,
-        "", // descriptionPlain,
+        "TAN",
+        data.taskName,
+        "Descripcion de ejemplo...", // descriptionPlain,
         data.userEmail
       );
 
@@ -263,6 +271,7 @@ export default function CreateTaskStepper({
         description: "La tarea y sus campos fueron creados correctamente.",
         duration: 5000,
       });
+
       setIsSuccess(true);
       
       // Redirigir a la lista de tareas
@@ -279,12 +288,12 @@ export default function CreateTaskStepper({
   }
 
   return (
-    <div className="flex justify-center items-center min-h-[80vh]">
-      <Card className="w-[90%] max-w-4xl h-[80vh] flex flex-col justify-between shadow-md border border-gray-200">
-        <CardHeader className="pb-0">
+    <div className="flex justify-center items-start py-8 min-h-screen">
+      <Card className="w-[90%] max-w-4xl max-h-[90vh] flex flex-col shadow-md border border-gray-200">
+        <CardHeader className="pb-0 flex-shrink-0">
           <StepperBubbles currentStep={currentStep} />
         </CardHeader>
-        <CardContent className="flex-1 overflow-y-auto pt-0">
+        <CardContent className="flex-1 overflow-y-auto pt-0 pb-0">
           <FormProvider {...methods}>
             <form
               onSubmit={methods.handleSubmit(onSubmit, (errors) => {
@@ -296,12 +305,12 @@ export default function CreateTaskStepper({
               })}
               className="h-full flex flex-col"
             >
-              <div className="flex-1">
+              <div className="flex-1 pb-4">
                 {currentStep === 1 && <><h2 className="text-xl font-semibold mb-4">Paso 1: Tipo de tarea</h2><Step1TaskType /></>}
                 {currentStep === 2 && <><h2 className="text-xl font-semibold mb-4">Paso 2: Selección de lotes</h2><Step2Lots userEmail={userEmail} /></>}
                 {currentStep === 3 && <><h2 className="text-xl font-semibold mb-4">Paso 3: Detalles</h2><Step3Details services={services} projectName={projectName} /></>}
               </div>
-              <CardFooter className="flex justify-end gap-2 bg-white sticky bottom-0 z-10 border-t border-gray-100 pt-4 pb-4">
+              <CardFooter className="flex justify-end gap-2 bg-white border-t border-gray-100 pt-4 pb-4 flex-shrink-0">
                 {currentStep > 1 && <Button type="button" variant="outline" onClick={prevStep}><ChevronLeft className="w-4 h-4 mr-1" /> Anterior</Button>}
                 {currentStep < 3 && <Button type="button" onClick={nextStep}><ChevronRight className="w-4 h-4 ml-1" /> Siguiente</Button>}
                 {currentStep === 3 && (

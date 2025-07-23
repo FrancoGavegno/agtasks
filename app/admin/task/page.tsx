@@ -32,13 +32,20 @@ export default async function TasksPage() {
   const serializedProjects = projects?.map((project) => serializeModelData(project)) || []
   const serializedServices = services?.map((service) => serializeModelData(service)) || []
 
+  // Ordenar tareas por fecha de creación descendente
+  const sortedTasks = serializedTasks.sort((a, b) => {
+    const dateA = new Date(a.createdAt || 0);
+    const dateB = new Date(b.createdAt || 0);
+    return dateB.getTime() - dateA.getTime(); // Descendente
+  });
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Tasks</h1>
         <p className="text-muted-foreground">Manage tasks with subtasks and user assignments.</p>
       </div>
-      <TasksClient tasks={serializedTasks} projects={serializedProjects} services={serializedServices} />
+      <TasksClient tasks={sortedTasks} projects={serializedProjects} services={serializedServices} />
     </div>
   )
 }

@@ -206,14 +206,14 @@ export default function CreateService({ userEmail }: Props) {
     const createdTasks = await Promise.all(tasks.map(async (task, idx) => {
       try {
         const response = await createTask({
-          projectId: task.projectId,
-          serviceId: task.serviceId,
-          tmpSubtaskId: task.tmpSubtaskId,
-          subtaskId: task.subtaskId,
           taskName: task.taskName,
           taskType: task.taskType,
           userEmail: task.userEmail,
+          projectId: task.projectId,
+          serviceId: task.serviceId,
           formId: task.formId,
+          tmpSubtaskId: task.tmpSubtaskId,
+          subtaskId: task.subtaskId,
         });
         if (!response) throw new Error("Failed to create field in DB");
         return response.id as string;

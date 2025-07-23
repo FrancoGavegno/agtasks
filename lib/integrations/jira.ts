@@ -314,7 +314,6 @@ export async function createSubtask(
       }
     }
 
-    // Create Service Desk Subtask 
     const payload = {
       fields: {
         project: {
@@ -360,38 +359,49 @@ export async function createSubtask(
 }
 
 export async function createIssue(
-  parentIssueKey?: string,
-  summary?: string,
-  userEmail?: string,
-  description?: string,
-  agtasksUrl?: string,
-  taskType?: string,
+  parentIssueKey: string,
+  summary: string,
+  userEmail: string,
+  description: string,
+  // agtasksUrl?: string,
+  // taskType?: string,
   serviceDeskId?: string
 ): Promise<JiraSubtaskResponse | void> {
   try {
-    const payload = `{
-      "fields": {
-        "summary": "DEMO Task",
-        "description": {
-          "content": [
+    
+    const payload = {
+      fields: {
+        project: {
+          key: parentIssueKey
+        },
+        summary: summary,
+        description: {
+          type: "doc",
+          version: 1,
+          content: [
             {
-              "content": [
+              type: "paragraph",
+              content: [
                 {
-                  "text": "Order entry fails when selecting supplier.",
-                  "type": "text"
+                  type: "text",
+                  text: description
                 }
-              ],
-              "type": "paragraph"
+              ]
             }
-          ],
-          "type": "doc",
-          "version": 1
+          ]
         },
-        "issuetype": {
-          "id": "10002"
+        // issuetype: {
+        //   name: "Sub-task"
+        // },
+        issuetype: {
+          id: "10002"
         },
+        // parent: {
+        //   key: parentIssueKey
+        // },
       }
-    `  
+    }
+    
     const endpoint = `${JIRA_API_URL}/rest/api/3/issue`
     const response = await jiraApi.post(endpoint, payload)
     return response.data

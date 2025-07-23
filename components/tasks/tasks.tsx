@@ -1,20 +1,20 @@
 "use client"
 
-import { 
-  useState, 
-  useEffect 
+import {
+  useState,
+  useEffect
 } from "react"
 import { Link } from "@/i18n/routing"
 import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table"
 import {
   Search,
@@ -24,6 +24,7 @@ import {
   ChevronRight,
   ChevronsRight,
   SquareArrowOutUpRight,
+  Plus,
 } from "lucide-react"
 
 import type { Schema } from "@/amplify/data/resource"
@@ -33,14 +34,14 @@ type Service = Schema["Service"]["type"]
 type Task = Schema["Task"]["type"]
 
 import { useToast } from "@/hooks/use-toast"
-import { 
-  listTasksByProject, 
-  listServicesByProject 
+import {
+  listTasksByProject,
+  listServicesByProject
 } from "@/lib/services/agtasks"
 
 export function TasksPageDetails() {
   const params = useParams()
-  const domainId = params.domain as string 
+  const domainId = params.domain as string
   const projectId = params.project as string
   const { toast } = useToast()
   const [services, setServices] = useState<Service[]>([])
@@ -59,7 +60,7 @@ export function TasksPageDetails() {
     try {
       setLoading(true)
       setError(null)
-      
+
       // 1. Obtener todos los servicios del proyecto usando función centralizada
       const servicesData = await listServicesByProject(projectId)
       setServices(servicesData as Service[])
@@ -71,7 +72,7 @@ export function TasksPageDetails() {
         const dateB = b.createdAt ? new Date(b.createdAt ?? '').getTime() : 0;
         return dateB - dateA;
       })
-      
+
       //setTasks(tasksData.map(cleanTask))
       setTasks(sortedTasks as Task[])
     } catch (err) {
@@ -144,6 +145,11 @@ export function TasksPageDetails() {
     return (
       <div className="text-center h-64 flex flex-col items-center justify-center">
         <p className="text-lg text-muted-foreground mb-4">No hay tareas disponibles</p>
+        <Link href={`/domains/${domainId}/projects/${projectId}/tasks/create`}>
+          <Button>
+            <Plus className="mr-2 h-4 w-4" /> Crear Tarea
+          </Button>
+        </Link>
       </div>
     )
   }
@@ -162,7 +168,7 @@ export function TasksPageDetails() {
           />
         </div>
         <div className="flex gap-2">
-          
+
           {/* Services Selector */}
           <select
             className="border rounded px-2 py-1 text-sm"
@@ -174,7 +180,7 @@ export function TasksPageDetails() {
               <option key={service.id} value={service.id}>{service.name}</option>
             ))}
           </select>
-          
+
           <Button onClick={handleRefresh} variant="outline" disabled={refreshing}>
             <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
             Actualizar
@@ -182,7 +188,7 @@ export function TasksPageDetails() {
 
           <Link href={`/domains/${domainId}/projects/${projectId}/tasks/create`}>
             <Button type="button" variant="default">
-              + Crear Tarea
+              <Plus className="mr-2 h-4 w-4" /> Crear Tarea
             </Button>
           </Link>
         </div>
@@ -192,7 +198,7 @@ export function TasksPageDetails() {
         <Table>
           <TableHeader>
             <TableRow>
-            <TableHead>Key</TableHead>
+              <TableHead>Key</TableHead>
               <TableHead>Summary</TableHead>
               <TableHead>Task Type</TableHead>
               <TableHead>Assigned to</TableHead>
@@ -217,7 +223,7 @@ export function TasksPageDetails() {
                     <TableCell className="flex flex-col flex-1">
                       {task.taskName}
                       <span className="text-xs text-gray-400">
-                      {service ? service.name : "(Sin servicio asociado)"}
+                        {service ? service.name : "(Sin servicio asociado)"}
                       </span>
                     </TableCell>
                     <TableCell>{task.taskType || "-"}</TableCell>
@@ -225,16 +231,16 @@ export function TasksPageDetails() {
                     <TableCell>{task.createdAt ? format(new Date(task.createdAt), 'dd/MM/yyyy') : '-'}</TableCell>
                     {/* <TableCell>{service ? service.name : "(Sin servicio asociado)"}</TableCell> */}
                     <TableCell>
-                    {task.subtaskId ? (
-                      <Link
-                        target="_blank"
-                        href={`${process.env.NEXT_PUBLIC_JIRA_API_URL}/browse/${task.subtaskId}`}
-                        className="inline-flex items-center gap-1 text-primary hover:underline"
-                      >
-                        <SquareArrowOutUpRight className="h-4 w-4" />
-                      </Link>
-                    ) : null}
-                  </TableCell>
+                      {task.subtaskId ? (
+                        <Link
+                          target="_blank"
+                          href={`${process.env.NEXT_PUBLIC_JIRA_API_URL}/browse/${task.subtaskId}`}
+                          className="inline-flex items-center gap-1 text-primary hover:underline"
+                        >
+                          <SquareArrowOutUpRight className="h-4 w-4" />
+                        </Link>
+                      ) : null}
+                    </TableCell>
                   </TableRow>
                 )
               })

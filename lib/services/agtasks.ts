@@ -304,14 +304,15 @@ export async function listServicesByProject(projectId: string) {
  * Crea un nuevo Task
  */
 export async function createTask(data: {
-  projectId?: string
-  serviceId?: string
-  tmpSubtaskId: string
-  subtaskId?: string
   taskName: string
   taskType: string
   userEmail: string
+  taskData?: string
+  projectId?: string
+  serviceId?: string
   formId?: string
+  tmpSubtaskId?: string
+  subtaskId?: string
 }) {
   const client = getClient();
   const response = await client.models.Task.create(data);

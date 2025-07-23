@@ -12,11 +12,11 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
-import { DynamicForm } from "@/components/dynamic-form/dynamic-form"
+import { DynamicForm } from "./dynamic-form"
 import { 
   convertJSONSchemaToFields, 
   isJSONSchema 
-} from "@/components/dynamic-form/utils"
+} from "@/lib/utils"
 import { listDomainForms } from "@/lib/services/agtasks"
 import { type Schema } from "@/amplify/data/resource";
 
@@ -31,7 +31,7 @@ export default function Step1TaskType() {
   const [taskTypes, setTaskTypes] = useState<string[]>([])
   const [selectedJson, setSelectedJson] = useState<any>(null)
   const selectedType = watch("taskType")
-  const selectedForm = watch("domainForm")
+  const selectedForm = watch("formId")
   const taskData = watch("taskData")
   const [localTaskData, setLocalTaskData] = useState<any>(taskData || {})
   const [domainForms, setDomainForms] = useState<Schema["DomainForm"]["type"][]>([])
@@ -48,7 +48,7 @@ export default function Step1TaskType() {
   useEffect(() => {
     if (selectedType) {
       setDomainForms([])
-      setValue("domainForm", null);
+      setValue("formId", "");
 
       // DomainForm[]
       if (selectedType === "fieldvisit") {
@@ -58,6 +58,9 @@ export default function Step1TaskType() {
         }
 
         fetchDomainForms()
+      } else {
+        // Limpiar formId cuando no es fieldvisit
+        setValue("formId", "")
       }
 
       // JSON schema  
@@ -68,25 +71,22 @@ export default function Step1TaskType() {
     }
   }, [locale, domain, selectedType])
 
-  useEffect(() => {
-    setLocalTaskData(taskData || {})
-  }, [selectedType])
+  // useEffect(() => {
+  //   setLocalTaskData(taskData || {})
+  // }, [taskData])
 
   let schemaFields = null
   if (selectedJson && isJSONSchema(selectedJson)) {
     schemaFields = convertJSONSchemaToFields(selectedJson)
   }
 
-  const handleDynamicFormSubmit = (data: any) => {
-    setLocalTaskData(data)
-    setValue("taskData", data)
-  }
+  // DynamicForm now syncs automatically with FormProvider
 
   return (
     <div className="space-y-4">
       <div>
         <Label>Nombre de la Tarea *</Label>
-        <Input {...register("name", { required: true })} />
+        <Input {...register("taskName", { required: true })} />
       </div>
 
       <div>
@@ -111,7 +111,7 @@ export default function Step1TaskType() {
           <Label>Formulario *</Label>
           <Select 
             value={selectedForm}
-            onValueChange={v => setValue("domainForm", v)} 
+            onValueChange={v => setValue("formId", v)} 
           >
             <SelectTrigger>
               <SelectValue placeholder="Selecciona un tipo de formulario" />
@@ -125,15 +125,13 @@ export default function Step1TaskType() {
         </div>
       )}
 
-      {/* <p>selectedForm: {selectedForm}</p>
-      <p>domainForms: {JSON.stringify(domainForms)}</p> */}
+
 
       {schemaFields && (
         <div className="mt-6">
           <DynamicForm
             schema={schemaFields}
             initialData={localTaskData}
-            onSubmit={handleDynamicFormSubmit}
             submitButtonText={""}
           />
         </div>
