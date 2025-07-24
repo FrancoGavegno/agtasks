@@ -4,14 +4,7 @@ import {
   useState, 
   useEffect 
 } from "react"
-import { useFormContext } from "react-hook-form"
-import { Check } from "lucide-react"
-import { 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormMessage 
-} from "@/components/ui/form"
+import { Check, SquareCheckBig } from "lucide-react"
 import { 
   Select, 
   SelectContent, 
@@ -22,6 +15,7 @@ import {
 import { useParams } from "next/navigation"
 import type { TaskFormValues } from "@/lib/schemas"
 import { useServiceForm } from "@/lib/contexts/service-form-context"
+import type { ProtocolTasks } from "@/lib/contexts/service-form-context"
 import { Protocol } from "@/lib/interfaces/agtasks"
 import { listDomainProtocols } from "@/lib/services/agtasks"
 
@@ -38,30 +32,35 @@ export default function Step1Protocol({
   selectedProtocolName,
   onSelectProtocolName
 }: Props) {
-  const form = useFormContext<any>()
-  const { updateFormValues } = useServiceForm()
+  const { 
+    updateFormValues, 
+    formValues, 
+    hasLoadedProtocols, 
+    setHasLoadedProtocols,
+    protocolTasks,
+    setProtocolTasks,
+    protocols,
+    setProtocols,
+    enabledTasks,
+    setEnabledTasks
+  } = useServiceForm()
   const params = useParams()
   const projectId = params.project as string
   const domainId = params.domain as string
-  const [protocols, setProtocols] = useState<Protocol[]>([])
-  const [protocolTasks, setProtocolTasks] = useState<Record<string, string[]>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   
-  // Sync selectedProtocol with form.watch("protocol")
-  useEffect(() => {
-    const protocol = form.watch("protocol")
-    onSelectProtocol(protocol) // Update state when protocol changes
-  }, [form.watch("protocol")])
-
-  // Fetch template protocols 
+  // Fetch template protocols
   useEffect(() => {
     const fetchProtocols = async () => {
+      if (!domainId) return
+      
       try {
         setLoading(true)
-        const protocols = await listDomainProtocols(domainId)
-        const protocolsData = Array.isArray(protocols) ? protocols : []
-        setProtocols(protocolsData)
+        const protocolsData = await listDomainProtocols(domainId)
+        const protocolsArray = Array.isArray(protocolsData) ? protocolsData : []
+        setProtocols(protocolsArray)
+        setHasLoadedProtocols(true)
       } catch (err) {
         console.error("Failed to fetch protocols:", err)
         setError("Failed to load protocols. Please try again later.")
@@ -70,10 +69,20 @@ export default function Step1Protocol({
       }
     }
 
-    if (domainId) {
+    if (!hasLoadedProtocols) {
       fetchProtocols()
+    } else {
+      setLoading(false)
     }
-  }, [domainId])
+  }, [domainId, hasLoadedProtocols, setHasLoadedProtocols, setProtocols])
+
+  // Restaurar protocolo seleccionado desde el contexto
+  useEffect(() => {
+    if (formValues.tmpRequestId && !selectedProtocol) {
+      onSelectProtocol(formValues.tmpRequestId)
+      onSelectProtocolName(formValues.protocolName || "")
+    }
+  }, [formValues.tmpRequestId, formValues.protocolName, selectedProtocol])
 
   // Fetch template tasks for specific protocol 
   const fetchProtocolTasks = async (protocolId: string) => {
@@ -90,10 +99,10 @@ export default function Step1Protocol({
       if (data && data.success && data.data) {
         const tasks = data.data.subtasks || []
 
-        setProtocolTasks((prev) => ({
-          ...prev,
+        setProtocolTasks({
+          ...protocolTasks,
           [protocolId]: tasks,
-        }))
+        })
 
         return tasks
       }
@@ -122,17 +131,15 @@ export default function Step1Protocol({
 
     // Find the protocol object to get the name
     const selectedProtocolObj = protocols.find((p) => p.tmProtocolId === value)
-    onSelectProtocolName(selectedProtocolObj?.name ?? "") // Update protocol name state
-
-    // Setear el campo 'name', 'protocolId' y 'tmpRequestId' del formulario para que pase la validación y se guarde
-    form.setValue("name", selectedProtocolObj?.name ?? "", { shouldValidate: true })
-    form.setValue("protocolId", selectedProtocolObj?.id ?? "", { shouldValidate: true })
-    form.setValue("tmpRequestId", selectedProtocolObj?.tmProtocolId ?? "", { shouldValidate: true })
+    const protocolName = selectedProtocolObj?.name ?? ""
+    onSelectProtocolName(protocolName) // Update protocol name state
 
     // Limpiar tareas si cambia el protocolo
-    form.setValue("tasks", [], { shouldValidate: true })
     updateFormValues({
       tasks: [],
+      protocolId: selectedProtocolObj?.id ?? "", // DomainProtocol.id
+      protocolName: protocolName,
+      tmpRequestId: selectedProtocolObj?.tmProtocolId ?? "", // tmProtocolId (issue key)
     })
 
     if (value) {
@@ -154,61 +161,61 @@ export default function Step1Protocol({
           deleted: false,
           formId: "", // Siempre inicializar como string vacío
         }))
-        form.setValue("tasks", newTasks, { shouldValidate: true })
+        
         updateFormValues({
           tasks: newTasks,
         })
+        
+        // Inicializar todas las tareas como habilitadas
+        const allTaskIndices = new Set<number>(newTasks.map((_, index) => index))
+        setEnabledTasks(allTaskIndices)
       }
     }
   }
 
+  // Obtener el valor actual del selector
+  const getCurrentValue = () => {
+    return selectedProtocol || formValues.tmpRequestId || ""
+  }
+
   return (
     <div className="space-y-6">
-      <FormField
-        control={form.control}
-        name="protocolId"
-        render={({ field }) => (
-          <FormItem>
-            {/* <FormLabel className="text-lg font-medium">Seleccione un protocolo</FormLabel> */}
-            <FormControl>
-              <Select
-                value={selectedProtocol || field.value}
-                onValueChange={handleProtocolChange}
-                disabled={loading}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={loading ? "Cargando protocolos..." : "Seleccionar protocolo"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {protocols.length > 0 ? (
-                    protocols.map((protocol) => (
-                      <SelectItem key={protocol.id} value={protocol.tmProtocolId}>
-                        {protocol.name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="no-protocols" disabled>
-                      No hay protocolos disponibles
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </FormControl>
-            <FormMessage className="text-red-500" />
-            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-          </FormItem>
-        )}
-      />
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Protocolo de servicio</label>
+        <Select
+          value={getCurrentValue()}
+          onValueChange={handleProtocolChange}
+          disabled={loading}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder={loading ? "Cargando protocolos..." : "Seleccionar protocolo"} />
+          </SelectTrigger>
+          <SelectContent>
+            {protocols.length > 0 ? (
+              protocols.map((protocol) => (
+                <SelectItem key={protocol.id} value={protocol.tmProtocolId}>
+                  {protocol.name}
+                </SelectItem>
+              ))
+            ) : (
+              <SelectItem value="no-protocols" disabled>
+                No hay protocolos disponibles
+              </SelectItem>
+            )}
+          </SelectContent>
+        </Select>
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+      </div>
 
-      {selectedProtocol && protocolTasks[selectedProtocol] && protocolTasks[selectedProtocol].length > 0 ? (
+      {selectedProtocol && formValues.tasks && formValues.tasks.length > 0 ? (
         <div className="mt-6 border rounded-md p-4">
           <h4 className="text-sm font-medium mb-2">
-            Tareas que incluye el protocolo: {selectedProtocolName || "Cargando..."}
+            Tareas que incluye el protocolo: 
           </h4>
-          <ul className="space-y-2">
-            {form.watch("tasks")?.map((task: TaskFormValues, index: number) => (
+          <ul className="text-sm">
+            {formValues.tasks?.map((task: TaskFormValues, index: number) => (
               <li key={index} className="flex items-start space-x-2">
-                <Check className="h-5 w-5 text-green-500 mt-0.5" />
+                <SquareCheckBig className="h-5 w-5 text-green-500 mt-0.5" />
                 <span>
                   {task.taskName}
                 </span>

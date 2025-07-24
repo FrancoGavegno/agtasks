@@ -21,17 +21,9 @@ export const taskSchema = z.object({
   taskName: z.string().min(1, "El taskName es requerido"),
   taskType: z.string().min(1, "El tipo de tarea es requerido"),
   taskData: z.any().optional(),
-  userEmail: z.string().min(1, "El userEmail es requerido"),
+  userEmail: z.string().optional(), // Cambiado a opcional - se validará según contexto
   deleted: z.boolean().optional(),
-  formId: z.string().optional(),
-}).superRefine((data, ctx) => {
-  if (data.taskType === "fieldvisit" && (!data.formId || data.formId === "")) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "El formulario es requerido para tareas de tipo 'fieldvisit'",
-      path: ["formId"],
-    });
-  }
+  formId: z.string().optional(), // Cambiado a opcional - se validará según contexto
 });
 
 export type TaskFormValues = z.infer<typeof taskSchema>
@@ -62,10 +54,61 @@ export const taskFieldSchema = z.object({
 
 export type TaskFieldFormValues = z.infer<typeof taskFieldSchema>
 
-// Array de tareas (tasks)
-export const tasksArraySchema = z.array(taskSchema).min(1, "Debe haber al menos una tarea")
+// Función para validar tareas habilitadas - VALIDACIÓN PRINCIPAL PARA EL FORMULARIO
+export const validateEnabledTasks = (tasks: TaskFormValues[], enabledTasks: Set<number>) => {
+  const errors: { [key: string]: string } = {}
+  
+  // Validar que al menos una tarea esté habilitada
+  if (enabledTasks.size === 0) {
+    errors.enabledTasks = "Al menos una tarea debe estar habilitada para continuar."
+    return errors
+  }
+  
+  // Validar solo las tareas habilitadas
+  enabledTasks.forEach((taskIndex) => {
+    const task = tasks[taskIndex]
+    if (!task) return
+    
+    // Validar userEmail para todas las tareas habilitadas
+    if (!task.userEmail || task.userEmail.trim() === "") {
+      errors[`tasks.${taskIndex}.userEmail`] = "El usuario es requerido para tareas habilitadas"
+    }
+    
+    // Validar formId solo para tareas tipo "fieldvisit" que estén habilitadas
+    if (task.taskType === "fieldvisit" && (!task.formId || task.formId.trim() === "")) {
+      errors[`tasks.${taskIndex}.formId`] = "El formulario es requerido para tareas de tipo 'fieldvisit'"
+    }
+  })
+  
+  return errors
+}
 
-export type TasksArrayFormValues = z.infer<typeof tasksArraySchema>
+// Función para validar el formulario completo usando la validación contextual
+export const validateServiceForm = (formData: any, enabledTasks: Set<number>) => {
+  const errors: { [key: string]: string } = {}
+  
+  // Validar campos básicos del servicio
+  if (!formData.name || formData.name.trim() === "") {
+    errors.name = "El nombre del servicio es requerido"
+  }
+  
+  if (!formData.protocolId || formData.protocolId.trim() === "") {
+    errors.protocolId = "El protocolo es requerido"
+  }
+  
+  // Validar tareas usando la función contextual
+  if (formData.tasks && Array.isArray(formData.tasks)) {
+    const taskErrors = validateEnabledTasks(formData.tasks, enabledTasks)
+    Object.assign(errors, taskErrors)
+  }
+  
+  // Validar campos (lotes)
+  if (!formData.fields || !Array.isArray(formData.fields) || formData.fields.length === 0) {
+    errors.fields = "Debe seleccionar al menos un lote"
+  }
+  
+  return errors
+}
 
 // Array de lotes/campos (fields)
 export const fieldsArraySchema = z.array(fieldSchema).min(1, "Debe seleccionar al menos un lote")
@@ -74,7 +117,7 @@ export type FieldsArrayFormValues = z.infer<typeof fieldsArraySchema>
 
 // "Create Service" Form Schema 
 export const serviceFormSchema = serviceSchema.extend({
-  tasks: tasksArraySchema,
+  tasks: z.array(taskSchema), // Array simple sin validación automática
   fields: fieldsArraySchema,
 })
 

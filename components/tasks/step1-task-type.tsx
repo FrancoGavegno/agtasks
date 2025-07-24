@@ -107,8 +107,6 @@ export default function Step1TaskType({ mode = 'create', initialData }: Step1Tas
     schemaFields = convertJSONSchemaToFields(selectedJson)
   }
 
-  // DynamicForm now syncs automatically with FormProvider
-
   return (
     <div className="space-y-4">
       <div>
@@ -158,14 +156,11 @@ export default function Step1TaskType({ mode = 'create', initialData }: Step1Tas
         </div>
       )}
 
-
-
       {schemaFields && (
         <div className="mt-6">
           <DynamicForm
             schema={schemaFields}
             initialData={localTaskData}
-            submitButtonText={""}
           />
         </div>
       )}

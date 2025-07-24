@@ -28,9 +28,7 @@ import type { JSX } from "react"
 
 export function DynamicForm({
   schema,
-  onSubmit,
   initialData = {},
-  submitButtonText = "",
   className,
 }: DynamicFormProps) {
   const [formData, setFormData] = useState<Record<string, any>>(() => initializeFormData(schema, initialData))

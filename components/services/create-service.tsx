@@ -5,11 +5,6 @@ import {
   useRouter, 
   useParams 
 } from "next/navigation"
-import { 
-  useForm, 
-  FormProvider 
-} from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -26,13 +21,16 @@ import Step1Protocol from "./step1-protocol"
 import Step2Lots from "./step2-lots"
 import Step3Tasks from "./step3-tasks"
 import {
-  serviceFormSchema,
   type ServiceFormFullValues,
   type TaskFormValues,
   type FieldFormValues,
   type TaskFieldFormValues,
+  validateServiceForm,
 } from "@/lib/schemas"
-import { ServiceFormProvider } from "@/lib/contexts/service-form-context"
+import { 
+  ServiceFormProvider, 
+  useServiceForm 
+} from "@/lib/contexts/service-form-context"
 import {
   generateDescriptionField,
   createService as createServiceInJira,
@@ -48,15 +46,25 @@ import {
   updateTask,
 } from "@/lib/services/agtasks"
 
-const defaultValues: ServiceFormFullValues = {
-  name: "",
-  projectId: "",
-  protocolId: "",
-  tmpRequestId: "",
-  requestId: "",
-  deleted: false,
-  tasks: [],
-  fields: [],
+// Componente de debug temporal
+function DebugContext() {
+  const { formValues } = useServiceForm()
+  
+  if (process.env.NODE_ENV === 'production') return null
+  
+  return (
+    <div className="fixed bottom-4 right-4 bg-black text-white p-4 rounded-lg text-xs max-w-sm z-50">
+      <h4 className="font-bold mb-2">Debug Context:</h4>
+      <div className="space-y-1">
+        <div>Protocol: {formValues.protocolId || 'none'}</div>
+        <div>Workspace: {formValues.workspace || 'none'}</div>
+        <div>Campaign: {formValues.campaign || 'none'}</div>
+        <div>Establishment: {formValues.establishment || 'none'}</div>
+        <div>Tasks: {formValues.tasks?.length || 0}</div>
+        <div>Fields: {formValues.fields?.length || 0}</div>
+      </div>
+    </div>
+  )
 }
 
 interface Props {
@@ -91,87 +99,40 @@ export default function CreateService({ userEmail }: Props) {
   const { locale, domain, project } = params
   const t = useTranslations("CreateService")
   const [currentStep, setCurrentStep] = useState(1)
-  const [shouldScrollToTop, setShouldScrollToTop] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
   const [selectedProtocol, setSelectedProtocol] = useState<string>("")
   const [selectedProtocolName, setSelectedProtocolName] = useState<string>("")
 
-  const methods = useForm<ServiceFormFullValues>({
-    resolver: zodResolver(serviceFormSchema),
-    defaultValues: {
-      ...defaultValues,
-    },
-    mode: "onChange",
-  })
-
-  const nextStep = async () => {
-    let isValid = false
-    switch (currentStep) {
-      case 1:
-        isValid = await methods.trigger(["protocolId"])
-        if (!isValid) {
-          const errorMsg = methods.formState.errors.protocolId?.message || "Debes seleccionar un protocolo";
-          toast({
-            title: "Formulario incompleto",
-            description: errorMsg,
-            variant: "destructive",
-          });
-          return;
-        }
-        break
-      case 2:
-        isValid = await methods.trigger(["fields"])
-        if (!isValid) {
-          const errorMsg = methods.formState.errors.fields?.message || "Debes seleccionar al menos un lote";
-          toast({
-            title: "Formulario incompleto",
-            description: errorMsg,
-            variant: "destructive",
-          });
-          return;
-        }
-        break
-      case 3:
-        isValid = await methods.trigger("tasks");
-        if (!isValid) {
-          const errorMsg = methods.formState.errors.tasks?.message || "Todas las tareas deben estar completas";
-          toast({
-            title: "Formulario incompleto",
-            description: errorMsg,
-            variant: "destructive",
-          });
-          return;
-        }
-        onSubmit(methods.getValues());
-        return;
-    }
-    if (isValid) {
-      setCurrentStep(currentStep + 1)
-      setShouldScrollToTop(true)
-    }
-  }
-
   const prevStep = () => {
     setCurrentStep(currentStep - 1)
-    setShouldScrollToTop(true)
   }
 
   const goToServicesList = () => {
     router.push(`/${locale}/domains/${domain}/projects/${project}/services`)
   }
 
-  // Crear Service en JIRA
-  async function createServiceInJiraOnly(serviceName: string, description: string, userEmail: string, serviceDeskId: string, requestTypeId: string) {
-    // Crea el Service en JIRA y retorna el issueKey
-    return await createServiceInJira(serviceName, description, userEmail, serviceDeskId, requestTypeId)
+  // Crea el Service en JIRA y retorna el issueKey
+  async function createServiceInJiraOnly(
+    serviceName: string, 
+    description: string, 
+    userEmail: string, 
+    serviceDeskId: string, 
+    requestTypeId: string
+  ) {
+    return await createServiceInJira(
+      serviceName, 
+      description, 
+      userEmail, 
+      serviceDeskId, 
+      requestTypeId
+    )
   }
 
   // Crear Service en DB
   async function createServiceInDB(data: ServiceFormFullValues): Promise<string> {
     const response = await createService(data)
     if (!response) throw new Error("Failed to create service in DB")
-    return response.id as string
+    return response.id || ""
   }
 
   // Crear Fields en DB 
@@ -192,7 +153,7 @@ export default function CreateService({ userEmail }: Props) {
           hybrid: field.hybrid,
         });
         if (!response) throw new Error("Failed to create field in DB");
-        return response.id as string;
+        return response.id || "";
       } catch (err) {
         console.error('Error creando Field en DB:', { idx, error: err });
         throw err;
@@ -208,21 +169,21 @@ export default function CreateService({ userEmail }: Props) {
         const response = await createTask({
           taskName: task.taskName,
           taskType: task.taskType,
-          userEmail: task.userEmail,
+          userEmail: task.userEmail || "",
           projectId: task.projectId,
           serviceId: task.serviceId,
           formId: task.formId,
           tmpSubtaskId: task.tmpSubtaskId,
           subtaskId: task.subtaskId,
         });
-        if (!response) throw new Error("Failed to create field in DB");
-        return response.id as string;
+        if (!response) throw new Error("Failed to create task in DB");
+        return response.id || "";
       } catch (err) {
-        console.error('Error creando Field en DB:', { idx, error: err });
+        console.error('Error creando Task en DB:', { idx, error: err });
         throw err;
       }
     }));
-    return createdTasks; // array de field IDs
+    return createdTasks; // array de task IDs
   }
 
   // Crear Subtasks en JIRA (en orden) y devolver los keys
@@ -249,7 +210,11 @@ export default function CreateService({ userEmail }: Props) {
         agtasksUrl,
         task.taskType
       );
-      subtaskKeys.push(response?.key || "");
+      if (response?.key) {
+        subtaskKeys.push(response.key);
+      } else {
+        throw new Error(`Failed to create subtask for task: ${task.taskName}`);
+      }
     }
     return subtaskKeys;
   }
@@ -264,157 +229,228 @@ export default function CreateService({ userEmail }: Props) {
     ));
   }
   
-  const onSubmit = async (data: any) => {
-    try {
-      setIsSubmitting(true);
+  // Componente interno que usa el contexto
+  function CreateServiceForm() {
+    const { 
+      formValues, 
+      enabledTasks,
+      updateFormValues 
+    } = useServiceForm()
 
-      // Verificar que no se esté ejecutando múltiples veces
-      if (isSubmitting) {
+    const nextStep = async () => {
+      let isValid = false
+      let errors: { [key: string]: string } = {}
+      
+      switch (currentStep) {
+        case 1:
+          // Validar solo protocolo en paso 1
+          if (!formValues.protocolId || formValues.protocolId.trim() === "") {
+            errors.protocolId = "Debes seleccionar un protocolo"
+          } else {
+            isValid = true
+          }
+          break
+        case 2:
+          // Validar solo campos en paso 2
+          if (!formValues.fields || formValues.fields.length === 0) {
+            errors.fields = "Debes seleccionar al menos un lote"
+          } else {
+            isValid = true
+          }
+          break
+        case 3:
+          // Validar todo el formulario en paso 3
+          errors = validateServiceForm(formValues, enabledTasks)
+          if (Object.keys(errors).length === 0) {
+            isValid = true
+            await onSubmit();
+            return;
+          }
+          break
+      }
+      
+      if (!isValid) {
+        const firstError = Object.values(errors)[0] || "Por favor, completa todos los campos requeridos."
+        toast({
+          title: "Formulario incompleto",
+          description: firstError,
+          variant: "destructive",
+        });
         return;
       }
+      
+      setCurrentStep(currentStep + 1)
+    }
 
-      // Generar el nombre del servicio
-      const serviceName = `${selectedProtocolName} - ${data.fields[0]?.workspaceName || ''} - ${data.fields[0]?.farmName || ''}`;
+    const onSubmit = async () => {
+      try {
+        setIsSubmitting(true);
 
-      // Generar la descripción
-      const { description, descriptionPlain } = await generateDescriptionField(data);
+        // Generar el nombre del servicio
+        const serviceName = `${selectedProtocolName} - ${formValues.fields[0]?.workspaceName || ''} - ${formValues.fields[0]?.farmName || ''}`;
 
-      // Obtener datos del proyecto
-      let serviceDeskId = "";
-      let requestTypeId = "";
-      const response = await getProject(project as string);
-      if (response && response.id) {
-        serviceDeskId = response.serviceDeskId;
-        requestTypeId = response.requestTypeId;
-      }
+        // Obtener datos del proyecto
+        let serviceDeskId = "";
+        let requestTypeId = "";
+        const response = await getProject(project as string);
+        if (response && response.id) {
+          serviceDeskId = response.serviceDeskId;
+          requestTypeId = response.requestTypeId;
+        }
 
-      // Crear Service en JIRA
-      const jiraResponse = await createServiceInJiraOnly(
-        serviceName,
-        description,
-        userEmail,
-        serviceDeskId,
-        requestTypeId
-      );
-      if (!jiraResponse.success || !jiraResponse.data?.issueKey) {
-        throw new Error(`Failed to create Jira service: ${jiraResponse.error || 'No issueKey returned'}`);
-      }
-      const { issueKey } = jiraResponse.data;
+        // Crear Service en JIRA
+        const jiraResponse = await createServiceInJiraOnly(
+          serviceName,
+          "", // description placeholder
+          userEmail,
+          serviceDeskId,
+          requestTypeId
+        );
+        if (!jiraResponse.success || !jiraResponse.data?.issueKey) {
+          throw new Error(`Failed to create Jira service: ${jiraResponse.error || 'No issueKey returned'}`);
+        }
+        const { issueKey } = jiraResponse.data;
 
-      // Crear Service en DB
-      const serviceId = await createServiceInDB({ 
-          ...data,
+        // Generar la descripción
+        const { description, descriptionPlain } = await generateDescriptionField({
+          name: serviceName,
+          protocolId: formValues.protocolId || "",
           projectId: project as string,
           requestId: issueKey,
-          name: serviceName,
+          tmpRequestId: formValues.tmpRequestId || "",
+          deleted: false,
+          tasks: formValues.tasks || [],
+          fields: formValues.fields || [],
         });
 
-      // Crear Fields en DB
-      const fieldIds = await createServiceFieldsInDB(data.fields);
+        // Crear Service en DB
+        const serviceId = await createServiceInDB({ 
+            name: serviceName,
+            protocolId: formValues.protocolId || "",
+            projectId: project as string,
+            requestId: issueKey,
+            tmpRequestId: formValues.tmpRequestId || "",
+            deleted: false,
+            tasks: formValues.tasks || [],
+            fields: formValues.fields || [],
+          });
 
-      // Crear Tasks en DB (sin subtaskId) - Filtrar tareas duplicadas
-      const uniqueTasks = (data.tasks || []).filter((task: any, index: number, self: any[]) => 
-        index === self.findIndex((t: any) => t.tmpSubtaskId === task.tmpSubtaskId)
-      );
-      
-      const tasks: TaskFormValues[] = uniqueTasks.map((task: any) => ({
-        ...task,
-        projectId: project as string,
-        serviceId: serviceId,
-      }));
-      const taskIds = await createServiceTasksInDB(tasks);
+        // Crear Fields en DB
+        const fieldIds = await createServiceFieldsInDB(formValues.fields);
 
-      // Crear Subtasks en JIRA y obtener los keys
-      const subtaskKeys = await createSubtasksInJira(
-        issueKey, 
-        tasks, 
-        descriptionPlain, 
-        locale as string, 
-        domain as string, 
-        project as string
-      );
+        // Crear Tasks en DB (sin subtaskId) - Filtrar tareas duplicadas
+        const uniqueTasks = (formValues.tasks || []).filter((task: any, index: number, self: any[]) => 
+          index === self.findIndex((t: any) => t.tmpSubtaskId === task.tmpSubtaskId)
+        );
+        
+        const tasks: TaskFormValues[] = uniqueTasks.map((task: any) => ({
+          ...task,
+          projectId: project as string,
+          serviceId: serviceId,
+        }));
+        const taskIds = await createServiceTasksInDB(tasks);
 
-      // Actualizar las tasks con el subtaskId de Jira
-      await Promise.all(taskIds.map((taskId, idx) =>
-        updateTask(taskId, { subtaskId: subtaskKeys[idx] })
-      ));
+        // Crear Subtasks en JIRA y obtener los keys
+        const subtaskKeys = await createSubtasksInJira(
+          issueKey, 
+          tasks, 
+          descriptionPlain, 
+          locale as string, 
+          domain as string, 
+          project as string
+        );
 
-      // Asociar cada Field a cada Task mediante TaskField
-      await associateFieldsToTasks(taskIds, fieldIds);
+        // Actualizar las tasks con el subtaskId de Jira
+        await Promise.all(taskIds.map((taskId, idx) =>
+          updateTask(taskId, { subtaskId: subtaskKeys[idx] })
+        ));
 
-      toast({
-        title: "Servicio creado exitosamente",
-        description: "El servicio y sus tareas fueron creados correctamente.",
-        duration: 5000,
-      });
-      setIsSuccess(true);
+        // Asociar cada Field a cada Task mediante TaskField
+        await associateFieldsToTasks(taskIds, fieldIds);
 
-      goToServicesList();
-    } catch (error) {
-      toast({
-        title: "Error al crear servicio",
-        description: error instanceof Error ? error.message : String(error),
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+        toast({
+          title: "Servicio creado exitosamente",
+          description: "El servicio y sus tareas fueron creados correctamente.",
+          duration: 5000,
+        });
+
+        goToServicesList();
+      } catch (error) {
+        toast({
+          title: "Error al crear servicio",
+          description: error instanceof Error ? error.message : String(error),
+          variant: "destructive",
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
     }
-  }
 
-  
-
-  return (
-    <ServiceFormProvider>
+    return (
       <div className="flex justify-center items-center min-h-[80vh]">
-        <Card className="w-[90%] max-w-4xl h-[80vh] flex flex-col justify-between shadow-md border border-gray-200">
+        <Card className="w-[95%] max-w-6xl h-[80vh] flex flex-col shadow-md border border-gray-200">
           <CardHeader className="pb-0">
             <StepperBubbles currentStep={currentStep} />
           </CardHeader>
-          <CardContent className="flex-1 overflow-y-auto pt-0">
-            <FormProvider {...methods}>
-              <form
-                onSubmit={methods.handleSubmit(onSubmit, (errors) => {
-                  toast({
-                    title: "Formulario incompleto",
-                    description: "Por favor, completa todos los campos requeridos.",
-                    variant: "destructive",
-                  });
-                })}
-                className="h-full flex flex-col"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && isSubmitting) {
-                    e.preventDefault();
-                  }
-                }}
-              >
-                <div className="flex-1">
-                  {currentStep === 1 && <><h2 className="text-xl font-semibold mb-4">Paso 1: Selección de protocolo de servicio</h2><Step1Protocol selectedProtocol={selectedProtocol} onSelectProtocol={setSelectedProtocol} selectedProtocolName={selectedProtocolName} onSelectProtocolName={setSelectedProtocolName} /></>}
-                  {currentStep === 2 && <><h2 className="text-xl font-semibold mb-4">Paso 2: Selección de lotes</h2><Step2Lots userEmail={userEmail} /></>}
-                  {currentStep === 3 && <><h2 className="text-xl font-semibold mb-4">Paso 3: Asignación de tareas</h2><Step3Tasks /></>}
-                </div>
-                <CardFooter className="flex justify-end gap-2 bg-white sticky bottom-0 z-10 border-t border-gray-100 pt-4 pb-4">
-                  {currentStep > 1 && <Button type="button" variant="outline" onClick={prevStep}><ChevronLeft className="w-4 h-4 mr-1" /> Anterior</Button>}
-                  {currentStep < 3 && <Button type="button" onClick={nextStep}><ChevronRight className="w-4 h-4 ml-1" /> Siguiente</Button>}
-                  {currentStep === 3 && (
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting}
-                      onClick={(e) => {
-                        if (isSubmitting) {
-                          e.preventDefault();
-                          return;
-                        }
-                      }}
-                    >
-                      {isSubmitting ? "Creando..." : "Crear Servicio"}
-                    </Button>
-                  )}
-                </CardFooter>
-              </form>
-            </FormProvider>
+          <CardContent className="flex-1 overflow-y-auto pt-0 pb-0">
+            <div className="h-full flex flex-col">
+              <div className="flex-1 pb-4">
+                {currentStep === 1 && (
+                  <>
+                    <h2 className="text-xl font-semibold mb-4">Paso 1: Selección de protocolo de servicio</h2>
+                    <Step1Protocol 
+                      selectedProtocol={selectedProtocol} 
+                      onSelectProtocol={setSelectedProtocol} 
+                      selectedProtocolName={selectedProtocolName} 
+                      onSelectProtocolName={setSelectedProtocolName} 
+                    />
+                  </>
+                )}
+                {currentStep === 2 && (
+                  <>
+                    <h2 className="text-xl font-semibold mb-4">Paso 2: Selección de lotes</h2>
+                    <Step2Lots userEmail={userEmail} />
+                  </>
+                )}
+                {currentStep === 3 && (
+                  <>
+                    <h2 className="text-xl font-semibold mb-4">Paso 3: Asignación de tareas</h2>
+                    <Step3Tasks />
+                  </>
+                )}
+              </div>
+              <CardFooter className="flex justify-end gap-2 bg-white sticky bottom-0 z-10 border-t border-gray-100 pt-4 pb-4">
+                {currentStep > 1 && (
+                  <Button type="button" variant="outline" onClick={prevStep}>
+                    <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
+                  </Button>
+                )}
+                {currentStep < 3 && (
+                  <Button type="button" onClick={nextStep}>
+                    <ChevronRight className="w-4 h-4 ml-1" /> Siguiente
+                  </Button>
+                )}
+                {currentStep === 3 && (
+                  <Button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={nextStep}
+                  >
+                    {isSubmitting ? "Creando..." : "Crear Servicio"}
+                  </Button>
+                )}
+              </CardFooter>
+            </div>
           </CardContent>
         </Card>
       </div>
+    )
+  }
+
+  return (
+    <ServiceFormProvider>
+      <CreateServiceForm />
+      <DebugContext />
     </ServiceFormProvider>
   )
 }
