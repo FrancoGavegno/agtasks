@@ -94,9 +94,9 @@ export default function Users() {
           <h2 className="text-xl font-semibold tracking-tight">Usuarios</h2>
           <p className="text-sm text-muted-foreground">Gestiona los usuarios del sistema y envía invitaciones</p>
         </div>
-        <Button variant="outline" size="sm" onClick={refreshUsers}>
+        {/* <Button variant="outline" size="sm" onClick={refreshUsers}>
           Actualizar
-        </Button>
+        </Button> */}
       </div>
 
       <div className="flex items-center">

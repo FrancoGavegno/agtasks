@@ -1,10 +1,6 @@
 import { cookies } from 'next/headers'
-import { Task } from "@/lib/interfaces/agtasks"
-import {
-    getTask,
-    getProject,
-    listServicesByProject
-} from "@/lib/services/agtasks"
+//import { Task } from "@/lib/interfaces/agtasks"
+import { apiClient } from '@/lib/integrations/amplify'
 import EditTaskStepper from "@/components/task/edit-task-stepper"
 import {
     Breadcrumb,
@@ -31,7 +27,7 @@ export default async function TaskPage({
     
     try {
         // Cargar tarea
-        const taskData = await getTask(taskId);
+        const taskData = await apiClient.getTask(taskId);
         if (!taskData) {
             throw new Error("No se encontró la tarea");
         }
@@ -39,20 +35,20 @@ export default async function TaskPage({
         // Limpiar taskData de funciones para poder pasarlo al cliente
         const cleanTaskData = {
             ...Object.fromEntries(Object.entries(taskData).filter(([_, v]) => typeof v !== 'function')),
-            taskFields: Array.isArray(taskData.taskFields) ? taskData.taskFields : []
-        } as unknown as Task;
+            taskFields: Array.isArray((taskData as any).taskFields) ? (taskData as any).taskFields : []
+        } as any;
 
-        console.log("Debug - TaskPage taskData.taskFields:", taskData.taskFields)
-        console.log("Debug - TaskPage cleanTaskData.taskFields:", cleanTaskData.taskFields)
+        // console.log("Debug - TaskPage taskData.taskFields:", taskData.taskFields)
+        // console.log("Debug - TaskPage cleanTaskData.taskFields:", cleanTaskData.taskFields)
 
         // Cargar proyecto
-        const projectData = await getProject(taskData.projectId || projectId);
+        const projectData = await apiClient.getProject(taskData.projectId || projectId);
         const cleanProjectData = projectData
             ? Object.fromEntries(Object.entries(projectData).filter(([_, v]) => typeof v !== 'function'))
             : null;
 
         // Cargar servicios
-        const services = await listServicesByProject(projectId);
+        const services = await apiClient.listServices({ projectId, limit: 100 });
         const cleanServices = Array.isArray(services)
             ? services.map(s => Object.fromEntries(Object.entries(s).filter(([_, v]) => typeof v !== 'function')))
             : [];

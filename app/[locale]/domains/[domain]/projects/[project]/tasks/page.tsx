@@ -4,7 +4,7 @@ import { Link } from "@/i18n/routing"
 import { useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
-import { getProject } from '@/lib/services/agtasks'
+import { apiClient } from '@/lib/integrations/amplify'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Breadcrumb,
@@ -24,7 +24,7 @@ export default function TasksPage() {
   useEffect(() => {
     let mounted = true;
     setLoadingProject(true);
-    getProject(project as string).then((data) => {
+    apiClient.getProject(project as string).then((data) => {
       if (mounted) setProjectName(data?.name || "");
     }).finally(() => { if (mounted) setLoadingProject(false); });
     return () => { mounted = false; };

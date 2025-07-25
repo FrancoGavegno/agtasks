@@ -1,14 +1,10 @@
-import { client } from "@/lib/amplify-client"
+import { apiClient } from "@/lib/integrations/amplify"
+import { Schema } from "@/amplify/data/resource"
+type DomainForm = Schema["DomainForm"]["type"]
 import { DomainFormsClient } from "./forms-client"
-import { serializeModelData } from "@/lib/serialization-utils"
 
 export default async function DomainFormsPage() {
-  const { data: domainForms } = await client.models.DomainForm.list()
-
-  // console.log("domainForms: " , domainForms)
-
-  // Serialize the data to remove function properties
-  const serializedDomainForms = domainForms?.map((form) => serializeModelData(form)) || []
+  const { items: domainForms } = await apiClient.listDomainForms()
 
   return (
     <div className="space-y-6">
@@ -17,7 +13,7 @@ export default async function DomainFormsPage() {
         <p className="text-muted-foreground">
           Manage domain forms with Kobo Toolbox form mappings.</p>
       </div>
-      <DomainFormsClient domainForms={serializedDomainForms} />
+      <DomainFormsClient domainForms={domainForms as DomainForm[]} />
     </div>
   )
 }

@@ -5,7 +5,7 @@ import { Navbar } from "@/components/navbar/navbar";
 import { AppSidebar } from "@/components/sidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { listDomainsByUserEmail } from "@/lib/integrations/360";
-import { listProjectsByDomain } from "@/lib/services/agtasks";
+import { apiClient } from "@/lib/integrations/amplify"
 import { Domain } from "@/lib/interfaces/360";
 import { Project } from "@/lib/interfaces/agtasks";
 import { useParams } from "next/navigation";
@@ -41,23 +41,29 @@ export default function ClientLayoutWithDomainProject({ userEmail, children }: {
   useEffect(() => {
     const fetchProjects = async () => {
       if (selectedDomain) {
-        const result = await listProjectsByDomain(selectedDomain.id.toString());
-        const projectsData: Project[] = Array.isArray(result)
-          ? result.map((p: any) => ({
-              ...p,
-              tmpSourceSystem: p.tmpSourceSystem ?? "", 
-            }))
-          : [];
-        setProjects(projectsData);
-        // Si hay projectId en la URL, seleccionarlo
-        if (projectIdFromUrl) {
-          const found = projectsData.find((p: Project) => p.id?.toString() === projectIdFromUrl.toString());
-          if (found) {
-            setSelectedProject(found);
-            return;
+        try {
+          const result = await apiClient.listProjects({domainId: selectedDomain.id.toString(), limit: 100});
+          // Corregir: result.items en lugar de result directamente
+          const projectsData: Project[] = result.items.map((p: any) => ({
+            ...p,
+            tmpSourceSystem: p.tmpSourceSystem ?? "", 
+          }));
+          setProjects(projectsData);
+          
+          // Si hay projectId en la URL, seleccionarlo
+          if (projectIdFromUrl) {
+            const found = projectsData.find((p: Project) => p.id?.toString() === projectIdFromUrl.toString());
+            if (found) {
+              setSelectedProject(found);
+              return;
+            }
           }
+          if (projectsData.length > 0) setSelectedProject(projectsData[0]);
+        } catch (error) {
+          console.error('Error fetching projects:', error);
+          setProjects([]);
+          setSelectedProject(undefined);
         }
-        if (projectsData.length > 0) setSelectedProject(projectsData[0]);
       } else {
         setProjects([]);
         setSelectedProject(undefined);

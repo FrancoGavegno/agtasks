@@ -44,7 +44,11 @@ export default function DomainProjectSelector({
 
   // Filtrar proyectos por dominio seleccionado
   const filteredProjects = selectedDomain
-    ? projects.filter(p => p.domainId === selectedDomain.id.toString())
+    ? projects.filter(p => {
+        const projectDomainId = String(p.domainId);
+        const selectedDomainId = String(selectedDomain.id);
+        return projectDomainId === selectedDomainId;
+      })
     : []
 
   return (

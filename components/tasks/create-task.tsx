@@ -30,12 +30,7 @@ import {
   type TaskFieldFormValues,
 } from "@/lib/schemas"
 
-import { 
-  createTask, 
-  createField, 
-  createTaskField,
-  updateTask 
-} from "@/lib/services/agtasks"
+import { apiClient } from "@/lib/integrations/amplify"
 
 import {
   generateDescriptionField,
@@ -169,7 +164,7 @@ export default function CreateTaskStepper({
       formId: data.formId,
       tmpSubtaskId: data.tmpSubtaskId || "",
     }
-    const response = await createTask(task)
+    const response = await apiClient.createTask(task)
     if (!response) throw new Error("Failed to create task in DB")
     return response.id as string
   }
@@ -178,7 +173,7 @@ export default function CreateTaskStepper({
   async function createTaskFieldsInDB(lots: any[]) {
     const createdFields = await Promise.all(lots.map(async (field, idx) => {
       try {
-        const response = await createField({
+        const response = await apiClient.createField({
           workspaceId: field.workspaceId,
           workspaceName: field.workspaceName,
           campaignId: field.campaignId,
@@ -190,6 +185,7 @@ export default function CreateTaskStepper({
           hectares: field.hectares,
           crop: field.crop,
           hybrid: field.hybrid,
+          deleted: false,
         });
         if (!response) throw new Error("Failed to create field in DB");
         return response.id as string;
@@ -206,7 +202,7 @@ export default function CreateTaskStepper({
     await Promise.all(fieldIds.map(async (fieldId, idx) => {
       try {
         const tf: TaskFieldFormValues = { taskId, fieldId };
-        const response = await createTaskField(tf);
+        const response = await apiClient.createTaskField(tf);
         return response;
       } catch (err) {
         console.error('Error associating field to task:', { taskId, fieldId, error: err });
@@ -270,7 +266,7 @@ export default function CreateTaskStepper({
         fields: data.fields
       });
 
-      // 1. Crear Task en DB
+
       // 1. Crear Task en DB
       const taskId = await createTaskInDB(data);
 
@@ -290,7 +286,7 @@ export default function CreateTaskStepper({
 
       // 5. Actualizar Task con el issueKey de Jira
       if (jiraResponse?.key) {
-        await updateTask(taskId, { subtaskId: jiraResponse.key });
+        await apiClient.updateTask(taskId, { subtaskId: jiraResponse.key });
       }
 
       toast({

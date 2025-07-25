@@ -30,7 +30,7 @@ import type {
   Farm,
   LotField
 } from "@/lib/interfaces/360"
-import { getProject } from "@/lib/services/agtasks"
+import { apiClient } from "@/lib/integrations/amplify"
 
 interface Props {
   userEmail: string
@@ -92,7 +92,7 @@ export default function Step2Lots({ userEmail, mode = 'create', initialFields = 
 
   useEffect(() => {
     const fetchProject = async (project: string) => {
-      const projectData = await getProject(project);
+      const projectData = await apiClient.getProject(project);
       if (projectData && projectData.areaId !== undefined && projectData.areaId !== null) {
         setAreaId(Number(projectData.areaId));
       }

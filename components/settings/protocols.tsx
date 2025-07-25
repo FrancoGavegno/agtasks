@@ -28,16 +28,11 @@ export default function Protocols() {
   const [displayedProtocols, setDisplayedProtocols] = useState<typeof protocols>([])
 
   // Efecto para actualizar los protocolos mostrados cuando cambian los datos
-  useEffect(() => {
-    // console.log("Protocols in component:", protocols)
-    // console.log("Selected protocols:", selectedProtocols)
-
+  useEffect(() => {   
     // Usar directamente los protocolos del dominio
     if (protocols.length > 0) {
-      // console.log("Using domain protocols")
       setDisplayedProtocols(protocols)
     } else {
-      // console.log("No domain protocols found")
       setDisplayedProtocols([])
     }
   }, [protocols, selectedProtocols])
@@ -96,7 +91,7 @@ export default function Protocols() {
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow>              
               <TableHead className="w-[80%]">Protocolo</TableHead>
               <TableHead className="text-center">Idioma</TableHead>
             </TableRow>
@@ -104,7 +99,7 @@ export default function Protocols() {
           <TableBody>
             {paginatedProtocols.length > 0 ? (
               paginatedProtocols.map((protocol) => (
-                <TableRow key={protocol.id}>
+                <TableRow key={protocol.id}>                  
                   <TableCell className="font-medium">{protocol.name}</TableCell>
                   <TableCell className="text-center">
                     <Badge variant="outline">{protocol.language}</Badge>

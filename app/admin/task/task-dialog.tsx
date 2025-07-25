@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { createTask, updateTask } from "@/lib/services/agtasks"
+import { apiClient } from "@/lib/integrations/amplify"
 import type { Schema } from "@/amplify/data/resource"
 
 type Task = Schema["Task"]["type"]
@@ -35,6 +35,7 @@ export function TaskDialog({ open, onOpenChange, task, projects, services }: Tas
     subtaskId: "",
     taskData: "",
     formId: "",
+    deleted: false
   })
   const [filteredServices, setFilteredServices] = useState<Service[]>([])
 
@@ -51,6 +52,7 @@ export function TaskDialog({ open, onOpenChange, task, projects, services }: Tas
         subtaskId: task.subtaskId || "",
         taskData: task.taskData ? JSON.stringify(task.taskData, null, 2) : "",
         formId: task.formId || "",
+        deleted: false
       })
     } else {
       // Reset form for create mode
@@ -64,6 +66,7 @@ export function TaskDialog({ open, onOpenChange, task, projects, services }: Tas
         subtaskId: "",
         taskData: "",
         formId: "",
+        deleted: false
       })
     }
   }, [task, open])
@@ -115,7 +118,7 @@ export function TaskDialog({ open, onOpenChange, task, projects, services }: Tas
         serviceId: formData.serviceId === "" ? undefined : formData.serviceId, // Send undefined if empty
       }
 
-      const result = task ? await updateTask(task.id, submitData) : await createTask(submitData)
+      const result = task ? await apiClient.updateTask(task.id, submitData) : await apiClient.createTask(submitData)
 
       if (result) {
         onOpenChange(false)

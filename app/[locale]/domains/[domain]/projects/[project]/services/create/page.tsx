@@ -5,10 +5,10 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import CreateService from "@/components/services/create-service"
+import ServiceStepper from "@/components/services/stepper"
 import { Link } from "@/i18n/routing"
 import { cookies } from 'next/headers'
-import { getProject } from '@/lib/services/agtasks'
+import { apiClient } from '@/lib/integrations/amplify'
 
 export default async function Page({
     params,
@@ -17,7 +17,7 @@ export default async function Page({
 }) {
     const cookiesList = cookies();
     const userEmail = cookiesList.get('user-email')?.value || "";
-    const projectData = await getProject(params.project);
+    const projectData = await apiClient.getProject(params.project);
 
     return (
         <div className="container w-full pt-4 pb-4">
@@ -39,7 +39,9 @@ export default async function Page({
                 </BreadcrumbList>
             </Breadcrumb>
 
-            <CreateService userEmail={userEmail} />
+            <ServiceStepper 
+                userEmail={userEmail} 
+            />
         </div>
     )
 }

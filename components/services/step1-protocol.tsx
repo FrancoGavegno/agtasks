@@ -13,7 +13,7 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 import { useParams } from "next/navigation"
-import type { TaskFormValues } from "@/lib/schemas"
+import type { TaskFormValues } from "@/lib/amplify/schemas"
 import { useServiceForm } from "@/lib/contexts/service-form-context"
 import type { ProtocolTasks } from "@/lib/contexts/service-form-context"
 import { Protocol } from "@/lib/interfaces/agtasks"

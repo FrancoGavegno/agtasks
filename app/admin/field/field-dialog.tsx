@@ -12,23 +12,18 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { createField, updateField } from "@/lib/services/agtasks"
-import type { Schema } from "@/amplify/data/resource"
-
-type Field = Schema["Field"]["type"]
-type Task = Schema["Task"]["type"]
+import { apiClient } from '@/lib/integrations/amplify'
+import type { Field, CreateFieldInput, UpdateFieldInput } from "@/lib/schemas"
 
 interface FieldDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   field?: Field | null
-  tasks: Task[]
 }
 
-export function FieldDialog({ open, onOpenChange, field, tasks }: FieldDialogProps) {
+export function FieldDialog({ open, onOpenChange, field }: FieldDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    taskId: "",
+  const [formData, setFormData] = useState<CreateFieldInput>({
     workspaceId: "",
     workspaceName: "",
     campaignId: "",
@@ -37,16 +32,16 @@ export function FieldDialog({ open, onOpenChange, field, tasks }: FieldDialogPro
     farmName: "",
     fieldId: "",
     fieldName: "",
-    hectares: "",
+    hectares: undefined,
     crop: "",
     hybrid: "",
+    deleted: false
   })
 
   // Auto-populate form when editing
   useEffect(() => {
     if (field) {
       setFormData({
-        taskId: (field as any).taskId || "",
         workspaceId: field.workspaceId || "",
         workspaceName: field.workspaceName || "",
         campaignId: field.campaignId || "",
@@ -55,14 +50,14 @@ export function FieldDialog({ open, onOpenChange, field, tasks }: FieldDialogPro
         farmName: field.farmName || "",
         fieldId: field.fieldId || "",
         fieldName: field.fieldName || "",
-        hectares: field.hectares?.toString() || "",
+        hectares: field.hectares,
         crop: field.crop || "",
         hybrid: field.hybrid || "",
+        deleted: false
       })
     } else {
       // Reset form for create mode
       setFormData({
-        taskId: "",
         workspaceId: "",
         workspaceName: "",
         campaignId: "",
@@ -71,9 +66,10 @@ export function FieldDialog({ open, onOpenChange, field, tasks }: FieldDialogPro
         farmName: "",
         fieldId: "",
         fieldName: "",
-        hectares: "",
+        hectares: undefined,
         crop: "",
         hybrid: "",
+        deleted: false
       })
     }
   }, [field, open])
@@ -85,18 +81,21 @@ export function FieldDialog({ open, onOpenChange, field, tasks }: FieldDialogPro
     try {
       const submitData = {
         ...formData,
-        hectares: formData.hectares ? Number.parseInt(formData.hectares) : undefined,
+        hectares: formData.hectares || undefined,
       }
 
-      const result = field ? await updateField(field.id, submitData) : await createField(submitData)
-
-      if (result) {
-        onOpenChange(false)
+      if (field) {
+        await apiClient.updateField(field.id!, submitData as UpdateFieldInput)
       } else {
-        alert("An error occurred")
+        await apiClient.createField(submitData)
       }
+      
+      onOpenChange(false)
+      // Refresh the page to show updated data
+      window.location.reload()
     } catch (error) {
-      alert("An unexpected error occurred")
+      console.error('Error saving field:', error)
+      alert("An error occurred while saving the field")
     } finally {
       setIsLoading(false)
     }
@@ -104,33 +103,32 @@ export function FieldDialog({ open, onOpenChange, field, tasks }: FieldDialogPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>{field ? "Edit Field" : "Create Field"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="taskId">Task *</Label>
-              <Select
-                value={formData.taskId}
-                onValueChange={(value) => setFormData({ ...formData, taskId: value })}
+              <Label htmlFor="fieldName">Field Name *</Label>
+              <Input
+                id="fieldName"
+                value={formData.fieldName}
+                onChange={(e) => setFormData({ ...formData, fieldName: e.target.value })}
                 required
                 disabled={isLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a task" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tasks.map((task) => (
-                    <SelectItem key={task.id} value={task.id}>
-                      {task.taskName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
             </div>
-            
+            <div className="space-y-2">
+              <Label htmlFor="fieldId">Field ID *</Label>
+              <Input
+                id="fieldId"
+                value={formData.fieldId}
+                onChange={(e) => setFormData({ ...formData, fieldId: e.target.value })}
+                required
+                disabled={isLoading}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="workspaceId">Workspace ID *</Label>
               <Input
@@ -189,32 +187,13 @@ export function FieldDialog({ open, onOpenChange, field, tasks }: FieldDialogPro
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="fieldId">Field ID *</Label>
-              <Input
-                id="fieldId"
-                value={formData.fieldId}
-                onChange={(e) => setFormData({ ...formData, fieldId: e.target.value })}
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="fieldName">Field Name *</Label>
-              <Input
-                id="fieldName"
-                value={formData.fieldName}
-                onChange={(e) => setFormData({ ...formData, fieldName: e.target.value })}
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="hectares">Hectares</Label>
               <Input
                 id="hectares"
                 type="number"
-                value={formData.hectares}
-                onChange={(e) => setFormData({ ...formData, hectares: e.target.value })}
+                step="0.01"
+                value={formData.hectares || ""}
+                onChange={(e) => setFormData({ ...formData, hectares: e.target.value ? Number(e.target.value) : undefined })}
                 disabled={isLoading}
               />
             </div>
@@ -237,7 +216,8 @@ export function FieldDialog({ open, onOpenChange, field, tasks }: FieldDialogPro
               />
             </div>
           </div>
-          <div className="flex justify-end space-x-2">
+          
+          <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
               Cancel
             </Button>

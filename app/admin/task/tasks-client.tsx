@@ -8,12 +8,8 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { DataTable } from "@/components/admin/data-table"
 import { TaskDialog } from "./task-dialog"
-import { deleteTask } from "@/lib/services/agtasks"
-import type { Schema } from "@/amplify/data/resource"
-
-type Task = Schema["Task"]["type"]
-type Project = Schema["Project"]["type"]
-type Service = Schema["Service"]["type"]
+import { apiClient } from "@/lib/integrations/amplify"
+import type { Task, Project, Service } from "@/lib/schemas"
 
 interface TasksClientProps {
   tasks: Task[]
@@ -32,9 +28,13 @@ export function TasksClient({ tasks, projects, services }: TasksClientProps) {
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this task?")) {
-      const result = await deleteTask(id)
-      if (!result) {
-        alert("Error deleting task")
+      try {
+        await apiClient.deleteTask(id)
+        // Refresh the page or update the list
+        window.location.reload()
+      } catch (error) {
+        console.error('Error deleting task:', error)
+        alert('Error deleting task')
       }
     }
   }
@@ -82,12 +82,10 @@ export function TasksClient({ tasks, projects, services }: TasksClientProps) {
       accessorKey: "tmpSubtaskId",
       header: "tmpSubtaskId",
     },
-    
     {
       accessorKey: "formId",
       header: "Form ID"
     },
-
     {
       id: "actions",
       cell: ({ row }) => {
@@ -105,7 +103,7 @@ export function TasksClient({ tasks, projects, services }: TasksClientProps) {
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDelete(task.id)} className="text-destructive">
+              <DropdownMenuItem onClick={() => handleDelete(task.id!)} className="text-destructive">
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
@@ -115,8 +113,6 @@ export function TasksClient({ tasks, projects, services }: TasksClientProps) {
       },
     },
   ]
-
-
 
   return (
     <>
@@ -128,7 +124,6 @@ export function TasksClient({ tasks, projects, services }: TasksClientProps) {
           setEditingTask(null)
           setIsDialogOpen(true)
         }}
-        addLabel="Add Task"
       />
       <TaskDialog
         open={isDialogOpen}

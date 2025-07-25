@@ -1,56 +1,52 @@
 "use client"
 
-import { 
-  useState, 
+import {
+  useState,
   useEffect,
   useRef
 } from "react"
 import { useFormContext } from "react-hook-form"
 import { useParams } from "next/navigation"
-import { useServiceForm } from "@/lib/contexts/service-form-context"
-import { User } from "@/lib/interfaces/360"
+import { useServiceForm } from "@/lib/contexts/services-context"
 import { listUsersByDomain } from "@/lib/integrations/360"
 import ReactSelect, { SingleValue } from 'react-select'
-import { listDomainForms } from "@/lib/services/agtasks"
-import type { Form as DomainForm } from "@/lib/interfaces/agtasks"
+import { apiClient } from "@/lib/integrations/amplify"
 import { Checkbox } from "@/components/ui/checkbox"
-import { 
-  FormField, 
-  FormItem, 
-  FormMessage 
-} from "@/components/ui/form"
-import { validateEnabledTasks } from "@/lib/amplify/schemas"
 
-export default function Step3Tasks() {
-  const { domain } = useParams<{ domain: string }>()
-  const domainId = Number.parseInt(domain, 10)
-  const form = useFormContext<any>()
-  const { 
-    updateFormValues, 
-    formValues,
+export default function Step3() {
+  const {
+    setValue,
+    watch,
+    formState: { errors }
+  } = useFormContext()
+
+  const {
     hasLoadedUsers,
-    hasLoadedForms,
     setHasLoadedUsers,
+    hasLoadedForms,
     setHasLoadedForms,
     users,
     setUsers,
     forms,
     setForms,
     enabledTasks,
-    setEnabledTasks
+    setEnabledTasks,
+    protocolTasks,
+    protocols
   } = useServiceForm()
-  const tasks = form.watch ? form.watch("tasks") : []
-  const errors = form.formState?.errors
+
+  const params = useParams()
+  const domainId = Number(params.domain)
   const [usersLoading, setUsersLoading] = useState(true)
   const [usersError, setUsersError] = useState<string | null>(null)
-  const [userSearch, setUserSearch] = useState<{ [index: number]: string }>({})
   const [formsLoading, setFormsLoading] = useState(false)
   const [formsError, setFormsError] = useState<string | null>(null)
 
-  const selectAllRef = useRef<HTMLInputElement>(null)
+  // Watch form values
+  const tasks = watch("tasks")
+  const protocolId = watch("protocolId")
 
-  // Validación contextual de tareas habilitadas
-  const contextualErrors = validateEnabledTasks(tasks, enabledTasks)
+  const selectAllRef = useRef<HTMLInputElement>(null)
 
   // Inicializar todas las tareas como habilitadas cuando se cargan las tareas por primera vez
   useEffect(() => {
@@ -115,8 +111,8 @@ export default function Step3Tasks() {
     const fetchForms = async () => {
       try {
         setFormsLoading(true)
-        const formsData = await listDomainForms(domainId.toString())
-        setForms(formsData)
+        const formsData = await apiClient.listDomainForms(domainId.toString())
+        setForms(formsData.items || [])
         setFormsError(null)
         setHasLoadedForms(true)
       } catch (error) {
@@ -134,44 +130,25 @@ export default function Step3Tasks() {
     }
   }, [domainId, hasLoadedForms, setHasLoadedForms, setForms])
 
-  const getFieldError = (index: number, field: "userEmail" | "formId") => {
-    // Usar validación contextual para tareas habilitadas
-    const contextualError = contextualErrors[`tasks.${index}.${field}`]
-    if (contextualError) {
-      return contextualError
-    }
-    
-    // Fallback a validación del formulario si existe
-    const fieldErrors = (errors?.tasks as any)?.[index]?.[field]
-    const isTouched = (form.formState.touchedFields.tasks as any)?.[index]?.[field]
-    if (fieldErrors && (isTouched || form.formState.isSubmitted)) {
-      return fieldErrors.message
-    }
-    return null
-  }
-
-  // Función para manejar la asignación de usuarios
-  const handleUserAssignment = (taskIndex: number, user: string) => {
-    const updatedTasks = [...tasks]
+  const handleTaskUserChange = (taskIndex: number, userEmail: string) => {
+    const updatedTasks = [...(tasks || [])]
     updatedTasks[taskIndex] = {
       ...updatedTasks[taskIndex],
-      userEmail: user,
+      userEmail
     }
-
-    // Marcar el campo como "touched"
-    form.setValue(`tasks.${taskIndex}.userEmail`, user, {
-      shouldValidate: true,
-      shouldTouch: true,
-    })
-
-    // Update context
-    updateFormValues({
-      tasks: updatedTasks,
-    })
+    setValue("tasks", updatedTasks)
   }
 
-  // Función para manejar la selección individual de tareas
-  const handleTaskSelection = (taskIndex: number) => {
+  const handleTaskFormChange = (taskIndex: number, formId: string) => {
+    const updatedTasks = [...(tasks || [])]
+    updatedTasks[taskIndex] = {
+      ...updatedTasks[taskIndex],
+      formId
+    }
+    setValue("tasks", updatedTasks)
+  }
+
+  const toggleTaskEnabled = (taskIndex: number) => {
     const newEnabledTasks = new Set(enabledTasks)
     if (newEnabledTasks.has(taskIndex)) {
       newEnabledTasks.delete(taskIndex)
@@ -253,116 +230,104 @@ export default function Step3Tasks() {
                     <Checkbox
                       id={`task-${index}`}
                       checked={isTaskEnabled}
-                      onCheckedChange={() => handleTaskSelection(index)}
+                      onCheckedChange={() => toggleTaskEnabled(index)}
                     />
                   </td>
                   <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                     {assignment.taskName}
                   </td>
                   <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                  {(assignment.taskType === "fieldvisit") ? (
+                    {(assignment.taskType === "fieldvisit") ? (
+                      <div className="min-w-[220px]">
+                        <ReactSelect
+                          classNamePrefix="react-select"
+                          isClearable
+                          isSearchable
+                          isDisabled={formsLoading || !isTaskEnabled}
+                          value={forms.find(f => f.id === assignment.formId) ? {
+                            value: assignment.formId,
+                            label: forms.find(f => f.id === assignment.formId)?.name || ""
+                          } : undefined}
+                          onChange={(option: SingleValue<{ value: string; label: string }>) => {
+                            handleTaskFormChange(index, option ? option.value : "")
+                          }}
+                          options={forms.map(form => ({
+                            value: form.id,
+                            label: form.name
+                          }))}
+                          placeholder={formsLoading ? "Cargando..." : "Seleccionar formulario"}
+                          noOptionsMessage={() => formsLoading ? "Cargando..." : "No hay formularios disponibles"}
+                          menuPortalTarget={typeof window !== "undefined" ? document.body : undefined}
+                          menuPosition="fixed"
+                          styles={{
+                            menuPortal: base => ({ ...base, zIndex: 9999 }),
+                            option: (base) => ({ ...base, fontSize: '0.875rem' }),
+                            singleValue: (base) => ({ ...base, fontSize: '0.875rem' }),
+                            input: (base) => ({ ...base, fontSize: '0.875rem' }),
+                            placeholder: (base) => ({ ...base, fontSize: '0.875rem' }),
+                          }}
+                        />
+                      </div>
+                    ) : "" }
+                  </td>
+                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
                     <div className="min-w-[220px]">
                       <ReactSelect
                         classNamePrefix="react-select"
                         isClearable
                         isSearchable
-                        isDisabled={formsLoading || !isTaskEnabled}
-                      value={forms.find(f => f.id === assignment.formId) ? {
-                        value: assignment.formId,
-                        label: forms.find(f => f.id === assignment.formId)?.name || ""
-                      } : undefined}
-                      onChange={(option: SingleValue<{ value: string; label: string }>) => {
-                        const updatedTasks = [...tasks]
-                        updatedTasks[index] = {
-                          ...updatedTasks[index],
-                          formId: option ? option.value : ""
-                        }
-                        form.setValue(`tasks.${index}.formId`, option ? option.value : "", {
-                          shouldValidate: true,
-                          shouldTouch: true,
-                        })
-                        updateFormValues({ tasks: updatedTasks })
-                      }}
-                      options={forms.map(form => ({
-                        value: form.id,
-                        label: form.name
-                      }))}
-                      placeholder={formsLoading ? "Cargando..." : "Seleccionar formulario"}
-                      noOptionsMessage={() => formsLoading ? "Cargando..." : "No hay formularios disponibles"}
-                      menuPortalTarget={typeof window !== "undefined" ? document.body : undefined}
-                      menuPosition="fixed"
-                      styles={{
-                        menuPortal: base => ({ ...base, zIndex: 9999 }),
-                        option: (base) => ({ ...base, fontSize: '0.875rem' }),
-                        singleValue: (base) => ({ ...base, fontSize: '0.875rem' }),
-                        input: (base) => ({ ...base, fontSize: '0.875rem' }),
-                        placeholder: (base) => ({ ...base, fontSize: '0.875rem' }),
-                      }}
-                    />
-                    {isTaskEnabled && getFieldError(index, "formId") && (
-                      <p className="text-red-500 text-xs mt-1">{getFieldError(index, "formId")}</p>
-                    )}
-                  </div>
-                ) : "" }
-                </td>
-                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                  <div className="min-w-[220px]">
-                      <ReactSelect
-                        classNamePrefix="react-select"
-                        isClearable
-                        isSearchable
                         isDisabled={usersLoading || !isTaskEnabled}
-                      value={users.find(u => u.email === assignment.userEmail) ? {
-                        value: assignment.userEmail,
-                        label: `${users.find(u => u.email === assignment.userEmail)?.firstName || ''} ${users.find(u => u.email === assignment.userEmail)?.lastName || ''} <${users.find(u => u.email === assignment.userEmail)?.email || ''}>`.trim()
-                      } : undefined}
-                      onChange={(option: SingleValue<{ value: string; label: string }>) => handleUserAssignment(index, option ? option.value : "")}
-                      options={users.map(user => ({
-                        value: user.email,
-                        label: `${user.firstName} ${user.lastName} <${user.email}>`.trim()
-                      }))}
-                      placeholder={usersLoading ? "Cargando..." : "Seleccionar usuario"}
-                      noOptionsMessage={() => usersLoading ? "Cargando..." : "No hay usuarios disponibles"}
-                      menuPortalTarget={typeof window !== "undefined" ? document.body : undefined}
-                      menuPosition="fixed"
-                      styles={{
-                        menuPortal: base => ({ ...base, zIndex: 9999 }),
-                        option: (base) => ({ ...base, fontSize: '0.875rem' }),
-                        singleValue: (base) => ({ ...base, fontSize: '0.875rem' }),
-                        input: (base) => ({ ...base, fontSize: '0.875rem' }),
-                        placeholder: (base) => ({ ...base, fontSize: '0.875rem' }),
-                      }}
-                    />
-                    {isTaskEnabled && getFieldError(index, "userEmail") && (
-                      <p className="text-red-500 text-xs mt-1">{getFieldError(index, "userEmail")}</p>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            )
+                        value={users.find(u => u.email === assignment.userEmail) ? {
+                          value: assignment.userEmail,
+                          label: `${users.find(u => u.email === assignment.userEmail)?.firstName || ''} ${users.find(u => u.email === assignment.userEmail)?.lastName || ''} <${users.find(u => u.email === assignment.userEmail)?.email || ''}>`.trim()
+                        } : undefined}
+                        onChange={(option: SingleValue<{ value: string; label: string }>) => handleTaskUserChange(index, option ? option.value : "")}
+                        options={users.map(user => ({
+                          value: user.email,
+                          label: `${user.firstName} ${user.lastName} <${user.email}>`.trim()
+                        }))}
+                        placeholder={usersLoading ? "Cargando..." : "Seleccionar usuario"}
+                        noOptionsMessage={() => usersLoading ? "Cargando..." : "No hay usuarios disponibles"}
+                        menuPortalTarget={typeof window !== "undefined" ? document.body : undefined}
+                        menuPosition="fixed"
+                        styles={{
+                          menuPortal: base => ({ ...base, zIndex: 9999 }),
+                          option: (base) => ({ ...base, fontSize: '0.875rem' }),
+                          singleValue: (base) => ({ ...base, fontSize: '0.875rem' }),
+                          input: (base) => ({ ...base, fontSize: '0.875rem' }),
+                          placeholder: (base) => ({ ...base, fontSize: '0.875rem' }),
+                        }}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              )
             })}
           </tbody>
         </table>
       </div>
 
       {/* Validación de tareas habilitadas */}
-      <FormField
-        control={form.control}
-        name="enabledTasks"
-        render={({ field, fieldState }) => (
-          <FormItem>
-            {enabledTasks.size === 0 && (
-              <FormMessage className="text-red-500">
-                Al menos una tarea debe estar habilitada para continuar.
-              </FormMessage>
-            )}
-          </FormItem>
-        )}
-      />
-
       {errors?.tasks && !Array.isArray(errors.tasks) && typeof errors.tasks.message === 'string' && (
         <p className="text-red-500 mt-2">{errors.tasks.message}</p>
       )}
+      
+      {/* Mostrar errores específicos de cada tarea */}
+      {Array.isArray(errors.tasks) && errors.tasks.map((taskError: any, index: number) => {
+        if (!taskError) return null
+        
+        return (
+          <div key={index} className="mt-2">
+            {taskError.userEmail && (
+              <p className="text-red-500 text-sm">Tarea {index + 1}: {taskError.userEmail.message}</p>
+            )}
+            {taskError.formId && (
+              <p className="text-red-500 text-sm">Tarea {index + 1}: {taskError.formId.message}</p>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
+

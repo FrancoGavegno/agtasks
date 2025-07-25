@@ -8,11 +8,8 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { DataTable } from "@/components/admin/data-table"
 import { FieldDialog } from "./field-dialog"
-import { deleteField } from "@/lib/services/agtasks"
-import type { Schema } from "@/amplify/data/resource"
-
-type Field = Schema["Field"]["type"]
-type Task = Schema["Task"]["type"]
+import { apiClient } from '@/lib/integrations/amplify'
+import type { Field, Task } from "@/lib/schemas"
 
 interface FieldsClientProps {
   fields: Field[]
@@ -30,9 +27,13 @@ export function FieldsClient({ fields, tasks }: FieldsClientProps) {
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this field?")) {
-      const result = await deleteField(id)
-      if (!result) {
-        alert("Error deleting field")
+      try {
+        await apiClient.deleteField(id)
+        // Refresh the page or update the list
+        window.location.reload()
+      } catch (error) {
+        console.error('Error deleting field:', error)
+        alert('Error deleting field')
       }
     }
   }
@@ -84,7 +85,7 @@ export function FieldsClient({ fields, tasks }: FieldsClientProps) {
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDelete(field.id)} className="text-destructive">
+              <DropdownMenuItem onClick={() => handleDelete(field.id!)} className="text-destructive">
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
@@ -105,9 +106,12 @@ export function FieldsClient({ fields, tasks }: FieldsClientProps) {
           setEditingField(null)
           setIsDialogOpen(true)
         }}
-        addLabel="Add Field"
       />
-      <FieldDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} field={editingField} tasks={tasks} />
+      <FieldDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        field={editingField}
+      />
     </>
   )
 }

@@ -26,7 +26,7 @@ import {
   type FieldFormValues,
   type TaskFieldFormValues,
   validateServiceForm,
-} from "@/lib/schemas"
+} from "@/lib/amplify/schemas"
 import { 
   ServiceFormProvider, 
   useServiceForm 

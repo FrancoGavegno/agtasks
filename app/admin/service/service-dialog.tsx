@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { createService, updateService } from "@/lib/services/agtasks"
+import { apiClient } from "@/lib/integrations/amplify"
 import type { Schema } from "@/amplify/data/resource"
 
 type Service = Schema["Service"]["type"]
@@ -58,7 +58,7 @@ export function ServiceDialog({ open, onOpenChange, service, projects }: Service
 
     try {
       if (service) {
-        await updateService(service.id, formData)
+        await apiClient.updateService(service.id, formData)
       } 
       // else {
       //   await createService(formData)

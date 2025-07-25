@@ -19,10 +19,11 @@ import {
   JiraSubtask
 } from "@/lib/interfaces/jira"
 
-import {
-  type ServiceFormFullValues,
-  type FieldFormValues
-} from "@/lib/schemas"
+// import {
+//   type Service,
+//   type Field,
+//   type Task
+// } from "@/lib/schemas"
 
 const JIRA_API_URL = process.env.NEXT_PUBLIC_JIRA_API_URL
 const JIRA_API_TOKEN = process.env.NEXT_PUBLIC_JIRA_API_TOKEN
@@ -147,59 +148,58 @@ export async function createCustomer(customerData: JiraCustomerData): Promise<Ji
   }
 }
 
-export async function getAllRequestTypes(serviceDeskId: number): Promise<any> {
-  try {
+// export async function getAllRequestTypes(serviceDeskId: number): Promise<any> {
+//   try {
 
-    const response = await fetch(
-      `${JIRA_API_URL}/rest/servicedeskapi/requesttype?serviceDeskId=${serviceDeskId}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          Authorization: `Basic ${JIRA_API_TOKEN}`,
-          'X-ExperimentalApi': 'opt-in'
-        },
-      }
-    );
+//     const response = await fetch(
+//       `${JIRA_API_URL}/rest/servicedeskapi/requesttype?serviceDeskId=${serviceDeskId}`,
+//       {
+//         method: 'GET',
+//         headers: {
+//           'Content-Type': 'application/json',
+//           Accept: 'application/json',
+//           Authorization: `Basic ${JIRA_API_TOKEN}`,
+//           'X-ExperimentalApi': 'opt-in'
+//         },
+//       }
+//     );
 
-    response.json().then(
-      (rq) => { rq.values }
-    )
+//     response.json().then(
+//       (rq) => { rq.values }
+//     )
+//   } catch (error) {
+//     let errorMessage: string;
 
-    // const endpoint = `/rest/servicedeskapi/requesttype?serviceDeskId=${serviceDeskId}`
-    //console.log("endpoint: ", endpoint)
+//     if (axios.isAxiosError(error)) {
+//       const errorData = error.response?.data;
+//       errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${errorData?.errorMessages?.join(', ') || errorData?.message || error.message}`;
+//     } else {
+//       errorMessage = "Unknown error occurred while creating Jira service";
+//     }
 
-    //const response = await jiraApi.get(endpoint);
+//     return {
+//       success: false,
+//       error: errorMessage,
+//     };
+//   }
+// }
 
-    // return {
-    //   success: true,
-    //   data: response.data.values,
-    // };
-  } catch (error) {
-    let errorMessage: string;
-
-    if (axios.isAxiosError(error)) {
-      const errorData = error.response?.data;
-      errorMessage = `Jira API error: ${error.response?.status} ${error.response?.statusText} - ${errorData?.errorMessages?.join(', ') || errorData?.message || error.message}`;
-    } else {
-      errorMessage = "Unknown error occurred while creating Jira service";
-    }
-
-    return {
-      success: false,
-      error: errorMessage,
-    };
-  }
-}
-
-export const generateDescriptionField = async (data: ServiceFormFullValues): Promise<JiraDescriptionFields> => {
-  const fields: FieldFormValues[] = data.fields ?? [];
-  const totalArea: number | string = fields.reduce((sum: number, lot: FieldFormValues) => sum + (lot.hectares || 0), 0) || '0';
+export const generateDescriptionField = async (data: {
+  name: string;
+  protocolId: string;
+  projectId: string;
+  requestId: string;
+  tmpRequestId: string;
+  deleted: boolean;
+  tasks: any[];
+  fields: any[];
+}): Promise<JiraDescriptionFields> => {
+  const fields: any[] = data.fields ?? [];
+  const totalArea: number | string = fields.reduce((sum: number, lot: any) => sum + (lot.hectares || 0), 0) || '0';
 
   const fieldsTable: string = `
   ||Lote||Hectáreas||Cultivo||Híbrido||
-  ${fields.map((lot: FieldFormValues) => `| ${lot.fieldName || '-'} | ${lot.hectares || '-'} | ${lot.crop || '-'} | ${lot.hybrid || '-'} |
+  ${fields.map((lot: any) => `| ${lot.fieldName || '-'} | ${lot.hectares || '-'} | ${lot.crop || '-'} | ${lot.hybrid || '-'} |
   `).join('')}
   `;
 
@@ -219,7 +219,7 @@ export const generateDescriptionField = async (data: ServiceFormFullValues): Pro
   • Establecimiento: ${fields[0]?.farmName || 'No especificado'}
   • Hectáreas totales: ${totalArea} h
   • Lotes:
-  ${fields.map((lot: FieldFormValues, index: number) =>
+  ${fields.map((lot: any, index: number) =>
     `Lote ${index + 1}:
      - Nombre: ${lot.fieldName || '-'}
      - Hectáreas: ${lot.hectares || '-'}
@@ -245,9 +245,7 @@ export async function createService(
   // https://developer.atlassian.com/cloud/jira/service-desk/rest/api-group-request/#api-rest-servicedeskapi-request-post
 
   try {
-
-    // Create Request Participants
-    const endpoint = "/rest/servicedeskapi/request";
+    const endpoint = "/rest/servicedeskapi/request";    
     // const requestParticipants = await handleParticipants(["francogavegno@gmail.com", "gavegnofranco@gmail.com"])
     // console.log("requestParticipants: ", requestParticipants)
 

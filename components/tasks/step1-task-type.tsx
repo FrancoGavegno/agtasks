@@ -17,7 +17,7 @@ import {
   convertJSONSchemaToFields, 
   isJSONSchema 
 } from "@/lib/utils"
-import { listDomainForms } from "@/lib/services/agtasks"
+import { apiClient } from "@/lib/integrations/amplify"
 import { type Schema } from "@/amplify/data/resource";
 import { Task } from "@/lib/interfaces/agtasks";
 
@@ -80,8 +80,8 @@ export default function Step1TaskType({ mode = 'create', initialData }: Step1Tas
       // DomainForm[]
       if (selectedType === "fieldvisit") {
         const fetchDomainForms = async () => {
-          const formsData = await listDomainForms(domain)
-          setDomainForms(formsData)
+          const formsData = await apiClient.listDomainForms(domain)
+          setDomainForms(formsData.items as Schema["DomainForm"]["type"][])
         }
 
         fetchDomainForms()

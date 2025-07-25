@@ -1,6 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { 
+  useState, 
+  useEffect 
+} from "react"
 import { Link } from "@/i18n/routing"
 import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -24,10 +27,9 @@ import {
   ChevronsRight,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { client } from "@/lib/amplify-client"
+import { apiClient } from "@/lib/integrations/amplify"
 import type { Schema } from "@/amplify/data/resource"
 import { format } from 'date-fns'
-import { listDomainProtocols } from "@/lib/services/agtasks";
 
 type Service = Schema["Service"]["type"]
 
@@ -51,14 +53,23 @@ export function ServicesPageDetails() {
     try {
       setLoading(true)
       setError(null)
-      const response = await client.models.Service.list({
-        filter: { projectId: { eq: projectId } }
+      
+      // Verificar que projectId sea válido
+      if (!projectId || projectId.trim() === '') {
+        throw new Error('Project ID is required and cannot be empty')
+      }
+      
+      const response = await apiClient.listServices({ 
+        projectId: projectId, 
+        limit: 100
       })
-      const raw = response.data || []
-      // Filtrar solo los datos planos (sin métodos)
-      const plain = raw.filter((s: any) => typeof s.id === 'string' && typeof s.name === 'string')
-      // Ordenar por createdAt descendente si existe
-      const sorted = [...plain].sort((a, b) => {
+      
+      // const raw = response.items || []
+      // // Filtrar solo los datos planos (sin métodos)
+      // const plain = raw.filter((s: any) => typeof s.id === 'string' && typeof s.name === 'string')
+     
+      // Ordenar por createdAt descendente 
+      const sorted = [...response.items].sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt ?? '').getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt ?? '').getTime() : 0;
         return dateB - dateA;
@@ -93,10 +104,12 @@ export function ServicesPageDetails() {
 
   useEffect(() => {
     if (domainId) {
-      listDomainProtocols(domainId).then(protocols => {
-        setProtocols(protocols);
+      apiClient.listDomainProtocols(domainId).then(protocols => {
+        setProtocols(protocols.items);
         const map: Record<string, string> = {};
-        protocols.forEach(p => { map[p.id] = p.name; });
+        protocols.items.forEach(p => { 
+          if (p.id) map[p.id] = p.name; 
+        });
         setProtocolIdToName(map);
       });
     }

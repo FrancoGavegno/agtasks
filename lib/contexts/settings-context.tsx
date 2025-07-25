@@ -9,34 +9,31 @@ import {
 } from "react"
 import { useParams } from "next/navigation"
 import { User } from "@/lib/interfaces/360"
-import { 
-  Protocol, 
-  Form
-} from "@/lib/interfaces/agtasks"
 import { listUsersByDomain } from "@/lib/integrations/360"
 import { listAssets } from "@/lib/integrations/kobotoolbox"
 import { 
-  listDomainProtocols, 
-  listDomainForms 
-} from "@/lib/services/agtasks"
+  apiClient, 
+  type DomainProtocol, 
+  type DomainForm 
+} from "@/lib/integrations/amplify"
 
 interface SettingsContextType {
-  protocols: Protocol[]
-  allProtocols: Protocol[]
+  protocols: DomainProtocol[]
+  allProtocols: DomainProtocol[]
   selectedProtocols: string[]
   protocolsLoading: boolean
-  setProtocols: (protocols: Protocol[]) => void
-  setAllProtocols: (protocols: Protocol[]) => void
+  setProtocols: (protocols: DomainProtocol[]) => void
+  setAllProtocols: (protocols: DomainProtocol[]) => void
   setSelectedProtocols: (ids: string[]) => void
   refreshProtocols: () => void
   isRefreshingProtocols: boolean
 
-  forms: Form[]
-  allForms: Form[]
+  forms: DomainForm[]
+  allForms: DomainForm[]
   selectedForms: string[]
   formsLoading: boolean
-  setForms: (forms: Form[]) => void
-  setAllForms: (forms: Form[]) => void
+  setForms: (forms: DomainForm[]) => void
+  setAllForms: (forms: DomainForm[]) => void
   setSelectedForms: (ids: string[]) => void
   refreshForms: () => void
   isRefreshingForms: boolean
@@ -56,22 +53,20 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 export function SettingsProvider({ children, selectedProject }: { children: ReactNode, selectedProject?: any }) {
   const { domain } = useParams<{ domain: string }>()
-  
-  // En settings todavía no existe projectId y queueId
   const projectId = selectedProject?.tmpServiceDeskId || process.env.NEXT_PUBLIC_JIRA_PROTOCOLS_PROJECT_ID
   const queueId = selectedProject?.tmpQueueId || process.env.NEXT_PUBLIC_JIRA_PROTOCOLS_QUEUE_ID
 
   // Estado para protocolos
-  const [protocols, setProtocols] = useState<Protocol[]>([])
-  const [allProtocols, setAllProtocols] = useState<Protocol[]>([])
+  const [protocols, setProtocols] = useState<DomainProtocol[]>([])
+  const [allProtocols, setAllProtocols] = useState<DomainProtocol[]>([])
   const [selectedProtocols, setSelectedProtocols] = useState<string[]>([])
   const [protocolsLoading, setProtocolsLoading] = useState(true)
   const [isRefreshingProtocols, setIsRefreshingProtocols] = useState(false)
   const [shouldRefetchProtocols, setShouldRefetchProtocols] = useState(true)
 
   // Estado para formularios
-  const [forms, setForms] = useState<Form[]>([])
-  const [allForms, setAllForms] = useState<Form[]>([])
+  const [forms, setForms] = useState<DomainForm[]>([])
+  const [allForms, setAllForms] = useState<DomainForm[]>([])
   const [selectedForms, setSelectedForms] = useState<string[]>([])
   const [formsLoading, setFormsLoading] = useState(true)
   const [isRefreshingForms, setIsRefreshingForms] = useState(false)
@@ -91,13 +86,12 @@ export function SettingsProvider({ children, selectedProject }: { children: Reac
 
       try {
         setProtocolsLoading(true)
-        const protocols = await listDomainProtocols(domain)
-        const sortedValues = protocols.sort((a: any, b: any) =>
+        const protocolsData = await apiClient.listDomainProtocols(domain)
+        const sortedValues = protocolsData.items.sort((a: any, b: any) =>
           a.name.localeCompare(b.name)
         );
-
         setProtocols(sortedValues)
-        setSelectedProtocols(sortedValues.map((p: Protocol) => p.tmProtocolId))
+        setSelectedProtocols(sortedValues.map((p: DomainProtocol) => p.tmProtocolId))
         setShouldRefetchProtocols(false)
       } catch (error) {
         console.error("Error fetching protocols:", error)
@@ -114,13 +108,9 @@ export function SettingsProvider({ children, selectedProject }: { children: Reac
   // Fetch All Jira Protocols
   useEffect(() => {
     const fetchAllProtocols = async () => {
-      console.log("URL: ", `/api/v1/integrations/jira/domains/${domain}/projects/${projectId}/services/queues/${queueId}`)
-      
-      
       if (!domain || !projectId || !queueId) return;
 
       try {
-
         const res = await fetch(
           `/api/v1/integrations/jira/domains/${domain}/projects/${projectId}/services/queues/${queueId}`,
         );
@@ -141,13 +131,10 @@ export function SettingsProvider({ children, selectedProject }: { children: Reac
           const matchingProtocol = protocols.find((p) => p.tmProtocolId === protocol.key);
           return {
             domainId: domain,
-            id: matchingProtocol ? matchingProtocol.id : protocol.id.toString(),
             name: protocol.fields.summary,
             language: protocol.fields.labels && protocol.fields.labels.length > 0 ? protocol.fields.labels[0] : "ES",
             tmProtocolId: protocol.key,
-            createdAt: protocol.created || new Date().toISOString(),
-            updatedAt: protocol.updated || new Date().toISOString(),
-          } as Protocol;
+          } as DomainProtocol;
         });
 
         setAllProtocols(newProtocols);
@@ -167,12 +154,12 @@ export function SettingsProvider({ children, selectedProject }: { children: Reac
 
       try {
         setFormsLoading(true)
-        const forms = await listDomainForms(domain)
-        const sortedValues = forms.sort((a: any, b: any) =>
+        const formsData = await apiClient.listDomainForms(domain)
+        const sortedValues = formsData.items.sort((a: any, b: any) =>
           a.name.localeCompare(b.name)
         );
-        setForms(sortedValues)
-        setSelectedForms(sortedValues.map((f: Form) => f.id))
+        setForms(sortedValues) 
+        setSelectedForms(sortedValues.map((f: DomainForm) => f.ktFormId))
         setShouldRefetchForms(false)
       } catch (error) {
         console.error("Error fetching domain forms:", error)
@@ -193,10 +180,12 @@ export function SettingsProvider({ children, selectedProject }: { children: Reac
 
       try {
         const koboForms = await listAssets()
+        
         // Ordenar alfabéticamente 
         const sortedValues = koboForms.sort((a: any, b: any) =>
           a.name.localeCompare(b.name)
         );
+        
         const newForms = sortedValues.map((form: any) => {
           const matchingForm = forms.find((f) => f.ktFormId === form.uid)
           return {
@@ -205,7 +194,7 @@ export function SettingsProvider({ children, selectedProject }: { children: Reac
             ktFormId: form.uid,
             name: form.name,
             language: "ES",
-          } as Form
+          } as DomainForm
         })
         setAllForms(newForms)
       } catch (error) {
@@ -281,6 +270,7 @@ export function SettingsProvider({ children, selectedProject }: { children: Reac
         setSelectedProtocols,
         refreshProtocols,
         isRefreshingProtocols,
+        
         forms,
         allForms,
         selectedForms,
@@ -290,6 +280,7 @@ export function SettingsProvider({ children, selectedProject }: { children: Reac
         setSelectedForms,
         refreshForms,
         isRefreshingForms,
+        
         users,
         usersLoading,
         setUsers,

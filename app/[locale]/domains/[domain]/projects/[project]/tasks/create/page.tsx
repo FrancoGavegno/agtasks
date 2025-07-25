@@ -7,10 +7,7 @@ import {
 } from "@/components/ui/breadcrumb"
 import CreateTaskStepper from "@/components/tasks/create-task"
 import { cookies } from 'next/headers'
-import { 
-  getProject, 
-  listServicesByProject 
-} from '@/lib/services/agtasks'
+import { apiClient } from '@/lib/integrations/amplify'
 import { Link } from "@/i18n/routing"
 
 export default async function Page({ 
@@ -22,12 +19,14 @@ export default async function Page({
   const userEmail = cookiesList.get('user-email')?.value || "";
   const projectId = params.project;
   const domainId = params.domain;
-  const projectData = await getProject(projectId);
+  const projectData = await apiClient.getProject(projectId);
+  
   // Limpiar projectData de funciones
   const cleanProjectData = projectData
     ? Object.fromEntries(Object.entries(projectData).filter(([_, v]) => typeof v !== 'function'))
     : null;
-  const services = await listServicesByProject(projectId);
+  const services = await apiClient.listServices({projectId, limit: 100});
+  
   // Limpiar services de funciones
   const cleanServices = Array.isArray(services)
     ? services.map(s => Object.fromEntries(Object.entries(s).filter(([_, v]) => typeof v !== 'function')))

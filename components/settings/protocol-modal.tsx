@@ -1,25 +1,32 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { 
+  useState, 
+  useEffect 
+} from "react"
 import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription 
+} from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { 
-  createDomainProtocol, 
-  deleteDomainProtocol 
-} from '@/lib/services/agtasks'
-import type { Protocol } from "@/lib/interfaces/agtasks"
-// import { listDomainProtocols } from "@/lib/services/agtasks"
+  apiClient, 
+  type DomainProtocol 
+} from "@/lib/integrations/amplify"
 
 interface ModalProtocolsProps {
   isOpen: boolean
   onClose: () => void
-  protocols: Protocol[]
-  allProtocols: Protocol[]
+  protocols: DomainProtocol[]
+  allProtocols: DomainProtocol[]
   selectedProtocols: string[]
   onSave: (selectedIds: string[]) => void
 }
@@ -40,7 +47,6 @@ export function ModalProtocols({
   // Initialize local state when modal opens
   useEffect(() => {
     if (isOpen) {
-      // console.log("Modal opened with selected protocols:", selectedProtocols)
       setLocalSelected([...selectedProtocols])
       setSearchTerm("")
     }
@@ -49,7 +55,6 @@ export function ModalProtocols({
   const toggleProtocol = (id: string) => {
     setLocalSelected((prev) => {
       const newSelected = prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
-      // console.log(`Toggled protocol ${id}, new selection:`, newSelected)
       return newSelected
     })
   }
@@ -89,7 +94,7 @@ export function ModalProtocols({
       // 3. Eliminar protocolos deseleccionados
       const deletePromises = protocolsToDelete.map(async ({ id }) => {
         try {
-          await deleteDomainProtocol(domain, id)
+          await apiClient.deleteDomainProtocol(id)
         } catch (error) {
           console.error(`Error al eliminar protocolo ${id}:`, error)
           toast({
@@ -110,16 +115,23 @@ export function ModalProtocols({
         }
 
         try {
-          await createDomainProtocol(domain, {
+          await apiClient.createDomainProtocol({
+            domainId: domain,
             tmProtocolId: protocolData.tmProtocolId,
             name: protocolData.name,
             language: protocolData.language || "ES",
           })
         } catch (error) {
           console.error(`Error al crear protocolo ${protocolId}:`, error)
+          let errorMessage = "Error desconocido"
+          if (error instanceof Error) {
+            errorMessage = error.message
+          } else if (typeof error === 'string') {
+            errorMessage = error
+          }
           toast({
             title: "Error",
-            description: `No se pudo crear el protocolo: ${(error as Error).message}`,
+            description: `No se pudo crear el protocolo: ${errorMessage}`,
             variant: "destructive",
           })
           throw error
@@ -141,9 +153,15 @@ export function ModalProtocols({
       onClose()
     } catch (error) {
       console.error("Error al procesar protocolos:", error)
+      let errorMessage = "Hubo un problema al guardar las preferencias de protocolos"
+      if (error instanceof Error) {
+        errorMessage = error.message
+      } else if (typeof error === 'string') {
+        errorMessage = error
+      }
       toast({
         title: "Error",
-        description: "Hubo un problema al guardar las preferencias de protocolos",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {

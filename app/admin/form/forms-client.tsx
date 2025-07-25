@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { DataTable } from "@/components/admin/data-table"
 import { DomainFormDialog } from "./form-dialog"
-import { deleteDomainForm } from "@/lib/services/agtasks"
+import { apiClient } from '@/lib/integrations/amplify'
 import type { Schema } from "@/amplify/data/resource"
 
 type DomainForm = Schema["DomainForm"]["type"]
@@ -26,8 +26,8 @@ export function DomainFormsClient({ domainForms }: DomainFormsClientProps) {
     setIsDialogOpen(true)
   }
 
-  const handleDelete = async (domainId: string, formId: string) => {
-    await deleteDomainForm(domainId, formId)
+  const handleDelete = async (formId: string) => {
+    await apiClient.deleteDomainForm(formId)
   }
 
   const columns: ColumnDef<DomainForm>[] = [
@@ -64,7 +64,7 @@ export function DomainFormsClient({ domainForms }: DomainFormsClientProps) {
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDelete(domainForm.domainId, domainForm.id)} className="text-destructive">
+              <DropdownMenuItem onClick={() => handleDelete(domainForm.id)} className="text-destructive">
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>

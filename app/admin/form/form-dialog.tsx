@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { createDomainForm } from "@/lib/services/agtasks"
+import { apiClient } from '@/lib/integrations/amplify'
 import type { Schema } from "@/amplify/data/resource"
 
 type DomainForm = Schema["DomainForm"]["type"]
@@ -52,9 +52,9 @@ export function DomainFormDialog({ open, onOpenChange, domainForm }: DomainFormD
 
     try {
       if (domainForm) {
-        await createDomainForm(domainForm.domainId, formData)
+        await apiClient.updateDomainForm(domainForm.id, formData)
       } else {
-        await createDomainForm(formData.domainId, formData)
+        await apiClient.createDomainForm(formData)
       }
       onOpenChange(false)
     } catch (error) {

@@ -35,10 +35,7 @@ type Service = Schema["Service"]["type"]
 type Task = Schema["Task"]["type"]
 
 import { useToast } from "@/hooks/use-toast"
-import {
-  listTasksByProject,
-  listServicesByProject
-} from "@/lib/services/agtasks"
+import { apiClient } from "@/lib/integrations/amplify"
 
 export function TasksPageDetails() {
   const params = useParams()
@@ -62,10 +59,15 @@ export function TasksPageDetails() {
       setLoading(true)
       setError(null)
 
+      // Verificar que projectId sea válido
+      if (!projectId || projectId.trim() === '') {
+        throw new Error('Project ID is required and cannot be empty')
+      }
+
       // 1. Obtener todos los servicios del proyecto usando función centralizada
-      const servicesData = await listServicesByProject(projectId)
+      const servicesData = await apiClient.listServices({projectId, limit: 100})
       // Ordenar servicios por requestId descendente
-      const sortedServices = [...servicesData].sort((a, b) => {
+      const sortedServices = [...servicesData.items].sort((a, b) => {
         const requestIdA = a.requestId || '';
         const requestIdB = b.requestId || '';
         return requestIdB.localeCompare(requestIdA);
@@ -73,12 +75,19 @@ export function TasksPageDetails() {
       setServices(sortedServices as Service[])
 
       // 2. Obtener todas las tareas del proyecto usando listTasksByProject
-      const tasksData = await listTasksByProject(projectId)
-      const sortedTasks: Task[] = [...tasksData].sort((a, b) => {
+      const tasksData = await apiClient.listTasks({ projectId, limit: 100 });
+      // Asegurarse de que cada tarea tenga las propiedades requeridas por el tipo Task
+      const cleanedTasks = tasksData.items.map((task) => ({
+        project: (task as any).project ?? null,
+        service: (task as any).service ?? null,
+        taskFields: (task as any).taskFields ?? [],
+        ...task,
+      }));
+      const sortedTasks = cleanedTasks.sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt ?? '').getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt ?? '').getTime() : 0;
         return dateB - dateA;
-      })
+      });
 
       //setTasks(tasksData.map(cleanTask))
       setTasks(sortedTasks as Task[])

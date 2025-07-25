@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { createDomainProtocol } from "@/lib/services/agtasks"
+import { apiClient } from '@/lib/integrations/amplify'
 import type { Schema } from "@/amplify/data/resource"
 
 type DomainProtocol = Schema["DomainProtocol"]["type"]
@@ -51,10 +51,11 @@ export function DomainProtocolDialog({ open, onOpenChange, domainProtocol }: Dom
     setIsLoading(true)
 
     try {
-      await createDomainProtocol(formData.domainId, {
+      await apiClient.createDomainProtocol({
+        domainId: formData.domainId,
         tmProtocolId: formData.tmProtocolId,
         name: formData.name,
-        language: formData.language,
+        language: formData.language
       })
         onOpenChange(false)
     } catch (error) {

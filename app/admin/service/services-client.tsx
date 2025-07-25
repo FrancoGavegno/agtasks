@@ -8,11 +8,8 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { DataTable } from "@/components/admin/data-table"
 import { ServiceDialog } from "./service-dialog"
-import { deleteService } from "@/lib/services/agtasks"
-import type { Schema } from "@/amplify/data/resource"
-
-type Service = Schema["Service"]["type"]
-type Project = Schema["Project"]["type"]
+import { apiClient } from "@/lib/integrations/amplify"
+import type { Service, Project } from "@/lib/schemas"
 
 interface ServicesClientProps {
   services: Service[]
@@ -30,7 +27,14 @@ export function ServicesClient({ services, projects }: ServicesClientProps) {
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this service?")) {
-      await deleteService(id)
+      try {
+        await apiClient.deleteService(id)
+        // Refresh the page or update the list
+        window.location.reload()
+      } catch (error) {
+        console.error('Error deleting service:', error)
+        alert('Error deleting service')
+      }
     }
   }
 
@@ -85,7 +89,7 @@ export function ServicesClient({ services, projects }: ServicesClientProps) {
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDelete(service.id)} className="text-destructive">
+              <DropdownMenuItem onClick={() => handleDelete(service.id!)} className="text-destructive">
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
@@ -106,9 +110,13 @@ export function ServicesClient({ services, projects }: ServicesClientProps) {
           setEditingService(null)
           setIsDialogOpen(true)
         }}
-        addLabel="Add Service"
       />
-      <ServiceDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} service={editingService} projects={projects} />
+      <ServiceDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        service={editingService}
+        projects={projects}
+      />
     </>
   )
 }

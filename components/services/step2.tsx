@@ -1,16 +1,10 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
-import { useFormContext } from "react-hook-form"
-import { Checkbox } from "@/components/ui/checkbox"
 import { 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from "@/components/ui/form"
+  useState, 
+  useEffect 
+} from "react"
+import { Checkbox } from "@/components/ui/checkbox"
 import { 
   Select, 
   SelectContent, 
@@ -18,41 +12,37 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
-import type { FieldFormValues } from "@/lib/amplify/schemas"
-import { useServiceForm } from "@/lib/contexts/service-form-context"
+import { useParams } from "next/navigation"
+import { useFormContext } from "react-hook-form"
+import { useServiceForm } from "@/lib/contexts/services-context"
+import type { ServiceFormValues } from "@/lib/contexts/services-context"
 import { 
   listWorkspaces, 
   listSeasons, 
   listFarms, 
   listFields 
 } from "@/lib/integrations/360"
-import type { 
-  Workspace, 
-  Season, 
-  Farm, 
-  LotField
-} from "@/lib/interfaces/360"
-import { getProject } from "@/lib/services/agtasks"
+import { apiClient } from "@/lib/integrations/amplify"
 
 interface Props {
   userEmail: string
 }
 
-export default function Step2Lots({ userEmail }: Props) {
-  const { domain, project } = useParams<{ domain: string, project: string }>()
-  const domainId = Number(domain)
-
-  const form = useFormContext<any>()
+export default function Step2({ userEmail }: Props) {
   const { 
-    updateFormValues, 
-    formValues,
+    setValue, 
+    watch,
+    formState: { errors }
+  } = useFormContext<ServiceFormValues>()
+  
+  const { 
     hasLoadedWorkspaces,
-    hasLoadedSeasons,
-    hasLoadedFarms,
-    hasLoadedFields,
     setHasLoadedWorkspaces,
+    hasLoadedSeasons,
     setHasLoadedSeasons,
+    hasLoadedFarms,
     setHasLoadedFarms,
+    hasLoadedFields,
     setHasLoadedFields,
     workspaces,
     setWorkspaces,
@@ -63,9 +53,19 @@ export default function Step2Lots({ userEmail }: Props) {
     lots,
     setLots
   } = useServiceForm()
-
-  // State for API data
+  
+  const params = useParams()
+  const domainId = Number(params.domain)
+  const projectId = params.project as string
   const [areaId, setAreaId] = useState<number>(0)
+  
+  // Watch form values
+  const fields = watch("fields")
+  
+  // State for selections
+  const [selectedWorkspace, setSelectedWorkspace] = useState<string>("")
+  const [selectedCampaign, setSelectedCampaign] = useState<string>("")
+  const [selectedEstablishment, setSelectedEstablishment] = useState<string>("")
 
   // Loading states
   const [workspacesLoading, setWorkspacesLoading] = useState(true)
@@ -79,81 +79,38 @@ export default function Step2Lots({ userEmail }: Props) {
   const [farmsError, setFarmsError] = useState<string | null>(null)
   const [fieldsError, setFieldsError] = useState<string | null>(null)
 
-  // Form values
-  const workspace = form.watch ? form.watch("workspace") : ""
-  const campaign = form.watch ? form.watch("campaign") : ""
-  const establishment = form.watch ? form.watch("establishment") : ""
-  const fieldsSelected: FieldFormValues[] = form.watch ? form.watch("fields") : []
-
   const allLotIds = lots.map(lot => lot.id.toString())
-  const selectedLotIds = fieldsSelected.map((lot) => lot.fieldId)
+  const selectedLotIds = fields?.map((lot) => lot.fieldId) || []
   const allSelected = allLotIds.length > 0 && allLotIds.every(id => selectedLotIds.includes(id))
   const someSelected = allLotIds.some(id => selectedLotIds.includes(id)) && !allSelected
 
-  const selectAllRef = React.useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    if (selectAllRef.current) {
-      selectAllRef.current.indeterminate = someSelected
-    }
-  }, [someSelected])
-
+  // Fetch project to get areaId
   useEffect(() => {
     const fetchProject = async (project: string) => {
-      const projectData = await getProject(project);
+      const projectData = await apiClient.getProject(project);
       if (projectData && projectData.areaId !== undefined && projectData.areaId !== null) {
         setAreaId(Number(projectData.areaId));
       }
     }
-    fetchProject(project)
-  }, [project])
+    fetchProject(projectId)
+  }, [projectId])
 
   // Restaurar valores del contexto cuando el componente se monta
   useEffect(() => {
+    const formValues = watch()
     console.log("Restaurando valores del contexto:", {
-      workspace: formValues.workspace,
-      campaign: formValues.campaign,
-      establishment: formValues.establishment,
       fieldsCount: formValues.fields?.length || 0
     })
     
-    if (formValues.workspace) {
-      form.setValue("workspace", formValues.workspace, { shouldValidate: true })
-    }
-    if (formValues.campaign) {
-      form.setValue("campaign", formValues.campaign, { shouldValidate: true })
-    }
-    if (formValues.establishment) {
-      form.setValue("establishment", formValues.establishment, { shouldValidate: true })
-    }
     if (formValues.fields && formValues.fields.length > 0) {
-      form.setValue("fields", formValues.fields, { shouldValidate: true })
+      const firstField = formValues.fields[0]
+      setSelectedWorkspace(firstField.workspaceId)
+      setSelectedCampaign(firstField.campaignId)
+      setSelectedEstablishment(firstField.farmId)
     }
-  }, [formValues.workspace, formValues.campaign, formValues.establishment, formValues.fields])
+  }, [watch])
 
-  // Cargar datos dependientes cuando se restauran los valores del contexto
-  useEffect(() => {
-    if (formValues.workspace && !hasLoadedSeasons) {
-      // Forzar la carga de seasons si tenemos workspace pero no se han cargado
-      setHasLoadedSeasons(false)
-    }
-  }, [formValues.workspace, hasLoadedSeasons, setHasLoadedSeasons])
-
-  useEffect(() => {
-    if (formValues.campaign && !hasLoadedFarms) {
-      // Forzar la carga de farms si tenemos campaign pero no se han cargado
-      setHasLoadedFarms(false)
-    }
-  }, [formValues.campaign, hasLoadedFarms, setHasLoadedFarms])
-
-  useEffect(() => {
-    if (formValues.establishment && !hasLoadedFields) {
-      // Forzar la carga de fields si tenemos establishment pero no se han cargado
-      setHasLoadedFields(false)
-    }
-  }, [formValues.establishment, hasLoadedFields, setHasLoadedFields])
-
-  // Fetch workspaces from 360 API solo si no se han cargado antes
+  // Fetch workspaces
   useEffect(() => {
     const fetchWorkspaces = async () => {
       try {
@@ -185,17 +142,17 @@ export default function Step2Lots({ userEmail }: Props) {
     }
   }, [userEmail, domainId, areaId, hasLoadedWorkspaces, setHasLoadedWorkspaces, setWorkspaces])
 
-  // Fetch seasons when workspace changes
+  // Fetch campaigns when workspace changes
   useEffect(() => {
     const fetchSeasons = async () => {
-      if (!workspace) {
+      if (!selectedWorkspace) {
         setCampaigns([])
         return
       }
 
       try {
         setSeasonsLoading(true)
-        const seasonsData = await listSeasons(workspace)
+        const seasonsData = await listSeasons(selectedWorkspace)
         // Filtrar seasons no eliminadas y ordenar alfabéticamente
         const filteredAndSorted = seasonsData
           .filter((season) => season.deleted === false)
@@ -213,26 +170,26 @@ export default function Step2Lots({ userEmail }: Props) {
       }
     }
 
-    if (workspace && !hasLoadedSeasons) {
+    if (selectedWorkspace && !hasLoadedSeasons) {
       console.log("Cargando seasons...")
       fetchSeasons()
     } else if (hasLoadedSeasons) {
       console.log("Seasons ya cargadas, saltando carga")
       setSeasonsLoading(false)
     }
-  }, [workspace, hasLoadedSeasons, setHasLoadedSeasons, setCampaigns])
+  }, [selectedWorkspace, hasLoadedSeasons, setHasLoadedSeasons, setCampaigns])
 
-  // Fetch farms when workspace and season change
+  // Fetch establishments when workspace and campaign change
   useEffect(() => {
     const fetchFarms = async () => {
-      if (!workspace || !campaign) {
+      if (!selectedWorkspace || !selectedCampaign) {
         setEstablishments([])
         return
       }
 
       try {
         setFarmsLoading(true)
-        const farmsData = await listFarms(workspace, campaign)
+        const farmsData = await listFarms(selectedWorkspace, selectedCampaign)
         // Filtrar farms no eliminadas y ordenar alfabéticamente
         const filteredAndSorted = farmsData
           .filter((farm) => farm.deleted === false)
@@ -250,30 +207,32 @@ export default function Step2Lots({ userEmail }: Props) {
       }
     }
 
-    if (workspace && campaign && !hasLoadedFarms) {
+    if (selectedWorkspace && selectedCampaign && !hasLoadedFarms) {
       console.log("Cargando farms...")
       fetchFarms()
     } else if (hasLoadedFarms) {
       console.log("Farms ya cargadas, saltando carga")
       setFarmsLoading(false)
     }
-  }, [workspace, campaign, hasLoadedFarms, setHasLoadedFarms, setEstablishments])
+  }, [selectedWorkspace, selectedCampaign, hasLoadedFarms, setHasLoadedFarms, setEstablishments])
 
-  // Fetch fields when workspace, season, and farm change
+  // Fetch lots when workspace, campaign and establishment change
   useEffect(() => {
     const fetchFields = async () => {
-      if (!workspace || !campaign || !establishment) {
+      if (!selectedWorkspace || !selectedCampaign || !selectedEstablishment) {
         setLots([])
         return
       }
 
       try {
         setFieldsLoading(true)
-        const fieldsData = await listFields(workspace, campaign, establishment)
-        setLots(fieldsData)
+        const fieldsData = await listFields(selectedWorkspace, selectedCampaign, selectedEstablishment)
+        // Ordenar fields alfabéticamente
+        const sorted = fieldsData.sort((a, b) => a.name.localeCompare(b.name))
+        setLots(sorted)
         setFieldsError(null)
         setHasLoadedFields(true)
-        console.log("Fields cargados:", fieldsData.length)
+        console.log("Fields cargados:", sorted.length)
       } catch (error) {
         console.error("Error fetching fields:", error)
         setFieldsError("Failed to load fields. Please try again later.")
@@ -283,110 +242,74 @@ export default function Step2Lots({ userEmail }: Props) {
       }
     }
 
-    if (workspace && campaign && establishment && !hasLoadedFields) {
+    if (selectedWorkspace && selectedCampaign && selectedEstablishment && !hasLoadedFields) {
       console.log("Cargando fields...")
       fetchFields()
     } else if (hasLoadedFields) {
       console.log("Fields ya cargados, saltando carga")
       setFieldsLoading(false)
     }
-  }, [workspace, campaign, establishment, hasLoadedFields, setHasLoadedFields, setLots])
+  }, [selectedWorkspace, selectedCampaign, selectedEstablishment, hasLoadedFields, setHasLoadedFields, setLots])
 
-  // Modificar handleWorkspaceChange para guardar el nombre del workspace
   const handleWorkspaceChange = (value: string) => {
     // Encontrar el workspace seleccionado para obtener su nombre
-    const selectedWorkspace = workspaces.find((workspace) => workspace.id.toString() === value)
-    const workspaceName = selectedWorkspace ? selectedWorkspace.name : ""
+    const selectedWorkspaceObj = workspaces.find((workspace) => workspace.id.toString() === value)
+    const workspaceName = selectedWorkspaceObj ? selectedWorkspaceObj.name : ""
 
-    form.setValue("workspace", value, { shouldValidate: true })
-    form.setValue("workspaceName", workspaceName, { shouldValidate: true })
-    form.setValue("campaign", "", { shouldValidate: true })
-    form.setValue("campaignName", "", { shouldValidate: true })
-    form.setValue("establishment", "", { shouldValidate: true })
-    form.setValue("establishmentName", "", { shouldValidate: true })
-    form.setValue("fields", [], { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-    form.trigger("fields");
+    setSelectedWorkspace(value)
+    setSelectedCampaign("")
+    setSelectedEstablishment("")
+    setValue("fields", [])
     
-    updateFormValues({
-      workspace: value,
-      workspaceName,
-      campaign: "",
-      campaignName: "",
-      establishment: "",
-      establishmentName: "",
-      fields: [],
-    })
-
-    // Reset loading flags for dependent data
+    // Reset loading states for dependent data
     setHasLoadedSeasons(false)
     setHasLoadedFarms(false)
     setHasLoadedFields(false)
   }
 
-  // Modificar handleCampaignChange para guardar el nombre de la campaña
   const handleCampaignChange = (value: string) => {
     // Encontrar la campaña seleccionada para obtener su nombre
-    const selectedCampaign = campaigns.find((season) => season.id.toString() === value)
-    const campaignName = selectedCampaign ? selectedCampaign.name : ""
+    const selectedCampaignObj = campaigns.find((season) => season.id.toString() === value)
+    const campaignName = selectedCampaignObj ? selectedCampaignObj.name : ""
 
-    form.setValue("campaign", value, { shouldValidate: true })
-    form.setValue("campaignName", campaignName, { shouldValidate: true })
-    form.setValue("establishment", "", { shouldValidate: true })
-    form.setValue("establishmentName", "", { shouldValidate: true })
-    form.setValue("fields", [], { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-    form.trigger("fields");
+    setSelectedCampaign(value)
+    setSelectedEstablishment("")
+    setValue("fields", [])
     
-    updateFormValues({
-      campaign: value,
-      campaignName,
-      establishment: "",
-      establishmentName: "",
-      fields: [],
-    })
-
-    // Reset loading flags for dependent data
+    // Reset loading states for dependent data
     setHasLoadedFarms(false)
     setHasLoadedFields(false)
   }
 
-  // Modificar handleEstablishmentChange para guardar el nombre del establecimiento
   const handleEstablishmentChange = (value: string) => {
     // Encontrar el establecimiento seleccionado para obtener su nombre
     const selectedFarm = establishments.find((farm) => farm.id.toString() === value)
     const establishmentName = selectedFarm ? selectedFarm.name : ""
 
-    form.setValue("establishment", value, { shouldValidate: true })
-    form.setValue("establishmentName", establishmentName, { shouldValidate: true })
-    form.setValue("fields", [], { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-    form.trigger("fields");
-    updateFormValues({
-      establishment: value,
-      establishmentName,
-      fields: [],
-    })
-
-    // Reset loading flags for dependent data
+    setSelectedEstablishment(value)
+    setValue("fields", [])
+    
+    // Reset loading states for dependent data
     setHasLoadedFields(false)
   }
 
-  // Modificar handleLotSelection para guardar también los nombres de los lotes y todos los campos requeridos
   const handleLotSelection = (lotId: string) => {
-    const currentLots: FieldFormValues[] = form.getValues("fields") || []
+    const currentLots = fields || []
     const selectedField = lots.find((field) => field.id.toString() === lotId)
 
     if (!selectedField) return // No hacer nada si el campo no se encuentra
 
     // Obtener los valores seleccionados actualmente
-    const workspaceId = form.getValues("workspace")
-    const campaignId = form.getValues("campaign")
-    const farmId = form.getValues("establishment")
+    const workspaceId = selectedWorkspace
+    const campaignId = selectedCampaign
+    const farmId = selectedEstablishment
 
     // Obtener nombres de los selects o del estado
     const workspaceName = workspaces.find(w => w.id?.toString() === String(workspaceId))?.name || ""
     const campaignName = campaigns.find(s => s.id?.toString() === String(campaignId))?.name || ""
     const farmName = establishments.find(f => f.id?.toString() === String(farmId))?.name || ""
 
-    const lotDetail: FieldFormValues = {
+    const lotDetail = {
       workspaceId: String(selectedField.workspaceId ?? ""),
       workspaceName,
       campaignId: String(selectedField.seasonId ?? ""),
@@ -401,28 +324,26 @@ export default function Step2Lots({ userEmail }: Props) {
       deleted: false,
     }
 
-    let newLots: FieldFormValues[]
+    let newLots
     if (currentLots.some((lot) => lot.fieldId === lotId)) {
       newLots = currentLots.filter((lot) => lot.fieldId !== lotId)
     } else {
       newLots = [...currentLots, lotDetail]
     }
 
-    form.setValue("fields", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
-    updateFormValues({ fields: newLots })
+    setValue("fields", newLots)
   }
 
   // Nueva función para seleccionar/deseleccionar todos los lotes
   const handleToggleAllLots = () => {
     if (allSelected) {
       // Deseleccionar todos
-      form.setValue("fields", [], { shouldValidate: true, shouldDirty: true, shouldTouch: true })
-      updateFormValues({ fields: [] })
+      setValue("fields", [])
     } else {
       // Seleccionar todos
-      const workspaceId = form.getValues("workspace")
-      const campaignId = form.getValues("campaign")
-      const farmId = form.getValues("establishment")
+      const workspaceId = selectedWorkspace
+      const campaignId = selectedCampaign
+      const farmId = selectedEstablishment
       const workspaceName = workspaces.find(w => w.id?.toString() === String(workspaceId))?.name || ""
       const campaignName = campaigns.find(s => s.id?.toString() === String(campaignId))?.name || ""
       const farmName = establishments.find(f => f.id?.toString() === String(farmId))?.name || ""
@@ -440,8 +361,7 @@ export default function Step2Lots({ userEmail }: Props) {
         hybrid: selectedField.hybridName || "",
         deleted: false,
       }))
-      form.setValue("fields", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
-      updateFormValues({ fields: newLots })
+      setValue("fields", newLots)
     }
   }
 
@@ -449,112 +369,85 @@ export default function Step2Lots({ userEmail }: Props) {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Workspace Selector */}
-        <FormField
-          control={form.control}
-          name="workspace"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Espacio de trabajo</FormLabel>
-              <FormControl>
-                <Select value={field.value} onValueChange={handleWorkspaceChange} disabled={workspacesLoading}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={workspacesLoading ? "Cargando..." : "Seleccionar espacio"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {workspacesError ? (
-                      <div className="p-2 text-red-500 text-sm">{workspacesError}</div>
-                    ) : workspaces.length === 0 ? (
-                      <div className="p-2 text-muted-foreground text-sm">No hay espacios disponibles</div>
-                    ) : (
-                      workspaces.map((workspace) => (
-                        <SelectItem key={workspace.id} value={workspace.id.toString()}>
-                          {workspace.name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage className="text-red-500" />
-            </FormItem>
-          )}
-        />
+        <div>
+          <label className="text-sm font-medium">Espacio de trabajo</label>
+          <Select value={selectedWorkspace} onValueChange={handleWorkspaceChange} disabled={workspacesLoading}>
+            <SelectTrigger>
+              <SelectValue placeholder={workspacesLoading ? "Cargando..." : "Seleccionar espacio"} />
+            </SelectTrigger>
+            <SelectContent>
+              {workspacesError ? (
+                <div className="p-2 text-red-500 text-sm">{workspacesError}</div>
+              ) : workspaces.length === 0 ? (
+                <div className="p-2 text-muted-foreground text-sm">No hay espacios disponibles</div>
+              ) : (
+                workspaces.map((workspace) => (
+                  <SelectItem key={workspace.id} value={workspace.id.toString()}>
+                    {workspace.name}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+        </div>
 
         {/* Season (Campaign) Selector */}
-        <FormField
-          control={form.control}
-          name="campaign"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Campaña</FormLabel>
-              <FormControl>
-                <Select
-                  value={field.value}
-                  onValueChange={handleCampaignChange}
-                  disabled={!workspace || seasonsLoading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={seasonsLoading ? "Cargando..." : "Seleccionar campaña"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {seasonsError ? (
-                      <div className="p-2 text-red-500 text-sm">{seasonsError}</div>
-                    ) : campaigns.length === 0 ? (
-                      <div className="p-2 text-muted-foreground text-sm">No hay campañas disponibles</div>
-                    ) : (
-                      campaigns.map((season) => (
-                        <SelectItem key={season.id} value={season.id.toString()}>
-                          {season.name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage className="text-red-500" />
-            </FormItem>
-          )}
-        />
+        <div>
+          <label className="text-sm font-medium">Campaña</label>
+          <Select
+            value={selectedCampaign}
+            onValueChange={handleCampaignChange}
+            disabled={!selectedWorkspace || seasonsLoading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={seasonsLoading ? "Cargando..." : "Seleccionar campaña"} />
+            </SelectTrigger>
+            <SelectContent>
+              {seasonsError ? (
+                <div className="p-2 text-red-500 text-sm">{seasonsError}</div>
+              ) : campaigns.length === 0 ? (
+                <div className="p-2 text-muted-foreground text-sm">No hay campañas disponibles</div>
+              ) : (
+                campaigns.map((season) => (
+                  <SelectItem key={season.id} value={season.id.toString()}>
+                    {season.name}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+        </div>
 
         {/* Farm (Establishment) Selector */}
-        <FormField
-          control={form.control}
-          name="establishment"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Establecimiento</FormLabel>
-              <FormControl>
-                <Select
-                  value={field.value}
-                  onValueChange={handleEstablishmentChange}
-                  disabled={!campaign || farmsLoading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={farmsLoading ? "Cargando..." : "Seleccionar establecimiento"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {farmsError ? (
-                      <div className="p-2 text-red-500 text-sm">{farmsError}</div>
-                    ) : establishments.length === 0 ? (
-                      <div className="p-2 text-muted-foreground text-sm">No hay establecimientos disponibles</div>
-                    ) : (
-                      establishments.map((farm) => (
-                        <SelectItem key={farm.id} value={farm.id.toString()}>
-                          {farm.name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage className="text-red-500" />
-            </FormItem>
-          )}
-        />
+        <div>
+          <label className="text-sm font-medium">Establecimiento</label>
+          <Select
+            value={selectedEstablishment}
+            onValueChange={handleEstablishmentChange}
+            disabled={!selectedCampaign || farmsLoading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={farmsLoading ? "Cargando..." : "Seleccionar establecimiento"} />
+            </SelectTrigger>
+            <SelectContent>
+              {farmsError ? (
+                <div className="p-2 text-red-500 text-sm">{farmsError}</div>
+              ) : establishments.length === 0 ? (
+                <div className="p-2 text-muted-foreground text-sm">No hay establecimientos disponibles</div>
+              ) : (
+                establishments.map((farm) => (
+                  <SelectItem key={farm.id} value={farm.id.toString()}>
+                    {farm.name}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Fields (Lots) Table */}
-      {establishment && (
+      {selectedEstablishment && (
         <div className="mt-6">
           <h3 className="text-lg font-medium mb-4">Lotes disponibles</h3>
           {fieldsLoading ? (
@@ -572,7 +465,6 @@ export default function Step2Lots({ userEmail }: Props) {
                     >
                       <input
                         type="checkbox"
-                        ref={selectAllRef}
                         checked={allSelected}
                         onChange={handleToggleAllLots}
                         aria-label="Seleccionar todos los lotes"
@@ -613,7 +505,7 @@ export default function Step2Lots({ userEmail }: Props) {
                         <td className="px-6 whitespace-nowrap">
                           <Checkbox
                             id={`lot-${field.id}`}
-                            checked={fieldsSelected?.some((lot) => lot.fieldId === field.id.toString())}
+                            checked={fields?.some((lot) => lot.fieldId === field.id.toString())}
                             onCheckedChange={() => handleLotSelection(field.id.toString())}
                           />
                         </td>
@@ -635,17 +527,9 @@ export default function Step2Lots({ userEmail }: Props) {
           )}
         </div>
       )}
-      <FormField
-        control={form.control}
-        name="fields"
-        render={({ field, fieldState }) => (
-          <FormItem>
-            {typeof fieldState.error?.message === "string" && (
-              <FormMessage className="text-red-500 mb-2" />
-            )}
-          </FormItem>
-        )}
-      />
+      {errors.fields && (
+        <p className="text-red-500 text-sm">{errors.fields.message}</p>
+      )}
     </div>
   )
 }

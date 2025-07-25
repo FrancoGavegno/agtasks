@@ -8,10 +8,8 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { DataTable } from "@/components/admin/data-table"
 import { ProjectDialog } from "./project-dialog"
-import { deleteProject } from "@/lib/services/agtasks"
-import type { Schema } from "@/amplify/data/resource"
-
-type Project = Schema["Project"]["type"]
+import { apiClient } from '@/lib/integrations/amplify'
+import type { Project } from "@/lib/schemas"
 
 interface ProjectsClientProps {
   projects: Project[]
@@ -28,7 +26,14 @@ export function ProjectsClient({ projects }: ProjectsClientProps) {
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this project?")) {
-      await deleteProject(id)
+      try {
+        await apiClient.deleteProject(id)
+        // Refresh the page or update the list
+        window.location.reload()
+      } catch (error) {
+        console.error('Error deleting project:', error)
+        alert('Error deleting project')
+      }
     }
   }
 
@@ -78,7 +83,7 @@ export function ProjectsClient({ projects }: ProjectsClientProps) {
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDelete(project.id)} className="text-destructive">
+              <DropdownMenuItem onClick={() => handleDelete(project.id!)} className="text-destructive">
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
@@ -99,9 +104,12 @@ export function ProjectsClient({ projects }: ProjectsClientProps) {
           setEditingProject(null)
           setIsDialogOpen(true)
         }}
-        addLabel="Add Project"
       />
-      <ProjectDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} project={editingProject} />
+      <ProjectDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        project={editingProject}
+      />
     </>
   )
 }

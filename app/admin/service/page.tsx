@@ -1,36 +1,39 @@
-import { client } from "@/lib/amplify-client"
+import { apiClient } from "@/lib/integrations/amplify"
 import { ServicesClient } from "./services-client"
-import { serializeModelData } from "@/lib/serialization-utils"
+import type { Service, Project } from "@/lib/schemas"
 
 export default async function ServicesPage() {
-  const [{ data: services }, { data: projects }] = await Promise.all([
-    client.models.Service.list({
-    filter: {
-      deleted: {
-        eq: false,
-      },
-    },
-    }),
-    client.models.Project.list({
-    filter: {
-      deleted: {
-        eq: false,
-      },
-    },
-    }),
-  ])
+  try {
+    const [{ items: services }, { items: projects }] = await Promise.all([
+      apiClient.listServices({
+        deleted: false,
+        limit: 100
+      }),
+      apiClient.listProjects({
+        deleted: false,
+        limit: 100
+      })
+    ])
 
-  // Serialización robusta
-  const serializedServices = services?.map((service) => serializeModelData(service)) || []
-  const serializedProjects = projects?.map((project) => serializeModelData(project)) || []
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Services</h1>
-        <p className="text-muted-foreground">Manage services associated with projects.</p>
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Services</h1>
+          <p className="text-muted-foreground">Manage services associated with projects.</p>
+        </div>
+        <ServicesClient services={services} projects={projects} />
       </div>
-      <ServicesClient services={serializedServices} projects={serializedProjects} />
-    </div>
-  )
+    )
+  } catch (error) {
+    console.error('Error loading services:', error)
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Services</h1>
+          <p className="text-muted-foreground">Manage services associated with projects.</p>
+        </div>
+        <div className="text-red-500">Error loading services. Please try again.</div>
+      </div>
+    )
+  }
 }

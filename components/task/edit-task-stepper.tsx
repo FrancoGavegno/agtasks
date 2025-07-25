@@ -26,7 +26,7 @@ import {
   taskFormSchema,
   type TaskFormFullValues,
 } from "@/lib/schemas"
-import { updateTask } from "@/lib/services/agtasks"
+import { apiClient } from "@/lib/integrations/amplify"
 import { Task } from "@/lib/interfaces/agtasks"
 
 const STEPS = [1, 2, 3]
@@ -156,7 +156,7 @@ export default function EditTaskStepper({
       }
 
       // Actualizar tarea
-      const updated = await updateTask(taskData.id, updateData)
+      const updated = await apiClient.updateTask(taskData.id, updateData)
       
       if (!updated) {
         throw new Error("No se pudo actualizar la tarea")

@@ -6,10 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { createProject, updateProject } from "@/lib/services/agtasks"
-import type { Schema } from "@/amplify/data/resource"
-
-type Project = Schema["Project"]["type"]
+import { apiClient } from '@/lib/integrations/amplify'
+import type { Project, CreateProjectInput, UpdateProjectInput } from "@/lib/schemas"
 
 interface ProjectDialogProps {
   open: boolean
@@ -19,7 +17,7 @@ interface ProjectDialogProps {
 
 export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<CreateProjectInput>({
     domainId: "",
     areaId: "",
     serviceDeskId: "",
@@ -31,6 +29,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
     tmpRequestTypeId: "87",
     tmpQueueId: "82",
     queueId: "",
+    deleted: false
   })
 
   // Auto-populate form when editing
@@ -48,6 +47,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
         tmpRequestTypeId: project.tmpRequestTypeId || "87",
         tmpQueueId: project.tmpQueueId || "82",
         queueId: project.queueId || "",
+        deleted: false,
       })
     } else {
       // Reset form for create mode
@@ -63,6 +63,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
         tmpRequestTypeId: "87",
         tmpQueueId: "82",
         queueId: "",
+        deleted: false,
       })
     }
   }, [project, open])
@@ -72,15 +73,18 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
     setIsLoading(true)
 
     try {
-      const result = project ? await updateProject(project.id, formData) : await createProject(formData)
-
-      if (result) {
-        onOpenChange(false)
+      if (project) {
+        await apiClient.updateProject(project.id!, formData as UpdateProjectInput)
       } else {
-        alert("An error occurred")
+        await apiClient.createProject(formData)
       }
+      
+      onOpenChange(false)
+      // Refresh the page to show updated data
+      window.location.reload()
     } catch (error) {
-      alert("An unexpected error occurred")
+      console.error('Error saving project:', error)
+      alert("An error occurred while saving the project")
     } finally {
       setIsLoading(false)
     }
@@ -93,11 +97,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
           <DialogTitle>{project ? "Edit Project" : "Create Project"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {" "}
-          {/* Changed to space-y-4 */}
           <div className="grid grid-cols-2 gap-4">
-            {" "}
-            {/* Consolidated all fields into one grid */}
             <div className="space-y-2">
               <Label htmlFor="name">Name *</Label>
               <Input
@@ -202,8 +202,8 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
                 disabled={isLoading}
               />
             </div>
-            
           </div>
+          
           <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
               Cancel
