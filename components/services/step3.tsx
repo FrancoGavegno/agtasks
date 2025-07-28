@@ -47,19 +47,28 @@ export default function Step3() {
   const protocolId = watch("protocolId")
 
   const selectAllRef = useRef<HTMLInputElement>(null)
+  const hasInitializedTasks = useRef(false)
 
   // Inicializar todas las tareas como habilitadas cuando se cargan las tareas por primera vez
   useEffect(() => {
-    if (tasks && tasks.length > 0 && enabledTasks.size === 0) {
+    if (tasks && tasks.length > 0 && !hasInitializedTasks.current) {
       const allTaskIndices = new Set<number>(tasks.map((_: any, index: number) => index))
       setEnabledTasks(allTaskIndices)
+      hasInitializedTasks.current = true
     }
-  }, [tasks, enabledTasks.size, setEnabledTasks])
+  }, [tasks?.length, setEnabledTasks]) // Changed from 'tasks' to 'tasks?.length' to only trigger when tasks array length changes
+
+  // Reset initialization flag when tasks change (e.g., when protocol changes)
+  useEffect(() => {
+    hasInitializedTasks.current = false
+  }, [protocolId])
 
   // Manejar estado indeterminado del checkbox "Seleccionar todos"
   const allTaskIndices = tasks ? tasks.map((_: any, index: number) => index) : []
   const allEnabled = allTaskIndices.length > 0 && allTaskIndices.every((index: number) => enabledTasks.has(index))
   const someEnabled = allTaskIndices.some((index: number) => enabledTasks.has(index)) && !allEnabled
+
+
 
   useEffect(() => {
     if (selectAllRef.current) {

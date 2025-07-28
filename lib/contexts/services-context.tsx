@@ -220,7 +220,7 @@ export function ServiceFormProvider({ children }: { children: ReactNode }) {
           if (!task.userEmail || task.userEmail.trim() === "") {
             form.setError(`tasks.${taskIndex}.userEmail`, {
               type: "manual",
-              message: "Debes asignar un usuario a esta tarea"
+              message: "Debes asignar usuario a cada tarea habilitada"
             })
             return false
           }
@@ -229,7 +229,7 @@ export function ServiceFormProvider({ children }: { children: ReactNode }) {
           if (task.taskType === "fieldvisit" && (!task.formId || task.formId.trim() === "")) {
             form.setError(`tasks.${taskIndex}.formId`, {
               type: "manual",
-              message: "Debes seleccionar un formulario para tareas de fieldvisit"
+              message: "Debes asignar un formulario a cada tarea de tipo recorrida"
             })
             return false
           }

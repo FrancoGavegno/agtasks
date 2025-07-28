@@ -32,8 +32,8 @@ import {
   CreateFieldInput,
 } from "@/lib/integrations/amplify"
 import {
-  createService as createServiceInJira,
-  createSubtask as createJiraSubtask,
+  createService,
+  createSubtask,
   generateDescriptionField
 } from "@/lib/integrations/jira"
 import { useTranslations } from "next-intl"
@@ -90,6 +90,9 @@ function ServiceStepperForm({ userEmail }: Props) {
   const router = useRouter()
   const params = useParams()
   const { locale, domain, project } = params
+  const localeStr = Array.isArray(locale) ? locale[0] : locale
+  const domainStr = Array.isArray(domain) ? domain[0] : domain
+  const projectStr = Array.isArray(project) ? project[0] : project
   const t = useTranslations("CreateService")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const {
@@ -104,7 +107,7 @@ function ServiceStepperForm({ userEmail }: Props) {
   // Check if current step is valid for button state
   const isCurrentStepValid = () => {
     const formData = form.getValues()
-    
+
     switch (currentStep) {
       case 1:
         return formData.protocolId && formData.protocolId.trim() !== ""
@@ -131,7 +134,7 @@ function ServiceStepperForm({ userEmail }: Props) {
         form.clearErrors("tasks")
       }
     })
-    
+
     return () => subscription.unsubscribe()
   }, [form, currentStep])
 
@@ -142,44 +145,37 @@ function ServiceStepperForm({ userEmail }: Props) {
   }
 
   const goToServicesList = () => {
-    const localeStr = Array.isArray(locale) ? locale[0] : locale
-    const domainStr = Array.isArray(domain) ? domain[0] : domain
-    const projectStr = Array.isArray(project) ? project[0] : project
-
     if (localeStr && domainStr && projectStr) {
       router.push(`/${localeStr}/domains/${domainStr}/projects/${projectStr}/services`)
     }
   }
 
+  // Crea el Service en JIRA y retorna el issueKey
+  async function createServiceInJiraOnly(
+    serviceName: string,
+    description: string,
+    userEmail: string,
+    serviceDeskId: string,
+    requestTypeId: string
+  ) {
+    console.log("createServiceInJiraOnly")
+
+    return await createService(
+      serviceName,
+      description,
+      userEmail,
+      serviceDeskId,
+      requestTypeId
+    )
+  }
+
+  // Crear Service en DB
   async function createServiceInDB(data: CreateServiceInput): Promise<Service> {
     const result = await apiClient.createService(data)
     return result
   }
 
-  async function createServiceTasksInDB(tasks: CreateTaskInput[]): Promise<string[]> {
-    const taskIds: string[] = []
-
-    for (const task of tasks) {
-      const taskData = {
-        projectId: task.projectId || "",
-        serviceId: task.serviceId || "",
-        tmpSubtaskId: task.tmpSubtaskId,
-        subtaskId: task.subtaskId,
-        taskName: task.taskName || "",
-        taskType: task.taskType || "",
-        taskData: task.taskData,
-        userEmail: task.userEmail || "",
-        deleted: false,
-        formId: task.formId
-      }
-
-      const result = await apiClient.createTask(taskData)
-      if (result.id) taskIds.push(result.id)
-    }
-
-    return taskIds
-  }
-
+  // Crear Fields en DB
   async function createServiceFieldsInDB(lots: CreateFieldInput[]): Promise<string[]> {
     const fieldIds: string[] = []
 
@@ -205,7 +201,65 @@ function ServiceStepperForm({ userEmail }: Props) {
 
     return fieldIds
   }
+  // Crear Tasks en DB
+  async function createServiceTasksInDB(tasks: CreateTaskInput[]): Promise<string[]> {
+    const taskIds: string[] = []
 
+    for (const task of tasks) {
+      const taskData = {
+        projectId: task.projectId || "",
+        serviceId: task.serviceId || "",
+        tmpSubtaskId: task.tmpSubtaskId,
+        subtaskId: task.subtaskId,
+        taskName: task.taskName || "",
+        taskType: task.taskType || "",
+        taskData: task.taskData,
+        userEmail: task.userEmail || "",
+        deleted: false,
+        formId: task.formId
+      }
+
+      const result = await apiClient.createTask(taskData)
+      if (result.id) taskIds.push(result.id)
+    }
+
+    return taskIds
+  }
+
+  // Crear Subtasks en JIRA (en orden) y devolver los keys
+  // async function createSubtasksInJira(
+  //   issueKey: string,
+  //   tasks: any[],
+  //   description: string,
+  //   locale: string,
+  //   domain: string,
+  //   project: string,
+  // ) {
+  //   const subtaskKeys: string[] = [];
+  //   for (let i = 0; i < tasks.length; i++) {
+  //     const task = tasks[i];
+  //     const baseUrl = process.env.NODE_ENV === 'production'
+  //       ? process.env.NEXT_PUBLIC_SITE_URL
+  //       : 'http://localhost:3000';
+  //     const agtasksUrl = `${baseUrl}/${locale}/domains/${domain}/projects/${project}/tasks/`;
+  //     const response = await createSubtask(
+  //       issueKey,
+  //       task.taskName,
+  //       task.userEmail,
+  //       description,
+  //       agtasksUrl,
+  //       task.taskType
+  //     );
+  //     if (response?.key) {
+  //       subtaskKeys.push(response.key);
+  //     } else {
+  //       throw new Error(`Failed to create subtask for task: ${task.taskName}`);
+  //     }
+  //   }
+  //   return subtaskKeys;
+  // }
+
+  // Asociar cada Field a cada Task mediante TaskField
   async function associateFieldsToTasks(taskIds: string[], fieldIds: string[]) {
     for (const taskId of taskIds) {
       for (const fieldId of fieldIds) {
@@ -221,7 +275,7 @@ function ServiceStepperForm({ userEmail }: Props) {
       // Get the first error message from the form
       const errors = form.formState.errors
       let errorMessage = "Por favor, completa todos los campos requeridos antes de continuar."
-      
+
       if (errors.protocolId?.message) {
         errorMessage = errors.protocolId.message
       } else if (errors.fields?.message) {
@@ -229,7 +283,7 @@ function ServiceStepperForm({ userEmail }: Props) {
       } else if (errors.tasks?.message) {
         errorMessage = errors.tasks.message
       }
-      
+
       toast({
         title: "Error de validación",
         description: errorMessage,
@@ -248,7 +302,7 @@ function ServiceStepperForm({ userEmail }: Props) {
       setIsSubmitting(true);
       const formData = form.getValues()
 
-      // Validate final step
+      // // Validate final step
       const isValid = await validateStep(3)
       if (!isValid) {
         toast({
@@ -272,11 +326,11 @@ function ServiceStepperForm({ userEmail }: Props) {
       let serviceDeskId = "";
       let requestTypeId = "";
       const projectResponse = await apiClient.getProject(projectStr);
-      console.log("Project response:", projectResponse);
+      // console.log("Project response:", projectResponse);
       if (projectResponse && projectResponse.id) {
         serviceDeskId = projectResponse.serviceDeskId;
         requestTypeId = projectResponse.requestTypeId;
-        console.log("Jira config - serviceDeskId:", serviceDeskId, "requestTypeId:", requestTypeId);
+        // console.log("Jira config - serviceDeskId:", serviceDeskId, "requestTypeId:", requestTypeId);
       }
 
       // Validate that we have the required Jira configuration
@@ -284,32 +338,22 @@ function ServiceStepperForm({ userEmail }: Props) {
         throw new Error(`Project configuration is missing required Jira settings. serviceDeskId: "${serviceDeskId}", requestTypeId: "${requestTypeId}"`);
       }
 
-      // Create Service in JIRA first
-      console.log("Creating Jira service with:", { serviceName, userEmail, serviceDeskId, requestTypeId });
-      const jiraResponse = await createServiceInJira(
+      // Generate description field
+      const { description, descriptionPlain } = await generateDescriptionField(formData.fields)
+
+      // Create Service in JIRA
+      const jiraResponse = await createServiceInJiraOnly(
         serviceName,
-        "", // description placeholder
+        description,
         userEmail,
         serviceDeskId,
         requestTypeId
       );
-      console.log("Jira response:", jiraResponse);
+
       if (!jiraResponse.success || !jiraResponse.data?.issueKey) {
         throw new Error(`Failed to create Jira service: ${jiraResponse.error || 'No issueKey returned'}`);
       }
       const { issueKey } = jiraResponse.data;
-
-      // Generate description
-      const { description, descriptionPlain } = await generateDescriptionField({
-        name: serviceName,
-        protocolId: formData.protocolId || "",
-        projectId: projectStr,
-        requestId: issueKey,
-        tmpRequestId: formData.tmpRequestId || "",
-        deleted: false,
-        tasks: formData.tasks || [],
-        fields: formData.fields || [],
-      });
 
       // Create Service in DB
       const serviceData = {
@@ -325,15 +369,15 @@ function ServiceStepperForm({ userEmail }: Props) {
       // Create Fields in DB
       const fieldIds = await createServiceFieldsInDB(formData.fields)
 
-      // Create Tasks in DB (only enabled tasks, without subtaskId initially) - Filter duplicate tasks
+      // Create Tasks in DB (only enabled tasks, without subtaskId initially) 
       const enabledTasksArray = Array.from(enabledTasks)
       const enabledTasksData = enabledTasksArray.map((taskIndex: number) => formData.tasks[taskIndex])
-      
-      // Filter duplicate tasks based on tmpSubtaskId (same as original)
-      const uniqueTasks = enabledTasksData.filter((task: any, index: number, self: any[]) => 
+
+      // Filter duplicate tasks based on tmpSubtaskId
+      const uniqueTasks = enabledTasksData.filter((task: any, index: number, self: any[]) =>
         index === self.findIndex((t: any) => t.tmpSubtaskId === task.tmpSubtaskId)
       );
-      
+
       const tasksToCreate: CreateTaskInput[] = uniqueTasks.map((task: any) => ({
         ...task,
         serviceId: service.id
@@ -347,11 +391,8 @@ function ServiceStepperForm({ userEmail }: Props) {
         const baseUrl = process.env.NODE_ENV === 'production'
           ? process.env.NEXT_PUBLIC_SITE_URL
           : 'http://localhost:3000';
-        // Handle locale and domain parameters (can be arrays in Next.js 13+)
-        const localeStr = Array.isArray(locale) ? locale[0] : locale
-        const domainStr = Array.isArray(domain) ? domain[0] : domain
         const agtasksUrl = `${baseUrl}/${localeStr}/domains/${domainStr}/projects/${projectStr}/tasks/`;
-        const response = await createJiraSubtask(
+        const response = await createSubtask(
           issueKey,
           task.taskName || "",
           task.userEmail || "",
@@ -365,7 +406,7 @@ function ServiceStepperForm({ userEmail }: Props) {
           throw new Error(`Failed to create subtask for task: ${task.taskName}`);
         }
       }
-
+      
       // Update tasks with Jira subtaskId
       await Promise.all(taskIds.map((taskId, idx) =>
         apiClient.updateTask(taskId, { subtaskId: subtaskKeys[idx] })
@@ -437,13 +478,17 @@ function ServiceStepperForm({ userEmail }: Props) {
             </div>
             <CardFooter className="flex justify-end gap-2 bg-white sticky bottom-0 z-10 border-t border-gray-100 pt-4 pb-4">
               {currentStep > 1 && (
-                <Button type="button" variant="outline" onClick={prevStep}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={prevStep}
+                >
                   <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
                 </Button>
               )}
               {currentStep < 3 && (
-                <Button 
-                  type="button" 
+                <Button
+                  type="button"
                   onClick={nextStep}
                   disabled={!isCurrentStepValid()}
                 >

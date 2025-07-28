@@ -18,6 +18,7 @@ import {
   JiraIssue,
   JiraSubtask
 } from "@/lib/interfaces/jira"
+import { Field } from "../schemas"
 
 // import {
 //   type Service,
@@ -184,17 +185,7 @@ export async function createCustomer(customerData: JiraCustomerData): Promise<Ji
 //   }
 // }
 
-export const generateDescriptionField = async (data: {
-  name: string;
-  protocolId: string;
-  projectId: string;
-  requestId: string;
-  tmpRequestId: string;
-  deleted: boolean;
-  tasks: any[];
-  fields: any[];
-}): Promise<JiraDescriptionFields> => {
-  const fields: any[] = data.fields ?? [];
+export const generateDescriptionField = async (fields: Field[]): Promise<JiraDescriptionFields> => {
   const totalArea: number | string = fields.reduce((sum: number, lot: any) => sum + (lot.hectares || 0), 0) || '0';
 
   const fieldsTable: string = `
@@ -234,6 +225,14 @@ export const generateDescriptionField = async (data: {
   };
 };
 
+// interface JiraRequest {
+//   serviceName: string
+//   jiraDescription: string
+//   userEmail: string
+//   serviceDeskId: string
+//   requestTypeId: string
+// }
+
 export async function createService(
   serviceName: string,
   jiraDescription: string,
@@ -243,6 +242,14 @@ export async function createService(
 ): Promise<JiraResponse> {
   // Service Desk Request (Protocol or Service)  
   // https://developer.atlassian.com/cloud/jira/service-desk/rest/api-group-request/#api-rest-servicedeskapi-request-post
+  
+  // console.log("createService data:", {
+  //   serviceName,
+  //   jiraDescription,
+  //   userEmail,
+  //   serviceDeskId,
+  //   requestTypeId
+  // })
 
   try {
     const endpoint = "/rest/servicedeskapi/request";    
@@ -261,7 +268,7 @@ export async function createService(
     };
 
     const response = await jiraApi.post(endpoint, payload);
-    // console.log('Jira service created successfully:', response.data);
+    //console.log('Jira service created successfully:', response.data);
 
     return {
       success: true,
@@ -378,7 +385,7 @@ export async function createIssue(
     if (!parentIssueKey || !summary || !userEmail || !description) {
       throw new Error("Missing required parameters for Jira issue creation");
     }
-    
+
     // Reporter field 
     let accountId: string | null = null
 
@@ -433,20 +440,20 @@ export async function createIssue(
         ...(accountId ? { reporter: { id: accountId } } : {})
       }
     }
-    
+
     const endpoint = `${JIRA_API_URL}/rest/api/3/issue`
     const response = await jiraApi.post(endpoint, payload)
-    
+
     if (!response.data) {
       throw new Error("No response data from Jira API");
     }
-    
+
     return response.data
   } catch (err) {
     console.error("Error creating Jira issue:", err)
     throw err
   }
-  
+
 }
 
 

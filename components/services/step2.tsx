@@ -98,9 +98,9 @@ export default function Step2({ userEmail }: Props) {
   // Restaurar valores del contexto cuando el componente se monta
   useEffect(() => {
     const formValues = watch()
-    console.log("Restaurando valores del contexto:", {
-      fieldsCount: formValues.fields?.length || 0
-    })
+    // console.log("Restaurando valores del contexto:", {
+    //   fieldsCount: formValues.fields?.length || 0
+    // })
     
     if (formValues.fields && formValues.fields.length > 0) {
       const firstField = formValues.fields[0]
@@ -123,7 +123,7 @@ export default function Step2({ userEmail }: Props) {
         setWorkspaces(filteredAndSorted)
         setWorkspacesError(null)
         setHasLoadedWorkspaces(true)
-        console.log("Workspaces cargados:", filteredAndSorted.length)
+        // console.log("Workspaces cargados:", filteredAndSorted.length)
       } catch (error) {
         console.error("Error fetching workspaces:", error)
         setWorkspacesError("Failed to load workspaces. Please try again later.")
@@ -134,10 +134,10 @@ export default function Step2({ userEmail }: Props) {
     }
 
     if (userEmail && domainId != 0 && areaId != 0 && !hasLoadedWorkspaces) {
-      console.log("Cargando workspaces...")
+      //console.log("Cargando workspaces...")
       fetchWorkspaces()
     } else if (hasLoadedWorkspaces) {
-      console.log("Workspaces ya cargados, saltando carga")
+      // console.log("Workspaces ya cargados, saltando carga")
       setWorkspacesLoading(false)
     }
   }, [userEmail, domainId, areaId, hasLoadedWorkspaces, setHasLoadedWorkspaces, setWorkspaces])
@@ -160,7 +160,7 @@ export default function Step2({ userEmail }: Props) {
         setCampaigns(filteredAndSorted)
         setSeasonsError(null)
         setHasLoadedSeasons(true)
-        console.log("Seasons cargadas:", filteredAndSorted.length)
+        // console.log("Seasons cargadas:", filteredAndSorted.length)
       } catch (error) {
         console.error("Error fetching seasons:", error)
         setSeasonsError("Failed to load seasons. Please try again later.")
@@ -171,10 +171,10 @@ export default function Step2({ userEmail }: Props) {
     }
 
     if (selectedWorkspace && !hasLoadedSeasons) {
-      console.log("Cargando seasons...")
+      // console.log("Cargando seasons...")
       fetchSeasons()
     } else if (hasLoadedSeasons) {
-      console.log("Seasons ya cargadas, saltando carga")
+      // console.log("Seasons ya cargadas, saltando carga")
       setSeasonsLoading(false)
     }
   }, [selectedWorkspace, hasLoadedSeasons, setHasLoadedSeasons, setCampaigns])
@@ -197,7 +197,7 @@ export default function Step2({ userEmail }: Props) {
         setEstablishments(filteredAndSorted)
         setFarmsError(null)
         setHasLoadedFarms(true)
-        console.log("Farms cargadas:", filteredAndSorted.length)
+        // console.log("Farms cargadas:", filteredAndSorted.length)
       } catch (error) {
         console.error("Error fetching farms:", error)
         setFarmsError("Failed to load farms. Please try again later.")
@@ -208,10 +208,10 @@ export default function Step2({ userEmail }: Props) {
     }
 
     if (selectedWorkspace && selectedCampaign && !hasLoadedFarms) {
-      console.log("Cargando farms...")
+      // console.log("Cargando farms...")
       fetchFarms()
     } else if (hasLoadedFarms) {
-      console.log("Farms ya cargadas, saltando carga")
+      // console.log("Farms ya cargadas, saltando carga")
       setFarmsLoading(false)
     }
   }, [selectedWorkspace, selectedCampaign, hasLoadedFarms, setHasLoadedFarms, setEstablishments])
@@ -232,7 +232,7 @@ export default function Step2({ userEmail }: Props) {
         setLots(sorted)
         setFieldsError(null)
         setHasLoadedFields(true)
-        console.log("Fields cargados:", sorted.length)
+        // console.log("Fields cargados:", sorted.length)
       } catch (error) {
         console.error("Error fetching fields:", error)
         setFieldsError("Failed to load fields. Please try again later.")
@@ -243,10 +243,10 @@ export default function Step2({ userEmail }: Props) {
     }
 
     if (selectedWorkspace && selectedCampaign && selectedEstablishment && !hasLoadedFields) {
-      console.log("Cargando fields...")
+      // console.log("Cargando fields...")
       fetchFields()
     } else if (hasLoadedFields) {
-      console.log("Fields ya cargados, saltando carga")
+      // console.log("Fields ya cargados, saltando carga")
       setFieldsLoading(false)
     }
   }, [selectedWorkspace, selectedCampaign, selectedEstablishment, hasLoadedFields, setHasLoadedFields, setLots])
