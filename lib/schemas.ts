@@ -324,3 +324,66 @@ export const protocolTasksSchema = z.record(z.array(z.object({
 })))
 
 export type ProtocolTasks = z.infer<typeof protocolTasksSchema>
+
+// Task Form Schema for create/edit task forms
+export const taskFormSchema = z.object({
+  taskName: z.string().min(1, "Task name is required"),
+  taskType: z.string().min(1, "Task type is required"),
+  fields: z.array(z.object({
+    id: z.number().optional(),
+    workspaceId: z.number().optional(),
+    workspaceName: z.string().optional(),
+    campaignId: z.number().optional(),
+    campaignName: z.string().optional(),
+    farmId: z.number().optional(),
+    farmName: z.string().optional(),
+    fieldId: z.string().optional(),
+    fieldName: z.string().optional(),
+    hectares: z.number().optional(),
+    crop: z.string().optional(),
+    hybrid: z.string().optional(),
+    cropDate: z.string().optional(),
+    cropId: z.number().optional(),
+    cropName: z.string().optional(),
+    hybridId: z.number().optional(),
+    hybridName: z.string().optional(),
+    layerId: z.number().optional(),
+    seasonId: z.number().optional(),
+    name: z.string().optional(),
+  })).min(1, "At least one field must be selected"),
+  projectId: z.string().min(1, "Project ID is required"),
+  serviceId: z.string().optional(),
+  userEmail: z.string().email("Valid email is required").min(1, "User email is required"),
+  tmpSubtaskId: z.string().optional(),
+  subtaskId: z.string().optional(),
+  taskData: z.union([z.record(z.any()), z.string()]).optional().nullable(),
+  deleted: z.boolean().default(false),
+  formId: z.string().optional(),
+})
+
+export type TaskFormFullValues = z.infer<typeof taskFormSchema>
+
+// Field Form Values for task fields
+export const fieldFormSchema = z.object({
+  workspaceId: z.string().min(1, "Workspace ID is required"),
+  workspaceName: z.string().optional(),
+  campaignId: z.string().min(1, "Campaign ID is required"),
+  campaignName: z.string().optional(),
+  farmId: z.string().min(1, "Farm ID is required"),
+  farmName: z.string().optional(),
+  fieldId: z.string().min(1, "Field ID is required"),
+  fieldName: z.string().min(1, "Field name is required"),
+  hectares: z.number().positive().optional(),
+  crop: z.string().optional(),
+  hybrid: z.string().optional(),
+})
+
+export type FieldFormValues = z.infer<typeof fieldFormSchema>
+
+// Task Field Form Values for task-field associations
+export const taskFieldFormSchema = z.object({
+  taskId: z.string().min(1, "Task ID is required"),
+  fieldId: z.string().min(1, "Field ID is required"),
+})
+
+export type TaskFieldFormValues = z.infer<typeof taskFieldFormSchema>
