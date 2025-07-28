@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { useFormContext } from "react-hook-form"
+import { useTaskForm } from "@/lib/contexts/tasks-context"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { 
@@ -19,19 +20,14 @@ import {
 } from "@/lib/utils"
 import { apiClient } from "@/lib/integrations/amplify"
 import { type Schema } from "@/amplify/data/resource";
-import { Task } from "@/lib/interfaces/agtasks";
 
-interface Step1TaskTypeProps {
-  mode?: 'create' | 'edit'
-  initialData?: Task
-}
-
-export default function Step1TaskType({ mode = 'create', initialData }: Step1TaskTypeProps) {
+export default function Step1TaskType() {
   const { 
     register, 
     setValue, 
     watch 
   } = useFormContext()
+  const { mode } = useTaskForm()
   const params = useParams()
   const { locale, domain } = params as { locale: string, domain: string }
   const [taskTypes, setTaskTypes] = useState<string[]>([])
@@ -39,29 +35,19 @@ export default function Step1TaskType({ mode = 'create', initialData }: Step1Tas
   const selectedType = watch("taskType")
   const selectedForm = watch("formId")
   const taskData = watch("taskData")
-  const [localTaskData, setLocalTaskData] = useState<any>(taskData || {})
   const [domainForms, setDomainForms] = useState<Schema["DomainForm"]["type"][]>([])
   const isEditMode = mode === 'edit'
 
-  // Pre-llenar datos si es modo edición
-  useEffect(() => {
-    if (isEditMode && initialData) {
-      setValue("taskName", initialData.taskName || "")
-      setValue("taskType", initialData.taskType || "")
-      setValue("formId", initialData.formId || "")
-      if (initialData.taskData) {
-        try {
-          const parsedData = typeof initialData.taskData === 'string' 
-            ? JSON.parse(initialData.taskData) 
-            : initialData.taskData
-          setValue("taskData", parsedData)
-          setLocalTaskData(parsedData)
-        } catch (error) {
-          console.error("Error parsing task data:", error)
-        }
-      }
+  // Parse taskData for DynamicForm
+  const parsedTaskData = (() => {
+    if (!taskData) return {}
+    try {
+      return typeof taskData === 'string' ? JSON.parse(taskData) : taskData
+    } catch (error) {
+      console.error("Error parsing task data:", error)
+      return {}
     }
-  }, [isEditMode, initialData, setValue])
+  })()
 
   useEffect(() => {
     async function fetchTaskTypes() {
@@ -74,9 +60,6 @@ export default function Step1TaskType({ mode = 'create', initialData }: Step1Tas
 
   useEffect(() => {
     if (selectedType) {
-      setDomainForms([])
-      setValue("formId", "");
-
       // DomainForm[]
       if (selectedType === "fieldvisit") {
         const fetchDomainForms = async () => {
@@ -86,21 +69,18 @@ export default function Step1TaskType({ mode = 'create', initialData }: Step1Tas
 
         fetchDomainForms()
       } else {
-        // Limpiar formId cuando no es fieldvisit
+        // Limpiar formId y domainForms cuando no es fieldvisit
         setValue("formId", "")
+        setDomainForms([])
       }
 
       // JSON schema  
       fetch(`/schemas/${locale}/${selectedType}.json`).then(r => r.json()).then(setSelectedJson)
     } else {
-      // setDomainForms()
       setSelectedJson(null)
+      setDomainForms([])
     }
-  }, [locale, domain, selectedType])
-
-  // useEffect(() => {
-  //   setLocalTaskData(taskData || {})
-  // }, [taskData])
+  }, [locale, domain, selectedType, setValue])
 
   let schemaFields = null
   if (selectedJson && isJSONSchema(selectedJson)) {
@@ -160,7 +140,7 @@ export default function Step1TaskType({ mode = 'create', initialData }: Step1Tas
         <div className="mt-6">
           <DynamicForm
             schema={schemaFields}
-            initialData={localTaskData}
+            initialData={parsedTaskData}
           />
         </div>
       )}

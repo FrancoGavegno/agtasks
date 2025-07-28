@@ -9,7 +9,7 @@ import {
   LayoutList
 } from "lucide-react"
 import { Domain } from "@/lib/interfaces/360"
-import { Project } from "@/lib/interfaces/agtasks"
+import { type Project } from "@/lib/schemas"
 
 interface Props {
   user: string

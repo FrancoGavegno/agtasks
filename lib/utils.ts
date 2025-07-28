@@ -1,6 +1,11 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import type { FieldSchema, FieldOption, JSONSchema, JSONSchemaProperty } from "./interfaces/agtasks"
+import type { 
+  FieldSchema, 
+  FieldOption, 
+  JSONSchema, 
+  JSONSchemaProperty 
+} from "@/lib/interfaces/agtasks"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

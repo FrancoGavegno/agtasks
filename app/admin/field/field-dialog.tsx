@@ -35,7 +35,6 @@ export function FieldDialog({ open, onOpenChange, field }: FieldDialogProps) {
     hectares: undefined,
     crop: "",
     hybrid: "",
-    deleted: false
   })
 
   // Auto-populate form when editing
@@ -53,7 +52,6 @@ export function FieldDialog({ open, onOpenChange, field }: FieldDialogProps) {
         hectares: field.hectares,
         crop: field.crop || "",
         hybrid: field.hybrid || "",
-        deleted: false
       })
     } else {
       // Reset form for create mode
@@ -69,7 +67,6 @@ export function FieldDialog({ open, onOpenChange, field }: FieldDialogProps) {
         hectares: undefined,
         crop: "",
         hybrid: "",
-        deleted: false
       })
     }
   }, [field, open])

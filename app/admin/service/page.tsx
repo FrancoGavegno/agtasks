@@ -1,6 +1,9 @@
 import { apiClient } from "@/lib/integrations/amplify"
 import { ServicesClient } from "./services-client"
-import type { Service, Project } from "@/lib/schemas"
+import type { Schema } from "@/amplify/data/resource"
+
+type Service = Schema["Service"]["type"]
+type Project = Schema["Project"]["type"]
 
 export default async function ServicesPage() {
   try {
@@ -21,7 +24,10 @@ export default async function ServicesPage() {
           <h1 className="text-3xl font-bold">Services</h1>
           <p className="text-muted-foreground">Manage services associated with projects.</p>
         </div>
-        <ServicesClient services={services} projects={projects} />
+        <ServicesClient
+          services={services as Service[]}
+          projects={projects as Project[]}
+        />
       </div>
     )
   } catch (error) {

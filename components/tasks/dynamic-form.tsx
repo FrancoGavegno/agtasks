@@ -17,13 +17,36 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { 
+  Popover, 
+  PopoverContent, 
+  PopoverTrigger 
+} from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { CalendarIcon, PlusCircle, Trash2 } from "lucide-react"
-import { format, parseISO, isValid } from "date-fns"
-import { cn, getByPath, setByPath, initializeFormData } from "@/lib/utils"
+import { 
+  CalendarIcon, 
+  PlusCircle, 
+  Trash2 
+} from "lucide-react"
+import { 
+  format, 
+  parseISO, 
+  isValid 
+} from "date-fns"
+import { 
+  cn, 
+  getByPath, 
+  setByPath, 
+  initializeFormData 
+} from "@/lib/utils"
 import type { JSX } from "react"
 
 export function DynamicForm({

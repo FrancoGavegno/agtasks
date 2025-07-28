@@ -15,7 +15,7 @@ import {
 import { useParams } from "next/navigation"
 import { useFormContext } from "react-hook-form"
 import { useServiceForm } from "@/lib/contexts/services-context"
-import type { ServiceFormValues } from "@/lib/contexts/services-context"
+import { type ServiceFormValues } from "@/lib/schemas"
 import { 
   listWorkspaces, 
   listSeasons, 

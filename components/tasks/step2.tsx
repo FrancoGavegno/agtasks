@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useParams } from "next/navigation"
 import { useFormContext } from "react-hook-form"
+import { useTaskForm } from "@/lib/contexts/tasks-context"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   FormControl,
@@ -24,32 +25,50 @@ import {
   listFarms,
   listFields
 } from "@/lib/integrations/360"
-import type {
-  Workspace,
-  Season,
-  Farm,
-  LotField
-} from "@/lib/interfaces/360"
+// import type {
+//   Workspace,
+//   Season,
+//   Farm,
+//   LotField
+// } from "@/lib/interfaces/360"
 import { apiClient } from "@/lib/integrations/amplify"
 
 interface Props {
-  userEmail: string
+  thisUserEmail: string
   mode?: 'create' | 'edit'
-  initialFields?: any[]
 }
 
-export default function Step2Lots({ userEmail, mode = 'create', initialFields = [] }: Props) {
+export default function Step2Lots({ thisUserEmail, mode }: Props) {
   const { domain, project } = useParams<{ domain: string, project: string }>()
   const domainId = Number(domain)
 
   const form = useFormContext<any>()
+  const { 
+    mode: contextMode,
+    workspaces,
+    setWorkspaces,
+    campaigns,
+    setCampaigns,
+    establishments,
+    setEstablishments,
+    lots,
+    setLots,
+    hasLoadedWorkspaces,
+    setHasLoadedWorkspaces,
+    hasLoadedSeasons,
+    setHasLoadedSeasons,
+    hasLoadedFarms,
+    setHasLoadedFarms,
+    hasLoadedFields,
+    setHasLoadedFields,
+  } = useTaskForm()
+
+  // Use context mode if not provided as prop
+  const currentMode = mode || contextMode
+  const isEditMode = currentMode === 'edit'
 
   // State for API data
   const [areaId, setAreaId] = useState<number>(0)
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([])
-  const [seasons, setSeasons] = useState<Season[]>([])
-  const [farms, setFarms] = useState<Farm[]>([])
-  const [fields, setFields] = useState<LotField[]>([])
 
   // Loading states
   const [workspacesLoading, setWorkspacesLoading] = useState(true)
@@ -68,16 +87,8 @@ export default function Step2Lots({ userEmail, mode = 'create', initialFields = 
   const [campaign, setCampaign] = useState<string>("")
   const [establishment, setEstablishment] = useState<string>("")
   const selectedLots = form.watch("fields") || []
-  const isEditMode = mode === 'edit'
 
-  // Pre-llenar campos si es modo edición
-  useEffect(() => {
-    if (isEditMode && initialFields.length > 0) {
-      form.setValue("fields", initialFields)
-    }
-  }, [isEditMode, initialFields, form])
-
-  const allLotIds = fields.map(field => field.id.toString())
+  const allLotIds = lots.map(field => field.id.toString())
   const selectedLotIds = selectedLots.map((lot: any) => lot.fieldId)
   const allSelected = allLotIds.length > 0 && allLotIds.every(id => selectedLotIds.includes(id))
   const someSelected = allLotIds.some(id => selectedLotIds.includes(id)) && !allSelected
@@ -89,6 +100,18 @@ export default function Step2Lots({ userEmail, mode = 'create', initialFields = 
       selectAllRef.current.indeterminate = someSelected
     }
   }, [someSelected])
+
+  // Restaurar valores del contexto cuando el componente se monta
+  useEffect(() => {
+    const formValues = form.getValues()
+    
+    if (formValues.fields && formValues.fields.length > 0) {
+      const firstField = formValues.fields[0]
+      setWorkspace(firstField.workspaceId)
+      setCampaign(firstField.campaignId)
+      setEstablishment(firstField.farmId)
+    }
+  }, [form])
 
   useEffect(() => {
     const fetchProject = async (project: string) => {
@@ -105,14 +128,13 @@ export default function Step2Lots({ userEmail, mode = 'create', initialFields = 
     const fetchWorkspaces = async () => {
       try {
         setWorkspacesLoading(true)
-        const workspacesData = await listWorkspaces(userEmail, domainId, areaId)
+        const workspacesData = await listWorkspaces(thisUserEmail, domainId, areaId)
         const filteredAndSorted = workspacesData
           .filter((workspace) => workspace.deleted === false)
           .sort((a, b) => a.name.localeCompare(b.name))
         setWorkspaces(filteredAndSorted)
         setWorkspacesError(null)
-        
-
+        setHasLoadedWorkspaces(true)
       } catch (error) {
         console.error("Error fetching workspaces:", error)
         setWorkspacesError("Failed to load workspaces. Please try again later.")
@@ -121,92 +143,133 @@ export default function Step2Lots({ userEmail, mode = 'create', initialFields = 
         setWorkspacesLoading(false)
       }
     }
-    if (userEmail && domainId != 0 && areaId != 0) {
+    
+    if (thisUserEmail && domainId != 0 && areaId != 0 && !hasLoadedWorkspaces) {
       fetchWorkspaces()
+    } else if (hasLoadedWorkspaces) {
+      setWorkspacesLoading(false)
     }
-  }, [userEmail, domainId, areaId])
+  }, [thisUserEmail, domainId, areaId, hasLoadedWorkspaces, setWorkspaces, setHasLoadedWorkspaces])
 
   useEffect(() => {
     const fetchSeasons = async () => {
-      if (!workspace) { setSeasons([]); return }
+      if (!workspace) {
+        setCampaigns([])
+        return
+      }
+
       try {
         setSeasonsLoading(true)
         const seasonsData = await listSeasons(workspace)
         const filteredAndSorted = seasonsData.filter((season) => season.deleted === false).sort((a, b) => a.name.localeCompare(b.name))
-        setSeasons(filteredAndSorted)
+        setCampaigns(filteredAndSorted)
         setSeasonsError(null)
-        
-
+        setHasLoadedSeasons(true)
       } catch (error) {
         setSeasonsError("Failed to load seasons. Please try again later.")
-        setSeasons([])
+        setCampaigns([])
       } finally {
         setSeasonsLoading(false)
       }
     }
-    fetchSeasons()
-  }, [workspace])
+
+    if (workspace && !hasLoadedSeasons) {
+      fetchSeasons()
+    } else if (hasLoadedSeasons) {
+      setSeasonsLoading(false)
+    }
+  }, [workspace, hasLoadedSeasons, setCampaigns, setHasLoadedSeasons])
 
   useEffect(() => {
     const fetchFarms = async () => {
-      if (!workspace || !campaign) { setFarms([]); return }
+      if (!workspace || !campaign) {
+        setEstablishments([])
+        return
+      }
+
       try {
         setFarmsLoading(true)
         const farmsData = await listFarms(workspace, campaign)
         const filteredAndSorted = farmsData.filter((farm) => farm.deleted === false).sort((a, b) => a.name.localeCompare(b.name))
-        setFarms(filteredAndSorted)
+        setEstablishments(filteredAndSorted)
         setFarmsError(null)
-        
-
+        setHasLoadedFarms(true)
       } catch (error) {
         setFarmsError("Failed to load farms. Please try again later.")
-        setFarms([])
+        setEstablishments([])
       } finally {
         setFarmsLoading(false)
       }
     }
-    fetchFarms()
-  }, [workspace, campaign])
+
+    if (workspace && campaign && !hasLoadedFarms) {
+      fetchFarms()
+    } else if (hasLoadedFarms) {
+      setFarmsLoading(false)
+    }
+  }, [workspace, campaign, hasLoadedFarms, setEstablishments, setHasLoadedFarms])
 
   useEffect(() => {
     const fetchFields = async () => {
-      if (!workspace || !campaign || !establishment) { setFields([]); return }
+      if (!workspace || !campaign || !establishment) {
+        setLots([])
+        return
+      }
+
       try {
         setFieldsLoading(true)
         const fieldsData = await listFields(workspace, campaign, establishment)
-        setFields(fieldsData)
+        setLots(fieldsData)
         setFieldsError(null)
+        setHasLoadedFields(true)
       } catch (error) {
         setFieldsError("Failed to load fields. Please try again later.")
-        setFields([])
+        setLots([])
       } finally {
         setFieldsLoading(false)
       }
     }
-    fetchFields()
-  }, [workspace, campaign, establishment])
+
+    if (workspace && campaign && establishment && !hasLoadedFields) {
+      fetchFields()
+    } else if (hasLoadedFields) {
+      setFieldsLoading(false)
+    }
+  }, [workspace, campaign, establishment, hasLoadedFields, setLots, setHasLoadedFields])
 
   const handleWorkspaceChange = (value: string) => {
     setWorkspace(value)
     setCampaign("")
     setEstablishment("")
     form.setValue("fields", [], { shouldValidate: true })
+    
+    // Reset loading states for dependent data
+    setHasLoadedSeasons(false)
+    setHasLoadedFarms(false)
+    setHasLoadedFields(false)
   }
 
   const handleCampaignChange = (value: string) => {
     setCampaign(value)
     setEstablishment("")
     form.setValue("fields", [], { shouldValidate: true })
+    
+    // Reset loading states for dependent data
+    setHasLoadedFarms(false)
+    setHasLoadedFields(false)
   }
 
   const handleEstablishmentChange = (value: string) => {
     setEstablishment(value)
     form.setValue("fields", [], { shouldValidate: true })
+    
+    // Reset loading states for dependent data
+    setHasLoadedFields(false)
   }
 
   const handleLotSelection = (lotId: string) => {
     const currentLots = form.getValues("fields") || []
-    const selectedField = fields.find((field) => field.id.toString() === lotId)
+    const selectedField = lots.find((field) => field.id.toString() === lotId)
     if (!selectedField) return
     const lotDetail = {
       fieldId: selectedField.id.toString(),
@@ -217,9 +280,9 @@ export default function Step2Lots({ userEmail, mode = 'create', initialFields = 
       workspaceId: workspace || "",
       workspaceName: workspaces.find(w => w.id.toString() === workspace)?.name || "",
       campaignId: campaign || "",
-      campaignName: seasons.find(s => s.id.toString() === campaign)?.name || "",
+      campaignName: campaigns.find(s => s.id.toString() === campaign)?.name || "",
       farmId: establishment || "",
-      farmName: farms.find(f => f.id.toString() === establishment)?.name || "",
+      farmName: establishments.find(f => f.id.toString() === establishment)?.name || "",
     }
     let newLots: any[]
     if (currentLots.some((lot: any) => lot.fieldId === lotId)) {
@@ -234,7 +297,7 @@ export default function Step2Lots({ userEmail, mode = 'create', initialFields = 
     if (allSelected) {
       form.setValue("fields", [], { shouldValidate: true, shouldDirty: true, shouldTouch: true })
     } else {
-      const newLots = fields.map(selectedField => ({
+      const newLots = lots.map(selectedField => ({
         fieldId: selectedField.id.toString(),
         fieldName: selectedField.name,
         hectares: selectedField.hectares,
@@ -243,9 +306,9 @@ export default function Step2Lots({ userEmail, mode = 'create', initialFields = 
         workspaceId: workspace || "",
         workspaceName: workspaces.find(w => w.id.toString() === workspace)?.name || "",
         campaignId: campaign || "",
-        campaignName: seasons.find(s => s.id.toString() === campaign)?.name || "",
+        campaignName: campaigns.find(s => s.id.toString() === campaign)?.name || "",
         farmId: establishment || "",
-        farmName: farms.find(f => f.id.toString() === establishment)?.name || "",
+        farmName: establishments.find(f => f.id.toString() === establishment)?.name || "",
       }))
       form.setValue("fields", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
     }
@@ -293,10 +356,10 @@ export default function Step2Lots({ userEmail, mode = 'create', initialFields = 
             <SelectContent>
               {seasonsError ? (
                 <div className="p-2 text-red-500 text-sm">{seasonsError}</div>
-              ) : seasons.length === 0 ? (
+              ) : campaigns.length === 0 ? (
                 <div className="p-2 text-muted-foreground text-sm">No hay campañas disponibles</div>
               ) : (
-                seasons.map((season) => (
+                campaigns.map((season) => (
                   <SelectItem key={season.id} value={season.id.toString()}>
                     {season.name}
                   </SelectItem>
@@ -320,10 +383,10 @@ export default function Step2Lots({ userEmail, mode = 'create', initialFields = 
             <SelectContent>
               {farmsError ? (
                 <div className="p-2 text-red-500 text-sm">{farmsError}</div>
-              ) : farms.length === 0 ? (
+              ) : establishments.length === 0 ? (
                 <div className="p-2 text-muted-foreground text-sm">No hay establecimientos disponibles</div>
               ) : (
-                farms.map((farm) => (
+                establishments.map((farm) => (
                   <SelectItem key={farm.id} value={farm.id.toString()}>
                     {farm.name}
                   </SelectItem>
@@ -382,14 +445,14 @@ export default function Step2Lots({ userEmail, mode = 'create', initialFields = 
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {fields.length === 0 ? (
+                  {lots.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
                         No hay lotes disponibles para este establecimiento
                       </td>
                     </tr>
                   ) : (
-                    fields.map((field) => (
+                    lots.map((field) => (
                       <tr key={field.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <Checkbox

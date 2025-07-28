@@ -1,6 +1,7 @@
 import { apiClient } from "@/lib/integrations/amplify"
+import { Schema } from "@/amplify/data/resource"
+type Task = Schema["Task"]["type"]
 import { TasksClient } from "./tasks-client"
-import type { Task, Project, Service } from "@/lib/schemas"
 
 export default async function TasksPage() {
   try {
@@ -24,7 +25,7 @@ export default async function TasksPage() {
       const dateA = new Date(a.createdAt || 0);
       const dateB = new Date(b.createdAt || 0);
       return dateB.getTime() - dateA.getTime();
-    });
+    }) as Task[];
 
     return (
       <div className="space-y-6">

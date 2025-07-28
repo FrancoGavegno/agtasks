@@ -1,7 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Check, ChevronsUpDown, Plus, Settings } from "lucide-react"
+import { 
+  Check, 
+  ChevronsUpDown, 
+  Plus, 
+  Settings 
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Command,
@@ -17,7 +22,7 @@ import {
   PopoverTrigger
 } from "@/components/ui/popover"
 import { Domain } from "@/lib/interfaces/360"
-import { Project } from "@/lib/interfaces/agtasks"
+import { type Project } from "@/lib/schemas"
 import { Link } from "@/i18n/routing"
 
 interface Props {

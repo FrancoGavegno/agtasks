@@ -1,25 +1,24 @@
 "use client"
 
-import React, { 
-  createContext, 
-  useContext, 
-  useState, 
-  type ReactNode 
+import React, {
+  createContext,
+  useContext,
+  useState,
+  type ReactNode
 } from "react"
-import { 
-  useForm, 
-  FormProvider, 
-  type UseFormReturn 
+import {
+  useForm,
+  FormProvider,
+  type UseFormReturn
 } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { 
-  serviceSchema,
-  taskSchema,
-  fieldSchema,
+// import { z } from "zod"
+import {
+  serviceFormSchema,
   type DomainProtocol,
   type DomainForm,
   type ProtocolTasks,
+  type ServiceFormValues,
 } from "@/lib/schemas"
 import type {
   User,
@@ -29,25 +28,14 @@ import type {
   LotField
 } from "@/lib/interfaces/360"
 
-// ServiceFormValues - Extend serviceSchema with arrays 
-// for tasks and fields
-export const serviceFormSchema = serviceSchema.extend({
-  protocolName: z.string().optional(),
-  tmpRequestId: z.string().optional(),
-  tasks: z.array(taskSchema),
-  fields: z.array(fieldSchema),
-})
-
-export type ServiceFormValues = z.infer<typeof serviceFormSchema>
-
 interface ServiceFormContextType {
   // Form state
   form: UseFormReturn<ServiceFormValues>
-  
+
   // Stepper state
   currentStep: number
   setCurrentStep: (step: number) => void
-  
+
   // Data states
   protocols: DomainProtocol[]
   protocolTasks: ProtocolTasks
@@ -58,7 +46,7 @@ interface ServiceFormContextType {
   forms: DomainForm[]
   users: User[]
   enabledTasks: Set<number>
-  
+
   // Loading flags
   hasLoadedProtocols: boolean
   hasLoadedProtocolTasks: boolean
@@ -68,7 +56,7 @@ interface ServiceFormContextType {
   hasLoadedFields: boolean
   hasLoadedForms: boolean
   hasLoadedUsers: boolean
-  
+
   // Setters for data
   setProtocolTasks: React.Dispatch<React.SetStateAction<ProtocolTasks>>
   setProtocols: React.Dispatch<React.SetStateAction<DomainProtocol[]>>
@@ -79,7 +67,7 @@ interface ServiceFormContextType {
   setLots: React.Dispatch<React.SetStateAction<LotField[]>>
   setUsers: React.Dispatch<React.SetStateAction<User[]>>
   setEnabledTasks: React.Dispatch<React.SetStateAction<Set<number>>>
-  
+
   // Setters for loading flags
   setHasLoadedProtocols: (loaded: boolean) => void
   setHasLoadedProtocolTasks: (loaded: boolean) => void
@@ -89,7 +77,7 @@ interface ServiceFormContextType {
   setHasLoadedFarms: (loaded: boolean) => void
   setHasLoadedFields: (loaded: boolean) => void
   setHasLoadedUsers: (loaded: boolean) => void
-  
+
   // Utility functions
   resetForm: () => void
   validateStep: (step: number) => Promise<boolean>
@@ -167,7 +155,7 @@ export function ServiceFormProvider({ children }: { children: ReactNode }) {
   // Validate specific step
   const validateStep = async (step: number): Promise<boolean> => {
     const formData = form.getValues()
-    
+
     switch (step) {
       case 1:
         // Validate step 1: protocolId is required
@@ -179,7 +167,7 @@ export function ServiceFormProvider({ children }: { children: ReactNode }) {
           return false
         }
         return true
-        
+
       case 2:
         // Validate step 2: fields array must have at least one item
         if (!formData.fields || formData.fields.length === 0) {
@@ -190,7 +178,7 @@ export function ServiceFormProvider({ children }: { children: ReactNode }) {
           return false
         }
         return true
-        
+
       case 3:
         // Validate step 3: tasks array and enabled tasks with proper validation
         if (!formData.tasks || formData.tasks.length === 0) {
@@ -200,7 +188,7 @@ export function ServiceFormProvider({ children }: { children: ReactNode }) {
           })
           return false
         }
-        
+
         // Check if at least one task is enabled
         if (enabledTasks.size === 0) {
           form.setError("tasks", {
@@ -209,13 +197,13 @@ export function ServiceFormProvider({ children }: { children: ReactNode }) {
           })
           return false
         }
-        
+
         // Validate each enabled task
         const enabledTasksArray = Array.from(enabledTasks)
         for (const taskIndex of enabledTasksArray) {
           const task = formData.tasks[taskIndex]
           if (!task) continue
-          
+
           // Check if userEmail is filled for enabled tasks
           if (!task.userEmail || task.userEmail.trim() === "") {
             form.setError(`tasks.${taskIndex}.userEmail`, {
@@ -224,7 +212,7 @@ export function ServiceFormProvider({ children }: { children: ReactNode }) {
             })
             return false
           }
-          
+
           // Check if formId is filled for fieldvisit tasks
           if (task.taskType === "fieldvisit" && (!task.formId || task.formId.trim() === "")) {
             form.setError(`tasks.${taskIndex}.formId`, {
@@ -234,9 +222,9 @@ export function ServiceFormProvider({ children }: { children: ReactNode }) {
             return false
           }
         }
-        
+
         return true
-        
+
       default:
         return true
     }

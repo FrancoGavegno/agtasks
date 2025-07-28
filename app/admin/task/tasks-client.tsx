@@ -9,7 +9,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { DataTable } from "@/components/admin/data-table"
 import { TaskDialog } from "./task-dialog"
 import { apiClient } from "@/lib/integrations/amplify"
-import type { Task, Project, Service } from "@/lib/schemas"
+import type { Schema } from "@/amplify/data/resource"
+
+type Task = Schema["Task"]["type"]
+type Project = Schema["Project"]["type"]
+type Service = Schema["Service"]["type"]
 
 interface TasksClientProps {
   tasks: Task[]

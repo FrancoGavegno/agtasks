@@ -423,8 +423,7 @@ export class ApiClient {
   async createTask(data: CreateTaskInput): Promise<Task> {
     try {
       const validatedData = createTaskInputSchema.parse(data);
-      const result = await client.models.Task.create(validatedData);
-      
+      const result = await client.models.Task.create(validatedData);            
       if (!result.data) {
         throw new Error('No data returned from create operation');
       }
@@ -452,10 +451,10 @@ export class ApiClient {
 
   async updateTask(id: string, data: UpdateTaskInput): Promise<Task> {
     try {
-      const validatedData = updateTaskInputSchema.parse(data);
+      const validatedData = updateTaskInputSchema.parse(data);      
       const result = await client.models.Task.update({ id, ...validatedData });
       return taskSchema.parse(result.data);
-    } catch (error) {
+    } catch (error) {      
       if (error instanceof Error && error.name === 'ZodError') {
         throw new ValidationError('Invalid task data', error);
       }

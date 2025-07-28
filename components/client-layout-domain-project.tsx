@@ -1,14 +1,20 @@
  "use client";
 
-import { useState, useEffect } from "react";
+import { 
+  useState, 
+  useEffect 
+} from "react";
+import { useParams } from "next/navigation";
 import { Navbar } from "@/components/navbar/navbar";
 import { AppSidebar } from "@/components/sidebar";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { 
+  SidebarProvider, 
+  SidebarInset 
+} from "@/components/ui/sidebar";
 import { listDomainsByUserEmail } from "@/lib/integrations/360";
 import { apiClient } from "@/lib/integrations/amplify"
 import { Domain } from "@/lib/interfaces/360";
-import { Project } from "@/lib/interfaces/agtasks";
-import { useParams } from "next/navigation";
+import { type Project } from "@/lib/schemas";
 
 export default function ClientLayoutWithDomainProject({ userEmail, children }: { userEmail: string, children: React.ReactNode }) {
   const [domains, setDomains] = useState<Domain[]>([]);

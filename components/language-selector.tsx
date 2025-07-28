@@ -1,6 +1,9 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { 
+  usePathname, 
+  useRouter 
+} from "next/navigation";
 import { useLocale } from "next-intl";
 import {
   DropdownMenu,

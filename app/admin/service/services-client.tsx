@@ -9,7 +9,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { DataTable } from "@/components/admin/data-table"
 import { ServiceDialog } from "./service-dialog"
 import { apiClient } from "@/lib/integrations/amplify"
-import type { Service, Project } from "@/lib/schemas"
+import type { Schema } from "@/amplify/data/resource"
+
+type Service = Schema["Service"]["type"]
+type Project = Schema["Project"]["type"]
 
 interface ServicesClientProps {
   services: Service[]

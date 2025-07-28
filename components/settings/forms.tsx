@@ -1,24 +1,53 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { 
+  useState, 
+  useEffect 
+} from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { FormModal } from "./form-modal"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2, Search } from "lucide-react"
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table"
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select"
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  ChevronsLeft, 
+  ChevronsRight, 
+  Loader2, 
+  Search 
+} from "lucide-react"
 import { useSettings } from "@/lib/contexts/settings-context"
 import { Badge } from "@/components/ui/badge"
-import type { Form } from "@/lib/interfaces/agtasks"
+import  { type DomainForm } from "@/lib/schemas"
 
 export default function Forms() {
-  const { forms, allForms, selectedForms, formsLoading, setSelectedForms, refreshForms } = useSettings()
-
+  const { 
+    forms, 
+    allForms, 
+    selectedForms, 
+    formsLoading, 
+    setSelectedForms, 
+    refreshForms 
+  } = useSettings()
   const [filter, setFilter] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [page, setPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(10)
-  const [displayedForms, setDisplayedForms] = useState<Form[]>([])
+  const [displayedForms, setDisplayedForms] = useState<DomainForm[]>([])
 
   // console.log("Forms component:", { forms, allForms, selectedForms, displayedForms })
 
@@ -28,7 +57,7 @@ export default function Forms() {
     const domainFormKtFormIds = forms.map((form) => form.ktFormId)
 
     // 1. Primero, incluir todos los formularios del dominio que están seleccionados
-    let combined: Form[] = forms
+    let combined: DomainForm[] = forms
       .filter((form) => selectedForms.includes(form.ktFormId))
       .map((form) => ({
         domainId: form.domainId,
@@ -47,7 +76,7 @@ export default function Forms() {
       .map((form) => ({
         ...form,
         id: form.id || form.ktFormId // Asegurar que id siempre tenga un valor
-      })) as Form[]
+      })) as DomainForm[]
 
     combined = [...combined, ...additionalForms]
 

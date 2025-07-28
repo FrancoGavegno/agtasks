@@ -6,6 +6,7 @@ import {
 } from "react"
 import { useParams } from "next/navigation"
 import { useFormContext } from "react-hook-form"
+import { useTaskForm } from "@/lib/contexts/tasks-context"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { 
@@ -16,37 +17,42 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 import { listUsersByDomain } from "@/lib/integrations/360"
-import { User } from "@/lib/interfaces/360"
+// import { User } from "@/lib/interfaces/360"
 import ReactSelect, { SingleValue } from 'react-select'
-import { Task } from "@/lib/interfaces/agtasks"
+import { Service } from "@/lib/schemas"
 
 interface Step3DetailsProps {
-  services: any[]
+  services: Service[]
   projectName: string
   mode?: 'create' | 'edit'
-  initialData?: Task
 }
 
-export default function Step3Details({ services, projectName, mode = 'create', initialData }: Step3DetailsProps) {
+export default function Step3Details({ services, projectName, mode }: Step3DetailsProps) {
   const { register, setValue, watch } = useFormContext()
+  const { 
+    mode: contextMode,
+    users,
+    setUsers,
+    hasLoadedUsers,
+    setHasLoadedUsers
+  } = useTaskForm()
   const { domain } = useParams<{ domain: string }>()
-  const [users, setUsers] = useState<User[]>([])
-  const [usersLoading, setUsersLoading] = useState(true)
+  const [usersLoading, setUsersLoading] = useState(false)
   const [usersError, setUsersError] = useState<string | null>(null)
   const selectedService = watch("serviceId")
   const selectedUserEmail = watch("userEmail")
-  const isEditMode = mode === 'edit'
-
-  // Pre-llenar datos si es modo edición
-  useEffect(() => {
-    if (isEditMode && initialData) {
-      setValue("serviceId", initialData.serviceId || undefined)
-      setValue("userEmail", initialData.userEmail || "")
-    }
-  }, [isEditMode, initialData, setValue])
+  
+  // Use context mode if not provided as prop
+  const currentMode = mode || contextMode
+  const isEditMode = currentMode === 'edit'
 
   useEffect(() => {
     const fetchUsers = async () => {
+      if (hasLoadedUsers) {
+        setUsersLoading(false)
+        return
+      }
+      
       try {
         setUsersLoading(true)
         const usersData = await listUsersByDomain(Number(domain))
@@ -57,11 +63,13 @@ export default function Step3Details({ services, projectName, mode = 'create', i
             return fullNameA.localeCompare(fullNameB)
           })
           setUsers(sortedUsers)
+          setHasLoadedUsers(true)
         } else {
           setUsers([])
         }
         setUsersError(null)
       } catch (error) {
+        console.error("Error fetching users:", error)
         setUsersError("Failed to load users. Please try again later.")
         setUsers([])
       } finally {
@@ -69,7 +77,7 @@ export default function Step3Details({ services, projectName, mode = 'create', i
       }
     }
     fetchUsers()
-  }, [domain])
+  }, [domain, hasLoadedUsers, setUsers, setHasLoadedUsers])
 
   return (
     <div className="space-y-4">
@@ -89,11 +97,25 @@ export default function Step3Details({ services, projectName, mode = 'create', i
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="none">Sin servicio</SelectItem>
-            {services.map(service => (
-              <SelectItem key={service.id} value={service.id}>{service.name}</SelectItem>
-            ))}
+            {Array.isArray(services) && services.length > 0 ? (
+              services
+                .filter(service => typeof service.id === 'string' && service.id.trim() !== '')
+                .map(service => (
+                  <SelectItem key={service.id!} value={service.id!}>
+                   {service.requestId} {service.name}
+                  </SelectItem>
+                ))
+            ) : (
+              <SelectItem value="no-services" disabled>No hay servicios disponibles</SelectItem>
+            )}
           </SelectContent>
         </Select>
+        {!Array.isArray(services) && (
+          <p className="text-red-500 text-xs mt-1">Error: No se pudieron cargar los servicios</p>
+        )}
+        {Array.isArray(services) && services.length === 0 && (
+          <p className="text-muted-foreground text-xs mt-1">No hay servicios configurados para este proyecto</p>
+        )}
       </div>
       <div className="text-sm">
         <Label>Usuario asignado *</Label>
@@ -102,15 +124,15 @@ export default function Step3Details({ services, projectName, mode = 'create', i
           isClearable
           isSearchable
           isDisabled={usersLoading}
-          value={users.find(u => u.email === selectedUserEmail) ? {
+          value={Array.isArray(users) && users.find(u => u.email === selectedUserEmail) ? {
             value: selectedUserEmail,
             label: `${users.find(u => u.email === selectedUserEmail)?.firstName || ''} ${users.find(u => u.email === selectedUserEmail)?.lastName || ''} <${users.find(u => u.email === selectedUserEmail)?.email || ''}>`.trim()
           } : undefined}
           onChange={(option: SingleValue<{ value: string; label: string }>) => setValue("userEmail", option ? option.value : "")}
-          options={users.map(user => ({
+          options={Array.isArray(users) ? users.map(user => ({
             value: user.email,
             label: `${user.firstName} ${user.lastName} <${user.email}>`.trim()
-          }))}
+          })) : []}
           placeholder={usersLoading ? "Cargando..." : "Seleccionar usuario"}
           noOptionsMessage={() => usersLoading ? "Cargando..." : "No hay usuarios disponibles"}
           menuPortalTarget={typeof window !== "undefined" ? document.body : undefined}
@@ -118,6 +140,9 @@ export default function Step3Details({ services, projectName, mode = 'create', i
           styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
         />
         {usersError && <p className="text-red-500 text-xs mt-1">{usersError}</p>}
+        {!Array.isArray(users) && !usersLoading && (
+          <p className="text-red-500 text-xs mt-1">Error: No se pudieron cargar los usuarios</p>
+        )}
       </div>
     </div>
   )

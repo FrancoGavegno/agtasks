@@ -5,7 +5,7 @@ import {
   useEffect
 } from "react"
 import { 
-  Check, 
+ // Check, 
   SquareCheckBig 
 } from "lucide-react"
 import {
@@ -17,14 +17,13 @@ import {
 } from "@/components/ui/select"
 import { useParams } from "next/navigation"
 import { useFormContext } from "react-hook-form"
-import { useServiceForm } from "@/lib/contexts/services-context"
-import type { ServiceFormValues } from "@/lib/contexts/services-context"
+import { useServiceForm, } from "@/lib/contexts/services-context"
 import { apiClient } from "@/lib/integrations/amplify"
-import { listTasksbyService } from "@/lib/integrations/jira"
-import { jiraTaskQuerySchema } from "@/lib/schemas"
-import type {
-  JiraSubtask,
-} from "@/lib/interfaces/jira"
+// import { listTasksbyService } from "@/lib/integrations/jira"
+import { type ServiceFormValues } from "@/lib/schemas"
+// import type {
+//   JiraSubtask,
+// } from "@/lib/interfaces/jira"
 
 export default function Step1() {
   const {

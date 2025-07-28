@@ -9,7 +9,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { DataTable } from "@/components/admin/data-table"
 import { FieldDialog } from "./field-dialog"
 import { apiClient } from '@/lib/integrations/amplify'
-import type { Field, Task } from "@/lib/schemas"
+import type { Schema } from "@/amplify/data/resource"
+
+type Field = Schema["Field"]["type"]
+type Task = Schema["Task"]["type"]
 
 interface FieldsClientProps {
   fields: Field[]
@@ -110,7 +113,7 @@ export function FieldsClient({ fields, tasks }: FieldsClientProps) {
       <FieldDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        field={editingField}
+        field={editingField as any}
       />
     </>
   )

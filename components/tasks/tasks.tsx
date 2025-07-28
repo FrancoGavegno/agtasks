@@ -249,7 +249,7 @@ export function TasksPageDetails() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Link
-                          href={`/domains/${domainId}/projects/${projectId}/tasks/${task.id}`}
+                          href={`/domains/${domainId}/projects/${projectId}/tasks/${task.id}/edit`}
                           className="inline-flex items-center gap-1 text-primary hover:underline"
                         >
                           <Edit className="h-4 w-4" />

@@ -1,11 +1,9 @@
 "use server"
 
-import axios,
-{
+import axios, {
   type AxiosError,
   type AxiosResponse
 } from "axios"
-
 import {
   JiraProjectRequest,
   JiraProjectResponse,
@@ -18,13 +16,7 @@ import {
   JiraIssue,
   JiraSubtask
 } from "@/lib/interfaces/jira"
-import { Field } from "../schemas"
-
-// import {
-//   type Service,
-//   type Field,
-//   type Task
-// } from "@/lib/schemas"
+import { type Field } from "@/lib/schemas"
 
 const JIRA_API_URL = process.env.NEXT_PUBLIC_JIRA_API_URL
 const JIRA_API_TOKEN = process.env.NEXT_PUBLIC_JIRA_API_TOKEN

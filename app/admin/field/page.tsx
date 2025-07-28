@@ -1,6 +1,8 @@
 import { apiClient } from "@/lib/integrations/amplify"
+import { Schema } from "@/amplify/data/resource"
+type Field = Schema["Field"]["type"]
+type Task = Schema["Task"]["type"]
 import { FieldsClient } from "./fields-client"
-import type { Field, Task } from "@/lib/schemas"
 
 export default async function FieldsPage() {
   try {
@@ -20,7 +22,7 @@ export default async function FieldsPage() {
           <h1 className="text-3xl font-bold">Fields</h1>
           <p className="text-muted-foreground">Manage field data with workspace and campaign information.</p>
         </div>
-        <FieldsClient fields={fields} tasks={[]} />
+        <FieldsClient fields={fields as Field[]} tasks={[]} />
       </div>
     )
   } catch (error) {
