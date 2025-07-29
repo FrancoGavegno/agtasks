@@ -69,6 +69,10 @@ import {
   serviceListResponseSchema,
   taskListResponseSchema,
   fieldListResponseSchema,
+  // New schemas for unified operations
+  taskFieldOperationSchema,
+  unifiedTaskOperationSchema,
+  taskFieldSyncSchema,
   // Types
   type DomainProtocol,
   type DomainForm,
@@ -91,6 +95,9 @@ import {
   type TaskQuery,
   type FieldQuery,
   type Pagination,
+  type TaskFieldOperation,
+  type UnifiedTaskOperation,
+  type TaskFieldSync,
 } from "@/lib/schemas";
 
 // Configura Amplify antes de generar el cliente
@@ -422,14 +429,27 @@ export class ApiClient {
   
   async createTask(data: CreateTaskInput): Promise<Task> {
     try {
+      console.log("ApiClient.createTask called with data:", data);
       const validatedData = createTaskInputSchema.parse(data);
-      const result = await client.models.Task.create(validatedData);            
+      console.log("ApiClient.createTask - validated data:", validatedData);
+      
+      console.log("ApiClient.createTask - calling client.models.Task.create with:", validatedData);
+      const result = await client.models.Task.create(validatedData);
+      console.log("ApiClient.createTask - result:", result);
+      
       if (!result.data) {
         throw new Error('No data returned from create operation');
       }
       
       return result.data as Task;
     } catch (error) {
+      console.error("ApiClient.createTask - error details:", {
+        error,
+        errorName: error instanceof Error ? error.name : 'Unknown',
+        errorMessage: error instanceof Error ? error.message : 'Unknown',
+        errorStack: error instanceof Error ? error.stack : 'Unknown'
+      });
+      
       if (error instanceof Error && error.name === 'ZodError') {
         throw new ValidationError('Invalid task data', error);
       }
@@ -591,19 +611,91 @@ export class ApiClient {
   
   async createTaskField(data: CreateTaskFieldInput): Promise<TaskField> {
     try {
+      console.log("createTaskField - Input data:", data)
       const validatedData = createTaskFieldInputSchema.parse(data);
+      console.log("createTaskField - Validated data:", validatedData)
+      
       const result = await client.models.TaskField.create(validatedData);
+      console.log("createTaskField - Raw result:", result)
       
       if (!result.data) {
+        console.error("createTaskField - No data returned from create operation")
         throw new Error('No data returned from create operation');
       }
       
+      console.log("createTaskField - Success, returning:", result.data)
       return result.data as TaskField;
     } catch (error) {
+      console.error("createTaskField - Error details:", error)
       if (error instanceof Error && error.name === 'ZodError') {
+        console.error("createTaskField - Validation error:", error)
         throw new ValidationError('Invalid task field data', error);
       }
       throw new AmplifyError('Failed to create task field', error);
+    }
+  }
+
+  // Crear múltiples TaskFields en batch para mejor rendimiento
+  async createTaskFieldsBatch(dataArray: CreateTaskFieldInput[]): Promise<TaskField[]> {
+    try {
+      console.log("createTaskFieldsBatch - Input data array length:", dataArray.length)
+      
+      if (dataArray.length === 0) {
+        return []
+      }
+      
+      // Validar todos los datos primero
+      const validatedDataArray = dataArray.map(data => {
+        console.log("createTaskFieldsBatch - Validating data:", data)
+        return createTaskFieldInputSchema.parse(data)
+      })
+      
+      console.log("createTaskFieldsBatch - All data validated successfully")
+      
+      // Crear TaskFields en paralelo con límite de concurrencia
+      const batchSize = 3 // Límite de concurrencia para evitar rate limiting
+      const results: TaskField[] = []
+      
+      for (let i = 0; i < validatedDataArray.length; i += batchSize) {
+        const batch = validatedDataArray.slice(i, i + batchSize)
+        console.log(`createTaskFieldsBatch - Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(validatedDataArray.length / batchSize)}`)
+        
+        const batchPromises = batch.map(async (data, index) => {
+          try {
+            console.log(`createTaskFieldsBatch - Creating TaskField ${i + index + 1}/${validatedDataArray.length}:`, data)
+            const result = await client.models.TaskField.create(data)
+            
+            if (!result.data) {
+              throw new Error('No data returned from create operation')
+            }
+            
+            console.log(`createTaskFieldsBatch - TaskField ${i + index + 1} created successfully:`, result.data)
+            return result.data as TaskField
+          } catch (error) {
+            console.error(`createTaskFieldsBatch - Error creating TaskField ${i + index + 1}:`, error)
+            throw error
+          }
+        })
+        
+        const batchResults = await Promise.all(batchPromises)
+        results.push(...batchResults)
+        
+        // Delay entre lotes para evitar rate limiting
+        if (i + batchSize < validatedDataArray.length) {
+          console.log("createTaskFieldsBatch - Waiting 1 second before next batch...")
+          await new Promise(resolve => setTimeout(resolve, 1000))
+        }
+      }
+      
+      console.log("createTaskFieldsBatch - All TaskFields created successfully:", results.length)
+      return results
+    } catch (error) {
+      console.error("createTaskFieldsBatch - Error details:", error)
+      if (error instanceof Error && error.name === 'ZodError') {
+        console.error("createTaskFieldsBatch - Validation error:", error)
+        throw new ValidationError('Invalid task field data in batch', error);
+      }
+      throw new AmplifyError('Failed to create task fields batch', error);
     }
   }
 
@@ -658,6 +750,236 @@ export class ApiClient {
       throw new AmplifyError('Failed to list task fields', error);
     }
   }
+
+  // ==================== UNIFIED TASK OPERATIONS ====================
+  
+  /**
+   * Unified method to create or update a task with its associated fields
+   * This method handles the complete task lifecycle including TaskField associations
+   */
+  async processUnifiedTaskOperation(data: UnifiedTaskOperation): Promise<{ task: Task; fieldIds: string[] }> {
+    try {
+      console.log("Processing unified task operation with data:", data);
+      
+      const validatedData = unifiedTaskOperationSchema.parse(data);
+      console.log("Data validated successfully:", validatedData);
+      
+      if (validatedData.operation === 'create') {
+        console.log("Creating new task with fields...");
+        return await this.createTaskWithFields(validatedData);
+      } else {
+        console.log("Updating existing task with fields...");
+        return await this.updateTaskWithFields(validatedData);
+      }
+    } catch (error) {
+      console.error("Error in processUnifiedTaskOperation:", error);
+      
+      if (error instanceof Error && error.name === 'ZodError') {
+        console.error("Validation error details:", error);
+        throw new ValidationError('Invalid unified task operation data', error);
+      }
+      
+      // Log the original error for debugging
+      if (error instanceof Error) {
+        console.error("Original error message:", error.message);
+        console.error("Original error stack:", error.stack);
+      }
+      
+      throw new AmplifyError('Failed to process unified task operation', error);
+    }
+  }
+
+  /**
+   * Create a new task with its associated fields
+   */
+  private async createTaskWithFields(data: UnifiedTaskOperation): Promise<{ task: Task; fieldIds: string[] }> {
+    // Create the task first
+    const taskData: CreateTaskInput = {
+      projectId: data.projectId,
+      serviceId: data.serviceId,
+      taskName: data.taskName,
+      taskType: data.taskType,
+      userEmail: data.userEmail,
+      taskData: data.taskData,
+      formId: data.formId,
+    };
+
+    const task = await this.createTask(taskData);
+
+    // Create fields and associate them
+    const fieldIds = await this.createFieldsAndAssociate(data.fields, task.id!);
+
+    return { task, fieldIds };
+  }
+
+  /**
+   * Update an existing task with its associated fields
+   */
+  private async updateTaskWithFields(data: UnifiedTaskOperation): Promise<{ task: Task; fieldIds: string[] }> {
+    if (!data.taskId) {
+      throw new Error('Task ID is required for update operations');
+    }
+
+    // Update the task
+    const taskData: UpdateTaskInput = {
+      taskName: data.taskName,
+      taskType: data.taskType,
+      userEmail: data.userEmail,
+      taskData: data.taskData,
+      serviceId: data.serviceId,
+      formId: data.formId,
+    };
+
+    const task = await this.updateTask(data.taskId, taskData);
+
+    // Synchronize fields
+    const fieldIds = await this.synchronizeTaskFields(data.taskId, data.fields);
+
+    return { task, fieldIds };
+  }
+
+  /**
+   * Create fields and associate them to a task
+   */
+  private async createFieldsAndAssociate(fields: any[], taskId: string): Promise<string[]> {
+    const fieldIds: string[] = [];
+
+    // Create each field
+    for (const field of fields) {
+      const fieldData: CreateFieldInput = {
+        workspaceId: field.workspaceId?.toString() || "",
+        workspaceName: field.workspaceName,
+        campaignId: field.campaignId?.toString() || "",
+        campaignName: field.campaignName,
+        farmId: field.farmId?.toString() || "",
+        farmName: field.farmName,
+        fieldId: field.fieldId || "",
+        fieldName: field.fieldName || "",
+        hectares: field.hectares,
+        crop: field.crop,
+        hybrid: field.hybrid,
+      };
+
+      const createdField = await this.createField(fieldData);
+      if (createdField.id) {
+        fieldIds.push(createdField.id);
+      }
+    }
+
+    // Associate fields to task
+    await this.associateFieldsToTask(taskId, fieldIds);
+
+    return fieldIds;
+  }
+
+  /**
+   * Synchronize task fields by comparing current and target field sets
+   * This method efficiently handles adding and removing field associations
+   */
+  async synchronizeTaskFields(taskId: string, targetFields: any[]): Promise<string[]> {
+    try {
+      // Get current task field associations
+      const currentTaskFields = await this.listTaskFields(taskId);
+      
+      // Get current field details for comparison
+      const currentFields = await Promise.all(
+        currentTaskFields.items.map(async (tf) => {
+          const field = await this.getField(tf.fieldId);
+          return {
+            taskFieldId: tf.id,
+            fieldId: tf.fieldId,
+            field360Id: field.fieldId, // 360 field ID for comparison
+            fieldData: field,
+          };
+        })
+      );
+
+      // Create sets for efficient comparison
+      const currentField360Ids = new Set(currentFields.map(cf => cf.field360Id));
+      const targetField360Ids = new Set(targetFields.map(tf => tf.fieldId));
+
+      // Find fields to remove (in current but not in target)
+      const fieldsToRemove = currentFields.filter(cf => !targetField360Ids.has(cf.field360Id));
+      
+      // Find fields to add (in target but not in current)
+      const fieldsToAdd = targetFields.filter(tf => !currentField360Ids.has(tf.fieldId));
+
+      // Remove fields that are no longer selected
+      if (fieldsToRemove.length > 0) {
+        await Promise.all(
+          fieldsToRemove.map(tf => this.deleteTaskField(tf.taskFieldId!))
+        );
+      }
+
+      // Add new fields
+      let newFieldIds: string[] = [];
+      if (fieldsToAdd.length > 0) {
+        newFieldIds = await this.createFieldsAndAssociate(fieldsToAdd, taskId);
+      }
+
+      // Return all current field IDs (existing + new)
+      const remainingFieldIds = currentFields
+        .filter(cf => !fieldsToRemove.some(fr => fr.taskFieldId === cf.taskFieldId))
+        .map(cf => cf.fieldId);
+      
+      return [...remainingFieldIds, ...newFieldIds];
+    } catch (error) {
+      throw new AmplifyError('Failed to synchronize task fields', error);
+    }
+  }
+
+  /**
+   * Associate multiple fields to a task
+   */
+  private async associateFieldsToTask(taskId: string, fieldIds: string[]): Promise<void> {
+    await Promise.all(
+      fieldIds.map(fieldId => 
+        this.createTaskField({ taskId, fieldId })
+      )
+    );
+  }
+
+  /**
+   * Get task with all its associated fields
+   */
+  async getTaskWithFields(taskId: string): Promise<{ task: Task; fields: Field[] }> {
+    try {
+      const task = await this.getTask(taskId);
+      const taskFields = await this.listTaskFields(taskId);
+      
+      const fields = await Promise.all(
+        taskFields.items.map(tf => this.getField(tf.fieldId))
+      );
+
+      return { task, fields };
+    } catch (error) {
+      throw new AmplifyError('Failed to get task with fields', error);
+    }
+  }
+
+  /**
+   * Validate task field associations
+   * This method checks if a TaskField association should be created or deleted
+   */
+  async validateTaskFieldAssociation(taskId: string, fieldId: string): Promise<{
+    shouldCreate: boolean;
+    shouldDelete: boolean;
+    existingTaskField?: TaskField;
+  }> {
+    try {
+      // Find existing TaskField with this taskId and fieldId
+      const taskFields = await this.listTaskFields(taskId);
+      const existingTaskField = taskFields.items.find(tf => tf.fieldId === fieldId);
+
+      return {
+        shouldCreate: !existingTaskField,
+        shouldDelete: false, // This would be determined by business logic
+        existingTaskField,
+      };
+    } catch (error) {
+      throw new AmplifyError('Failed to validate task field association', error);
+    }
+  }
 }
 
 // Export singleton instance
@@ -686,4 +1008,7 @@ export type {
   TaskQuery,
   FieldQuery,
   Pagination,
+  TaskFieldOperation,
+  UnifiedTaskOperation,
+  TaskFieldSync,
 };

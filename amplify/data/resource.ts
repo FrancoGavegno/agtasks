@@ -67,7 +67,7 @@ const schema = a
       // Task
       taskName: a.string().required(), 
       taskType: a.string().required(), 
-      taskData: a.json(), // Submitted Form Data  
+      taskData: a.string(), // JSON string data for submitted form
       userEmail: a.string().required(), 
       deleted: a.boolean().default(false),
       // DomainForm

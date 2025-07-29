@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { useParams } from "next/navigation"
 import { useFormContext } from "react-hook-form"
 import { useTaskForm } from "@/lib/contexts/tasks-context"
@@ -45,6 +45,9 @@ export default function Step2Lots({ thisUserEmail, mode }: Props) {
   const form = useFormContext<any>()
   const { 
     mode: contextMode,
+    currentStep,
+    tempFields,
+    setTempFields,
     workspaces,
     setWorkspaces,
     campaigns,
@@ -86,14 +89,55 @@ export default function Step2Lots({ thisUserEmail, mode }: Props) {
   const [workspace, setWorkspace] = useState<string>("")
   const [campaign, setCampaign] = useState<string>("")
   const [establishment, setEstablishment] = useState<string>("")
-  const selectedLots = form.watch("fields") || []
+  const [forceUpdate, setForceUpdate] = useState(0) // Para forzar actualizaciones de la UI
+  
+  // Usar campos temporales si están disponibles, sino usar los del formulario
+  // En modo edición, tempFields solo se usa cuando hay cambios temporales
+  const selectedLots = useMemo(() => {
+    return isEditMode ? tempFields : (form.getValues("fields") || [])
+  }, [isEditMode, tempFields, form.watch("fields")])
 
-  const allLotIds = lots.map(field => field.id.toString())
-  const selectedLotIds = selectedLots.map((lot: any) => lot.fieldId)
-  const allSelected = allLotIds.length > 0 && allLotIds.every(id => selectedLotIds.includes(id))
-  const someSelected = allLotIds.some(id => selectedLotIds.includes(id)) && !allSelected
+  // Usar el ID de 360 (fieldId) para la comparación, no el ID interno de AgTasks
+  const allLotIds = useMemo(() => lots.map(field => field.id.toString()), [lots]) // Este es el ID de 360 desde la API
+  const selectedLotIds = useMemo(() => selectedLots.map((lot: any) => lot.fieldId), [selectedLots])
+  const allSelected = useMemo(() => allLotIds.length > 0 && allLotIds.every(id => selectedLotIds.includes(id)), [allLotIds, selectedLotIds])
+  const someSelected = useMemo(() => allLotIds.some(id => selectedLotIds.includes(id)) && !allSelected, [allLotIds, selectedLotIds, allSelected])
 
   const selectAllRef = useRef<HTMLInputElement>(null)
+
+  // Debug: monitorear cambios en selectedLots
+  useEffect(() => {
+    // Removed debug logs
+  }, [tempFields, forceUpdate]) // Removido selectedLots de las dependencias
+
+  // Forzar actualización del estado del botón cuando cambien los lotes seleccionados
+  useEffect(() => {
+    // Solo ejecutar cuando estemos en el step 2
+    if (currentStep === 2) {
+      // No necesitamos hacer form.trigger aquí, solo forzar re-render
+      setForceUpdate(prev => prev + 1)
+    }
+  }, [currentStep]) // Removido selectedLots de las dependencias
+
+  // Sincronizar tempFields con los campos del formulario en modo edición
+  useEffect(() => {
+    if (isEditMode) {
+      const formFields = form.getValues("fields") || []
+      if (formFields.length > 0 && tempFields.length === 0) {
+        setTempFields(formFields)
+      }
+    }
+  }, [isEditMode, form.watch("fields")]) // Usar form.watch en lugar de form para evitar renderizado infinito
+
+  // Inicializar tempFields cuando se cargan los datos del formulario
+  useEffect(() => {
+    if (isEditMode) {
+      const formValues = form.getValues()
+      if (formValues.fields && formValues.fields.length > 0 && tempFields.length === 0) {
+        setTempFields(formValues.fields)
+      }
+    }
+  }, [isEditMode, form.watch("fields")]) // Usar form.watch para detectar cambios en fields
 
   useEffect(() => {
     if (selectAllRef.current) {
@@ -107,11 +151,11 @@ export default function Step2Lots({ thisUserEmail, mode }: Props) {
     
     if (formValues.fields && formValues.fields.length > 0) {
       const firstField = formValues.fields[0]
-      setWorkspace(firstField.workspaceId)
-      setCampaign(firstField.campaignId)
-      setEstablishment(firstField.farmId)
+      setWorkspace(firstField.workspaceId || "")
+      setCampaign(firstField.campaignId || "")
+      setEstablishment(firstField.farmId || "")
     }
-  }, [form])
+  }, [form.watch("fields")]) // Usar form.watch para detectar cambios en fields
 
   useEffect(() => {
     const fetchProject = async (project: string) => {
@@ -126,6 +170,11 @@ export default function Step2Lots({ thisUserEmail, mode }: Props) {
   // Fetch workspaces from 360 API
   useEffect(() => {
     const fetchWorkspaces = async () => {
+      if (hasLoadedWorkspaces) {
+        setWorkspacesLoading(false)
+        return
+      }
+      
       try {
         setWorkspacesLoading(true)
         const workspacesData = await listWorkspaces(thisUserEmail, domainId, areaId)
@@ -144,12 +193,10 @@ export default function Step2Lots({ thisUserEmail, mode }: Props) {
       }
     }
     
-    if (thisUserEmail && domainId != 0 && areaId != 0 && !hasLoadedWorkspaces) {
+    if (thisUserEmail && domainId != 0 && areaId != 0) {
       fetchWorkspaces()
-    } else if (hasLoadedWorkspaces) {
-      setWorkspacesLoading(false)
     }
-  }, [thisUserEmail, domainId, areaId, hasLoadedWorkspaces, setWorkspaces, setHasLoadedWorkspaces])
+  }, [thisUserEmail, domainId, areaId, hasLoadedWorkspaces]) // Removidos setters del contexto
 
   useEffect(() => {
     const fetchSeasons = async () => {
@@ -178,7 +225,7 @@ export default function Step2Lots({ thisUserEmail, mode }: Props) {
     } else if (hasLoadedSeasons) {
       setSeasonsLoading(false)
     }
-  }, [workspace, hasLoadedSeasons, setCampaigns, setHasLoadedSeasons])
+  }, [workspace, hasLoadedSeasons]) // Removidos setters del contexto
 
   useEffect(() => {
     const fetchFarms = async () => {
@@ -207,7 +254,7 @@ export default function Step2Lots({ thisUserEmail, mode }: Props) {
     } else if (hasLoadedFarms) {
       setFarmsLoading(false)
     }
-  }, [workspace, campaign, hasLoadedFarms, setEstablishments, setHasLoadedFarms])
+  }, [workspace, campaign, hasLoadedFarms]) // Removidos setters del contexto
 
   useEffect(() => {
     const fetchFields = async () => {
@@ -235,44 +282,90 @@ export default function Step2Lots({ thisUserEmail, mode }: Props) {
     } else if (hasLoadedFields) {
       setFieldsLoading(false)
     }
-  }, [workspace, campaign, establishment, hasLoadedFields, setLots, setHasLoadedFields])
+  }, [workspace, campaign, establishment, hasLoadedFields]) // Removidos setters del contexto
 
   const handleWorkspaceChange = (value: string) => {
+    const previousWorkspace = workspace
     setWorkspace(value)
-    setCampaign("")
-    setEstablishment("")
-    form.setValue("fields", [], { shouldValidate: true })
     
-    // Reset loading states for dependent data
-    setHasLoadedSeasons(false)
-    setHasLoadedFarms(false)
-    setHasLoadedFields(false)
+    // Solo limpiar lotes si se cambia a un workspace completamente diferente
+    if (previousWorkspace !== value) {
+      setCampaign("")
+      setEstablishment("")
+      
+      // Limpiar lotes seleccionados usando estados temporales
+      if (isEditMode) {
+        setTempFields([])
+      } else {
+        form.setValue("fields", [], { shouldValidate: true })
+      }
+      
+      // Reset loading states for dependent data
+      setHasLoadedSeasons(false)
+      setHasLoadedFarms(false)
+      setHasLoadedFields(false)
+      
+      // Limpiar datos dependientes
+      setCampaigns([])
+      setEstablishments([])
+      setLots([])
+    }
   }
 
   const handleCampaignChange = (value: string) => {
+    const previousCampaign = campaign
     setCampaign(value)
-    setEstablishment("")
-    form.setValue("fields", [], { shouldValidate: true })
     
-    // Reset loading states for dependent data
-    setHasLoadedFarms(false)
-    setHasLoadedFields(false)
+    // Solo limpiar lotes si se cambia a una campaña completamente diferente
+    if (previousCampaign !== value) {
+      setEstablishment("")
+      
+      // Limpiar lotes seleccionados usando estados temporales
+      if (isEditMode) {
+        setTempFields([])
+      } else {
+        form.setValue("fields", [], { shouldValidate: true })
+      }
+      
+      // Reset loading states for dependent data
+      setHasLoadedFarms(false)
+      setHasLoadedFields(false)
+      
+      // Limpiar datos dependientes
+      setEstablishments([])
+      setLots([])
+    }
   }
 
   const handleEstablishmentChange = (value: string) => {
+    const previousEstablishment = establishment
     setEstablishment(value)
-    form.setValue("fields", [], { shouldValidate: true })
     
-    // Reset loading states for dependent data
-    setHasLoadedFields(false)
+    // Solo limpiar lotes si se cambia a un establecimiento completamente diferente
+    if (previousEstablishment !== value) {
+      // Limpiar lotes seleccionados usando estados temporales
+      if (isEditMode) {
+        setTempFields([])
+      } else {
+        form.setValue("fields", [], { shouldValidate: true })
+      }
+      
+      // Reset loading states for dependent data
+      setHasLoadedFields(false)
+      
+      // Limpiar datos dependientes
+      setLots([])
+    }
   }
 
   const handleLotSelection = (lotId: string) => {
-    const currentLots = form.getValues("fields") || []
+    // Usar la misma lógica que se usa para determinar selectedLots
+    const currentLots = isEditMode ? tempFields : (form.getValues("fields") || [])
     const selectedField = lots.find((field) => field.id.toString() === lotId)
     if (!selectedField) return
+    
     const lotDetail = {
-      fieldId: selectedField.id.toString(),
+      fieldId: selectedField.id.toString(), // Este es el ID de 360 desde la API
       fieldName: selectedField.name || "",
       hectares: selectedField.hectares || 0,
       crop: selectedField.cropName || "",
@@ -284,21 +377,38 @@ export default function Step2Lots({ thisUserEmail, mode }: Props) {
       farmId: establishment || "",
       farmName: establishments.find(f => f.id.toString() === establishment)?.name || "",
     }
+    
     let newLots: any[]
     if (currentLots.some((lot: any) => lot.fieldId === lotId)) {
       newLots = currentLots.filter((lot: any) => lot.fieldId !== lotId)
     } else {
       newLots = [...currentLots, lotDetail]
     }
-    form.setValue("fields", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
+    
+    if (isEditMode) {
+      setTempFields(newLots)
+      setForceUpdate(prev => prev + 1) // Forzar actualización de la UI
+    } else {
+      form.setValue("fields", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
+      setForceUpdate(prev => prev + 1) // Forzar actualización de la UI
+    }
   }
 
   const handleToggleAllLots = () => {
+    
     if (allSelected) {
-      form.setValue("fields", [], { shouldValidate: true, shouldDirty: true, shouldTouch: true })
+      // Deseleccionar todos los lotes
+      if (isEditMode) {
+        setTempFields([])
+        setForceUpdate(prev => prev + 1) // Forzar actualización de la UI
+      } else {
+        form.setValue("fields", [], { shouldValidate: true, shouldDirty: true, shouldTouch: true })
+        setForceUpdate(prev => prev + 1) // Forzar actualización de la UI
+      }
     } else {
+      // Seleccionar todos los lotes
       const newLots = lots.map(selectedField => ({
-        fieldId: selectedField.id.toString(),
+        fieldId: selectedField.id.toString(), // Este es el ID de 360 desde la API
         fieldName: selectedField.name,
         hectares: selectedField.hectares,
         crop: selectedField.cropName,
@@ -310,7 +420,14 @@ export default function Step2Lots({ thisUserEmail, mode }: Props) {
         farmId: establishment || "",
         farmName: establishments.find(f => f.id.toString() === establishment)?.name || "",
       }))
-      form.setValue("fields", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
+      
+      if (isEditMode) {
+        setTempFields(newLots)
+        setForceUpdate(prev => prev + 1) // Forzar actualización de la UI
+      } else {
+        form.setValue("fields", newLots, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
+        setForceUpdate(prev => prev + 1) // Forzar actualización de la UI
+      }
     }
   }
 

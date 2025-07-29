@@ -5,6 +5,7 @@ import React, {
   useContext, 
   useState, 
   useEffect,
+  useCallback,
   type ReactNode 
 } from "react"
 import { 
@@ -26,7 +27,7 @@ import type {
   Farm,
   LotField
 } from "@/lib/interfaces/360"
-import { apiClient } from "@/lib/integrations/amplify"
+import { TaskService } from "@/lib/services/task-service"
 
 interface TaskFormContextType {
   // Form state
@@ -39,6 +40,14 @@ interface TaskFormContextType {
   // Mode state
   mode: 'create' | 'edit'
   taskId?: string
+  
+  // Temporary editable data states
+  tempTaskData: Record<string, any> | null
+  setTempTaskData: React.Dispatch<React.SetStateAction<Record<string, any> | null>>
+  tempFields: any[]
+  setTempFields: React.Dispatch<React.SetStateAction<any[]>>
+  tempUserEmail: string
+  setTempUserEmail: React.Dispatch<React.SetStateAction<string>>
   
   // Data states
   workspaces: Workspace[]
@@ -75,6 +84,8 @@ interface TaskFormContextType {
   validateStep: (step: number) => Promise<boolean>
   loadTaskForEdit: (taskId: string) => Promise<void>
   updateTask: (data: TaskFormValues) => Promise<void>
+  saveTemporaryChanges: () => Promise<void>
+  discardTemporaryChanges: () => void
 }
 
 // Create the context
@@ -85,14 +96,23 @@ const TaskFormContext = createContext<TaskFormContextType | undefined>(undefined
     children, 
     mode = 'create',
     taskId,
+    projectId,
     initialData 
   }: { 
     children: ReactNode
     mode?: 'create' | 'edit'
     taskId?: string
+    projectId?: string
     initialData?: { task: Task, fields: Field[] }
   }) {
-    const [currentMode, setCurrentMode] = useState<'create' | 'edit'>(mode)
+    const [currentMode, setCurrentMode] = useState<'create' | 'edit'>(mode as 'create' | 'edit')
+    const [currentTaskId, setCurrentTaskId] = useState<string | undefined>(taskId)
+    
+    // Update taskId when it changes
+    useEffect(() => {
+      setCurrentTaskId(taskId)
+    }, [taskId])
+    
   // Initialize react-hook-form with Zod resolver
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
@@ -100,7 +120,7 @@ const TaskFormContext = createContext<TaskFormContextType | undefined>(undefined
       taskName: "",
       taskType: "",
       fields: [],
-      projectId: "",
+      projectId: projectId || "",
       serviceId: "",
       userEmail: "",
       tmpSubtaskId: "",
@@ -109,8 +129,15 @@ const TaskFormContext = createContext<TaskFormContextType | undefined>(undefined
       deleted: false,
       formId: "",
     },
-    mode: "onChange",
+      mode: "onChange" as const,
   })
+
+  // Update projectId in form when it changes
+  useEffect(() => {
+    if (projectId) {
+      form.setValue("projectId", projectId)
+    }
+  }, [projectId]) // Removido 'form' de las dependencias para evitar renderizado infinito
 
   // Stepper state
   const [currentStep, setCurrentStep] = useState(1)
@@ -130,9 +157,14 @@ const TaskFormContext = createContext<TaskFormContextType | undefined>(undefined
   const [hasLoadedUsers, setHasLoadedUsers] = useState(false)
   const [isLoadingTask, setIsLoadingTask] = useState(false)
 
+  // Temporary editable data states
+  const [tempTaskData, setTempTaskData] = useState<Record<string, any> | null>(null)
+  const [tempFields, setTempFields] = useState<any[]>([])
+  const [tempUserEmail, setTempUserEmail] = useState<string>("")
+
   // Load initial data for edit mode
   useEffect(() => {
-    if (mode === 'edit' && initialData) {
+    if (currentMode === 'edit' && initialData) {
       const { task, fields } = initialData
       form.reset({
         taskName: task.taskName || "",
@@ -160,10 +192,10 @@ const TaskFormContext = createContext<TaskFormContextType | undefined>(undefined
         formId: task.formId || "",
       })
     }
-  }, [mode, initialData, form])
+  }, [currentMode, initialData]) // Removido 'form' de las dependencias
 
   // Reset form
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     form.reset({
       taskName: "",
       taskType: "",
@@ -177,82 +209,71 @@ const TaskFormContext = createContext<TaskFormContextType | undefined>(undefined
       deleted: false,
       formId: "",
     })
-    setCurrentStep(1)
-    setWorkspaces([])
-    setCampaigns([])
-    setEstablishments([])
-    setLots([])
-    setUsers([])
-    setHasLoadedWorkspaces(false)
-    setHasLoadedSeasons(false)
-    setHasLoadedFarms(false)
-    setHasLoadedFields(false)
-    setHasLoadedUsers(false)
-    setIsLoadingTask(false)
-  }
+  }, [form])
 
   // Validate specific step
-  const validateStep = async (step: number): Promise<boolean> => {
-    const formData = form.getValues()
-    
-    switch (step) {
-      case 1:
-        // Validate step 1: taskName and taskType are required
-        if (!formData.taskName || formData.taskName.trim() === "") {
-          form.setError("taskName", {
-            type: "manual",
-            message: "Debes ingresar un nombre para la tarea"
-          })
-          return false
-        }
-        if (!formData.taskType || formData.taskType.trim() === "") {
-          form.setError("taskType", {
-            type: "manual",
-            message: "Debes seleccionar un tipo de tarea"
-          })
-          return false
-        }
-        return true
-        
-      case 2:
-        // Validate step 2: fields array must have at least one item
-        if (!formData.fields || formData.fields.length === 0) {
-          form.setError("fields", {
-            type: "manual",
-            message: "Debes seleccionar al menos un lote"
-          })
-          return false
-        }
-        return true
-        
-      case 3:
-        // Validate step 3: userEmail is required
-        if (!formData.userEmail || formData.userEmail.trim() === "") {
-          form.setError("userEmail", {
-            type: "manual",
-            message: "Debes seleccionar un usuario asignado"
-          })
-          return false
-        }
-        return true
-        
-      default:
-        return true
+  const validateStep = useCallback(async (step: number): Promise<boolean> => {
+    try {
+      switch (step) {
+        case 1:
+          // Step 1: Validar taskName y taskType (igual para ambos modos)
+          const formData1 = form.getValues()
+          const step1Valid = Boolean(
+            formData1.taskName && formData1.taskName.trim() !== "" &&
+            formData1.taskType && formData1.taskType.trim() !== ""
+          )
+          return step1Valid
+          
+        case 2:
+          // Step 2: Validar que haya al menos un lote seleccionado
+          const formData2 = form.getValues()
+          if (currentMode === 'edit') {
+            // En modo edición, usar tempFields si están disponibles, sino usar formData.fields
+            const fieldsToCheck = tempFields.length > 0 ? tempFields : formData2.fields
+            const step2Valid = Boolean(fieldsToCheck && fieldsToCheck.length > 0)
+            return step2Valid
+          } else {
+            // En modo creación, usar formData.fields
+            const step2Valid = Boolean(formData2.fields && formData2.fields.length > 0)
+            return step2Valid
+          }
+          
+        case 3:
+          // Step 3: Validar userEmail (igual para ambos modos)
+          const formData3 = form.getValues()
+          const step3Valid = Boolean(formData3.userEmail && formData3.userEmail.trim() !== "")
+          return step3Valid
+          
+        default:
+          return true
+      }
+    } catch (error) {
+      console.error(`Error validating step ${step}:`, error)
+      return false
     }
-  }
+  }, [form, currentMode, tempFields])
 
-  // Load task for edit mode
-  const loadTaskForEdit = async (taskId: string) => {
+  // Load task for edit mode using the unified service
+  const loadTaskForEdit = useCallback(async (taskId: string) => {
     try {
       setIsLoadingTask(true)
-      const task = await apiClient.getTask(taskId)
-      const taskFields = await apiClient.listTaskFields(taskId)
-      const fields = await Promise.all(
-        taskFields.items.map(async (tf: any) => {
-          const field = await apiClient.getField(tf.fieldId)
-          return field
+      const { task, fields } = await TaskService.loadTaskForEdit(taskId)
+      
+      console.log("=== EDITAR TAREA: TaskFields obtenidos ===")
+      console.log("Task ID:", taskId)
+      console.log("Task Name:", task.taskName)
+      console.log("Fields obtenidos:", fields)
+      console.log("Total de Fields:", fields.length)
+      fields.forEach((field, index) => {
+        console.log(`Field ${index + 1}:`, {
+          fieldId: field.fieldId,
+          fieldName: field.fieldName,
+          workspaceName: field.workspaceName,
+          farmName: field.farmName,
+          hectares: field.hectares
         })
-      )
+      })
+      console.log("=== FIN EDITAR TAREA ===")
       
       form.reset({
         taskName: task.taskName || "",
@@ -285,70 +306,76 @@ const TaskFormContext = createContext<TaskFormContextType | undefined>(undefined
     } finally {
       setIsLoadingTask(false)
     }
-  }
+  }, [form])
 
-  // Update task function
-  const updateTask = async (data: TaskFormValues) => {
-    if (!taskId) throw new Error('No task ID for update')
+  // Update task function using the unified service
+  const updateTask = useCallback(async (data: TaskFormValues) => {
     
-    // Update main task
-    await apiClient.updateTask(taskId, {
-      taskName: data.taskName,
-      taskType: data.taskType,
-      userEmail: data.userEmail,
-      taskData: data.taskData,
-      serviceId: data.serviceId,
-      formId: data.formId,
+    if (!currentTaskId) throw new Error('No task ID for update')
+    
+    try {
+      // Prepare form data with temporary changes
+      const preparedData = TaskService.prepareFormData(data, {
+        taskData: tempTaskData,
+        fields: tempFields,
+        userEmail: tempUserEmail,
+      })
+      
+      // Use the unified service to update the task
+      const result = await TaskService.updateTask(preparedData, currentTaskId)
+      
+      // Clear temporary data after successful update
+      setTempTaskData(null)
+      setTempFields([])
+      setTempUserEmail("")
+      
+    } catch (error) {
+      console.error("Error in updateTask:", error)
+      throw error
+    }
+  }, [currentTaskId, tempTaskData, tempFields, tempUserEmail, setTempTaskData, setTempFields, setTempUserEmail])
+
+  // Save temporary changes to database
+  const saveTemporaryChanges = useCallback(async () => {
+    if (!currentTaskId) throw new Error('No task ID for update')
+    
+    const currentFormData = form.getValues()
+    
+    // Prepare form data with temporary changes
+    const preparedData = TaskService.prepareFormData(currentFormData, {
+      taskData: tempTaskData,
+      fields: tempFields,
+      userEmail: tempUserEmail,
     })
     
-    // Handle fields (remove existing and create new ones)
-    const existingTaskFields = await apiClient.listTaskFields(taskId)
-    await Promise.all(existingTaskFields.items.map((tf: any) => apiClient.deleteTaskField(tf.id)))
+    // Use the unified service to update the task
+    await TaskService.updateTask(preparedData, currentTaskId)
     
-    // Create new fields and associations
-    const fieldIds = await createTaskFieldsInDB(data.fields)
-    await associateFieldsToTask(taskId, fieldIds)
-  }
+    // Clear temporary data after successful save
+    setTempTaskData(null)
+    setTempFields([])
+    setTempUserEmail("")
+  }, [currentTaskId, form, tempTaskData, tempFields, tempUserEmail, setTempTaskData, setTempFields, setTempUserEmail])
 
-  // Helper functions for field operations
-  const createTaskFieldsInDB = async (fields: any[]): Promise<string[]> => {
-    const fieldIds: string[] = []
-    
-    for (const field of fields) {
-      const fieldData = {
-        workspaceId: field.workspaceId?.toString() || "",
-        workspaceName: field.workspaceName,
-        campaignId: field.campaignId?.toString() || "",
-        campaignName: field.campaignName,
-        farmId: field.farmId?.toString() || "",
-        farmName: field.farmName,
-        fieldId: field.fieldId || "",
-        fieldName: field.fieldName || "",
-        hectares: field.hectares,
-        crop: field.crop,
-        hybrid: field.hybrid,
-        deleted: false
-      }
-      
-      const result = await apiClient.createField(fieldData)
-      if (result.id) fieldIds.push(result.id)
-    }
-    
-    return fieldIds
-  }
-
-  const associateFieldsToTask = async (taskId: string, fieldIds: string[]) => {
-    await Promise.all(fieldIds.map(async (fieldId) => {
-      await apiClient.createTaskField({ taskId, fieldId })
-    }))
-  }
+  // Discard temporary changes
+  const discardTemporaryChanges = useCallback(() => {
+    setTempTaskData(null)
+    setTempFields([])
+    setTempUserEmail("")
+  }, [setTempTaskData, setTempFields, setTempUserEmail])
 
   const contextValue: TaskFormContextType = {
     form,
     currentStep,
     setCurrentStep,
     mode: currentMode,
-    taskId,
+    taskId: currentTaskId,
+    tempTaskData,
+    setTempTaskData,
+    tempFields,
+    setTempFields,
+    tempUserEmail,
+    setTempUserEmail,
     workspaces,
     campaigns,
     establishments,
@@ -375,6 +402,8 @@ const TaskFormContext = createContext<TaskFormContextType | undefined>(undefined
     validateStep,
     loadTaskForEdit,
     updateTask,
+    saveTemporaryChanges,
+    discardTemporaryChanges,
   }
 
   return (

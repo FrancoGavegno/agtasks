@@ -27,7 +27,9 @@
     "projectNavItems-2-title": "Servicios",
     "projectNavItems-2-description": "Gestiona tus servicios",
     "projectNavItems-3-title": "Tareas",
-    "projectNavItems-3-description": "Gestiona tus tareas"
+    "projectNavItems-3-description": "Gestiona tus tareas",
+    "projectNavItems-4-title": "Lotes",
+    "projectNavItems-4-description": "Gestiona tus lotes"
   },
   "DashboardPage": {
     "steps-1": "Elige qué protocolos estarán disponibles para tus usuarios y agiliza así la creación de servicios.",
@@ -111,6 +113,11 @@
     "BreadcrumbPage": "Tareas",
     "title": "Tareas",
     "subtitle": "Administra las tareas del proyecto"
+  },
+  "FieldsPage": {
+    "BreadcrumbPage": "Lotes",
+    "title": "Lotes",
+    "subtitle": "Administra los lotes del proyecto"
   },
   "Footer": {
     "poweredBy": "Desarrollador por"

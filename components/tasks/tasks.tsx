@@ -239,7 +239,7 @@ export function TasksPageDetails() {
                     <TableCell className="flex flex-col flex-1">
                       {task.taskName}
                       <span className="text-xs text-gray-400">
-                        {service ? service.name : "(Sin servicio asociado)"}
+                        {service ? `${service.requestId} ${service.name}` : "(Sin servicio asociado)"}
                       </span>
                     </TableCell>
                     <TableCell>{task.taskType || "-"}</TableCell>

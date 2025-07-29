@@ -21,24 +21,12 @@ import {
 import Step1TaskType from "./step1"
 import Step2Lots from "./step2"
 import Step3Details from "./step3"
-import {
-  apiClient,
-  type Task,
-  type CreateTaskInput,
-  type CreateFieldInput,
-} from "@/lib/integrations/amplify"
-import {
-  createIssue,
-  generateDescriptionField
-} from "@/lib/integrations/jira"
-import type { 
-  Field, 
-  TaskFormValues 
-} from "@/lib/schemas"
+import { TaskService } from "@/lib/services/task-service"
+import type { TaskFormValues } from "@/lib/schemas"
 
 // Componente de debug temporal
 function DebugContext() {
-  const { form, mode } = useTaskForm()
+  const { form, mode, tempTaskData } = useTaskForm()
   const formData = form.getValues()
 
   if (process.env.NODE_ENV === 'production') return null
@@ -52,6 +40,8 @@ function DebugContext() {
         <div>userEmail: {formData.userEmail || 'none'}</div>
         <div>Fields: {formData.fields?.length || 0}</div>
         <div>Mode: {mode || 'create'}</div>
+        <div>taskData keys: {formData.taskData ? (typeof formData.taskData === 'string' ? Object.keys(JSON.parse(formData.taskData)).length : Object.keys(formData.taskData).length) : 0}</div>
+        <div>tempTaskData keys: {tempTaskData ? Object.keys(tempTaskData).length : 0}</div>
       </div>
     </div>
   )
@@ -64,7 +54,7 @@ interface TaskStepperProps {
   projectName: string
   mode?: 'create' | 'edit'
   taskId?: string
-  initialData?: { task: Task, fields: any[] }
+  initialData?: { task: any, fields: any[] }
 }
 
 const STEPS = [1, 2, 3]
@@ -112,48 +102,59 @@ function TaskStepperForm({
     validateStep,
     resetForm,
     loadTaskForEdit,
-    updateTask
+    updateTask,
+    saveTemporaryChanges,
+    discardTemporaryChanges,
+    tempTaskData,
+    tempFields,
+    tempUserEmail
   } = useTaskForm()
+
+  // Check if there are unsaved changes
+  const hasUnsavedChanges = tempTaskData !== null || tempFields.length > 0 || tempUserEmail !== ""
 
   // Load task for edit mode
   useEffect(() => {
     if (mode === 'edit' && taskId) {
       loadTaskForEdit(taskId)
     }
-  }, [mode, taskId, loadTaskForEdit])
+  }, [mode, taskId]) // Removido loadTaskForEdit de las dependencias para evitar renderizado infinito
 
   // Check if current step is valid for button state
   const isCurrentStepValid = () => {
     const formData = form.getValues()
-
+    
     switch (currentStep) {
       case 1:
-        return formData.taskName && formData.taskName.trim() !== "" &&
+        // Step 1: Validar taskName y taskType (igual para ambos modos)
+        const step1Valid = Boolean(
+          formData.taskName && formData.taskName.trim() !== "" &&
           formData.taskType && formData.taskType.trim() !== ""
+        )
+        return step1Valid
+        
       case 2:
-        return formData.fields && formData.fields.length > 0
+        // Step 2: Validar que haya al menos un lote seleccionado
+        if (mode === 'edit') {
+          // En modo edición, usar tempFields si están disponibles, sino usar formData.fields
+          const fieldsToCheck = tempFields.length > 0 ? tempFields : formData.fields
+          const step2Valid = Boolean(fieldsToCheck && fieldsToCheck.length > 0)
+          return step2Valid
+        } else {
+          // En modo creación, usar formData.fields
+          const step2Valid = Boolean(formData.fields && formData.fields.length > 0)
+          return step2Valid
+        }
+        
       case 3:
-        return formData.userEmail && formData.userEmail.trim() !== ""
+        // Step 3: Validar userEmail (igual para ambos modos)
+        const step3Valid = Boolean(formData.userEmail && formData.userEmail.trim() !== "")
+        return step3Valid
+        
       default:
         return true
     }
   }
-
-  // Auto-validate when form data changes
-  useEffect(() => {
-    const subscription = form.watch(() => {
-      // Clear previous errors when data changes
-      if (currentStep === 1) {
-        form.clearErrors(["taskName", "taskType"])
-      } else if (currentStep === 2) {
-        form.clearErrors("fields")
-      } else if (currentStep === 3) {
-        form.clearErrors("userEmail")
-      }
-    })
-
-    return () => subscription.unsubscribe()
-  }, [form, currentStep])
 
   const prevStep = () => {
     if (currentStep > 1) {
@@ -167,93 +168,11 @@ function TaskStepperForm({
     }
   }
 
-  // Crear Task en DB
-  async function createTaskInDB(data: CreateTaskInput): Promise<string> {    
-    const response = await apiClient.createTask(data)
-    if (!response) throw new Error("Failed to create task in DB")
-    return response.id as string
-  }
-
-  // Crear Fields en DB
-  async function createTaskFieldsInDB(lots: CreateFieldInput[]): Promise<string[]> {
-    const fieldIds: string[] = []
-
-    for (const lot of lots) {      
-      const result = await apiClient.createField(lot)
-      if (result.id) fieldIds.push(result.id)
-    }
-
-    return fieldIds
-  }
-
-  // Asociar cada Field a la Task mediante TaskField
-  async function associateFieldsToTask(taskId: string, fieldIds: string[]) {
-    await Promise.all(fieldIds.map(async (fieldId) => {
-      await apiClient.createTaskField({ taskId, fieldId })
-    }))
-  }
-
-  // Crear Issue en Jira
-  async function createIssueInJira(
-    parentIssueKey: string,
-    taskName: string,
-    userEmail: string,
-    description: string,
-    agtasksUrl: string,
-    taskType: string,
-  ) {
-    const response = await createIssue(
-      parentIssueKey,
-      taskName,
-      userEmail,
-      description,
-      agtasksUrl,
-      taskType,
-    )
-    if (!response) throw new Error("Failed to create issue in Jira")
-    return response
-  }
-
   const nextStep = async () => {
-    const isValid = await validateStep(currentStep)
-
-    if (!isValid) {
-      // Get the first error message from the form
-      const errors = form.formState.errors
-      let errorMessage = "Por favor, completa todos los campos requeridos antes de continuar."
-
-      if (errors.taskName?.message) {
-        errorMessage = errors.taskName.message
-      } else if (errors.taskType?.message) {
-        errorMessage = errors.taskType.message
-      } else if (errors.fields?.message) {
-        errorMessage = errors.fields.message
-      } else if (errors.userEmail?.message) {
-        errorMessage = errors.userEmail.message
-      }
-
-      toast({
-        title: "Error de validación",
-        description: errorMessage,
-        variant: "destructive",
-      })
-      return
-    }
-
-    if (currentStep < 3) {
-      setCurrentStep(currentStep + 1)
-    }
-  }
-
-  const onSubmit = async () => {
     try {
-      setIsSubmitting(true)
-      const formData = form.getValues()
-
-      // console.log("formData: ", formData)
-
-      // Validate final step
-      const isValid = await validateStep(3)
+      // Validar el step actual antes de avanzar
+      const isValid = await validateStep(currentStep)
+      
       if (!isValid) {
         toast({
           title: "Error de validación",
@@ -262,24 +181,46 @@ function TaskStepperForm({
         })
         return
       }
+      
+      if (currentStep < STEPS.length) {
+        setCurrentStep(currentStep + 1)
+      }
+    } catch (error) {
+      console.error("Error in nextStep:", error)
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al validar el paso actual.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const onSubmit = async () => {
+    try {
+      setIsSubmitting(true)
+      const formData = form.getValues()
 
       if (mode === 'edit') {
-        // Update existing task
-        await updateTask(formData)
-
+        // En modo edición, usar datos temporales si están disponibles
+        
+        // Prepare form data with temporary changes
+        const preparedData = TaskService.prepareFormData(formData, {
+          taskData: tempTaskData,
+          fields: tempFields,
+          userEmail: tempUserEmail,
+        })
+        
+        await updateTask(preparedData)
+        
         toast({
           title: "Tarea actualizada exitosamente",
           description: "La tarea fue actualizada correctamente.",
           duration: 5000,
         })
-
-        // Redirect to task detail page
-        if (taskId && localeStr && domainStr && projectStr) {
-          router.push(`/${localeStr}/domains/${domainStr}/projects/${projectStr}/tasks/${taskId}`)
-        }
+        
+        goToTasksList()
       } else {
-        // Create new task
-        // Validate required fields
+        // Modo creación usando el servicio unificado
         if (!formData.taskName || !formData.taskType || !formData.userEmail) {
           throw new Error("Missing required fields: taskName, taskType, or userEmail")
         }
@@ -288,70 +229,22 @@ function TaskStepperForm({
           throw new Error("No fields selected")
         }
 
-        // Handle project parameter (can be array in Next.js 13+)
-        const projectStr = Array.isArray(project) ? project[0] : project
-        if (!projectStr || typeof projectStr !== 'string') {
+        if (!projectId || typeof projectId !== 'string') {
           throw new Error("Project ID is required")
         }
 
-        // Get project data
-        let serviceDeskId = "";
-        let requestTypeId = "";
-        const projectResponse = await apiClient.getProject(projectStr);
-        if (projectResponse && projectResponse.id) {
-          serviceDeskId = projectResponse.serviceDeskId;
-          requestTypeId = projectResponse.requestTypeId;
-        }
-
-        // Generate description
-        const { descriptionPlain } = await generateDescriptionField(formData.fields as Field[])   
-
-        // Create Task in DB        
-        const taskData: CreateTaskInput = {
-          projectId: projectStr,          
-          // serviceId: formData.serviceId || "",
-          taskName: formData.taskName,
-          taskType: formData.taskType,
-          userEmail: formData.userEmail,
-          taskData: formData.taskData ? JSON.stringify(formData.taskData) : "",
-          formId: formData.formId || "",
-        }
-
-        const taskId = await createTaskInDB(taskData)
-
-        // Create Fields in DB
-        const fieldIds = await createTaskFieldsInDB(formData.fields)
-
-        // Associate each Field to the Task via TaskField
-        await associateFieldsToTask(taskId, fieldIds)
-
-        // Create Issue in Jira
-        // parentIssueKey: string,
-        // summary: string,
-        // userEmail: string,
-        // description: string,
-        // agtasksUrl?: string,
-        // taskType?: string,
-        // serviceDeskId?: string
-
+        // Prepare the base URL for Jira integration
         const baseUrl = process.env.NODE_ENV === 'production'
           ? process.env.NEXT_PUBLIC_SITE_URL
           : 'http://localhost:3000';
-        const agtasksUrl = `${baseUrl}/${localeStr}/domains/${domainStr}/projects/${projectStr}/tasks/${taskId}/edit`;
+        const agtasksUrl = `${baseUrl}/${localeStr}/domains/${domainStr}/projects/${projectId}/tasks/${taskId}/edit`;
 
-        const jiraResponse = await createIssueInJira(
-          "TAN", // serviceDeskId, // "107" = "TAN",
-          formData.taskName,
-          formData.userEmail,
-          descriptionPlain,
+        // Use the unified service to create the task
+        const result = await TaskService.createTask(formData, {
+          createJiraIssue: true,
+          jiraParentKey: "TAN", // Default parent key
           agtasksUrl,
-          formData.taskType,          
-        )
-
-        // Update Task with Jira issueKey
-        if (jiraResponse?.key) {
-          await apiClient.updateTask(taskId, { subtaskId: jiraResponse.key, tmpSubtaskId: ""})
-        }
+        })
 
         toast({
           title: "Tarea creada exitosamente",
@@ -381,7 +274,6 @@ function TaskStepperForm({
       3: "Asignación de usuario"
     }
 
-    // const action = mode === 'edit' ? 'Editar' : 'Crear'
     return `Paso ${step}: ${baseTitles[step as keyof typeof baseTitles]}`
   }
 
@@ -426,42 +318,33 @@ function TaskStepperForm({
                 </>
               )}
             </div>
-            <CardFooter className="flex justify-end gap-2 bg-white sticky bottom-0 z-10 border-t border-gray-100 pt-4 pb-4">
-              {currentStep > 1 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={prevStep}
-                >
-                  <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
-                </Button>
-              )}
-              {currentStep < 3 && (
-                <Button
-                  type="button"
-                  onClick={nextStep}
-                  disabled={!isCurrentStepValid()}
-                >
-                  <ChevronRight className="w-4 h-4 ml-1" /> Siguiente
-                </Button>
-              )}
-              {currentStep === 3 && (
-                <Button
-                  type="button"
-                  disabled={isSubmitting || !isCurrentStepValid()}
-                  onClick={onSubmit}
-                >
-                  {isSubmitting
-                    ? (mode === 'edit' ? "Actualizando..." : "Creando...")
-                    : (mode === 'edit' ? "Actualizar Tarea" : "Crear Tarea")
-                  }
-                </Button>
-              )}
+            <CardFooter className="flex justify-between">
+              <div className="flex gap-2">
+                {currentStep > 1 && (
+                  <Button variant="outline" onClick={prevStep}>
+                    <ChevronLeft className="mr-2 h-4 w-4" />
+                    Anterior
+                  </Button>
+                )}
+              </div>
+              
+              <div className="flex gap-2">
+                {currentStep < STEPS.length ? (
+                  <Button onClick={nextStep} disabled={!isCurrentStepValid()}>
+                    Siguiente
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button onClick={onSubmit} disabled={isSubmitting}>
+                    {isSubmitting ? "Guardando..." : mode === 'edit' ? "Actualizar Tarea" : "Crear Tarea"}
+                  </Button>
+                )}
+              </div>
             </CardFooter>
           </div>
         </CardContent>
       </Card>
-      <DebugContext />
+      {/* <DebugContext /> */}
     </div>
   )
 }
@@ -480,6 +363,7 @@ export default function TaskStepper({
     <TaskFormProvider
       mode={mode}
       taskId={taskId}
+      projectId={projectId}
       initialData={initialData}
     >
       <TaskStepperForm

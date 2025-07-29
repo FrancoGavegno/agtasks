@@ -109,7 +109,7 @@ export const taskSchema = baseEntitySchema.extend({
   subtaskId: z.string().optional().nullable(), // client
   taskName: z.string().min(1, "Task name is required"),
   taskType: z.string().min(1, "Task type is required"),
-  taskData: z.union([z.record(z.any()), z.string()]).optional().nullable(), // JSON data for submitted form (can be object, string, or null)
+  taskData: z.string().optional().nullable(), // JSON string data for submitted form
   userEmail: z.string().email("Valid email is required").min(1, "User email is required"),
   deleted: z.boolean().default(false),
   formId: z.string().optional(), // DomainForm reference
@@ -343,7 +343,7 @@ export const taskFormSchema = z.object({
   userEmail: z.string().email("Valid email is required").min(1, "User email is required"),
   tmpSubtaskId: z.string().optional(),
   subtaskId: z.string().optional(),
-  taskData: z.union([z.record(z.any()), z.string()]).optional().nullable(),
+  taskData: z.string().optional().nullable(),
   deleted: z.boolean().default(false),
   formId: z.string().optional(),
 })
@@ -352,6 +352,46 @@ export const taskFormSchema = z.object({
 export const taskFieldFormSchema = z.object({
   taskId: z.string().min(1, "Task ID is required"),
   fieldId: z.string().min(1, "Field ID is required"),
+})
+
+// Schema for task field operations (create/delete associations)
+export const taskFieldOperationSchema = z.object({
+  taskId: z.string().min(1, "Task ID is required"),
+  fieldIds: z.array(z.string().min(1, "Field ID is required")),
+})
+
+// Schema for unified task operations (create/update with fields)
+export const unifiedTaskOperationSchema = z.object({
+  // Task data
+  taskName: z.string().min(1, "Task name is required"),
+  taskType: z.string().min(1, "Task type is required"),
+  userEmail: z.string().email("Valid email is required").min(1, "User email is required"),
+  projectId: z.string().min(1, "Project ID is required"),
+  serviceId: z.string().optional(),
+  taskData: z.string().optional().nullable(),
+  formId: z.string().optional(),
+  // Field data
+  fields: z.array(fieldFormSchema).min(1, "At least one field must be selected"),
+  // Operation type
+  operation: z.enum(["create", "update"]),
+  // For update operations
+  taskId: z.string().optional(),
+}).refine((data) => {
+  // taskId is required when operation is 'update'
+  if (data.operation === 'update' && !data.taskId) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Task ID is required for update operations",
+  path: ["taskId"]
+});
+
+// Schema for task field synchronization
+export const taskFieldSyncSchema = z.object({
+  taskId: z.string().min(1, "Task ID is required"),
+  currentFieldIds: z.array(z.string().min(1, "Field ID is required")),
+  targetFieldIds: z.array(z.string().min(1, "Field ID is required")),
 })
 
 // Export all types
@@ -378,3 +418,6 @@ export type ServiceFormValues = z.infer<typeof serviceFormSchema>
 export type FieldFormValues = z.infer<typeof fieldFormSchema>
 export type TaskFormValues = z.infer<typeof taskFormSchema>
 export type TaskFieldFormValues = z.infer<typeof taskFieldFormSchema>
+export type TaskFieldOperation = z.infer<typeof taskFieldOperationSchema>
+export type UnifiedTaskOperation = z.infer<typeof unifiedTaskOperationSchema>
+export type TaskFieldSync = z.infer<typeof taskFieldSyncSchema>

@@ -1,3 +1,5 @@
+import { cookies } from 'next/headers'
+import { Link } from "@/i18n/routing"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -6,9 +8,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import CreateTaskStepper from "@/components/tasks/create-task"
-import { cookies } from 'next/headers'
-import { apiClient } from '@/lib/integrations/amplify'
-import { Link } from "@/i18n/routing"
+import { apiClient, Service } from '@/lib/integrations/amplify'
 
 export default async function Page({ 
   params 
@@ -25,13 +25,14 @@ export default async function Page({
   const cleanProjectData = projectData
     ? Object.fromEntries(Object.entries(projectData).filter(([_, v]) => typeof v !== 'function'))
     : null;
-  const services = await apiClient.listServices({projectId, limit: 100});
   
-  // Limpiar services de funciones
-  const cleanServices = Array.isArray(services?.items)
-    ? services.items.map(s => Object.fromEntries(Object.entries(s).filter(([_, v]) => typeof v !== 'function')))
-    : [];
+  // const services = await apiClient.listServices({projectId, limit: 100});
+  // const cleanServices = Array.isArray(services?.items)
+  //   ? services.items.map(s => Object.fromEntries(Object.entries(s).filter(([_, v]) => typeof v !== 'function')))
+  //   : [];  
+
   const projectName = typeof cleanProjectData?.name === 'string' ? cleanProjectData.name : "";
+  const cleanServices: Service[] = [];
 
   return (
     <div className="container w-full pt-4 pb-4">

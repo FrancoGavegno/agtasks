@@ -36,6 +36,12 @@ export function AppSidebar({ user, selectedDomain, selectedProject, domains, pro
       icon: LayoutList,
       description: t("projectNavItems-3-description")
     },
+    {
+      title: t("projectNavItems-4-title"),
+      href: "/fields",
+      icon: LayoutList,
+      description: t("projectNavItems-4-description")
+    },
   ]
 
   return (

@@ -48,14 +48,34 @@ import {
   initializeFormData 
 } from "@/lib/utils"
 import type { JSX } from "react"
+import { useTaskForm } from "@/lib/contexts/tasks-context"
 
 export function DynamicForm({
   schema,
   initialData = {},
   className,
 }: DynamicFormProps) {
-  const [formData, setFormData] = useState<Record<string, any>>(() => initializeFormData(schema, initialData))
   const { setValue } = useFormContext()
+  const { tempTaskData, setTempTaskData, mode } = useTaskForm()
+  
+  // Usar datos temporales si están disponibles, sino usar initialData
+  const effectiveInitialData = tempTaskData && Object.keys(tempTaskData).length > 0 
+    ? tempTaskData 
+    : initialData
+  
+  const [formData, setFormData] = useState<Record<string, any>>(() => initializeFormData(schema, effectiveInitialData))
+
+  // Sincronizar con el estado temporal cuando formData cambie
+  useEffect(() => {
+    setTempTaskData(formData)
+    
+    // También sincronizar con el formulario principal
+    // En modo creación, actualizar directamente el campo taskData
+    // En modo edición, mantener en tempTaskData para que se use al guardar
+    if (mode === 'create') {
+      setValue("taskData", formData)
+    }
+  }, [formData, setTempTaskData, setValue, mode])
 
   const handleStateChange = useCallback((path: string, value: any) => {
     setFormData((prevData) => {
@@ -64,11 +84,6 @@ export function DynamicForm({
       return newData
     })
   }, [])
-
-  // Sync with parent form when formData changes
-  useEffect(() => {
-    setValue("taskData", formData)
-  }, [formData, setValue])
 
   const addSubFormEntry = useCallback(
     (subFormPath: string, subFormSchemaDef: SubFormFieldSchema) => {
@@ -145,7 +160,7 @@ export function DynamicForm({
       id,
       name: path,
       placeholder: field.placeholder,
-      disabled: field.disabled,
+      disabled: field.disabled || false, // Asegurar que no esté deshabilitado por defecto
       required: field.required,
     }
 
@@ -161,7 +176,9 @@ export function DynamicForm({
             {...commonProps}
             type={field.type}
             value={value || ""}
-            onChange={(e) => handleStateChange(path, e.target.value)}
+            onChange={(e) => {
+              handleStateChange(path, e.target.value)
+            }}
           />
         )
         break

@@ -3,6 +3,7 @@
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs"
 import { Link } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
+import Image from 'next/image'
 import { LanguageSelector } from "@/components/language-selector"
 import DomainProjectSelector from "@/components/navbar/domain-selector"
 import { Domain } from "@/lib/interfaces/360"
@@ -35,8 +36,15 @@ export function Navbar({
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center mx-auto">
-        <Link href="/" className="font-bold mr-auto">
-          Agtasks
+        <Link href="/" className="font-bold mr-auto flex items-center gap-2">
+          <Image
+            src="/agtasks-logo.png"
+            alt="AgTasks Logo"
+            width={32}
+            height={32}
+            className="object-contain"
+          />
+          <span>Agtasks</span>
         </Link>
         <div className="flex items-center space-x-4">
           <DomainProjectSelector

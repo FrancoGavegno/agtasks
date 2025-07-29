@@ -27,7 +27,9 @@
     "projectNavItems-2-title": "Services",
     "projectNavItems-2-description": "Manage your project services",
     "projectNavItems-3-title": "Tasks",
-    "projectNavItems-3-description": "Manage your project tasks"
+    "projectNavItems-3-description": "Manage your project tasks",
+    "projectNavItems-4-title": "Fields",
+    "projectNavItems-4-description": "Manage your project fields"
   },
   "DashboardPage": {
     "steps-1": "Choose which protocols will be available to your users and streamline service creation.",
@@ -111,6 +113,11 @@
     "BreadcrumbPage": "Tasks",
     "title": "Tasks",
     "subtitle": "Manage your project tasks"
+  },
+  "FieldsPage": {
+    "BreadcrumbPage": "Fields",
+    "title": "Fields",
+    "subtitle": "Manage your project fields"
   },
   "Footer": {
     "poweredBy": "Powered by"
