@@ -112,7 +112,7 @@ export const taskSchema = baseEntitySchema.extend({
   taskData: z.string().optional().nullable(), // JSON string data for submitted form
   userEmail: z.string().email("Valid email is required").min(1, "User email is required"),
   deleted: z.boolean().default(false),
-  formId: z.string().optional(), // DomainForm reference
+  formId: z.string().optional().nullable(), // DomainForm reference
 });
 
 export type Task = z.infer<typeof taskSchema>;
@@ -345,7 +345,7 @@ export const taskFormSchema = z.object({
   subtaskId: z.string().optional(),
   taskData: z.string().optional().nullable(),
   deleted: z.boolean().default(false),
-  formId: z.string().optional(),
+  formId: z.string().optional().nullable(),
 })
 
 // Task Field Form Values for task-field associations
@@ -369,7 +369,7 @@ export const unifiedTaskOperationSchema = z.object({
   projectId: z.string().min(1, "Project ID is required"),
   serviceId: z.string().optional(),
   taskData: z.string().optional().nullable(),
-  formId: z.string().optional(),
+  formId: z.string().optional().nullable(),
   // Field data
   fields: z.array(fieldFormSchema).min(1, "At least one field must be selected"),
   // Operation type
