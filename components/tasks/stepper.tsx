@@ -246,9 +246,15 @@ function TaskStepperForm({
           agtasksUrl,
         })
 
+        // Mostrar resultado detallado del procesamiento batch
+        const totalFields = formData.fields?.length || 0
+        const successMessage = totalFields > 0 
+          ? `Tarea creada exitosamente con ${totalFields} campo${totalFields > 1 ? 's' : ''} asociado${totalFields > 1 ? 's' : ''}.`
+          : "Tarea creada exitosamente."
+
         toast({
           title: "Tarea creada exitosamente",
-          description: "La tarea y sus campos fueron creados correctamente.",
+          description: successMessage,
           duration: 5000,
         })
         

@@ -48,10 +48,11 @@ export class TaskFieldBatchService {
         // Preparar input para la mutation
         const input = JSON.stringify({ taskFields: batch });
 
-        // Usar la función batch del apiClient
+        // Usar la función batch del apiClient que ahora usa la Lambda function
         const results = await apiClient.createTaskFieldsBatch(batch);
         
-        // Contar resultados
+        // La función Lambda retorna estadísticas, no los objetos creados
+        // Los resultados ahora son objetos TaskField con IDs generados
         const response = {
           inserted: results.length,
           retries: 0,

@@ -395,11 +395,27 @@ function ServiceStepperForm({ userEmail }: Props) {
       ));
 
       // Associate fields to tasks
-      await associateFieldsToTasksBatch(taskIds, fieldIds)
+      const totalCombinations = taskIds.length * fieldIds.length
+      
+      // Mostrar toast informativo para lotes grandes
+      if (totalCombinations > 50) {
+        toast({
+          title: "Procesando asociaciones de campos",
+          description: `Procesando ${totalCombinations} asociaciones Task-Field. Esto puede tomar unos segundos...`,
+          duration: 3000,
+        })
+      }
+      
+      const batchResult = await associateFieldsToTasksBatch(taskIds, fieldIds)
+      
+      // Mostrar resultado detallado del procesamiento batch
+      const successMessage = batchResult.length === totalCombinations 
+        ? "El servicio y sus tareas fueron creados correctamente."
+        : `Servicio creado. ${batchResult.length}/${totalCombinations} asociaciones de campos procesadas.`
 
       toast({
         title: "Servicio creado exitosamente",
-        description: "El servicio y sus tareas fueron creados correctamente.",
+        description: successMessage,
         duration: 5000,
       })
  
