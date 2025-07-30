@@ -19,15 +19,17 @@
   },
   "AppSidebar": {
     "SidebarGroupLabel-1": "Domínio",
-    "SidebarGroupLabel-2": "Projetos",
+    "SidebarGroupLabel-2": "Projeto",
     "sidebarNavItems-1-title": "Configurações",
     "sidebarNavItems-1-description": "Manage your domain settings",
     "projectNavItems-1-title": "Projeto",
-    "projectNavItems-1-description": "Manage your project",
+    "projectNavItems-1-description": "Gerencie seu projeto",
     "projectNavItems-2-title": "Serviços",
-    "projectNavItems-2-description": "Manage your project services",
-    "projectNavItems-3-title": "",
-    "projectNavItems-3-description": ""
+    "projectNavItems-2-description": "Gerencie seus serviços do projeto",
+    "projectNavItems-3-title": "Tarefas",
+    "projectNavItems-3-description": "Gerencie suas tarefas do projeto",
+    "projectNavItems-4-title": "Lotes",
+    "projectNavItems-4-description": "Gerencie seus lotes do projeto"
   },
   "DashboardPage": {
     "steps-1": "Escolha quais protocolos estarão disponíveis para seus usuários, acelerando a criação de serviços.",
@@ -104,6 +106,18 @@
     "Button-4": "Próximo",
     "isSubmitting": "Criando...",
     "isSubmitting-2": "Confirmar"
+  },
+  "TasksPage": {
+    "BreadcrumbItem-1": "Página Inicial",
+    "BreadcrumbItem-2": "Projeto",
+    "BreadcrumbPage": "Tarefas",
+    "title": "Tarefas",
+    "subtitle": "Gerencie suas tarefas do projeto"
+  },
+  "FieldsPage": {
+    "BreadcrumbPage": "Lotes",
+    "title": "Lotes",
+    "subtitle": "Gerencie os lotes do seu projeto"
   },
   "Footer": {
     "poweredBy": "Desenvolvido por"

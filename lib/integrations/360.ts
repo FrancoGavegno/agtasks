@@ -1,5 +1,14 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
-import { Domain, Workspace, Season, Farm, LotField, User } from "@/lib/interfaces";
+import axios, 
+{ AxiosInstance, 
+  AxiosError } from 'axios';
+import { 
+  Domain, 
+  Workspace, 
+  Season, 
+  Farm, 
+  LotField, 
+  User 
+} from "@/lib/interfaces/360";
 
 // Validar variables de entorno al inicio
 const apiUrl = process.env.NEXT_PUBLIC_FMS_API_URL;
@@ -37,6 +46,11 @@ const graphqlRequest = async <T>(
       variables,
     });
 
+    if (!response.data) {
+      console.error(`No data in GraphQL response for ${dataKey}:`, response);
+      throw new Error(`No data in GraphQL response for ${dataKey}`);
+    }
+
     if (response.data.errors) {
       throw new Error(JSON.stringify(response.data.errors));
     }
@@ -58,6 +72,25 @@ const graphqlRequest = async <T>(
     throw error;
   }
 };
+
+export const getDomain = async (domainId: number): Promise<Domain> => {
+  const query = `query ($domainId: Int!) {
+    get_domain(domainId: $domainId) {
+      deleted
+      domainUrl
+      hasLogo
+      id
+      languageId
+      name
+    }
+  }`
+
+  return graphqlRequest<Domain>(
+    query,
+    { domainId: domainId },
+    'get_domain',
+  );
+}
 
 // Listar dominios por email de usuario
 export const listDomainsByUserEmail = async (user: string): Promise<Domain[]> => {

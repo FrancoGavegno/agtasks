@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "properties": {
+    "responsable": {
+      "type": "string",
+      "title": "Responsable",
+      "enum": []
+    },
+    "contratista": {
+      "type": "string",
+      "title": "Contratista",
+      "enum": []
+    },
+    "comoLlegar": {
+      "type": "string",
+      "title": "Como llegar",
+      "format": "uri"
+    },
+    "mapaDeFondo": {
+      "type": "string",
+      "title": "Mapa de fondo",
+      "format": "uri"
+    }
+  },
+  "required": ["responsable", "contratista", "comoLlegar", "mapaDeFondo", "formulario"]
+}

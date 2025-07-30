@@ -1,13 +1,36 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { 
+  useState, 
+  useEffect 
+} from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ModalProtocols } from "./protocol-modal"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2, Search } from "lucide-react"
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table"
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select"
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  ChevronsLeft, 
+  ChevronsRight, 
+  Loader2, 
+  Search 
+} from "lucide-react"
 import { useSettings } from "@/lib/contexts/settings-context"
 
 export default function Protocols() {
@@ -28,16 +51,11 @@ export default function Protocols() {
   const [displayedProtocols, setDisplayedProtocols] = useState<typeof protocols>([])
 
   // Efecto para actualizar los protocolos mostrados cuando cambian los datos
-  useEffect(() => {
-    console.log("Protocols in component:", protocols)
-    console.log("Selected protocols:", selectedProtocols)
-
+  useEffect(() => {   
     // Usar directamente los protocolos del dominio
     if (protocols.length > 0) {
-      console.log("Using domain protocols")
       setDisplayedProtocols(protocols)
     } else {
-      console.log("No domain protocols found")
       setDisplayedProtocols([])
     }
   }, [protocols, selectedProtocols])
@@ -69,6 +87,7 @@ export default function Protocols() {
 
   return (
     <div className="w-full space-y-4">
+
       <div className="flex justify-between items-center">
         <div className="space-y-1">
           <h2 className="text-xl font-semibold tracking-tight">Protocolos</h2>
@@ -95,7 +114,7 @@ export default function Protocols() {
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow>              
               <TableHead className="w-[80%]">Protocolo</TableHead>
               <TableHead className="text-center">Idioma</TableHead>
             </TableRow>
@@ -103,7 +122,7 @@ export default function Protocols() {
           <TableBody>
             {paginatedProtocols.length > 0 ? (
               paginatedProtocols.map((protocol) => (
-                <TableRow key={protocol.id}>
+                <TableRow key={protocol.id}>                  
                   <TableCell className="font-medium">{protocol.name}</TableCell>
                   <TableCell className="text-center">
                     <Badge variant="outline">{protocol.language}</Badge>
@@ -124,9 +143,8 @@ export default function Protocols() {
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
           {filteredProtocols.length > 0
-            ? `Mostrando ${startIndex + 1} a ${Math.min(startIndex + rowsPerPage, filteredProtocols.length)} de ${
-                filteredProtocols.length
-              } protocolos`
+            ? `Mostrando ${startIndex + 1} a ${Math.min(startIndex + rowsPerPage, filteredProtocols.length)} de ${filteredProtocols.length
+            } protocolos`
             : "No se encontraron protocolos"}
         </div>
         <div className="flex items-center space-x-6">

@@ -1,163 +1,80 @@
 "use client"
 
-import {
-  useEffect,
-  useState
-} from "react"
 import { Link } from "@/i18n/routing"
 import { useTranslations } from 'next-intl'
-import { useParams } from 'next/navigation'
+// import { useParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-} from "@/components/ui/sidebar"
-import {
-  Settings,
-  FolderCheck,
-  ClipboardCheck,
-  Folder,
+  // Settings,
   LayoutList
 } from "lucide-react"
-import DomainSelector from "@/components/navbar/domain-selector"
-import ProjectSelector from "@/components/navbar/project-selector"
-import {
-  Domain,
-  Project
-} from "@/lib/interfaces"
-import {
-  listDomainsByUserEmail
-} from "@/lib/integrations/360"
-import {
-  listProjectsByDomain
-} from "@/lib/services/agtasks"
+import { Domain } from "@/lib/interfaces/360"
+import { type Project } from "@/lib/schemas"
 
 interface Props {
   user: string
+  selectedDomain: Domain | undefined
+  selectedProject: Project | undefined
+  domains: Domain[]
+  projects: Project[]
 }
 
-export function AppSidebar({ user }: Props) {
-  const { domain } = useParams<{ domain: string }>();
+export function AppSidebar({ user, selectedDomain, selectedProject, domains, projects }: Props) {
   const t = useTranslations("AppSidebar")
-
-  const sidebarNavItems = [
-    {
-      title: t("sidebarNavItems-1-title"),
-      href: "/settings",
-      icon: Settings,
-      description: t("sidebarNavItems-1-description")
-    }
-  ]
+  const pathname = usePathname();
 
   const projectNavItems = [
-    // {
-    //   title: t("projectNavItems-1-title"),
-    //   href: "",
-    //   icon: Folder,
-    //   description: t("projectNavItems-1-description")
-    // },
     {
       title: t("projectNavItems-2-title"),
       href: "/services",
       icon: LayoutList,
       description: t("projectNavItems-2-description")
     },
+    {
+      title: t("projectNavItems-3-title"),
+      href: "/tasks",
+      icon: LayoutList,
+      description: t("projectNavItems-3-description")
+    },
+    {
+      title: t("projectNavItems-4-title"),
+      href: "/fields",
+      icon: LayoutList,
+      description: t("projectNavItems-4-description")
+    },
   ]
 
-  const [domains, setDomains] = useState<Domain[]>([])
-  const [selectedDomain, setSelectedDomain] = useState<Domain>()
-  const [projects, setProjects] = useState<Project[]>([])
-  const [selectedProject, setSelectedProject] = useState<Project>()
-
-  useEffect(() => {
-    const fetchDomains = async () => {
-      const domainsData = await listDomainsByUserEmail(user)
-      setDomains(domainsData)
-      // setSelectedDomain(domainsData[0])
-
-      domainsData.forEach((d) => {
-        if (d.id === Number(domain)) { 
-          setSelectedDomain(d)
-        }
-      })
-      
-    }
-    fetchDomains()
-  }, [])
-
-  useEffect(() => {
-    const fetchProjects = async () => {
-      if (selectedDomain) {
-        const projectsData = await listProjectsByDomain(selectedDomain.id.toString())
-        setProjects(projectsData)
-        setSelectedProject(projectsData[0])
-      }
-    }
-    setProjects([])
-    fetchProjects()
-  }, [selectedDomain])
-
   return (
-    <Sidebar className="pt-12">
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>{t("SidebarGroupLabel-1")}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <DomainSelector
-              domains={domains}
-              selectedDomain={selectedDomain || domains[0]}
-              onDomainSelect={setSelectedDomain}
-            />
-            <SidebarMenu>
-              {(selectedDomain) && sidebarNavItems.map((item) => {
-                const Icon = item.icon
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <Link href={`/domains/${selectedDomain?.id}${item.href}`}>
-                        <Icon className="h-4 w-4" />
-                        {item.title}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupLabel>{t("SidebarGroupLabel-2")}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <ProjectSelector
-              projects={projects}
-              selectedProject={selectedProject || projects[0]}
-              onProjectSelect={setSelectedProject} />
-            <SidebarMenu>
-              {(selectedProject) && projectNavItems.map((item) => {
-                const Icon = item.icon
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <Link href={`/domains/${selectedDomain?.id}/projects/${selectedProject?.id}${item.href}`}>
-                        <Icon className="h-4 w-4" />
-                        {item.title}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-      <SidebarRail />
-    </Sidebar>
+    <aside className="w-56 min-h-screen bg-gray-50 border-r border-gray-100 py-4 px-2">
+      {/* Grupo: Proyectos */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between text-xs text-gray-400 font-semibold tracking-wide px-2 mb-1">
+          <span>{selectedProject?.name}</span>
+        </div>
+        {selectedProject && (
+          <nav className="flex flex-col gap-1">
+            {projectNavItems.map((item) => {
+              const itemHref = `/domains/${selectedDomain?.id}/projects/${selectedProject?.id}${item.href}`;
+              const selected = pathname.startsWith(itemHref);
+              return (
+                <Link
+                  key={item.title}
+                  href={itemHref}
+                  className={
+                    `flex items-center gap-3 px-2 py-2 rounded-md transition-colors group text-sm ` +
+                    (selected
+                      ? 'bg-gray-100 text-gray-900 font-semibold'
+                      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900')
+                  }
+                >
+                  <span>{item.title}</span>
+                </Link>
+              )
+            })}
+          </nav>
+        )}
+      </div>
+    </aside>
   )
 }
 

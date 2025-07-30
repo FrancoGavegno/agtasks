@@ -3,6 +3,9 @@
 import { Link } from "@/i18n/routing"
 import { useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { useEffect, useState } from 'react'
+import { getDomain } from '@/lib/integrations/360'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -12,23 +15,34 @@ import {
 } from "@/components/ui/breadcrumb"
 import TabsNavigation from "@/components/settings/tabs-navigation"
 
-export default function SettingsPage(
-  // {
-  //   params,
-  // }: {
-  //   params: { domain: string; };
-  // }
-) {
+export default function SettingsPage() {
   const { domain } = useParams<{ domain: string }>();
-  // const { domain } = params
   const t = useTranslations("SettingsPage")
+  const [domainName, setDomainName] = useState<string>("");
+  const [loadingDomain, setLoadingDomain] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoadingDomain(true);
+    if (!domain) {
+      setDomainName("");
+      setLoadingDomain(false);
+      return;
+    }
+    getDomain(Number(domain)).then((data) => {
+      if (mounted) setDomainName(data?.name || "");
+    }).finally(() => { if (mounted) setLoadingDomain(false); });
+    return () => { mounted = false; };
+  }, [domain]);
 
   return (
     <div className="container w-full pt-4 pb-4">
-      <Breadcrumb>
+      <Breadcrumb className="mb-4">
         <BreadcrumbList>
           <BreadcrumbItem>
-            <Link href={`/domains/${domain}/settings`}>{t("BreadcrumbLink")}</Link>
+            <Link href={`/domains/${domain}/settings`}>
+              {loadingDomain ? <Skeleton className="inline-block h-4 w-24 align-middle" /> : domainName}
+            </Link>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -37,12 +51,12 @@ export default function SettingsPage(
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="flex justify-between items-center mt-5 mb-5">
+      {/* <div className="flex justify-between items-center mt-5 mb-5">
         <div className="space-y-1.5">
           <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
-      </div>
+      </div> */}
 
       <TabsNavigation />
     </div>

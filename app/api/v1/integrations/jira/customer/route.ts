@@ -3,7 +3,7 @@ import {
   getCustomer, 
   createCustomer 
 } from "@/lib/integrations/jira"
-import type { JiraCustomerData } from '@/lib/interfaces'
+import type { JiraCustomerData } from '@/lib/interfaces/jira'
 
 export async function GET(request: Request) {
     try {

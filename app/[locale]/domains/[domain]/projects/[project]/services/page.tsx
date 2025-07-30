@@ -3,6 +3,9 @@
 import { Link } from "@/i18n/routing"
 import { useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { useEffect, useState } from 'react'
+import { apiClient } from '@/lib/integrations/amplify'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -10,18 +13,31 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { ServicesPageDetails } from "@/components/projects/services"
+import { ServicesPageDetails } from "@/components/services/services"
 
 export default function ServicesPage() {
   const { domain, project } = useParams<{ domain: string, project: string }>();
   const t = useTranslations("ServicesPage")
+  const [projectName, setProjectName] = useState<string>("");
+  const [loadingProject, setLoadingProject] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoadingProject(true);
+    apiClient.getProject(project as string).then((data) => {
+      if (mounted) setProjectName(data?.name || "");
+    }).finally(() => { if (mounted) setLoadingProject(false); });
+    return () => { mounted = false; };
+  }, [project]);
 
   return (
     <div className="container w-full pt-4 pb-4">
-      <Breadcrumb>
+      <Breadcrumb className="mb-4">
         <BreadcrumbList>
           <BreadcrumbItem>
-            <Link href={`/domains/${domain}/settings`}>{t("BreadcrumbItem-1")}</Link>
+            <Link href={`/domains/${domain}/settings`}>
+              {loadingProject ? <Skeleton className="inline-block h-4 w-24 align-middle" /> : projectName}
+            </Link>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -29,13 +45,6 @@ export default function ServicesPage() {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-
-      <div className="flex justify-between items-center mt-5 mb-5">
-      <div>
-          <h2 className="text-2xl font-semibold tracking-tight">{t("title")}</h2>
-          <p className="text-muted-foreground">{t("subtitle")}</p>
-        </div>
-      </div>
 
       <ServicesPageDetails />
     </div>

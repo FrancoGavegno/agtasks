@@ -1,44 +1,86 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { 
+  useState, 
+  useEffect 
+} from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { FormModal } from "./form-modal"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2, Search } from "lucide-react"
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table"
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select"
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  ChevronsLeft, 
+  ChevronsRight, 
+  Loader2, 
+  Search 
+} from "lucide-react"
 import { useSettings } from "@/lib/contexts/settings-context"
 import { Badge } from "@/components/ui/badge"
-import type { Form } from "@/lib/interfaces"
+import  { type DomainForm } from "@/lib/schemas"
 
 export default function Forms() {
-  const { forms, allForms, selectedForms, formsLoading, setSelectedForms, refreshForms } = useSettings()
-
+  const { 
+    forms, 
+    allForms, 
+    selectedForms, 
+    formsLoading, 
+    setSelectedForms, 
+    refreshForms 
+  } = useSettings()
   const [filter, setFilter] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [page, setPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(10)
-  const [displayedForms, setDisplayedForms] = useState<Form[]>([])
+  const [displayedForms, setDisplayedForms] = useState<DomainForm[]>([])
 
-  console.log("Forms component:", { forms, allForms, selectedForms, displayedForms })
+  // console.log("Forms component:", { forms, allForms, selectedForms, displayedForms })
 
   // Actualizar displayedForms cuando cambien forms o selectedForms
   useEffect(() => {
     // Combinar los formularios del dominio con los formularios seleccionados de allForms
-    const domainFormIds = forms.map((form) => form.id)
+    const domainFormKtFormIds = forms.map((form) => form.ktFormId)
 
     // 1. Primero, incluir todos los formularios del dominio que están seleccionados
-    let combined: Form[] = forms.filter((form) => selectedForms.includes(form.id))
+    let combined: DomainForm[] = forms
+      .filter((form) => selectedForms.includes(form.ktFormId))
+      .map((form) => ({
+        domainId: form.domainId,
+        id: form.id,
+        ktFormId: form.ktFormId,
+        name: form.name,
+        language: form.language
+      }))
 
     // 2. Luego, añadir formularios de allForms que están seleccionados pero no están en el dominio
-    const additionalForms = allForms.filter((form) => {
-      // Si el ID está seleccionado pero no está en los formularios del dominio
-      return selectedForms.includes(form.id) && !domainFormIds.includes(form.id)
-    })
+    const additionalForms = allForms
+      .filter((form) => {
+        // Si el ktFormId está seleccionado pero no está en los formularios del dominio
+        return selectedForms.includes(form.ktFormId) && !domainFormKtFormIds.includes(form.ktFormId)
+      })
+      .map((form) => ({
+        ...form,
+        id: form.id || form.ktFormId // Asegurar que id siempre tenga un valor
+      })) as DomainForm[]
 
     combined = [...combined, ...additionalForms]
 
-    console.log("Combined forms:", combined)
+    // console.log("Combined forms:", combined)
 
     // Filtrar por término de búsqueda
     const filtered = combined.filter((form) => form.name.toLowerCase().includes(filter.toLowerCase()))

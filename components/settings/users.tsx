@@ -1,20 +1,51 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { 
+  useState, 
+  useEffect 
+} from "react"
+import { 
+  Avatar, 
+  AvatarFallback 
+} from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "@/hooks/use-toast"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2, Search } from "lucide-react"
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table"
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select"
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  ChevronsLeft, 
+  ChevronsRight, 
+  Loader2, 
+  Search 
+} from "lucide-react"
 import { useSettings } from "@/lib/contexts/settings-context"
-import type { User } from "@/lib/interfaces"
+import type { User } from "@/lib/interfaces/360"
 
 export default function Users() {
-  const { users, usersLoading, refreshUsers, sentInvitationEmails, setSentInvitationEmails } = useSettings()
-
+  const { 
+    users, 
+    usersLoading, 
+    refreshUsers, 
+    sentInvitationEmails, 
+    setSentInvitationEmails 
+  } = useSettings()
   const [filter, setFilter] = useState("")
   const [page, setPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(10)
@@ -94,9 +125,9 @@ export default function Users() {
           <h2 className="text-xl font-semibold tracking-tight">Usuarios</h2>
           <p className="text-sm text-muted-foreground">Gestiona los usuarios del sistema y envía invitaciones</p>
         </div>
-        <Button variant="outline" size="sm" onClick={refreshUsers}>
+        {/* <Button variant="outline" size="sm" onClick={refreshUsers}>
           Actualizar
-        </Button>
+        </Button> */}
       </div>
 
       <div className="flex items-center">

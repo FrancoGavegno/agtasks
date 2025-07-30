@@ -18,16 +18,18 @@
     "help-description": "Obtén ayuda y documentación"
   },
   "AppSidebar": {
-    "SidebarGroupLabel-1": "Dominios",
-    "SidebarGroupLabel-2": "Proyectos",
+    "SidebarGroupLabel-1": "Dominio",
+    "SidebarGroupLabel-2": "Proyecto",
     "sidebarNavItems-1-title": "Configuración",
     "sidebarNavItems-1-description": "Gestiona la configuración de tu dominio",
     "projectNavItems-1-title": "Proyecto",
     "projectNavItems-1-description": "Gestiona tu proyecto",
     "projectNavItems-2-title": "Servicios",
     "projectNavItems-2-description": "Gestiona tus servicios",
-    "projectNavItems-3-title": "",
-    "projectNavItems-3-description": ""
+    "projectNavItems-3-title": "Tareas",
+    "projectNavItems-3-description": "Gestiona tus tareas",
+    "projectNavItems-4-title": "Lotes",
+    "projectNavItems-4-description": "Gestiona tus lotes"
   },
   "DashboardPage": {
     "steps-1": "Elige qué protocolos estarán disponibles para tus usuarios y agiliza así la creación de servicios.",
@@ -105,7 +107,23 @@
     "isSubmitting": "Creando...",
     "isSubmitting-2": "Confirmar"
   },
+  "TasksPage": {
+    "BreadcrumbItem-1": "Inicio",
+    "BreadcrumbItem-2": "Proyecto",
+    "BreadcrumbPage": "Tareas",
+    "title": "Tareas",
+    "subtitle": "Administra las tareas del proyecto"
+  },
+  "FieldsPage": {
+    "BreadcrumbPage": "Lotes",
+    "title": "Lotes",
+    "subtitle": "Administra los lotes del proyecto"
+  },
   "Footer": {
     "poweredBy": "Desarrollador por"
+  },
+  "LanguageSelector": {
+    "label": "Idioma",
+    "select": "Seleccionar idioma"
   }
 }
