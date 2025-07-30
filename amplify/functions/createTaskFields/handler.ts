@@ -1,5 +1,6 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, BatchWriteCommand } from '@aws-sdk/lib-dynamodb';
+import { v4 as uuidv4 } from 'uuid';
 
 // Initialize DynamoDB client
 const client = new DynamoDBClient({});
@@ -22,6 +23,7 @@ interface BatchTaskFieldInput {
 }
 
 interface TaskFieldItem {
+  id: string;
   taskId: string;
   fieldId: string;
 }
@@ -79,6 +81,7 @@ function sleep(ms: number): Promise<void> {
 
 function createTaskFieldItem(input: TaskFieldInput): TaskFieldItem {
   return {
+    id: uuidv4(),
     taskId: input.taskId,
     fieldId: input.fieldId,
   };

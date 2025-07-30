@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
 const client_dynamodb_1 = require("@aws-sdk/client-dynamodb");
 const lib_dynamodb_1 = require("@aws-sdk/lib-dynamodb");
+const uuid_1 = require("uuid");
 const client = new client_dynamodb_1.DynamoDBClient({});
 const docClient = lib_dynamodb_1.DynamoDBDocumentClient.from(client);
 const TABLE_NAME = process.env['TASKFIELD_TABLE'];
@@ -44,6 +45,7 @@ function sleep(ms) {
 }
 function createTaskFieldItem(input) {
     return {
+        id: (0, uuid_1.v4)(),
         taskId: input.taskId,
         fieldId: input.fieldId,
     };
