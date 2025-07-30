@@ -211,7 +211,24 @@ export const handler = async (event: any): Promise<any> => {
   
   try {
     // Extract input from event
-    const input = event.arguments?.input || event;
+    let input;
+    
+    // Handle different event formats
+    if (event.arguments?.input) {
+      // GraphQL mutation format
+      input = event.arguments.input;
+    } else if (typeof event === 'string') {
+      // Direct JSON string
+      input = JSON.parse(event);
+    } else if (event.body) {
+      // API Gateway format
+      input = JSON.parse(event.body);
+    } else {
+      // Direct object
+      input = event;
+    }
+    
+    console.log('Parsed input:', JSON.stringify(input, null, 2));
     
     // Process the task fields
     const result = await processTaskFields(input);

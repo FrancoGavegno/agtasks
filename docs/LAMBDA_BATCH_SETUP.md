@@ -39,7 +39,7 @@ Crear archivo `.env.local` en la raíz del proyecto:
 
 ```bash
 # AWS Configuration
-AWS_REGION=us-east-1
+AWS_REGION=us-west-2
 CREATE_TASK_FIELDS_FUNCTION_NAME=createTaskFields-dev-agtasks
 
 # Next.js Configuration

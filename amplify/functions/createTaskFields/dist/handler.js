@@ -142,7 +142,20 @@ async function processTaskFields(input) {
 const handler = async (event) => {
     console.log('Event received:', JSON.stringify(event, null, 2));
     try {
-        const input = event.arguments?.input || event;
+        let input;
+        if (event.arguments?.input) {
+            input = event.arguments.input;
+        }
+        else if (typeof event === 'string') {
+            input = JSON.parse(event);
+        }
+        else if (event.body) {
+            input = JSON.parse(event.body);
+        }
+        else {
+            input = event;
+        }
+        console.log('Parsed input:', JSON.stringify(input, null, 2));
         const result = await processTaskFields(input);
         return {
             statusCode: result.success ? 200 : 400,

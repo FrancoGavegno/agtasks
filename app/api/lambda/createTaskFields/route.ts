@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
-import { env } from '@/lib/config/env';
 
 const lambda = new LambdaClient({
-  region: env.AWS_REGION,
+  region: process.env.AWS_REGION,
 });
 
 export async function POST(request: NextRequest) {
@@ -27,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     // Preparar el comando para invocar la Lambda
     const command = new InvokeCommand({
-      FunctionName: env.CREATE_TASK_FIELDS_FUNCTION_NAME,
+      FunctionName: process.env.CREATE_TASK_FIELDS_FUNCTION_NAME!,
       Payload: JSON.stringify(body),
     });
 
