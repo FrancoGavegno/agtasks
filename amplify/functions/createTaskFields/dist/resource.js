@@ -8,7 +8,7 @@ exports.createTaskFields = (0, backend_1.defineFunction)({
     timeoutSeconds: 900,
     memoryMB: 1024,
     environment: {
-        TASKFIELD_TABLE: 'TaskField-${env}-${projectName}',
+        TASKFIELD_TABLE: 'TaskField-edyzenrmzvdgnoom3qe2772a3u-NONE',
         LOG_LEVEL: 'INFO',
     },
 });

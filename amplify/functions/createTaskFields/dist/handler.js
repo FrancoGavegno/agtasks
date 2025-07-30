@@ -55,14 +55,15 @@ function createTaskFieldItem(input) {
 }
 async function batchWriteWithRetry(items, retryCount = 0) {
     try {
-        const command = new lib_dynamodb_1.BatchWriteCommand({
-            RequestItems: {
-                [TABLE_NAME]: items.map(item => ({
-                    PutRequest: {
-                        Item: item,
-                    },
-                })),
+        console.log(`Attempting batch write to table: ${TABLE_NAME}`);
+        const requestItems = {};
+        requestItems[TABLE_NAME] = items.map(item => ({
+            PutRequest: {
+                Item: item,
             },
+        }));
+        const command = new lib_dynamodb_1.BatchWriteCommand({
+            RequestItems: requestItems,
         });
         const response = await docClient.send(command);
         if (!response.UnprocessedItems || Object.keys(response.UnprocessedItems).length === 0) {

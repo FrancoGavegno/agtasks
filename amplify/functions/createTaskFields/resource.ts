@@ -6,7 +6,7 @@ export const createTaskFields = defineFunction({
   timeoutSeconds: 900, // 15 minutes for large batches
   memoryMB: 1024,
   environment: {
-    TASKFIELD_TABLE: 'TaskField-${env}-${projectName}',
+    TASKFIELD_TABLE: 'TaskField-edyzenrmzvdgnoom3qe2772a3u-NONE',
     LOG_LEVEL: 'INFO',
   },
 }); 

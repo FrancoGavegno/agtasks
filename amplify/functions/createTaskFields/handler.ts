@@ -98,14 +98,17 @@ async function batchWriteWithRetry(
   retryCount = 0
 ): Promise<{ processed: number; unprocessed: TaskFieldItem[] }> {
   try {
-    const command = new BatchWriteCommand({
-      RequestItems: {
-        [TABLE_NAME]: items.map(item => ({
-          PutRequest: {
-            Item: item,
-          },
-        })),
+    console.log(`Attempting batch write to table: ${TABLE_NAME}`);
+    
+    const requestItems: Record<string, any[]> = {};
+    requestItems[TABLE_NAME] = items.map(item => ({
+      PutRequest: {
+        Item: item,
       },
+    }));
+
+    const command = new BatchWriteCommand({
+      RequestItems: requestItems,
     });
 
     const response = await docClient.send(command);
