@@ -23,6 +23,8 @@ interface BatchTaskFieldInput {
 interface TaskFieldItem {
   taskId: string;
   fieldId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface BatchWriteResult {
@@ -69,9 +71,12 @@ function sleep(ms: number): Promise<void> {
 }
 
 function createTaskFieldItem(input: TaskFieldInput): TaskFieldItem {
+  const now = new Date().toISOString();
   return {
     taskId: input.taskId,
     fieldId: input.fieldId,
+    createdAt: now,
+    updatedAt: now,
   };
 }
 

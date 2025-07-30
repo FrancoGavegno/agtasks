@@ -35,9 +35,12 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 function createTaskFieldItem(input) {
+    const now = new Date().toISOString();
     return {
         taskId: input.taskId,
         fieldId: input.fieldId,
+        createdAt: now,
+        updatedAt: now,
     };
 }
 async function writeItemWithRetry(item, retryCount = 0) {
