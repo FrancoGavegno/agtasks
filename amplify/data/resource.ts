@@ -94,7 +94,6 @@ const schema = a
     }),
 
     TaskField: a.model({
-      id: a.id(),
       taskId: a.string().required(),
       fieldId: a.string().required(),
       task: a.belongsTo("Task", "taskId"),

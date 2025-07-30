@@ -1,6 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, BatchWriteCommand } from '@aws-sdk/lib-dynamodb';
-import { v4 as uuidv4 } from 'uuid';
+import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
 
 // Initialize DynamoDB client
 const client = new DynamoDBClient({});
@@ -8,7 +7,6 @@ const docClient = DynamoDBDocumentClient.from(client);
 
 // Configuration
 const TABLE_NAME = process.env['TASKFIELD_TABLE']!;
-const BATCH_SIZE = 25;
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
@@ -23,7 +21,6 @@ interface BatchTaskFieldInput {
 }
 
 interface TaskFieldItem {
-  id: string;
   taskId: string;
   fieldId: string;
 }
@@ -67,71 +64,41 @@ function validateInput(input: any): input is BatchTaskFieldInput {
 }
 
 // Utility functions
-function chunkArray<T>(array: T[], size: number): T[][] {
-  const chunks: T[][] = [];
-  for (let i = 0; i < array.length; i += size) {
-    chunks.push(array.slice(i, i + size));
-  }
-  return chunks;
-}
-
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function createTaskFieldItem(input: TaskFieldInput): TaskFieldItem {
   return {
-    id: uuidv4(),
     taskId: input.taskId,
     fieldId: input.fieldId,
   };
 }
 
-// Batch write with retry logic
-async function batchWriteWithRetry(
-  items: TaskFieldItem[],
+// Individual write with retry logic
+async function writeItemWithRetry(
+  item: TaskFieldItem,
   retryCount = 0
-): Promise<{ processed: number; unprocessed: TaskFieldItem[] }> {
+): Promise<boolean> {
   try {
-    console.log(`Attempting batch write to table: ${TABLE_NAME}`);
-    console.log(`Items to write:`, JSON.stringify(items, null, 2));
+    console.log(`Attempting to write item to table: ${TABLE_NAME}`);
+    console.log(`Item to write:`, JSON.stringify(item, null, 2));
     
-    const requestItems: Record<string, any[]> = {};
-    requestItems[TABLE_NAME] = items.map(item => ({
-      PutRequest: {
-        Item: item,
-      },
-    }));
-
-    console.log(`Request items:`, JSON.stringify(requestItems, null, 2));
-
-    const command = new BatchWriteCommand({
-      RequestItems: requestItems,
+    const command = new PutCommand({
+      TableName: TABLE_NAME,
+      Item: item,
     });
 
     const response = await docClient.send(command);
     console.log(`DynamoDB response:`, JSON.stringify(response, null, 2));
     
-    if (!response.UnprocessedItems || Object.keys(response.UnprocessedItems).length === 0) {
-      return { processed: items.length, unprocessed: [] };
-    }
-
-    const unprocessedItems: TaskFieldItem[] = [];
-    const unprocessedRequests = response.UnprocessedItems[TABLE_NAME] || [];
-    
-    for (const request of unprocessedRequests) {
-      if (request.PutRequest?.Item) {
-        unprocessedItems.push(request.PutRequest.Item as TaskFieldItem);
-      }
-    }
-
-    return { processed: items.length - unprocessedItems.length, unprocessed: unprocessedItems };
+    return true;
   } catch (error) {
-    console.error(`Batch write error (attempt ${retryCount + 1}):`, error);
+    console.error(`Write error (attempt ${retryCount + 1}):`, error);
     
     if (retryCount < MAX_RETRIES) {
       await sleep(RETRY_DELAY_MS * (retryCount + 1));
-      return batchWriteWithRetry(items, retryCount + 1);
+      return writeItemWithRetry(item, retryCount + 1);
     }
     
     throw error;
@@ -152,35 +119,20 @@ async function processTaskFields(input: BatchTaskFieldInput): Promise<BatchWrite
     // Create items with generated fields
     const items = input.taskFields.map(createTaskFieldItem);
     
-    // Split into chunks
-    const chunks = chunkArray(items, BATCH_SIZE);
+    console.log(`Processing ${items.length} items individually`);
     
-    console.log(`Processing ${items.length} items in ${chunks.length} chunks`);
-    
-    // Process each chunk
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i]!;
-      console.log(`Processing chunk ${i + 1}/${chunks.length} with ${chunk.length} items`);
+    // Process each item individually
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]!;
+      console.log(`Processing item ${i + 1}/${items.length}`);
       
-      let unprocessedItems = chunk;
-      let retryCount = 0;
-      
-      while (unprocessedItems.length > 0 && retryCount < MAX_RETRIES) {
-        const result = await batchWriteWithRetry(unprocessedItems, retryCount);
-        totalInserted += result.processed;
-        
-        if (result.unprocessed.length > 0) {
-          retryCount++;
-          totalRetries++;
-          unprocessedItems = result.unprocessed;
-          console.log(`Retry ${retryCount}: ${unprocessedItems.length} items remaining`);
-        } else {
-          break;
+      try {
+        const success = await writeItemWithRetry(item, 0);
+        if (success) {
+          totalInserted++;
         }
-      }
-      
-      if (unprocessedItems.length > 0) {
-        const errorMsg = `Failed to process ${unprocessedItems.length} items in chunk ${i + 1} after ${MAX_RETRIES} retries`;
+      } catch (error) {
+        const errorMsg = `Failed to process item ${i + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`;
         errors.push(errorMsg);
         console.error(errorMsg);
       }
