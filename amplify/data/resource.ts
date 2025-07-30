@@ -4,6 +4,7 @@ import {
   defineData 
 } from "@aws-amplify/backend";
 
+
 const schema = a
   .schema({
     DomainProtocol: a.model({

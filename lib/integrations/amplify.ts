@@ -929,14 +929,16 @@ export class ApiClient {
   }
 
   /**
-   * Associate multiple fields to a task
+   * Associate multiple fields to a task using batch processing
    */
   private async associateFieldsToTask(taskId: string, fieldIds: string[]): Promise<void> {
-    await Promise.all(
-      fieldIds.map(fieldId => 
-        this.createTaskField({ taskId, fieldId })
-      )
-    );
+    if (fieldIds.length === 0) return;
+    
+    // Prepare batch data
+    const taskFieldInputs = fieldIds.map(fieldId => ({ taskId, fieldId }));
+    
+    // Use batch processing for better performance
+    await this.createTaskFieldsBatch(taskFieldInputs);
   }
 
   /**

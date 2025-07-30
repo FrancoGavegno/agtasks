@@ -220,101 +220,9 @@ function ServiceStepperForm({ userEmail }: Props) {
     return { taskIds, tasksCreated }
   }
 
-  // Asociar cada Field a cada Task mediante TaskField (versión individual con retry)
-  async function associateFieldsToTasks(taskIds: string[], fieldIds: string[]) {
-    console.log("=== CREAR SERVICIO: TaskFields que se crearán (INDIVIDUAL) ===")
-    console.log("Task IDs:", taskIds)
-    console.log("Field IDs:", fieldIds)
-    
-    let successCount = 0
-    let errorCount = 0
-    let retryCount = 0
-    const maxRetries = 3
-    const batchSize = 5 // Procesar en lotes de 5 para evitar rate limiting
-    
-    // Crear array de todas las combinaciones taskId-fieldId
-    const allCombinations = []
-    for (const taskId of taskIds) {
-      for (const fieldId of fieldIds) {
-        allCombinations.push({ taskId, fieldId })
-      }
-    }
-    
-    console.log(`Total de combinaciones a procesar: ${allCombinations.length}`)
-    
-    // Procesar en lotes
-    for (let i = 0; i < allCombinations.length; i += batchSize) {
-      const batch = allCombinations.slice(i, i + batchSize)
-      console.log(`Procesando lote ${Math.floor(i / batchSize) + 1}/${Math.ceil(allCombinations.length / batchSize)}`)
-      
-      // Procesar el lote con retry logic
-      for (let retry = 0; retry < maxRetries; retry++) {
-        try {
-          const batchPromises = batch.map(async ({ taskId, fieldId }) => {
-            try {
-              console.log(`Creando TaskField: taskId=${taskId}, fieldId=${fieldId}`)
-              const result = await apiClient.createTaskField({ taskId, fieldId })
-              console.log(`TaskField creado exitosamente:`, result)
-              return { success: true, result }
-            } catch (error) {
-              console.error(`Error creando TaskField: taskId=${taskId}, fieldId=${fieldId}`, error)
-              return { success: false, error }
-            }
-          })
-          
-          const batchResults = await Promise.all(batchPromises)
-          
-          // Contar éxitos y errores del lote
-          const batchSuccesses = batchResults.filter(r => r.success).length
-          const batchErrors = batchResults.filter(r => !r.success).length
-          
-          successCount += batchSuccesses
-          errorCount += batchErrors
-          
-          console.log(`Lote completado: ${batchSuccesses} éxitos, ${batchErrors} errores`)
-          
-          // Si todos los del lote fueron exitosos, continuar con el siguiente lote
-          if (batchErrors === 0) {
-            break
-          }
-          
-          // Si hay errores y no es el último retry, esperar antes de reintentar
-          if (retry < maxRetries - 1) {
-            const delay = Math.pow(2, retry) * 1000 // Exponential backoff: 1s, 2s, 4s
-            console.log(`Reintentando lote en ${delay}ms... (intento ${retry + 2}/${maxRetries})`)
-            await new Promise(resolve => setTimeout(resolve, delay))
-            retryCount++
-          }
-        } catch (batchError) {
-          console.error(`Error procesando lote:`, batchError)
-          errorCount += batch.length
-          
-          if (retry < maxRetries - 1) {
-            const delay = Math.pow(2, retry) * 1000
-            console.log(`Reintentando lote completo en ${delay}ms... (intento ${retry + 2}/${maxRetries})`)
-            await new Promise(resolve => setTimeout(resolve, delay))
-            retryCount++
-          }
-        }
-      }
-      
-      // Delay entre lotes para evitar rate limiting
-      if (i + batchSize < allCombinations.length) {
-        console.log("Esperando 2 segundos antes del siguiente lote...")
-        await new Promise(resolve => setTimeout(resolve, 2000))
-      }
-    }
-    
-    console.log(`Total de TaskFields procesados: ${allCombinations.length}`)
-    console.log(`TaskFields creados exitosamente: ${successCount}`)
-    console.log(`Errores al crear TaskFields: ${errorCount}`)
-    console.log(`Reintentos realizados: ${retryCount}`)
-    console.log("=== FIN CREAR SERVICIO (INDIVIDUAL) ===")
-  }
-
-  // Asociar cada Field a cada Task mediante TaskField (versión con batch processing)
+  // Asociar cada Field a cada Task mediante TaskField usando la Lambda function
   async function associateFieldsToTasksBatch(taskIds: string[], fieldIds: string[]) {
-    console.log("=== CREAR SERVICIO: TaskFields que se crearán (BATCH) ===")
+    console.log("=== CREAR SERVICIO: TaskFields que se crearán ===")
     console.log("Task IDs:", taskIds)
     console.log("Field IDs:", fieldIds)
     
@@ -329,19 +237,16 @@ function ServiceStepperForm({ userEmail }: Props) {
     console.log(`Total de combinaciones a procesar: ${allCombinations.length}`)
     
     try {
-      // Usar el método batch para mejor rendimiento
+      // Usar la nueva Lambda function para mejor rendimiento
       const results = await apiClient.createTaskFieldsBatch(allCombinations)
       
       console.log(`TaskFields creados exitosamente: ${results.length}`)
-      console.log("=== FIN CREAR SERVICIO (BATCH) ===")
+      console.log("=== FIN CREAR SERVICIO ===")
       
       return results
     } catch (error) {
       console.error("Error en batch processing:", error)
-      console.log("Fallback a procesamiento individual...")
-      
-      // Fallback al método individual si el batch falla
-      return await associateFieldsToTasks(taskIds, fieldIds)
+      throw error
     }
   }
 
