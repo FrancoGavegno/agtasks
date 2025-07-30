@@ -4,7 +4,7 @@ exports.createTaskFields = void 0;
 const backend_1 = require("@aws-amplify/backend");
 exports.createTaskFields = (0, backend_1.defineFunction)({
     name: 'createTaskFields',
-    entry: './index.ts',
+    entry: './handler.ts',
     timeoutSeconds: 900,
     memoryMB: 1024,
     environment: {
