@@ -99,6 +99,7 @@ async function batchWriteWithRetry(
 ): Promise<{ processed: number; unprocessed: TaskFieldItem[] }> {
   try {
     console.log(`Attempting batch write to table: ${TABLE_NAME}`);
+    console.log(`Items to write:`, JSON.stringify(items, null, 2));
     
     const requestItems: Record<string, any[]> = {};
     requestItems[TABLE_NAME] = items.map(item => ({
@@ -107,11 +108,14 @@ async function batchWriteWithRetry(
       },
     }));
 
+    console.log(`Request items:`, JSON.stringify(requestItems, null, 2));
+
     const command = new BatchWriteCommand({
       RequestItems: requestItems,
     });
 
     const response = await docClient.send(command);
+    console.log(`DynamoDB response:`, JSON.stringify(response, null, 2));
     
     if (!response.UnprocessedItems || Object.keys(response.UnprocessedItems).length === 0) {
       return { processed: items.length, unprocessed: [] };

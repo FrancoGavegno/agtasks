@@ -313,7 +313,7 @@ function ServiceStepperForm({ userEmail }: Props) {
       }
 
       // Generate service name
-      const serviceName = `${formData.protocolName} - ${formData.fields[0]?.workspaceName || ''} - ${formData.fields[0]?.farmName || ''}`;
+      const serviceName = `${formData.protocolName} - ${formData.fields[0]?.workspaceName || ''} - ${formData.fields[0]?.campaignName || ''} - ${formData.fields[0]?.farmName || ''}`;
 
       // Validate that we have the required Jira configuration
       if (!serviceDeskId || !requestTypeId) {
