@@ -652,57 +652,87 @@ export class ApiClient {
       
       console.log("createTaskFieldsBatch - All data validated successfully")
       
-      // Preparar input para la función Lambda
-      const lambdaInput = {
-        taskFields: validatedDataArray
-      }
-      
-      console.log("createTaskFieldsBatch - Calling Lambda function with input:", lambdaInput)
-      
       // Mostrar toast informativo para lotes grandes
       if (validatedDataArray.length > 50) {
         console.log(`createTaskFieldsBatch - Processing large batch: ${validatedDataArray.length} items`)
       }
       
-      // Llamar a la función Lambda usando fetch directamente
-      const response = await fetch('/api/lambda/createTaskFields', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(lambdaInput)
-      })
-      
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error("createTaskFieldsBatch - HTTP error:", response.status, errorText)
-        throw new Error(`Lambda function failed: ${response.status} - ${errorText}`)
+      // Intentar usar la función Lambda primero
+      try {
+        console.log("createTaskFieldsBatch - Attempting to use Lambda function")
+        
+        // Preparar input para la función Lambda
+        const lambdaInput = {
+          taskFields: validatedDataArray
+        }
+        
+        console.log("createTaskFieldsBatch - Calling Lambda function with input:", lambdaInput)
+        
+        // Llamar a la función Lambda usando fetch directamente
+        const response = await fetch('/api/lambda/createTaskFields', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(lambdaInput)
+        })
+        
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error("createTaskFieldsBatch - HTTP error:", response.status, errorText)
+          throw new Error(`Lambda function failed: ${response.status} - ${errorText}`)
+        }
+        
+        const result = await response.json()
+        const lambdaResponse = result
+        console.log("createTaskFieldsBatch - Lambda response:", lambdaResponse)
+        
+        if (!lambdaResponse.success) {
+          const errorMessage = lambdaResponse.errors?.join(', ') || 'Unknown error from Lambda function'
+          console.error("createTaskFieldsBatch - Lambda function failed:", lambdaResponse)
+          throw new Error(`Lambda function failed: ${errorMessage}`)
+        }
+        
+        console.log(`createTaskFieldsBatch - Successfully created ${lambdaResponse.inserted} TaskFields via Lambda`)
+        
+        // La función Lambda no retorna los objetos creados, solo estadísticas
+        // Para mantener compatibilidad con la interfaz existente, creamos objetos TaskField básicos
+        // con los IDs generados por la función Lambda
+        const createdTaskFields: TaskField[] = validatedDataArray.map((data, index) => ({
+          id: `generated-${Date.now()}-${index}`, // ID temporal ya que la Lambda no retorna los IDs específicos
+          taskId: data.taskId,
+          fieldId: data.fieldId,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }))
+        
+        return createdTaskFields
+        
+      } catch (lambdaError) {
+        console.warn("createTaskFieldsBatch - Lambda function not available, falling back to individual creates:", lambdaError)
+        
+        // Fallback: crear TaskFields individualmente
+        console.log("createTaskFieldsBatch - Using fallback method: individual creates")
+        
+        const createdTaskFields: TaskField[] = []
+        
+        for (const data of validatedDataArray) {
+          try {
+            const result = await client.models.TaskField.create(data)
+            if (result.data) {
+              createdTaskFields.push(result.data as TaskField)
+            }
+          } catch (individualError) {
+            console.error("createTaskFieldsBatch - Error creating individual TaskField:", individualError)
+            // Continuar con el siguiente item en lugar de fallar todo el batch
+          }
+        }
+        
+        console.log(`createTaskFieldsBatch - Fallback completed: ${createdTaskFields.length}/${validatedDataArray.length} TaskFields created`)
+        
+        return createdTaskFields
       }
       
-      const result = await response.json()
-      const lambdaResponse = result
-      console.log("createTaskFieldsBatch - Lambda response:", lambdaResponse)
-      
-      if (!lambdaResponse.success) {
-        const errorMessage = lambdaResponse.errors?.join(', ') || 'Unknown error from Lambda function'
-        console.error("createTaskFieldsBatch - Lambda function failed:", lambdaResponse)
-        throw new Error(`Lambda function failed: ${errorMessage}`)
-      }
-      
-      console.log(`createTaskFieldsBatch - Successfully created ${lambdaResponse.inserted} TaskFields`)
-      
-      // La función Lambda no retorna los objetos creados, solo estadísticas
-      // Para mantener compatibilidad con la interfaz existente, creamos objetos TaskField básicos
-      // con los IDs generados por la función Lambda
-      const createdTaskFields: TaskField[] = validatedDataArray.map((data, index) => ({
-        id: `generated-${Date.now()}-${index}`, // ID temporal ya que la Lambda no retorna los IDs específicos
-        taskId: data.taskId,
-        fieldId: data.fieldId,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }))
-      
-      return createdTaskFields
     } catch (error) {
       console.error("createTaskFieldsBatch - Error details:", error)
       if (error instanceof Error && error.name === 'ZodError') {
