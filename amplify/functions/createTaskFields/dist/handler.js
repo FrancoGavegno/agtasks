@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
 const client_dynamodb_1 = require("@aws-sdk/client-dynamodb");
 const lib_dynamodb_1 = require("@aws-sdk/lib-dynamodb");
-const uuid_1 = require("uuid");
 const client = new client_dynamodb_1.DynamoDBClient({});
 const docClient = lib_dynamodb_1.DynamoDBDocumentClient.from(client);
 const TABLE_NAME = process.env['TASKFIELD_TABLE'];
@@ -44,13 +43,9 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 function createTaskFieldItem(input) {
-    const now = new Date().toISOString();
     return {
-        id: (0, uuid_1.v4)(),
         taskId: input.taskId,
         fieldId: input.fieldId,
-        createdAt: now,
-        updatedAt: now,
     };
 }
 async function batchWriteWithRetry(items, retryCount = 0) {
@@ -161,8 +156,9 @@ const handler = async (event) => {
         }
         console.log('Parsed input:', JSON.stringify(input, null, 2));
         const result = await processTaskFields(input);
+        const statusCode = result.inserted > 0 ? 200 : 400;
         return {
-            statusCode: result.success ? 200 : 400,
+            statusCode,
             body: JSON.stringify(result),
             headers: {
                 'Content-Type': 'application/json',

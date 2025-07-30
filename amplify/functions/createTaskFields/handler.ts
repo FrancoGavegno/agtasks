@@ -1,6 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, BatchWriteCommand } from '@aws-sdk/lib-dynamodb';
-import { v4 as uuidv4 } from 'uuid';
 
 // Initialize DynamoDB client
 const client = new DynamoDBClient({});
@@ -23,11 +22,8 @@ interface BatchTaskFieldInput {
 }
 
 interface TaskFieldItem {
-  id: string;
   taskId: string;
   fieldId: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 interface BatchWriteResult {
@@ -82,13 +78,9 @@ function sleep(ms: number): Promise<void> {
 }
 
 function createTaskFieldItem(input: TaskFieldInput): TaskFieldItem {
-  const now = new Date().toISOString();
   return {
-    id: uuidv4(),
     taskId: input.taskId,
     fieldId: input.fieldId,
-    createdAt: now,
-    updatedAt: now,
   };
 }
 
@@ -241,8 +233,11 @@ export const handler = async (event: any): Promise<any> => {
     const result = await processTaskFields(input);
     
     // Return response
+    // Si se insertaron items, consideramos exitoso aunque haya errores
+    const statusCode = result.inserted > 0 ? 200 : 400;
+    
     return {
-      statusCode: result.success ? 200 : 400,
+      statusCode,
       body: JSON.stringify(result),
       headers: {
         'Content-Type': 'application/json',
