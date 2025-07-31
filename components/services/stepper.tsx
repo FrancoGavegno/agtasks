@@ -96,6 +96,7 @@ function ServiceStepperForm({ userEmail }: Props) {
   const domainStr = Array.isArray(domain) ? domain[0] : domain
   const projectStr = Array.isArray(project) ? project[0] : project
   const t = useTranslations("CreateService")
+  const tStepper = useTranslations("CreateServiceStepper")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const {
     currentStep,
@@ -256,7 +257,7 @@ function ServiceStepperForm({ userEmail }: Props) {
     if (!isValid) {
       // Get the first error message from the form
       const errors = form.formState.errors
-      let errorMessage = "Por favor, completa todos los campos requeridos antes de continuar."
+      let errorMessage = tStepper("validationErrorMessage")
 
       if (errors.protocolId?.message) {
         errorMessage = errors.protocolId.message
@@ -267,7 +268,7 @@ function ServiceStepperForm({ userEmail }: Props) {
       }
 
       toast({
-        title: "Error de validación",
+        title: tStepper("validationErrorTitle"),
         description: errorMessage,
         variant: "destructive",
       })
@@ -284,12 +285,12 @@ function ServiceStepperForm({ userEmail }: Props) {
       setIsSubmitting(true);
       const formData = form.getValues()
 
-      // // Validate final step
+      //       // Validate final step
       const isValid = await validateStep(3)
       if (!isValid) {
         toast({
-          title: "Error de validación",
-          description: "Por favor, completa todos los campos requeridos antes de crear el servicio.",
+          title: tStepper("validationErrorTitle"),
+          description: tStepper("validationErrorMessageFinal"),
           variant: "destructive",
         })
         return
@@ -400,8 +401,8 @@ function ServiceStepperForm({ userEmail }: Props) {
       // Mostrar toast informativo para lotes grandes
       if (totalCombinations > 50) {
         toast({
-          title: "Procesando asociaciones de campos",
-          description: `Procesando ${totalCombinations} asociaciones Task-Field. Esto puede tomar unos segundos...`,
+          title: tStepper("processingFieldsTitle"),
+          description: tStepper("processingFieldsMessage", { totalCombinations }),
           duration: 3000,
         })
       }
@@ -410,11 +411,11 @@ function ServiceStepperForm({ userEmail }: Props) {
       
       // Mostrar resultado detallado del procesamiento batch
       const successMessage = batchResult.length === totalCombinations 
-        ? "El servicio y sus tareas fueron creados correctamente."
-        : `Servicio creado. ${batchResult.length}/${totalCombinations} asociaciones de campos procesadas.`
+        ? tStepper("serviceCreatedMessage")
+        : tStepper("serviceCreatedPartialMessage", { batchResult: batchResult.length, totalCombinations })
 
       toast({
-        title: "Servicio creado exitosamente",
+        title: tStepper("serviceCreatedTitle"),
         description: successMessage,
         duration: 5000,
       })
@@ -423,7 +424,7 @@ function ServiceStepperForm({ userEmail }: Props) {
     } catch (error) {
       console.error("Error creating service:", error)
       toast({
-        title: "Error al crear el servicio",
+        title: tStepper("createServiceErrorTitle"),
         description: error instanceof Error ? error.message : String(error),
         variant: "destructive",
       })
@@ -456,19 +457,19 @@ function ServiceStepperForm({ userEmail }: Props) {
             <div className="flex-1 pb-4">
               {currentStep === 1 && (
                 <>
-                  <h2 className="text-xl font-semibold mb-4">Paso 1: Selección de protocolo de servicio</h2>
+                  <h2 className="text-xl font-semibold mb-4">{tStepper("step1Title")}</h2>
                   {renderStep()}
                 </>
               )}
               {currentStep === 2 && (
                 <>
-                  <h2 className="text-xl font-semibold mb-4">Paso 2: Selección de lotes</h2>
+                  <h2 className="text-xl font-semibold mb-4">{tStepper("step2Title")}</h2>
                   {renderStep()}
                 </>
               )}
               {currentStep === 3 && (
                 <>
-                  <h2 className="text-xl font-semibold mb-4">Paso 3: Asignación de tareas</h2>
+                  <h2 className="text-xl font-semibold mb-4">{tStepper("step3Title")}</h2>
                   {renderStep()}
                 </>
               )}
@@ -480,7 +481,7 @@ function ServiceStepperForm({ userEmail }: Props) {
                   variant="outline"
                   onClick={prevStep}
                 >
-                  <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
+                  <ChevronLeft className="w-4 h-4 mr-1" /> {tStepper("previousButton")}
                 </Button>
               )}
               {currentStep < 3 && (
@@ -489,7 +490,7 @@ function ServiceStepperForm({ userEmail }: Props) {
                   onClick={nextStep}
                   disabled={!isCurrentStepValid()}
                 >
-                  <ChevronRight className="w-4 h-4 ml-1" /> Siguiente
+                  <ChevronRight className="w-4 h-4 ml-1" /> {tStepper("nextButton")}
                 </Button>
               )}
               {currentStep === 3 && (
@@ -498,7 +499,7 @@ function ServiceStepperForm({ userEmail }: Props) {
                   disabled={isSubmitting || !isCurrentStepValid()}
                   onClick={onSubmit}
                 >
-                  {isSubmitting ? "Creando..." : "Crear Servicio"}
+                  {isSubmitting ? tStepper("creatingButton") : tStepper("createServiceButton")}
                 </Button>
               )}
             </CardFooter>

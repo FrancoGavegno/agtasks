@@ -10,8 +10,20 @@
     "subtitle": "",
     "image-alt": ""
   },
+  "HomePage": {
+    "title": "Agtasks",
+    "subtitle": "Administra todos los datos de tu aplicación desde este panel de administración central."
+  },
   "Navbar": {
-    "lang": "ES"
+    "lang": "ES",
+    "domainLabel": "Dominio",
+    "projectLabel": "Proyecto",
+    "selectDomain": "Seleccionar dominio",
+    "selectProject": "Seleccionar proyecto",
+    "searchDomainProject": "Buscar dominio o proyecto...",
+    "noProjectsInDomain": "No hay proyectos en este dominio.",
+    "createProject": "Crear Proyecto",
+    "noDomainProjectFound": "No se encontró dominio o proyecto."
   },
   "MainNav": {
     "help-title": "Ayuda & Soporte",
@@ -67,33 +79,44 @@
     "subtitle": "Administra tu proyecto"
   },
   "ProjectPageDetails": {
-  "loadingData": "Cargando datos del proyecto...",
-  "notFoundTitle": "No hay servicios disponibles",
-  "notFoundSubtitle": "Crear servicios para ver los indicadores del proyecto",
-  "active": "Servicios activos",
-  "completed": "Servicios completados",
-  "blocked": "Servicios bloqueados",
-  "averageTime": "Tiempo promedio"
+    "loadingData": "Cargando datos del proyecto...",
+    "notFoundTitle": "No hay servicios disponibles",
+    "notFoundSubtitle": "Crear servicios para ver los indicadores del proyecto",
+    "active": "Servicios activos",
+    "completed": "Servicios completados",
+    "blocked": "Servicios bloqueados",
+    "averageTime": "Tiempo promedio"
   },
   "ServicesPage": {
-  "BreadcrumbItem-1": "Inicio",
-  "BreadcrumbItem-2": "Proyecto",
-  "BreadcrumbPage": "Servicios",
-  "title": "Servicios",
-  "subtitle": "Administra los servicios del proyecto",
-  "buttonCreateService": "Crear servicio"
+    "BreadcrumbItem-1": "Inicio",
+    "BreadcrumbItem-2": "Proyecto",
+    "BreadcrumbPage": "Servicios",
+    "title": "Servicios",
+    "subtitle": "Administra los servicios del proyecto",
+    "buttonCreateService": "Crear servicio"
   },
   "ServicesPageDetails": {
-  "loadingData": "Cargando datos de los servicios...",
-  "notFoundTitle": "No hay servicios disponibles",
-  "notFoundSubtitle": "Crear servicios para ver los indicadores del proyecto"
+    "loadingData": "Cargando datos de los servicios...",
+    "notFoundTitle": "No hay servicios disponibles",
+    "notFoundSubtitle": "Crear servicios para ver los indicadores del proyecto",
+    "searchPlaceholder": "Buscar servicios...",
+    "refreshButton": "Actualizar",
+    "createServiceButton": "Crear Servicio",
+    "tryAgainButton": "Intentar de nuevo",
+    "tableHeaders": {
+      "key": "Key",
+      "summary": "Resumen",
+      "protocol": "Protocolo",
+      "created": "Creado",
+      "actions": "Acciones"
+    }
   },
   "ServiceDetailPage": {
-  "BreadcrumbItem-1": "Inicio",
-  "BreadcrumbItem-2": "Servicios",
-  "BreadcrumbPage": "Detalles del servicio",
-  "title": "Detalles del servicio",
-  "subtitle": "Ver información detallada sobre este servicio"
+    "BreadcrumbItem-1": "Inicio",
+    "BreadcrumbItem-2": "Servicios",
+    "BreadcrumbPage": "Detalles del servicio",
+    "title": "Detalles del servicio",
+    "subtitle": "Ver información detallada sobre este servicio"
   },
   "CreateService": {
     "CardTitle": "Crear Nuevo Servicio",
@@ -105,7 +128,12 @@
     "Button-3": "Atrás",
     "Button-4": "Siguiente",
     "isSubmitting": "Creando...",
-    "isSubmitting-2": "Confirmar"
+    "isSubmitting-2": "Confirmar",
+    "step1Title": "Información básica",
+    "step2Title": "Selección de lotes",
+    "step3Title": "Configuración de tareas",
+    "errorCreate": "Error al crear el servicio",
+    "validationMessage": "Por favor, completa todos los campos requeridos antes de crear el servicio."
   },
   "TasksPage": {
     "BreadcrumbItem-1": "Inicio",
@@ -114,10 +142,234 @@
     "title": "Tareas",
     "subtitle": "Administra las tareas del proyecto"
   },
+  "TasksPageDetails": {
+    "searchPlaceholder": "Buscar tareas...",
+    "refreshButton": "Actualizar",
+    "createTaskButton": "Crear Tarea",
+    "noTasksTitle": "No hay tareas disponibles",
+    "noTasksSubtitle": "Crear tareas para comenzar a trabajar",
+    "tryAgainButton": "Intentar de nuevo",
+    "tableHeaders": {
+      "key": "Key",
+      "summary": "Summary",
+      "taskType": "Task Type",
+      "assignedTo": "Assigned to",
+      "created": "Created",
+      "actions": "Actions"
+    }
+  },
+  "CreateTask": {
+    "title": "Crear Tarea",
+    "updateTitle": "Actualizar Tarea",
+    "saving": "Guardando...",
+    "createButton": "Crear Tarea",
+    "updateButton": "Actualizar Tarea",
+    "errorCreate": "Error al crear tarea",
+    "errorUpdate": "Error al actualizar tarea",
+    "successCreate": "Tarea creada exitosamente",
+    "step1Title": "Información básica",
+    "step2Title": "Selección de lotes",
+    "step3Title": "Asignación y formularios",
+    "validationMessage": "Por favor, completa todos los campos requeridos antes de crear la tarea."
+  },
   "FieldsPage": {
     "BreadcrumbPage": "Lotes",
     "title": "Lotes",
     "subtitle": "Administra los lotes del proyecto"
+  },
+  "FieldsPageDetails": {
+    "searchPlaceholder": "Buscar lotes...",
+    "selectLotMessage": "Seleccione un lote para ver los servicios asociados",
+    "selectLotMessageTasks": "Seleccione un lote para ver las tareas asociadas",
+    "associatedServices": "Servicios Asociados",
+    "associatedTasks": "Tareas Asociadas",
+    "refreshButton": "Actualizar",
+    "noServicesMessage": "No hay servicios asociados a este lote",
+    "noTasksMessage": "No hay tareas asociadas a este lote",
+    "noSearchResults": "No se encontraron resultados que coincidan con su búsqueda",
+    "searchFormTitle": "Buscar Lotes",
+    "statsTitle": "Estadísticas",
+    "totalLotes": "Total de Lotes",
+    "totalServices": "Total de Servicios",
+    "totalTasks": "Total de Tareas"
+  },
+  "SettingsUsers": {
+    "title": "Usuarios",
+    "subtitle": "Gestiona los usuarios de tu dominio",
+    "searchPlaceholder": "Buscar usuarios...",
+    "loadingUsers": "Cargando usuarios...",
+    "refreshButton": "Actualizar",
+    "noUsersTitle": "No hay usuarios disponibles",
+    "noUsersSubtitle": "No se encontraron usuarios que coincidan con la búsqueda",
+    "noUsersFound": "No se encontraron usuarios",
+    "sentInvitation": "Enviada",
+    "noSentInvitation": "No enviada",
+    "invitationSent": "Invitación enviada",
+    "sendInvitation": "Enviar invitación",
+    "showing": "Mostrando",
+    "of": "de",
+    "entries": "entradas",
+    "page": "Página",
+    "tableHeaders": {
+      "name": "Nombre",
+      "email": "Email",
+      "role": "Rol",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "rowsPerPage": "Filas por página",
+    "errorInvitation": "Error al enviar invitación"
+  },
+  "SettingsProtocols": {
+    "title": "Protocolos",
+    "subtitle": "Gestiona los protocolos disponibles",
+    "searchPlaceholder": "Filtrar protocolos...",
+    "loadingProtocols": "Cargando protocolos...",
+    "refreshButton": "Actualizar",
+    "editButton": "Editar",
+    "noProtocolsTitle": "No se encontraron protocolos",
+    "noProtocolsSubtitle": "No se encontraron protocolos",
+    "showing": "Mostrando",
+    "of": "de",
+    "entries": "entradas",
+    "page": "Página",
+    "firstPage": "Primera página",
+    "previousPage": "Página anterior",
+    "nextPage": "Página siguiente",
+    "lastPage": "Última página",
+    "tableHeaders": {
+      "name": "Nombre",
+      "description": "Descripción",
+      "language": "Idioma",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "rowsPerPage": "Filas por página",
+    "savePreferences": "Guardar preferencias"
+  },
+  "SettingsForms": {
+    "title": "Formularios",
+    "subtitle": "Administra los formularios de recolección de datos",
+    "searchPlaceholder": "Filtrar formularios...",
+    "loadingForms": "Cargando formularios...",
+    "editButton": "Editar",
+    "noFormsTitle": "No se encontraron formularios",
+    "noFormsSubtitle": "No se encontraron formularios que coincidan con la búsqueda",
+    "noFormsFound": "No se encontraron formularios",
+    "showing": "Mostrando",
+    "of": "de",
+    "entries": "entradas",
+    "page": "Página",
+    "firstPage": "Primera página",
+    "previousPage": "Página anterior",
+    "nextPage": "Página siguiente",
+    "lastPage": "Última página",
+    "tableHeaders": {
+      "name": "Nombre",
+      "language": "Idioma",
+      "origin": "Origen"
+    },
+    "rowsPerPage": "Filas por página",
+    "koboToolbox": "KoboToolbox",
+    "local": "Local"
+  },
+  "ProtocolModal": {
+    "title": "Protocolos",
+    "description": "Indica qué protocolos usará tu dominio.",
+    "searchPlaceholder": "Buscar protocolos...",
+    "noProtocolsFound": "No se encontraron protocolos.",
+    "savingPreferences": "Guardando preferencias...",
+    "savePreferences": "Guardar preferencias",
+    "successTitle": "Éxito",
+    "successMessage": "Preferencias de protocolos guardadas correctamente",
+    "errorTitle": "Error",
+    "errorMessage": "Hubo un problema al guardar las preferencias de protocolos"
+  },
+  "FormModal": {
+    "title": "Formularios",
+    "description": "Selecciona los formularios que deseas mostrar.",
+    "searchPlaceholder": "Buscar formularios...",
+    "noFormsFound": "No se encontraron formularios.",
+    "savingPreferences": "Guardando preferencias...",
+    "savePreferences": "Guardar preferencias",
+    "successTitle": "Éxito",
+    "successMessage": "Preferencias de formularios guardadas correctamente",
+    "errorTitle": "Error",
+    "errorMessage": "Hubo un problema al guardar las preferencias de formularios",
+    "errorDeleteForm": "No se pudo eliminar el formulario",
+    "errorCreateForm": "No se pudo crear el formulario"
+  },
+  "NavbarComponents": {
+    "selectDomain": "Seleccionar dominio",
+    "selectProject": "Seleccionar proyecto",
+    "searchDomainProject": "Buscar dominio o proyecto...",
+    "noProjectsInDomain": "No hay proyectos en este dominio",
+    "createProject": "Crear Proyecto",
+    "createProjectAlert": "Crear Proyecto",
+    "domainLabel": "Dominio",
+    "projectLabel": "Proyecto"
+  },
+  "AdminDataTable": {
+    "searchPlaceholder": "Buscar {searchKey}...",
+    "noResults": "No se encontraron resultados",
+    "loading": "Cargando...",
+    "rowsPerPage": "Filas por página",
+    "of": "de",
+    "showing": "Mostrando",
+    "entries": "entradas",
+    "previous": "Anterior",
+    "next": "Siguiente"
+  },
+  "FormComponents": {
+    "selectWorkspace": "Seleccionar espacio",
+    "selectSeason": "Seleccionar temporada",
+    "selectFarm": "Seleccionar establecimiento",
+    "selectField": "Seleccionar lote",
+    "selectService": "Selecciona un servicio (opcional)",
+    "selectUser": "Seleccionar usuario",
+    "selectForm": "Seleccionar formulario",
+    "loading": "Cargando...",
+    "noUsersAvailable": "No hay usuarios disponibles",
+    "noFormsAvailable": "No hay formularios disponibles",
+    "noOptionsAvailable": "No hay opciones disponibles",
+    "allServices": "Todos los servicios",
+    "allTasks": "Todas las tareas",
+    "allFields": "Todos los lotes"
+  },
+  "Stepper": {
+    "step1": "Paso 1",
+    "step2": "Paso 2", 
+    "step3": "Paso 3",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "finish": "Finalizar",
+    "back": "Atrás"
+  },
+  "Common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "update": "Actualizar",
+    "refresh": "Actualizar",
+    "search": "Buscar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "yes": "Sí",
+    "no": "No",
+    "all": "Todos",
+    "none": "Ninguno",
+    "select": "Seleccionar",
+    "choose": "Elegir",
+    "required": "Requerido",
+    "optional": "Opcional"
   },
   "Footer": {
     "poweredBy": "Desarrollador por"
@@ -125,5 +377,136 @@
   "LanguageSelector": {
     "label": "Idioma",
     "select": "Seleccionar idioma"
+  },
+  "CreateServiceSteps": {
+    "step1": {
+      "protocolLabel": "Protocolo de servicio",
+      "loadingProtocols": "Cargando protocolos...",
+      "selectProtocol": "Seleccionar protocolo",
+      "noProtocolsAvailable": "No hay protocolos disponibles",
+      "protocolTasksTitle": "Tareas que incluye el protocolo:",
+      "searchingTasks": "Buscando tareas del protocolo seleccionado"
+    },
+    "step2": {
+      "workspaceLabel": "Espacio de trabajo",
+      "campaignLabel": "Campaña",
+      "establishmentLabel": "Establecimiento", 
+      "availableLotsTitle": "Lotes disponibles",
+      "loadingLots": "Cargando lotes...",
+      "noLotsAvailable": "No hay lotes disponibles para este establecimiento",
+      "selectAll": "Seleccionar",
+      "lot": "Lote",
+      "cropHybrid": "Cultivo/Híbrido",
+      "hectares": "Hectáreas",
+      "selectAllLots": "Seleccionar todos los lotes",
+      "noWorkspacesAvailable": "No hay espacios disponibles",
+      "noCampaignsAvailable": "No hay campañas disponibles",
+      "noEstablishmentsAvailable": "No hay establecimientos disponibles"
+    },
+    "step3": {
+      "task": "Tarea",
+      "formRequired": "Formulario",
+      "assignedToRequired": "Asignado a",
+      "selectAllTasks": "Seleccionar todas las tareas",
+      "noTasksAvailable": "No hay tareas disponibles. Por favor, seleccione un protocolo en el paso 1.",
+      "noTasksAvailableSubtext": "Si ya seleccionó un protocolo, intente volver al paso 1 y seleccionarlo nuevamente.",
+      "loadingForms": "Cargando...",
+      "selectForm": "Seleccionar formulario",
+      "noFormsAvailable": "No hay formularios disponibles",
+      "loadingUsers": "Cargando...",
+      "selectUser": "Seleccionar usuario",
+      "noUsersAvailable": "No hay usuarios disponibles",
+      "taskNumber": "Tarea {number}",
+      "requiredField": "Requerido"
+    }
+  },
+  "CreateServiceStepper": {
+    "step1Title": "Paso 1: Selección de protocolo de servicio",
+    "step2Title": "Paso 2: Selección de lotes",
+    "step3Title": "Paso 3: Asignación de tareas",
+    "previousButton": "Anterior",
+    "nextButton": "Siguiente",
+    "creatingButton": "Creando...",
+    "createServiceButton": "Crear Servicio",
+    "validationErrorTitle": "Error de validación",
+    "validationErrorMessage": "Por favor, completa todos los campos requeridos antes de continuar.",
+    "validationErrorMessageFinal": "Por favor, completa todos los campos requeridos antes de crear el servicio.",
+    "createServiceErrorTitle": "Error al crear el servicio",
+    "processingFieldsTitle": "Procesando asociaciones de campos",
+    "processingFieldsMessage": "Procesando {totalCombinations} asociaciones Task-Field. Esto puede tomar unos segundos...",
+    "serviceCreatedTitle": "Servicio creado exitosamente",
+    "serviceCreatedMessage": "El servicio y sus tareas fueron creados correctamente.",
+    "serviceCreatedPartialMessage": "Servicio creado. {batchResult.length}/{totalCombinations} asociaciones de campos procesadas."
+  },
+  "CreateServiceBreadcrumb": {
+    "services": "Servicios",
+    "createService": "Crear Servicio"
+  },
+  "CreateTaskStepper": {
+    "step1Title": "Paso 1: Datos de la tarea",
+    "step2Title": "Paso 2: Selección de lotes",
+    "step3Title": "Paso 3: Asignación de usuario",
+    "previousButton": "Anterior",
+    "nextButton": "Siguiente",
+    "savingButton": "Guardando...",
+    "createTaskButton": "Crear Tarea",
+    "updateTaskButton": "Actualizar Tarea",
+    "validationErrorTitle": "Error de validación",
+    "validationErrorMessage": "Por favor, completa todos los campos requeridos antes de continuar.",
+    "errorTitle": "Error",
+    "errorMessage": "Ocurrió un error al validar el paso actual.",
+    "taskUpdatedTitle": "Tarea actualizada exitosamente",
+    "taskUpdatedMessage": "La tarea fue actualizada correctamente.",
+    "taskCreatedTitle": "Tarea creada exitosamente",
+    "taskCreatedMessage": "Tarea creada exitosamente con {totalFields} campo{totalFields > 1 ? 's' : ''} asociado{totalFields > 1 ? 's' : ''}.",
+    "taskCreatedSimpleMessage": "Tarea creada exitosamente.",
+    "updateTaskErrorTitle": "Error al actualizar tarea",
+    "createTaskErrorTitle": "Error al crear tarea"
+  },
+  "CreateTaskSteps": {
+    "step1": {
+      "taskNameLabel": "Nombre de la Tarea",
+      "taskTypeLabel": "Tipo de Tarea",
+      "formLabel": "Formulario",
+      "selectTaskType": "Selecciona un tipo de tarea",
+      "selectForm": "Selecciona un tipo de formulario"
+    },
+    "step2": {
+      "workspaceLabel": "Espacio de trabajo",
+      "campaignLabel": "Campaña",
+      "establishmentLabel": "Establecimiento",
+      "availableLotsTitle": "Lotes disponibles",
+      "loadingLots": "Cargando lotes...",
+      "noLotsAvailable": "No hay lotes disponibles para este establecimiento",
+      "selectAll": "Seleccionar",
+      "lot": "Lote",
+      "cropHybrid": "Cultivo/Híbrido",
+      "hectares": "Hectáreas",
+      "selectAllLots": "Seleccionar todos los lotes",
+      "noWorkspacesAvailable": "No hay espacios disponibles",
+      "noCampaignsAvailable": "No hay campañas disponibles",
+      "noEstablishmentsAvailable": "No hay establecimientos disponibles"
+    },
+    "step3": {
+      "projectLabel": "Proyecto",
+      "serviceLabel": "Servicio",
+      "assignedUserLabel": "Usuario asignado",
+      "assignedUserRequired": "Usuario asignado",
+      "noService": "Sin servicio",
+      "noServicesAvailable": "No hay servicios disponibles",
+      "noServicesConfigured": "No hay servicios configurados para este proyecto",
+      "errorLoadingServices": "Error: No se pudieron cargar los servicios",
+      "errorLoadingUsers": "Error: No se pudieron cargar los usuarios",
+      "loadingUsers": "Cargando...",
+      "selectUser": "Seleccionar usuario",
+      "noUsersAvailable": "No hay usuarios disponibles",
+      "noUsersFound": "No se encontraron usuarios para este dominio",
+      "notAssigned": "No asignado"
+    }
+  },
+  "CreateTaskBreadcrumb": {
+    "tasks": "Tareas",
+    "createTask": "Crear Tarea",
+    "editTask": "Editar Tarea"
   }
 }

@@ -24,6 +24,7 @@ import {
 import { Domain } from "@/lib/interfaces/360"
 import { type Project } from "@/lib/schemas"
 import { Link } from "@/i18n/routing"
+import { useTranslations } from 'next-intl'
 
 interface Props {
   domains: Domain[]
@@ -44,6 +45,7 @@ export default function DomainProjectSelector({
   onProjectSelect,
   onCreateProject
 }: Props) {
+  const t = useTranslations("Navbar")
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState("")
 
@@ -70,13 +72,13 @@ export default function DomainProjectSelector({
             <div className="flex flex-row items-end justify-between w-full gap-4">
               {/* Dominio */}
               <div className="flex flex-col min-w-0 max-w-[48%]">
-                <span className="text-[10px] text-gray-400 leading-none mb-0.5">Dominio</span>
-                <span className="text-sm font-medium truncate" style={{lineHeight: '1.2'}}>{selectedDomain?.name ?? "Seleccionar dominio"}</span>
+                <span className="text-[10px] text-gray-400 leading-none mb-0.5">{t("domainLabel")}</span>
+                <span className="text-sm font-medium truncate" style={{lineHeight: '1.2'}}>{selectedDomain?.name ?? t("selectDomain")}</span>
               </div>
               {/* Proyecto */}
               <div className="flex flex-col min-w-0 max-w-[48%]">
-                <span className="text-[10px] text-gray-400 leading-none mb-0.5">Proyecto</span>
-                <span className="text-sm font-medium truncate" style={{lineHeight: '1.2'}}>{selectedProject?.name ?? "Seleccionar proyecto"}</span>
+                <span className="text-[10px] text-gray-400 leading-none mb-0.5">{t("projectLabel")}</span>
+                <span className="text-sm font-medium truncate" style={{lineHeight: '1.2'}}>{selectedProject?.name ?? t("selectProject")}</span>
               </div>
             </div>
             <ChevronsUpDown className="ml-2 h-5 w-5 shrink-0 opacity-70" />
@@ -85,16 +87,16 @@ export default function DomainProjectSelector({
         <PopoverContent className="w-72 p-0 border border-gray-200 shadow-xl rounded-lg">
           <Command className="bg-white rounded-lg">
             <CommandInput
-              placeholder="Buscar dominio o proyecto..."
+              placeholder={t("searchDomainProject")}
               className="h-9 px-3 text-sm border-0 border-b border-gray-200 focus:border-primary/40 focus:ring-0 rounded-none shadow-none bg-white"
               value={search}
               onValueChange={setSearch}
             />
             <CommandList className="max-h-72 overflow-y-auto">
               <CommandEmpty>
-                <span className="block px-4 py-2 text-sm text-gray-400">No se encontró dominio o proyecto.</span>
+                <span className="block px-4 py-2 text-sm text-gray-400">{t("noDomainProjectFound")}</span>
               </CommandEmpty>
-              <CommandGroup heading={<span className="text-xs font-semibold text-gray-500 px-3 py-1">Dominios</span>}>
+              <CommandGroup heading={<span className="text-xs font-semibold text-gray-500 px-3 py-1">{t("domainLabel")}s</span>}>
                 {domains.map((domain) => (
                   <CommandItem
                     key={domain.id}
@@ -128,7 +130,7 @@ export default function DomainProjectSelector({
                 ))}
               </CommandGroup>
               <div className="my-1 border-t border-gray-100" />
-              <CommandGroup heading={<span className="text-xs font-semibold text-gray-500 px-3 py-1">Proyectos</span>}>
+              <CommandGroup heading={<span className="text-xs font-semibold text-gray-500 px-3 py-1">{t("projectLabel")}s</span>}>
                 {filteredProjects.length > 0 ? filteredProjects.map((project) => (
                   <CommandItem
                     key={project.id}
@@ -146,7 +148,7 @@ export default function DomainProjectSelector({
                     {selectedProject?.id === project.id && <Check className="ml-auto h-4 w-4 text-primary" />}
                   </CommandItem>
                 )) : (
-                  <span className="block px-4 py-2 text-xs text-gray-400">No hay proyectos en este dominio.</span>
+                  <span className="block px-4 py-2 text-xs text-gray-400">{t("noProjectsInDomain")}</span>
                 )}
                 <CommandItem
                   onSelect={() => {
@@ -155,7 +157,7 @@ export default function DomainProjectSelector({
                   }}
                   className="flex items-center gap-2 px-3 py-2 text-sm text-primary cursor-pointer rounded-md hover:bg-gray-50 mt-1"
                 >
-                  <Plus className="h-4 w-4" /> Crear Proyecto
+                  <Plus className="h-4 w-4" /> {t("createProject")}
                 </CommandItem>
               </CommandGroup>
             </CommandList>

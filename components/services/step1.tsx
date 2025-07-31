@@ -21,11 +21,13 @@ import { useServiceForm, } from "@/lib/contexts/services-context"
 import { apiClient } from "@/lib/integrations/amplify"
 // import { listTasksbyService } from "@/lib/integrations/jira"
 import { type ServiceFormValues } from "@/lib/schemas"
+import { useTranslations } from 'next-intl'
 // import type {
 //   JiraSubtask,
 // } from "@/lib/interfaces/jira"
 
 export default function Step1() {
+  const t = useTranslations("CreateServiceSteps.step1")
   const {
     setValue,
     watch,
@@ -205,14 +207,14 @@ export default function Step1() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <label className="text-sm font-medium">Protocolo de servicio</label>
+        <label className="text-sm font-medium">{t("protocolLabel")}</label>
         <Select
           value={getCurrentValue()}
           onValueChange={handleProtocolChange}
           disabled={loading}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder={loading ? "Cargando protocolos..." : "Seleccionar protocolo"} />
+            <SelectValue placeholder={loading ? t("loadingProtocols") : t("selectProtocol")} />
           </SelectTrigger>
           <SelectContent>
             {protocols.length > 0 ? (
@@ -223,7 +225,7 @@ export default function Step1() {
               ))
             ) : (
               <SelectItem value="no-protocols" disabled>
-                No hay protocolos disponibles
+                {t("noProtocolsAvailable")}
               </SelectItem>
             )}
           </SelectContent>
@@ -237,7 +239,7 @@ export default function Step1() {
       {tmpRequestId && watch("tasks") && watch("tasks").length > 0 ? (
         <div className="mt-6 border rounded-md p-4">
           <h4 className="text-sm font-medium mb-2">
-            Tareas que incluye el protocolo: 
+            {t("protocolTasksTitle")}
           </h4>
           <ul className="text-sm">
             {watch("tasks").map((task: any, index: number) => (
@@ -253,7 +255,7 @@ export default function Step1() {
       ) : (
         tmpRequestId && (
           <div className="mt-6 border rounded-md p-4 text-center text-gray-500">
-            <p>Buscando tareas del protocolo {protocolName || "seleccionado"}</p>
+            <p>{t("searchingTasks")}</p>
           </div>
         )
       )}

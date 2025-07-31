@@ -31,6 +31,9 @@ import {
 import type { Schema } from "@/amplify/data/resource"
 import { format } from 'date-fns'
 
+import { TasksSkeleton } from "@/components/ui/tasks-skeleton"
+import { useTranslations } from 'next-intl'
+
 type Service = Schema["Service"]["type"]
 type Task = Schema["Task"]["type"]
 
@@ -42,6 +45,7 @@ export function TasksPageDetails() {
   const domainId = params.domain as string
   const projectId = params.project as string
   const { toast } = useToast()
+  const t = useTranslations("TasksPageDetails")
   const [services, setServices] = useState<Service[]>([])
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
@@ -143,7 +147,7 @@ export function TasksPageDetails() {
   // const displayedTasks = paginatedTasks
 
   if (loading && !refreshing) {
-    return <div className="flex justify-center items-center h-64">Cargando tareas...</div>
+    return <TasksSkeleton />
   }
 
   if (error) {
@@ -151,7 +155,7 @@ export function TasksPageDetails() {
       <div className="text-red-500 text-center h-64 flex flex-col items-center justify-center">
         <p className="mb-4">{error}</p>
         <Button onClick={handleRefresh} variant="outline">
-          <RefreshCw className="mr-2 h-4 w-4" /> Intentar de nuevo
+          <RefreshCw className="mr-2 h-4 w-4" /> {t("tryAgainButton")}
         </Button>
       </div>
     )
@@ -160,10 +164,10 @@ export function TasksPageDetails() {
   if (tasks.length === 0 && !searchQuery) {
     return (
       <div className="text-center h-64 flex flex-col items-center justify-center">
-        <p className="text-lg text-muted-foreground mb-4">No hay tareas disponibles</p>
+        <p className="text-lg text-muted-foreground mb-4">{t("noTasksTitle")}</p>
         <Link href={`/domains/${domainId}/projects/${projectId}/tasks/create`}>
           <Button>
-            <Plus className="mr-2 h-4 w-4" /> Crear Tarea
+            <Plus className="mr-2 h-4 w-4" /> {t("createTaskButton")}
           </Button>
         </Link>
       </div>
@@ -177,7 +181,7 @@ export function TasksPageDetails() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Buscar tareas..."
+            placeholder={t("searchPlaceholder")}
             className="pl-8"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -199,12 +203,12 @@ export function TasksPageDetails() {
 
           <Button onClick={handleRefresh} variant="outline" disabled={refreshing}>
             <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-            Actualizar
+            {t("refreshButton")}
           </Button>
 
           <Link href={`/domains/${domainId}/projects/${projectId}/tasks/create`}>
             <Button type="button" variant="default">
-              <Plus className="mr-2 h-4 w-4" /> Crear Tarea
+              <Plus className="mr-2 h-4 w-4" /> {t("createTaskButton")}
             </Button>
           </Link>
         </div>
@@ -214,20 +218,20 @@ export function TasksPageDetails() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Key</TableHead>
-              <TableHead>Summary</TableHead>
-              <TableHead>Task Type</TableHead>
-              <TableHead>Assigned to</TableHead>
-              <TableHead>Created</TableHead>
+              <TableHead>{t("tableHeaders.key")}</TableHead>
+              <TableHead>{t("tableHeaders.summary")}</TableHead>
+              <TableHead>{t("tableHeaders.taskType")}</TableHead>
+              <TableHead>{t("tableHeaders.assignedTo")}</TableHead>
+              <TableHead>{t("tableHeaders.created")}</TableHead>
               {/* <TableHead>Service</TableHead>*/}
-              <TableHead>Actions</TableHead>
+              <TableHead>{t("tableHeaders.actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {displayedTasks.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
-                  No se encontraron tareas que coincidan con su búsqueda
+                <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                  {searchQuery ? "No se encontraron tareas que coincidan con su búsqueda" : "No hay tareas disponibles"}
                 </TableCell>
               </TableRow>
             ) : (
@@ -235,7 +239,7 @@ export function TasksPageDetails() {
                 const service = services.find(s => s.id === task.serviceId)
                 return (
                   <TableRow key={task.id}>
-                    <TableCell>{task.subtaskId}</TableCell>
+                    <TableCell className="font-medium">{task.subtaskId}</TableCell>
                     <TableCell className="flex flex-col flex-1">
                       {task.taskName}
                       <span className="text-xs text-gray-400">
@@ -247,7 +251,7 @@ export function TasksPageDetails() {
                     <TableCell>{task.createdAt ? format(new Date(task.createdAt), 'dd/MM/yyyy') : '-'}</TableCell>
                     {/* <TableCell>{service ? service.name : "(Sin servicio asociado)"}</TableCell> */}
                     <TableCell>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center space-x-2">
                         <Link
                           href={`/domains/${domainId}/projects/${projectId}/tasks/${task.id}/edit`}
                           className="inline-flex items-center gap-1 text-primary hover:underline"

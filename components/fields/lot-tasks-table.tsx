@@ -30,6 +30,8 @@ import { format } from 'date-fns'
 import { useToast } from "@/hooks/use-toast"
 import { apiClient } from "@/lib/integrations/amplify"
 import { useParams } from "next/navigation"
+import { LotTasksTableSkeleton } from "@/components/ui/lot-tasks-table-skeleton"
+import { useTranslations } from 'next-intl'
 
 type Service = Schema["Service"]["type"]
 type Task = Schema["Task"]["type"]
@@ -44,6 +46,7 @@ export function LotTasksTable({ selectedLot, loading }: LotTasksTableProps) {
   const domainId = params.domain as string
   const projectId = params.project as string
   const { toast } = useToast()
+  const t = useTranslations("FieldsPageDetails")
   const [services, setServices] = useState<Service[]>([])
   const [tasks, setTasks] = useState<Task[]>([])
   const [loadingTasks, setLoadingTasks] = useState(false)
@@ -185,9 +188,9 @@ export function LotTasksTable({ selectedLot, loading }: LotTasksTableProps) {
   if (!selectedLot?.fieldId) {
     return (
       <div className="bg-white p-6 rounded-lg border shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">Tareas Asociadas</h3>
+        <h3 className="text-lg font-semibold mb-4">{t("associatedTasks")}</h3>
         <div className="text-center py-8 text-muted-foreground">
-          Seleccione un lote para ver las tareas asociadas
+          {t("selectLotMessageTasks")}
         </div>
       </div>
     )
@@ -196,10 +199,10 @@ export function LotTasksTable({ selectedLot, loading }: LotTasksTableProps) {
   return (
     <div className="bg-white p-6 rounded-lg border shadow-sm">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">Tareas Asociadas</h3>
+        <h3 className="text-lg font-semibold">{t("associatedTasks")}</h3>
         <Button onClick={handleRefresh} variant="outline" disabled={refreshing} size="sm">
           <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-          Actualizar
+          {t("refreshButton")}
         </Button>
       </div>
 
@@ -208,7 +211,7 @@ export function LotTasksTable({ selectedLot, loading }: LotTasksTableProps) {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Buscar tareas..."
+            placeholder={t("searchPlaceholder")}
             className="pl-8"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -232,9 +235,7 @@ export function LotTasksTable({ selectedLot, loading }: LotTasksTableProps) {
       </div>
 
       {loadingTasks ? (
-        <div className="text-center py-8 text-muted-foreground">
-          Cargando tareas...
-        </div>
+        <LotTasksTableSkeleton />
       ) : error ? (
         <div className="text-center py-8 text-red-500">
           {error}
@@ -256,7 +257,7 @@ export function LotTasksTable({ selectedLot, loading }: LotTasksTableProps) {
                 {displayedTasks.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
-                      {searchQuery || selectedService !== "all" ? "No se encontraron tareas que coincidan con su búsqueda" : "No hay tareas asociadas a este lote"}
+                      {searchQuery || selectedService !== "all" ? t("noSearchResults") : t("noTasksMessage")}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -279,25 +280,25 @@ export function LotTasksTable({ selectedLot, loading }: LotTasksTableProps) {
                         <TableCell>
                           {task.createdAt ? format(new Date(task.createdAt), 'dd/MM/yyyy') : '-'}
                         </TableCell>
-                                                 <TableCell>
-                           <div className="flex items-center gap-2">
-                             <Link
-                               href={`/domains/${domainId}/projects/${projectId}/tasks/${task.id}/edit`}
-                               className="inline-flex items-center gap-1 text-primary hover:underline"
-                             >
-                               <Edit className="h-4 w-4" />
-                             </Link>
-                             {task.subtaskId ? (
-                               <Link
-                                 target="_blank"
-                                 href={`${process.env.NEXT_PUBLIC_JIRA_API_URL}/browse/${task.subtaskId}`}
-                                 className="inline-flex items-center gap-1 text-primary hover:underline"
-                               >
-                                 <SquareArrowOutUpRight className="h-4 w-4" />
-                               </Link>
-                             ) : null}
-                           </div>
-                         </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Link
+                              href={`/domains/${domainId}/projects/${projectId}/tasks/${task.id}/edit`}
+                              className="inline-flex items-center gap-1 text-primary hover:underline"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Link>
+                            {task.subtaskId ? (
+                              <Link
+                                target="_blank"
+                                href={`${process.env.NEXT_PUBLIC_JIRA_API_URL}/browse/${task.subtaskId}`}
+                                className="inline-flex items-center gap-1 text-primary hover:underline"
+                              >
+                                <SquareArrowOutUpRight className="h-4 w-4" />
+                              </Link>
+                            ) : null}
+                          </div>
+                        </TableCell>
                       </TableRow>
                     )
                   })

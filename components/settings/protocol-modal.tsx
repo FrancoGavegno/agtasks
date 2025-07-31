@@ -5,6 +5,7 @@ import {
   useEffect 
 } from "react"
 import { useParams } from "next/navigation"
+import { useTranslations } from 'next-intl'
 import { Button } from "@/components/ui/button"
 import { 
   Dialog, 
@@ -39,6 +40,7 @@ export function ModalProtocols({
   selectedProtocols,
   onSave,
 }: ModalProtocolsProps) {
+  const t = useTranslations("ProtocolModal")
   const { domain } = useParams<{ domain: string }>()
   const [localSelected, setLocalSelected] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -143,8 +145,8 @@ export function ModalProtocols({
 
       // 6. Notificar éxito y cerrar modal
       toast({
-        title: "Éxito",
-        description: "Preferencias de protocolos guardadas correctamente",
+        title: t("successTitle"),
+        description: t("successMessage"),
       })
 
       // Llamar a onSave con los IDs seleccionados
@@ -153,14 +155,14 @@ export function ModalProtocols({
       onClose()
     } catch (error) {
       console.error("Error al procesar protocolos:", error)
-      let errorMessage = "Hubo un problema al guardar las preferencias de protocolos"
+      let errorMessage = t("errorMessage")
       if (error instanceof Error) {
         errorMessage = error.message
       } else if (typeof error === 'string') {
         errorMessage = error
       }
       toast({
-        title: "Error",
+        title: t("errorTitle"),
         description: errorMessage,
         variant: "destructive",
       })
@@ -181,8 +183,8 @@ export function ModalProtocols({
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="flex flex-row items-center justify-between">
           <div>
-            <DialogTitle>Protocolos</DialogTitle>
-            <DialogDescription>Indica qué protocolos usará tu dominio.</DialogDescription>
+            <DialogTitle>{t("title")}</DialogTitle>
+            <DialogDescription>{t("description")}</DialogDescription>
           </div>
         </DialogHeader>
 
@@ -191,7 +193,7 @@ export function ModalProtocols({
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Buscar protocolos..."
+              placeholder={t("searchPlaceholder")}
               className="pl-8"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -214,13 +216,13 @@ export function ModalProtocols({
               </div>
             ))
           ) : (
-            <div className="text-center py-4 text-sm text-muted-foreground">No se encontraron protocolos.</div>
+            <div className="text-center py-4 text-sm text-muted-foreground">{t("noProtocolsFound")}</div>
           )}
         </div>
 
         <div className="flex justify-center mt-4">
           <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? "Guardando preferencias..." : "Guardar preferencias"}
+            {isSaving ? t("savingPreferences") : t("savePreferences")}
           </Button>
         </div>
       </DialogContent>
