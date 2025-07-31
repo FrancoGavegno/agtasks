@@ -686,15 +686,54 @@ export class ApiClient {
         const result = await response.json()
         const lambdaResponse = result
         console.log("createTaskFieldsBatch - Lambda response:", lambdaResponse)
+        console.log("createTaskFieldsBatch - Lambda response type:", typeof lambdaResponse)
+        console.log("createTaskFieldsBatch - Lambda response keys:", Object.keys(lambdaResponse))
         
-        // Si la Lambda insertó datos, consideramos que fue exitosa aunque tenga errores
-        if (lambdaResponse.inserted > 0) {
-          console.log(`createTaskFieldsBatch - Lambda function inserted ${lambdaResponse.inserted} items successfully`)
+        // Parse the body string if it exists (Lambda returns body as string)
+        let parsedBody;
+        if (lambdaResponse.body && typeof lambdaResponse.body === 'string') {
+          try {
+            parsedBody = JSON.parse(lambdaResponse.body);
+            console.log("createTaskFieldsBatch - Parsed body:", parsedBody);
+          } catch (parseError) {
+            console.error("createTaskFieldsBatch - Error parsing body:", parseError);
+            throw new Error(`Failed to parse Lambda response body: ${parseError}`);
+          }
+        } else {
+          // If no body or body is already an object, use the response directly
+          parsedBody = lambdaResponse;
+        }
+        
+        // Si la Lambda insertó datos, usar los items creados con IDs reales
+        if (parsedBody.inserted > 0 && parsedBody.createdItems && Array.isArray(parsedBody.createdItems)) {
+          console.log(`createTaskFieldsBatch - Lambda function inserted ${parsedBody.inserted} items successfully`)
           
-          // La función Lambda no retorna los objetos creados, solo estadísticas
-          // Para mantener compatibilidad con la interfaz existente, creamos objetos TaskField básicos
-          const createdTaskFields: TaskField[] = validatedDataArray.slice(0, lambdaResponse.inserted).map((data, index) => ({
-            id: `generated-${Date.now()}-${index}`, // ID temporal ya que la Lambda no retorna los IDs específicos
+          // Usar los IDs reales de la Lambda
+          const createdTaskFields: TaskField[] = parsedBody.createdItems.map((item: any) => ({
+            id: item.id,           // 👈 ID REAL DE LA LAMBDA
+            taskId: item.taskId,
+            fieldId: item.fieldId,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt,
+          }))
+          
+          return createdTaskFields
+        }
+        
+        // Solo fallback si no se insertó nada
+        if (!parsedBody.success) {
+          const errorMessage = parsedBody.errors?.join(', ') || 'Unknown error from Lambda function'
+          console.error("createTaskFieldsBatch - Lambda function failed:", parsedBody)
+          throw new Error(`Lambda function failed: ${errorMessage}`)
+        }
+        
+        console.log(`createTaskFieldsBatch - Successfully created ${parsedBody.inserted} TaskFields via Lambda`)
+        
+        // Si no hay createdItems pero sí inserted, crear objetos básicos (fallback)
+        if (parsedBody.inserted > 0) {
+          console.log("createTaskFieldsBatch - Using fallback: no createdItems returned, generating temporary IDs")
+          const createdTaskFields: TaskField[] = validatedDataArray.slice(0, parsedBody.inserted).map((data, index) => ({
+            id: `generated-${Date.now()}-${index}`, // ID temporal como fallback
             taskId: data.taskId,
             fieldId: data.fieldId,
             createdAt: new Date().toISOString(),
@@ -704,27 +743,7 @@ export class ApiClient {
           return createdTaskFields
         }
         
-        // Solo fallback si no se insertó nada
-        if (!lambdaResponse.success) {
-          const errorMessage = lambdaResponse.errors?.join(', ') || 'Unknown error from Lambda function'
-          console.error("createTaskFieldsBatch - Lambda function failed:", lambdaResponse)
-          throw new Error(`Lambda function failed: ${errorMessage}`)
-        }
-        
-        console.log(`createTaskFieldsBatch - Successfully created ${lambdaResponse.inserted} TaskFields via Lambda`)
-        
-        // La función Lambda no retorna los objetos creados, solo estadísticas
-        // Para mantener compatibilidad con la interfaz existente, creamos objetos TaskField básicos
-        // con los IDs generados por la función Lambda
-        const createdTaskFields: TaskField[] = validatedDataArray.slice(0, lambdaResponse.inserted).map((data, index) => ({
-          id: `generated-${Date.now()}-${index}`, // ID temporal ya que la Lambda no retorna los IDs específicos
-          taskId: data.taskId,
-          fieldId: data.fieldId,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }))
-        
-        return createdTaskFields
+        return []
         
       } catch (lambdaError) {
         console.warn("createTaskFieldsBatch - Lambda function not available, falling back to individual creates:", lambdaError)
