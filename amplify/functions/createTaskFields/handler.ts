@@ -1,5 +1,6 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { v4 as uuidv4 } from "uuid";
 
 // Initialize DynamoDB client
 const client = new DynamoDBClient({});
@@ -21,6 +22,7 @@ interface BatchTaskFieldInput {
 }
 
 interface TaskFieldItem {
+  id: string;
   taskId: string;
   fieldId: string;
   createdAt: string;
@@ -31,6 +33,7 @@ interface BatchWriteResult {
   success: boolean;
   inserted: number;
   retries: number;
+  createdItems?: TaskFieldItem[] | undefined;
   errors: string[] | undefined;
 }
 
@@ -73,6 +76,7 @@ function sleep(ms: number): Promise<void> {
 function createTaskFieldItem(input: TaskFieldInput): TaskFieldItem {
   const now = new Date().toISOString();
   return {
+    id: uuidv4(),
     taskId: input.taskId,
     fieldId: input.fieldId,
     createdAt: now,
@@ -116,6 +120,7 @@ async function processTaskFields(input: BatchTaskFieldInput): Promise<BatchWrite
   let totalInserted = 0;
   let totalRetries = 0;
   const errors: string[] = [];
+  const createdItems: TaskFieldItem[] = [];
 
   try {
     // Validate input
@@ -134,6 +139,7 @@ async function processTaskFields(input: BatchTaskFieldInput): Promise<BatchWrite
       try {
         const success = await writeItemWithRetry(item, 0);
         if (success) {
+          createdItems.push(item);
           totalInserted++;
         }
       } catch (error) {
@@ -150,6 +156,7 @@ async function processTaskFields(input: BatchTaskFieldInput): Promise<BatchWrite
       success: errors.length === 0,
       inserted: totalInserted,
       retries: totalRetries,
+      createdItems: createdItems.length > 0 ? createdItems : undefined,
       errors: errors.length > 0 ? errors : undefined,
     };
     
@@ -159,6 +166,7 @@ async function processTaskFields(input: BatchTaskFieldInput): Promise<BatchWrite
       success: false,
       inserted: totalInserted,
       retries: totalRetries,
+      createdItems: createdItems.length > 0 ? createdItems : undefined,
       errors: [error instanceof Error ? error.message : 'Unknown error'],
     };
   }
