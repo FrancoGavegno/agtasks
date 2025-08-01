@@ -21,7 +21,9 @@ import {
 import { apiClient } from "@/lib/integrations/amplify"
 import { type Schema } from "@/amplify/data/resource";
 
+
 export default function Step1TaskType() {
+
   const { 
     register, 
     setValue, 

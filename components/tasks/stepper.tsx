@@ -94,6 +94,7 @@ function TaskStepperForm({
   const localeStr = Array.isArray(locale) ? locale[0] : locale
   const domainStr = Array.isArray(domain) ? domain[0] : domain
   const projectStr = Array.isArray(project) ? project[0] : project
+
   const [isSubmitting, setIsSubmitting] = useState(false)
   const {
     currentStep,
@@ -189,7 +190,7 @@ function TaskStepperForm({
       console.error("Error in nextStep:", error)
       toast({
         title: "Error",
-        description: "Ocurrió un error al validar el paso actual.",
+        description: "Ocurrió un error inesperado. Por favor, intenta de nuevo.",
         variant: "destructive",
       })
     }
@@ -214,7 +215,7 @@ function TaskStepperForm({
         
         toast({
           title: "Tarea actualizada exitosamente",
-          description: "La tarea fue actualizada correctamente.",
+          description: "La tarea ha sido actualizada correctamente.",
           duration: 5000,
         })
         
@@ -249,7 +250,7 @@ function TaskStepperForm({
         // Mostrar resultado detallado del procesamiento batch
         const totalFields = formData.fields?.length || 0
         const successMessage = totalFields > 0 
-          ? `Tarea creada exitosamente con ${totalFields} campo${totalFields > 1 ? 's' : ''} asociado${totalFields > 1 ? 's' : ''}.`
+          ? `Tarea creada exitosamente. Procesando ${totalFields} asociaciones de campos...`
           : "Tarea creada exitosamente."
 
         toast({
@@ -280,7 +281,7 @@ function TaskStepperForm({
       3: "Asignación de usuario"
     }
 
-    return `Paso ${step}: ${baseTitles[step as keyof typeof baseTitles]}`
+    return baseTitles[step as keyof typeof baseTitles]
   }
 
   const renderStep = () => {

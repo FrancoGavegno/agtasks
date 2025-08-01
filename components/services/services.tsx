@@ -25,11 +25,14 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsRight,
+  Edit
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { apiClient } from "@/lib/integrations/amplify"
 import type { Schema } from "@/amplify/data/resource"
 import { format } from 'date-fns'
+import { ServicesSkeleton } from "@/components/ui/services-skeleton"
+import { useTranslations } from 'next-intl'
 
 type Service = Schema["Service"]["type"]
 
@@ -38,6 +41,7 @@ export function ServicesPageDetails() {
   const domainId = params.domain as string
   const projectId = params.project as string
   const { toast } = useToast()
+  const t = useTranslations("ServicesPageDetails")
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -132,7 +136,7 @@ export function ServicesPageDetails() {
   const paginatedServices = filteredServices.slice(startIndex, startIndex + rowsPerPage)
 
   if (loading && !refreshing) {
-    return <div className="flex justify-center items-center h-64">Cargando servicios...</div>
+    return <ServicesSkeleton />
   }
 
   if (error) {
@@ -140,7 +144,7 @@ export function ServicesPageDetails() {
       <div className="text-red-500 text-center h-64 flex flex-col items-center justify-center">
         <p className="mb-4">{error}</p>
         <Button onClick={handleRefresh} variant="outline">
-          <RefreshCw className="mr-2 h-4 w-4" /> Intentar de nuevo
+          <RefreshCw className="mr-2 h-4 w-4" /> {t("tryAgainButton")}
         </Button>
       </div>
     )
@@ -149,10 +153,10 @@ export function ServicesPageDetails() {
   if (services.length === 0 && !searchQuery) {
     return (
       <div className="text-center h-64 flex flex-col items-center justify-center">
-        <p className="text-lg text-muted-foreground mb-4">No hay servicios disponibles</p>
+        <p className="text-lg text-muted-foreground mb-4">{t("notFoundTitle")}</p>
         <Link href={`/domains/${domainId}/projects/${projectId}/services/create`}>
           <Button>
-            <Plus className="mr-2 h-4 w-4" /> Crear Servicio
+            <Plus className="mr-2 h-4 w-4" /> {t("createServiceButton")}
           </Button>
         </Link>
       </div>
@@ -166,7 +170,7 @@ export function ServicesPageDetails() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Buscar servicios..."
+            placeholder={t("searchPlaceholder")}
             className="pl-8"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -175,11 +179,11 @@ export function ServicesPageDetails() {
         <div className="flex gap-2">
           <Button onClick={handleRefresh} variant="outline" disabled={refreshing}>
             <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-            Actualizar
+            {t("refreshButton")}
           </Button>
           <Link href={`/domains/${domainId}/projects/${projectId}/services/create`}>
             <Button>
-              <Plus className="mr-2 h-4 w-4" /> Crear Servicio
+              <Plus className="mr-2 h-4 w-4" /> {t("createServiceButton")}
             </Button>
           </Link>
         </div>
@@ -189,43 +193,43 @@ export function ServicesPageDetails() {
         <Table>
           <TableHeader>
             <TableRow>
-              {/* <TableHead>ID</TableHead> */}
-              <TableHead>Key</TableHead>
-              <TableHead>Summary</TableHead>
-              {/* <TableHead>Template Request ID</TableHead> */}
-              <TableHead>Protocol</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>{t("tableHeaders.key")}</TableHead>
+              <TableHead>{t("tableHeaders.summary")}</TableHead>
+              <TableHead>{t("tableHeaders.protocol")}</TableHead>
+              <TableHead>{t("tableHeaders.created")}</TableHead>
+              <TableHead>{t("tableHeaders.actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {paginatedServices.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
-                  No se encontraron servicios que coincidan con su búsqueda
+                  {searchQuery ? t("noSearchResults") : t("notFoundTitle")}
                 </TableCell>
               </TableRow>
             ) : (
               paginatedServices.map((service) => (
                 <TableRow key={service.id}>
-                  {/* <TableCell>{service.id}</TableCell> */}
-                  <TableCell>{service.requestId || "-"}</TableCell>
-                  <TableCell >{service.name}</TableCell>
-                  {/* <TableCell>{service.tmpRequestId || "-"}</TableCell> */}
+                  <TableCell className="font-medium">{service.requestId}</TableCell>
+                  <TableCell>{service.name}</TableCell>
                   <TableCell>
                     {service.protocolId ? (protocolIdToName[service.protocolId] || service.protocolId) : "-"}
                   </TableCell>
-                  <TableCell>{service.createdAt ? format(new Date(service.createdAt), 'dd/MM/yyyy') : '-'}</TableCell>
                   <TableCell>
-                    {service.requestId ? (
-                      <Link
-                        target="_blank"
-                        href={`${process.env.NEXT_PUBLIC_JIRA_API_URL}/browse/${service.requestId}`}
-                        className="inline-flex items-center gap-1 text-primary hover:underline"
-                      >
-                        <SquareArrowOutUpRight className="h-4 w-4" />
-                      </Link>
-                    ) : null}
+                    {service.createdAt ? format(new Date(service.createdAt), 'dd/MM/yyyy') : '-'}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">                      
+                      {service.requestId ? (
+                        <Link
+                          target="_blank"
+                          href={`${process.env.NEXT_PUBLIC_JIRA_API_URL}/browse/${service.requestId}`}
+                          className="inline-flex items-center gap-1 text-primary hover:underline"
+                        >
+                          <SquareArrowOutUpRight className="h-4 w-4" />
+                        </Link>
+                      ) : null}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

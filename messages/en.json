@@ -10,8 +10,20 @@
     "subtitle": "",
     "image-alt": ""
   },
+  "HomePage": {
+    "title": "Agtasks",
+    "subtitle": "Manage all your application data from this central admin panel."
+  },
   "Navbar": {
-    "lang": "EN"
+    "lang": "EN",
+    "domainLabel": "Domain",
+    "projectLabel": "Project",
+    "selectDomain": "Select domain",
+    "selectProject": "Select project",
+    "searchDomainProject": "Search domain or project...",
+    "noProjectsInDomain": "No projects in this domain.",
+    "createProject": "Create Project",
+    "noDomainProjectFound": "No domain or project found."
   },
   "MainNav": {
     "help-title": "Help & Support",
@@ -86,7 +98,18 @@
   "ServicesPageDetails": {
     "loadingData": "Loading services data...",
     "notFoundTitle": "No services available",
-    "notFoundSubtitle": "Create services to view project indicators"
+    "notFoundSubtitle": "Create services to view project indicators",
+    "searchPlaceholder": "Search services...",
+    "refreshButton": "Refresh",
+    "createServiceButton": "Create Service",
+    "tryAgainButton": "Try again",
+    "tableHeaders": {
+      "key": "Key",
+      "summary": "Summary",
+      "protocol": "Protocol",
+      "created": "Created",
+      "actions": "Actions"
+    }
   },
   "ServiceDetailPage": {
     "BreadcrumbItem-1": "Home",
@@ -96,16 +119,21 @@
     "subtitle": "View detailed information about this service"
   },
   "CreateService": {
-  "CardTitle": "Create New Service",
-  "CardDescription": "Complete the following steps to create a new service",
-  "title": "Service created successfully!",
-  "subtitle": "The service has been created successfully. What do you want to do now?",
-  "Button-1": "View list of services",
-  "Button-2": "Create another service",
-  "Button-3": "Back",
-  "Button-4": "Next",
-  "isSubmitting": "Creating...",
-  "isSubmitting-2": "Confirm"
+    "CardTitle": "Create New Service",
+    "CardDescription": "Complete the following steps to create a new service",
+    "title": "Service created successfully!",
+    "subtitle": "The service has been created successfully. What do you want to do now?",
+    "Button-1": "View list of services",
+    "Button-2": "Create another service",
+    "Button-3": "Back",
+    "Button-4": "Next",
+    "isSubmitting": "Creating...",
+    "isSubmitting-2": "Confirm",
+    "step1Title": "Basic Information",
+    "step2Title": "Field Selection",
+    "step3Title": "Task Configuration",
+    "errorCreate": "Error creating service",
+    "validationMessage": "Please complete all required fields before creating the service."
   },
   "TasksPage": {
     "BreadcrumbItem-1": "Home",
@@ -114,13 +142,372 @@
     "title": "Tasks",
     "subtitle": "Manage your project tasks"
   },
+  "TasksPageDetails": {
+    "searchPlaceholder": "Search tasks...",
+    "refreshButton": "Refresh",
+    "createTaskButton": "Create Task",
+    "noTasksTitle": "No tasks available",
+    "noTasksSubtitle": "Create tasks to start working",
+    "tryAgainButton": "Try again",
+    "tableHeaders": {
+      "key": "Key",
+      "summary": "Summary",
+      "taskType": "Task Type",
+      "assignedTo": "Assigned to",
+      "created": "Created",
+      "actions": "Actions"
+    }
+  },
+  "CreateTask": {
+    "title": "Create Task",
+    "updateTitle": "Update Task",
+    "saving": "Saving...",
+    "createButton": "Create Task",
+    "updateButton": "Update Task",
+    "errorCreate": "Error creating task",
+    "errorUpdate": "Error updating task",
+    "successCreate": "Task created successfully",
+    "step1Title": "Basic Information",
+    "step2Title": "Field Selection",
+    "step3Title": "Assignment and Forms",
+    "validationMessage": "Please complete all required fields before creating the task."
+  },
   "FieldsPage": {
     "BreadcrumbPage": "Fields",
     "title": "Fields",
     "subtitle": "Manage your project fields"
   },
+  "FieldsPageDetails": {
+    "searchPlaceholder": "Search fields...",
+    "selectLotMessage": "Select a field to view associated services",
+    "selectLotMessageTasks": "Select a field to view associated tasks",
+    "associatedServices": "Associated Services",
+    "associatedTasks": "Associated Tasks",
+    "refreshButton": "Refresh",
+    "noServicesMessage": "No services associated with this field",
+    "noTasksMessage": "No tasks associated with this field",
+    "noSearchResults": "No results found matching your search",
+    "searchFormTitle": "Search Fields",
+    "statsTitle": "Statistics",
+    "totalLotes": "Total Fields",
+    "totalServices": "Total Services",
+    "totalTasks": "Total Tasks"
+  },
+  "SettingsUsers": {
+    "title": "Users",
+    "subtitle": "Manage your domain users",
+    "searchPlaceholder": "Search users...",
+    "loadingUsers": "Loading users...",
+    "refreshButton": "Refresh",
+    "noUsersTitle": "No users available",
+    "noUsersSubtitle": "No users found matching the search",
+    "noUsersFound": "No users found",
+    "sentInvitation": "Sent",
+    "noSentInvitation": "Not sent",
+    "invitationSent": "Invitation sent",
+    "sendInvitation": "Send invitation",
+    "showing": "Showing",
+    "of": "of",
+    "entries": "entries",
+    "page": "Page",
+    "tableHeaders": {
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "rowsPerPage": "Rows per page",
+    "errorInvitation": "Error sending invitation"
+  },
+  "SettingsProtocols": {
+    "title": "Protocols",
+    "subtitle": "Manage available protocols",
+    "searchPlaceholder": "Filter protocols...",
+    "loadingProtocols": "Loading protocols...",
+    "refreshButton": "Refresh",
+    "editButton": "Edit",
+    "noProtocolsTitle": "No protocols found",
+    "noProtocolsSubtitle": "No protocols found",
+    "showing": "Showing",
+    "of": "of",
+    "entries": "entries",
+    "page": "Page",
+    "firstPage": "First page",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "lastPage": "Last page",
+    "tableHeaders": {
+      "name": "Name",
+      "description": "Description",
+      "language": "Language",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "rowsPerPage": "Rows per page",
+    "savePreferences": "Save preferences"
+  },
+  "SettingsForms": {
+    "title": "Forms",
+    "subtitle": "Manage data collection forms",
+    "searchPlaceholder": "Filter forms...",
+    "loadingForms": "Loading forms...",
+    "editButton": "Edit",
+    "noFormsTitle": "No forms found",
+    "noFormsSubtitle": "No forms found matching the search",
+    "noFormsFound": "No forms found",
+    "showing": "Showing",
+    "of": "of",
+    "entries": "entries",
+    "page": "Page",
+    "firstPage": "First page",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "lastPage": "Last page",
+    "tableHeaders": {
+      "name": "Name",
+      "language": "Language",
+      "origin": "Origin"
+    },
+    "rowsPerPage": "Rows per page",
+    "koboToolbox": "KoboToolbox",
+    "local": "Local"
+  },
+  "ProtocolModal": {
+    "title": "Protocols",
+    "description": "Indicate which protocols your domain will use.",
+    "searchPlaceholder": "Search protocols...",
+    "noProtocolsFound": "No protocols found.",
+    "savingPreferences": "Saving preferences...",
+    "savePreferences": "Save preferences",
+    "successTitle": "Success",
+    "successMessage": "Protocol preferences saved successfully",
+    "errorTitle": "Error",
+    "errorMessage": "There was a problem saving protocol preferences"
+  },
+  "FormModal": {
+    "title": "Forms",
+    "description": "Select the forms you want to display.",
+    "searchPlaceholder": "Search forms...",
+    "noFormsFound": "No forms found.",
+    "savingPreferences": "Saving preferences...",
+    "savePreferences": "Save preferences",
+    "successTitle": "Success",
+    "successMessage": "Form preferences saved successfully",
+    "errorTitle": "Error",
+    "errorMessage": "There was a problem saving form preferences",
+    "errorDeleteForm": "Could not delete form",
+    "errorCreateForm": "Could not create form"
+  },
+  "NavbarComponents": {
+    "selectDomain": "Select domain",
+    "selectProject": "Select project",
+    "searchDomainProject": "Search domain or project...",
+    "noProjectsInDomain": "No projects in this domain",
+    "createProject": "Create Project",
+    "createProjectAlert": "Create Project",
+    "domainLabel": "Domain",
+    "projectLabel": "Project"
+  },
+  "AdminDataTable": {
+    "searchPlaceholder": "Search {searchKey}...",
+    "noResults": "No results found",
+    "loading": "Loading...",
+    "rowsPerPage": "Rows per page",
+    "of": "of",
+    "showing": "Showing",
+    "entries": "entries",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "FormComponents": {
+    "selectWorkspace": "Select workspace",
+    "selectSeason": "Select season",
+    "selectFarm": "Select farm",
+    "selectField": "Select field",
+    "selectService": "Select a service (optional)",
+    "selectUser": "Select user",
+    "selectForm": "Select form",
+    "loading": "Loading...",
+    "noUsersAvailable": "No users available",
+    "noFormsAvailable": "No forms available",
+    "noOptionsAvailable": "No options available",
+    "allServices": "All services",
+    "allTasks": "All tasks",
+    "allFields": "All fields"
+  },
+  "Stepper": {
+    "step1": "Step 1",
+    "step2": "Step 2",
+    "step3": "Step 3",
+    "next": "Next",
+    "previous": "Previous",
+    "finish": "Finish",
+    "back": "Back"
+  },
+  "Common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "update": "Update",
+    "refresh": "Refresh",
+    "search": "Search",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "close": "Close",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "all": "All",
+    "none": "None",
+    "select": "Select",
+    "choose": "Choose",
+    "required": "Required",
+    "optional": "Optional"
+  },
   "Footer": {
     "poweredBy": "Powered by"
+  },
+  "LanguageSelector": {
+    "label": "Language",
+    "select": "Select language"
+  },
+  "CreateServiceSteps": {
+    "step1": {
+      "protocolLabel": "Service Protocol",
+      "loadingProtocols": "Loading protocols...",
+      "selectProtocol": "Select protocol",
+      "noProtocolsAvailable": "No protocols available",
+      "protocolTasksTitle": "Tasks included in the protocol:",
+      "searchingTasks": "Searching for tasks from the selected protocol"
+    },
+    "step2": {
+      "workspaceLabel": "Workspace",
+      "campaignLabel": "Campaign", 
+      "establishmentLabel": "Establishment",
+      "availableLotsTitle": "Available Lots",
+      "loadingLots": "Loading lots...",
+      "noLotsAvailable": "No lots available for this establishment",
+      "selectAll": "Select",
+      "lot": "Lot",
+      "cropHybrid": "Crop/Hybrid",
+      "hectares": "Hectares",
+      "selectAllLots": "Select all lots",
+      "noWorkspacesAvailable": "No workspaces available",
+      "noCampaignsAvailable": "No campaigns available", 
+      "noEstablishmentsAvailable": "No establishments available"
+    },
+    "step3": {
+      "task": "Task",
+      "formRequired": "Form",
+      "assignedToRequired": "Assigned to",
+      "selectAllTasks": "Select all tasks",
+      "noTasksAvailable": "No tasks available. Please select a protocol in step 1.",
+      "noTasksAvailableSubtext": "If you already selected a protocol, try going back to step 1 and selecting it again.",
+      "loadingForms": "Loading...",
+      "selectForm": "Select form",
+      "noFormsAvailable": "No forms available",
+      "loadingUsers": "Loading...",
+      "selectUser": "Select user", 
+      "noUsersAvailable": "No users available",
+      "taskNumber": "Task {number}",
+      "requiredField": "Required"
+    }
+  },
+  "CreateServiceStepper": {
+    "step1Title": "Step 1: Service Protocol Selection",
+    "step2Title": "Step 2: Field Selection", 
+    "step3Title": "Step 3: Task Assignment",
+    "previousButton": "Previous",
+    "nextButton": "Next",
+    "creatingButton": "Creating...",
+    "createServiceButton": "Create Service",
+    "validationErrorTitle": "Validation Error",
+    "validationErrorMessage": "Please complete all required fields before continuing.",
+    "validationErrorMessageFinal": "Please complete all required fields before creating the service.",
+    "createServiceErrorTitle": "Error creating service",
+    "processingFieldsTitle": "Processing field associations",
+    "processingFieldsMessage": "Processing {totalCombinations} Task-Field associations. This may take a few seconds...",
+    "serviceCreatedTitle": "Service created successfully",
+    "serviceCreatedMessage": "The service and its tasks were created successfully.",
+    "serviceCreatedPartialMessage": "Service created. {batchResult.length}/{totalCombinations} field associations processed."
+  },
+  "CreateServiceBreadcrumb": {
+    "services": "Services",
+    "createService": "Create Service"
+  },
+  "CreateTaskStepper": {
+    "step1Title": "Step 1: Task Data",
+    "step2Title": "Step 2: Field Selection",
+    "step3Title": "Step 3: User Assignment",
+    "previousButton": "Previous",
+    "nextButton": "Next",
+    "savingButton": "Saving...",
+    "createTaskButton": "Create Task",
+    "updateTaskButton": "Update Task",
+    "validationErrorTitle": "Validation Error",
+    "validationErrorMessage": "Please complete all required fields before continuing.",
+    "errorTitle": "Error",
+    "errorMessage": "An error occurred while validating the current step.",
+    "taskUpdatedTitle": "Task updated successfully",
+    "taskUpdatedMessage": "The task was updated correctly.",
+    "taskCreatedTitle": "Task created successfully",
+    "taskCreatedMessage": "Task created successfully with {totalFields} associated field{totalFields > 1 ? 's' : ''}.",
+    "taskCreatedSimpleMessage": "Task created successfully.",
+    "updateTaskErrorTitle": "Error updating task",
+    "createTaskErrorTitle": "Error creating task"
+  },
+  "CreateTaskSteps": {
+    "step1": {
+      "taskNameLabel": "Task Name",
+      "taskTypeLabel": "Task Type",
+      "formLabel": "Form",
+      "selectTaskType": "Select a task type",
+      "selectForm": "Select a form type"
+    },
+    "step2": {
+      "workspaceLabel": "Workspace",
+      "campaignLabel": "Campaign",
+      "establishmentLabel": "Establishment",
+      "availableLotsTitle": "Available Lots",
+      "loadingLots": "Loading lots...",
+      "noLotsAvailable": "No lots available for this establishment",
+      "selectAll": "Select",
+      "lot": "Lot",
+      "cropHybrid": "Crop/Hybrid",
+      "hectares": "Hectares",
+      "selectAllLots": "Select all lots",
+      "noWorkspacesAvailable": "No workspaces available",
+      "noCampaignsAvailable": "No campaigns available",
+      "noEstablishmentsAvailable": "No establishments available"
+    },
+    "step3": {
+      "projectLabel": "Project",
+      "serviceLabel": "Service",
+      "assignedUserLabel": "Assigned User",
+      "assignedUserRequired": "Assigned User",
+      "noService": "No service",
+      "noServicesAvailable": "No services available",
+      "noServicesConfigured": "No services configured for this project",
+      "errorLoadingServices": "Error: Could not load services",
+      "errorLoadingUsers": "Error: Could not load users",
+      "loadingUsers": "Loading...",
+      "selectUser": "Select user",
+      "noUsersAvailable": "No users available",
+      "noUsersFound": "No users found for this domain",
+      "notAssigned": "Not assigned"
+    }
+  },
+  "CreateTaskBreadcrumb": {
+    "tasks": "Tasks",
+    "createTask": "Create Task",
+    "editTask": "Edit Task"
   }
 }
 

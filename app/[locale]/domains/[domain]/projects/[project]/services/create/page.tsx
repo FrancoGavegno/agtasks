@@ -1,12 +1,5 @@
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
+import { BreadcrumbWithTranslations } from "@/components/ui/breadcrumb-with-translations"
 import ServiceStepper from "@/components/services/stepper"
-import { Link } from "@/i18n/routing"
 import { cookies } from 'next/headers'
 import { apiClient } from '@/lib/integrations/amplify'
 
@@ -21,23 +14,24 @@ export default async function Page({
 
     return (
         <div className="container w-full pt-4 pb-4">
-            <Breadcrumb className="mb-4">
-                <BreadcrumbList>
-                    <BreadcrumbItem>
-                        <Link href={`/domains/${params.domain}/projects/${params.project}/services`}>
-                            {projectData?.name || 'Proyecto'}
-                        </Link>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator />
-                    <BreadcrumbItem>
-                        <Link href={`/domains/${params.domain}/projects/${params.project}/services`}>Services</Link>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator />
-                    <BreadcrumbItem>
-                        <BreadcrumbPage>Crear Servicio</BreadcrumbPage>
-                    </BreadcrumbItem>
-                </BreadcrumbList>
-            </Breadcrumb>
+            <BreadcrumbWithTranslations
+                items={[
+                    {
+                        label: projectData?.name || 'Proyecto',
+                        href: `/domains/${params.domain}/projects/${params.project}/services`
+                    },
+                    {
+                        label: "Services",
+                        href: `/domains/${params.domain}/projects/${params.project}/services`,
+                        translationKey: "CreateServiceBreadcrumb.services"
+                    },
+                    {
+                        label: "Crear Servicio",
+                        isCurrent: true,
+                        translationKey: "CreateServiceBreadcrumb.createService"
+                    }
+                ]}
+            />
 
             <ServiceStepper 
                 userEmail={userEmail} 

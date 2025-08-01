@@ -29,6 +29,8 @@ import { apiClient } from "@/lib/integrations/amplify"
 import type { Schema } from "@/amplify/data/resource"
 import { format } from 'date-fns'
 import { useParams } from "next/navigation"
+import { LotServicesTableSkeleton } from "@/components/ui/lot-services-table-skeleton"
+import { useTranslations } from 'next-intl'
 
 type Service = Schema["Service"]["type"]
 
@@ -42,6 +44,7 @@ export function LotServicesTable({ selectedLot, loading }: LotServicesTableProps
   const domainId = params.domain as string
   const projectId = params.project as string
   const { toast } = useToast()
+  const t = useTranslations("FieldsPageDetails")
   const [services, setServices] = useState<Service[]>([])
   const [loadingServices, setLoadingServices] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -175,9 +178,9 @@ export function LotServicesTable({ selectedLot, loading }: LotServicesTableProps
   if (!selectedLot?.fieldId) {
     return (
       <div className="bg-white p-6 rounded-lg border shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">Servicios Asociados</h3>
+        <h3 className="text-lg font-semibold mb-4">{t("associatedServices")}</h3>
         <div className="text-center py-8 text-muted-foreground">
-          Seleccione un lote para ver los servicios asociados
+          {t("selectLotMessage")}
         </div>
       </div>
     )
@@ -186,10 +189,10 @@ export function LotServicesTable({ selectedLot, loading }: LotServicesTableProps
   return (
     <div className="bg-white p-6 rounded-lg border shadow-sm">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">Servicios Asociados</h3>
+        <h3 className="text-lg font-semibold">{t("associatedServices")}</h3>
         <Button onClick={handleRefresh} variant="outline" disabled={refreshing} size="sm">
           <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-          Actualizar
+          {t("refreshButton")}
         </Button>
       </div>
 
@@ -198,7 +201,7 @@ export function LotServicesTable({ selectedLot, loading }: LotServicesTableProps
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Buscar servicios..."
+            placeholder={t("searchPlaceholder")}
             className="pl-8"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -207,9 +210,7 @@ export function LotServicesTable({ selectedLot, loading }: LotServicesTableProps
       </div>
 
       {loadingServices ? (
-        <div className="text-center py-8 text-muted-foreground">
-          Cargando servicios...
-        </div>
+        <LotServicesTableSkeleton />
       ) : error ? (
         <div className="text-center py-8 text-red-500">
           {error}
@@ -230,7 +231,7 @@ export function LotServicesTable({ selectedLot, loading }: LotServicesTableProps
                 {displayedServices.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
-                      {searchQuery ? "No se encontraron servicios que coincidan con su búsqueda" : "No hay servicios asociados a este lote"}
+                      {searchQuery ? t("noSearchResults") : t("noServicesMessage")}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -241,17 +242,17 @@ export function LotServicesTable({ selectedLot, loading }: LotServicesTableProps
                       <TableCell>
                         {service.createdAt ? format(new Date(service.createdAt), 'dd/MM/yyyy') : '-'}
                       </TableCell>
-                                             <TableCell>
-                         {service.requestId ? (
-                           <Link
-                             target="_blank"
-                             href={`${process.env.NEXT_PUBLIC_JIRA_API_URL}/browse/${service.requestId}`}
-                             className="inline-flex items-center gap-1 text-primary hover:underline"
-                           >
-                             <SquareArrowOutUpRight className="h-4 w-4" />
-                           </Link>
-                         ) : null}
-                       </TableCell>
+                      <TableCell>
+                        {service.requestId ? (
+                          <Link
+                            target="_blank"
+                            href={`${process.env.NEXT_PUBLIC_JIRA_API_URL}/browse/${service.requestId}`}
+                            className="inline-flex items-center gap-1 text-primary hover:underline"
+                          >
+                            <SquareArrowOutUpRight className="h-4 w-4" />
+                          </Link>
+                        ) : null}
+                      </TableCell>
                     </TableRow>
                   ))
                 )}

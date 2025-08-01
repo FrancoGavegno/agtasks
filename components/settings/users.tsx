@@ -37,8 +37,10 @@ import {
 } from "lucide-react"
 import { useSettings } from "@/lib/contexts/settings-context"
 import type { User } from "@/lib/interfaces/360"
+import { useTranslations } from 'next-intl'
 
 export default function Users() {
+  const t = useTranslations("SettingsUsers")
   const { 
     users, 
     usersLoading, 
@@ -111,31 +113,35 @@ export default function Users() {
 
   if (usersLoading) {
     return (
-      <div className="flex h-[400px] w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Cargando usuarios...</span>
+      <div className="flex items-center justify-center h-64">
+        <div className="flex items-center space-x-2">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+          <span className="ml-2 text-muted-foreground">{t("loadingUsers")}</span>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="w-full space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h2 className="text-xl font-semibold tracking-tight">Usuarios</h2>
-          <p className="text-sm text-muted-foreground">Gestiona los usuarios del sistema y envía invitaciones</p>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">{t("title")}</h2>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
-        {/* <Button variant="outline" size="sm" onClick={refreshUsers}>
-          Actualizar
-        </Button> */}
+        <div className="flex items-center space-x-2">
+          {/* <Button variant="outline" size="sm" onClick={refreshUsers}>
+            {t("refreshButton")}
+          </Button> */}
+        </div>
       </div>
 
-      <div className="flex items-center">
-        <div className="relative flex-1">
+      <div className="flex items-center space-x-2">
+        <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Buscar usuarios..."
+            placeholder={t("searchPlaceholder")}
             className="pl-8"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -147,125 +153,84 @@ export default function Users() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[300px]">Nombre</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Estado de invitación</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
+              <TableHead>{t("tableHeaders.name")}</TableHead>
+              <TableHead>{t("tableHeaders.email")}</TableHead>
+              <TableHead>{t("tableHeaders.status")}</TableHead>
+              <TableHead>{t("tableHeaders.actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedUsers.length > 0 ? (
-              paginatedUsers.map((user) => {
-                const isSent = hasInvitationBeenSent(user.email) || user.invitationStatus === "Sent"
-
-                return (
-                  <TableRow key={user.id || user.email}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback className="bg-muted text-muted-foreground text-xs">
-                            {getInitials(user)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span>{getFullName(user)}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <Badge variant={isSent ? "default" : "secondary"} className="font-normal">
-                        {isSent ? "Enviada" : "No enviada"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="outline" size="sm" onClick={() => sendInvitation(user)} disabled={isSent}>
-                        {isSent ? "Invitación enviada" : "Enviar invitación"}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                )
-              })
-            ) : (
+            {paginatedUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
+                <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
                   {filter
-                    ? "No se encontraron usuarios que coincidan con la búsqueda."
-                    : "No hay usuarios disponibles."}
+                    ? t("noUsersSubtitle")
+                    : t("noUsersTitle")
+                  }
                 </TableCell>
               </TableRow>
+            ) : (
+              paginatedUsers.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-muted text-muted-foreground text-xs">
+                          {getInitials(user)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span>{getFullName(user)}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    <Badge variant={hasInvitationBeenSent(user.email) || user.invitationStatus === "Sent" ? "default" : "secondary"} className="font-normal">
+                      {hasInvitationBeenSent(user.email) || user.invitationStatus === "Sent" ? t("sentInvitation") : t("noSentInvitation")}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => sendInvitation(user)}
+                      disabled={hasInvitationBeenSent(user.email) || user.invitationStatus === "Sent"}
+                    >
+                      {hasInvitationBeenSent(user.email) || user.invitationStatus === "Sent" ? t("invitationSent") : t("sendInvitation")}
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
             )}
           </TableBody>
         </Table>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">
+      <div className="flex items-center justify-between space-x-2 py-4">
+        <div className="flex-1 text-sm text-muted-foreground">
           {filteredUsers.length > 0
-            ? `Mostrando ${startIndex + 1} a ${Math.min(startIndex + rowsPerPage, filteredUsers.length)} de ${
-                filteredUsers.length
-              } usuarios`
-            : "No se encontraron usuarios"}
+            ? t("showing") + " " + (startIndex + 1) + " " + t("of") + " " + Math.min(startIndex + rowsPerPage, filteredUsers.length) + " " + t("entries")
+            : t("noUsersFound")}
         </div>
-        <div className="flex items-center space-x-6">
-          <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Filas por página</p>
-            <Select
-              value={rowsPerPage.toString()}
-              onValueChange={(value) => {
-                setRowsPerPage(Number(value))
-                setPage(1)
-              }}
-            >
-              <SelectTrigger className="h-8 w-[70px]">
-                <SelectValue placeholder={rowsPerPage.toString()} />
-              </SelectTrigger>
-              <SelectContent side="top">
-                {[5, 10, 15, 20].map((pageSize) => (
-                  <SelectItem key={pageSize} value={pageSize.toString()}>
-                    {pageSize}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPage(1)} disabled={page === 1}>
-              <ChevronsLeft className="h-4 w-4" />
-              <span className="sr-only">Primera página</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setPage(page - 1)}
-              disabled={page === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <span className="sr-only">Página anterior</span>
-            </Button>
-            <span className="text-sm">
-              Página {page} de {totalPages || 1}
-            </span>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setPage(page + 1)}
-              disabled={page === totalPages || totalPages === 0}
-            >
-              <ChevronRight className="h-4 w-4" />
-              <span className="sr-only">Página siguiente</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setPage(totalPages)}
-              disabled={page === totalPages || totalPages === 0}
-            >
-              <ChevronsRight className="h-4 w-4" />
-              <span className="sr-only">Última página</span>
-            </Button>
-          </div>
+        <div className="flex items-center space-x-2">
+          <p className="text-sm font-medium">{t("rowsPerPage")}</p>
+          <Select
+            value={rowsPerPage.toString()}
+            onValueChange={(value) => {
+              setRowsPerPage(Number(value))
+              setPage(1)
+            }}
+          >
+            <SelectTrigger className="h-8 w-[70px]">
+              <SelectValue placeholder={rowsPerPage.toString()} />
+            </SelectTrigger>
+            <SelectContent side="top">
+              {[5, 10, 20, 30, 40, 50].map((pageSize) => (
+                <SelectItem key={pageSize} value={pageSize.toString()}>
+                  {pageSize}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>

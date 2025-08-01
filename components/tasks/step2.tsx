@@ -441,7 +441,7 @@ export default function Step2Lots({ thisUserEmail, mode }: Props) {
           <FormLabel>Espacio de trabajo</FormLabel>
           <Select value={workspace} onValueChange={handleWorkspaceChange} disabled={workspacesLoading}>
             <SelectTrigger>
-              <SelectValue placeholder={workspacesLoading ? "Cargando..." : "Seleccionar espacio"} />
+              <SelectValue placeholder={workspacesLoading ? "Cargando..." : "Seleccionar espacio de trabajo"} />
             </SelectTrigger>
             <SelectContent>
               {workspacesError ? (

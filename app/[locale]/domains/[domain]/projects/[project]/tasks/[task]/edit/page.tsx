@@ -4,6 +4,7 @@ import { apiClient } from "@/lib/integrations/amplify"
 import TaskStepper from "@/components/tasks/stepper"
 import { Loading } from "@/components/loading"
 import { cookies } from 'next/headers'
+import { BreadcrumbWithTranslations } from "@/components/ui/breadcrumb-with-translations"
 
 interface EditTaskPageProps {
   params: {
@@ -76,16 +77,37 @@ export default async function EditTaskPage({ params }: EditTaskPageProps) {
   const { task, fields } = taskData
 
   return (
-    <Suspense fallback={<Loading />}>
-      <TaskStepper
-        projectId={projectId}
-        thisUserEmail={thisUserEmail}
-        services={services}
-        projectName={projectData.name}
-        mode="edit"
-        taskId={taskId}
-        initialData={{ task, fields }}
+    <div className="container w-full pt-4 pb-4">
+      <BreadcrumbWithTranslations
+        items={[
+          {
+            label: projectData.name || 'Proyecto',
+            href: `/domains/${params.domain}/projects/${projectId}/tasks`
+          },
+          {
+            label: "Tareas",
+            href: `/domains/${params.domain}/projects/${projectId}/tasks`,
+            translationKey: "CreateTaskBreadcrumb.tasks"
+          },
+          {
+            label: "Editar Tarea",
+            isCurrent: true,
+            translationKey: "CreateTaskBreadcrumb.editTask"
+          }
+        ]}
       />
-    </Suspense>
+
+      <Suspense fallback={<Loading />}>
+        <TaskStepper
+          projectId={projectId}
+          thisUserEmail={thisUserEmail}
+          services={services}
+          projectName={projectData.name}
+          mode="edit"
+          taskId={taskId}
+          initialData={{ task, fields }}
+        />
+      </Suspense>
+    </div>
   )
 }

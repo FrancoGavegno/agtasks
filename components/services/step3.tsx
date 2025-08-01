@@ -12,8 +12,12 @@ import { listUsersByDomain } from "@/lib/integrations/360"
 import ReactSelect, { SingleValue } from 'react-select'
 import { apiClient } from "@/lib/integrations/amplify"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/select"
+import { useTranslations } from 'next-intl'
 
 export default function Step3() {
+  const t = useTranslations("CreateServiceSteps.step3")
   const {
     setValue,
     watch,
@@ -183,9 +187,9 @@ export default function Step3() {
   if (!tasks || tasks.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        <p>No hay tareas disponibles. Por favor, seleccione un protocolo en el paso 1.</p>
+        <p>{t("noTasksAvailable")}</p>
         <p className="mt-2 text-sm">
-          Si ya seleccionó un protocolo, intente volver al paso 1 y seleccionarlo nuevamente.
+          {t("noTasksAvailableSubtext")}
         </p>
       </div>
     )
@@ -206,7 +210,7 @@ export default function Step3() {
                   ref={selectAllRef}
                   checked={allEnabled}
                   onChange={handleToggleAllTasks}
-                  aria-label="Seleccionar todas las tareas"
+                  aria-label={t("selectAllTasks")}
                   className="h-4 w-4 accent-primary rounded-sm border border-primary shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 />
               </th>
@@ -214,19 +218,19 @@ export default function Step3() {
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Tarea
+                {t("task")}
               </th>
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Formulario <span className="text-red-700 font-medium">*</span>
+                {t("formRequired")} <span className="text-red-700 font-medium">*</span>
               </th>
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Asignado a <span className="text-red-700 font-medium">*</span>
+                {t("assignedToRequired")} <span className="text-red-700 font-medium">*</span>
               </th>
             </tr>
           </thead>
@@ -264,8 +268,8 @@ export default function Step3() {
                             value: form.id,
                             label: form.name
                           }))}
-                          placeholder={formsLoading ? "Cargando..." : "Seleccionar formulario"}
-                          noOptionsMessage={() => formsLoading ? "Cargando..." : "No hay formularios disponibles"}
+                          placeholder={formsLoading ? t("loadingForms") : t("selectForm")}
+                          noOptionsMessage={() => formsLoading ? t("loadingForms") : t("noFormsAvailable")}
                           menuPortalTarget={typeof window !== "undefined" ? document.body : undefined}
                           menuPosition="fixed"
                           styles={{
@@ -295,8 +299,8 @@ export default function Step3() {
                           value: user.email,
                           label: `${user.firstName} ${user.lastName} <${user.email}>`.trim()
                         }))}
-                        placeholder={usersLoading ? "Cargando..." : "Seleccionar usuario"}
-                        noOptionsMessage={() => usersLoading ? "Cargando..." : "No hay usuarios disponibles"}
+                        placeholder={usersLoading ? t("loadingUsers") : t("selectUser")}
+                        noOptionsMessage={() => usersLoading ? t("loadingUsers") : t("noUsersAvailable")}
                         menuPortalTarget={typeof window !== "undefined" ? document.body : undefined}
                         menuPosition="fixed"
                         styles={{
@@ -328,10 +332,10 @@ export default function Step3() {
         return (
           <div key={index} className="mt-2">
             {taskError.userEmail && (
-              <p className="text-red-500 text-sm">Tarea {index + 1}: {taskError.userEmail.message}</p>
+              <p className="text-red-500 text-sm">{t("taskNumber", { number: index + 1 })}: {taskError.userEmail.message}</p>
             )}
             {taskError.formId && (
-              <p className="text-red-500 text-sm">Tarea {index + 1}: {taskError.formId.message}</p>
+              <p className="text-red-500 text-sm">{t("taskNumber", { number: index + 1 })}: {taskError.formId.message}</p>
             )}
           </div>
         )

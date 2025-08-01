@@ -1,5 +1,5 @@
-import { Loading } from "@/components/loading"
+import { LandingSkeleton } from "@/components/ui/landing-skeleton"
 
-export default function LoadingPage() {
-  return <Loading />
+export default function LandingLoading() {
+  return <LandingSkeleton />
 }

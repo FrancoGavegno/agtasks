@@ -21,6 +21,7 @@ import { listUsersByDomain } from "@/lib/integrations/360"
 import ReactSelect, { SingleValue } from 'react-select'
 import { Service } from "@/lib/schemas"
 
+
 interface Step3DetailsProps {
   services: Service[]
   projectName: string
@@ -28,6 +29,7 @@ interface Step3DetailsProps {
 }
 
 export default function Step3Details({ services, projectName, mode }: Step3DetailsProps) {
+
   const { register, setValue, watch } = useFormContext()
   const { 
     mode: contextMode,

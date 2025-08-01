@@ -23,12 +23,16 @@ import {
   listFields 
 } from "@/lib/integrations/360"
 import { apiClient } from "@/lib/integrations/amplify"
+import { useTranslations } from 'next-intl'
+import { Label } from "@/components/ui/label"
 
 interface Props {
   userEmail: string
 }
 
 export default function Step2({ userEmail }: Props) {
+  const t = useTranslations("FormComponents")
+  const t2 = useTranslations("CreateServiceSteps.step2")
   const { 
     setValue, 
     watch,
@@ -370,16 +374,16 @@ export default function Step2({ userEmail }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Workspace Selector */}
         <div>
-          <label className="text-sm font-medium">Espacio de trabajo</label>
+          <Label htmlFor="workspace">{t2("workspaceLabel")}</Label>
           <Select value={selectedWorkspace} onValueChange={handleWorkspaceChange} disabled={workspacesLoading}>
             <SelectTrigger>
-              <SelectValue placeholder={workspacesLoading ? "Cargando..." : "Seleccionar espacio"} />
+              <SelectValue placeholder={workspacesLoading ? t("loading") : t("selectWorkspace")} />
             </SelectTrigger>
             <SelectContent>
               {workspacesError ? (
                 <div className="p-2 text-red-500 text-sm">{workspacesError}</div>
               ) : workspaces.length === 0 ? (
-                <div className="p-2 text-muted-foreground text-sm">No hay espacios disponibles</div>
+                <div className="p-2 text-muted-foreground text-sm">{t2("noWorkspacesAvailable")}</div>
               ) : (
                 workspaces.map((workspace) => (
                   <SelectItem key={workspace.id} value={workspace.id.toString()}>
@@ -393,20 +397,20 @@ export default function Step2({ userEmail }: Props) {
 
         {/* Season (Campaign) Selector */}
         <div>
-          <label className="text-sm font-medium">Campaña</label>
+          <Label htmlFor="season">{t2("campaignLabel")}</Label>
           <Select
             value={selectedCampaign}
             onValueChange={handleCampaignChange}
             disabled={!selectedWorkspace || seasonsLoading}
           >
             <SelectTrigger>
-              <SelectValue placeholder={seasonsLoading ? "Cargando..." : "Seleccionar campaña"} />
+              <SelectValue placeholder={seasonsLoading ? t("loading") : t("selectSeason")} />
             </SelectTrigger>
             <SelectContent>
               {seasonsError ? (
                 <div className="p-2 text-red-500 text-sm">{seasonsError}</div>
               ) : campaigns.length === 0 ? (
-                <div className="p-2 text-muted-foreground text-sm">No hay campañas disponibles</div>
+                <div className="p-2 text-muted-foreground text-sm">{t2("noCampaignsAvailable")}</div>
               ) : (
                 campaigns.map((season) => (
                   <SelectItem key={season.id} value={season.id.toString()}>
@@ -420,20 +424,20 @@ export default function Step2({ userEmail }: Props) {
 
         {/* Farm (Establishment) Selector */}
         <div>
-          <label className="text-sm font-medium">Establecimiento</label>
+          <Label htmlFor="farm">{t2("establishmentLabel")}</Label>
           <Select
             value={selectedEstablishment}
             onValueChange={handleEstablishmentChange}
             disabled={!selectedCampaign || farmsLoading}
           >
             <SelectTrigger>
-              <SelectValue placeholder={farmsLoading ? "Cargando..." : "Seleccionar establecimiento"} />
+              <SelectValue placeholder={farmsLoading ? t("loading") : t("selectFarm")} />
             </SelectTrigger>
             <SelectContent>
               {farmsError ? (
                 <div className="p-2 text-red-500 text-sm">{farmsError}</div>
               ) : establishments.length === 0 ? (
-                <div className="p-2 text-muted-foreground text-sm">No hay establecimientos disponibles</div>
+                <div className="p-2 text-muted-foreground text-sm">{t2("noEstablishmentsAvailable")}</div>
               ) : (
                 establishments.map((farm) => (
                   <SelectItem key={farm.id} value={farm.id.toString()}>
@@ -449,9 +453,9 @@ export default function Step2({ userEmail }: Props) {
       {/* Fields (Lots) Table */}
       {selectedEstablishment && (
         <div className="mt-6">
-          <h3 className="text-lg font-medium mb-4">Lotes disponibles</h3>
+          <h3 className="text-lg font-medium mb-4">{t2("availableLotsTitle")}</h3>
           {fieldsLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Cargando lotes...</div>
+            <div className="text-center py-8 text-muted-foreground">{t2("loadingLots")}</div>
           ) : fieldsError ? (
             <div className="text-center py-8 text-red-500">{fieldsError}</div>
           ) : (
@@ -467,28 +471,28 @@ export default function Step2({ userEmail }: Props) {
                         type="checkbox"
                         checked={allSelected}
                         onChange={handleToggleAllLots}
-                        aria-label="Seleccionar todos los lotes"
+                        aria-label={t2("selectAllLots")}
                         className="h-4 w-4 accent-primary rounded-sm border border-primary shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       />
-                      <span className="ml-2">Seleccionar</span>
+                      <span className="ml-2">{t2("selectAll")}</span>
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      Lote
+                      {t2("lot")}
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      Cultivo/Híbrido
+                      {t2("cropHybrid")}
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      Hectáreas
+                      {t2("hectares")}
                     </th>
                   </tr>
                 </thead>
@@ -496,7 +500,7 @@ export default function Step2({ userEmail }: Props) {
                   {lots.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
-                        No hay lotes disponibles para este establecimiento
+                        {t2("noLotsAvailable")}
                       </td>
                     </tr>
                   ) : (

@@ -32,8 +32,10 @@ import {
   Search 
 } from "lucide-react"
 import { useSettings } from "@/lib/contexts/settings-context"
+import { useTranslations } from 'next-intl'
 
 export default function Protocols() {
+  const t = useTranslations("SettingsProtocols")
   const {
     protocols,
     allProtocols,
@@ -78,32 +80,35 @@ export default function Protocols() {
 
   if (protocolsLoading || isRefreshingProtocols) {
     return (
-      <div className="flex h-[400px] w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Cargando protocolos...</span>
+      <div className="flex items-center justify-center h-64">
+        <div className="flex items-center space-x-2">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+          <span className="ml-2 text-muted-foreground">{t("loadingProtocols")}</span>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="w-full space-y-4">
-
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <div className="space-y-1">
-          <h2 className="text-xl font-semibold tracking-tight">Protocolos</h2>
-          <p className="text-sm text-muted-foreground">Administra tus protocolos de servicio</p>
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">{t("title")}</h2>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button size="sm" onClick={() => setIsModalOpen(true)}>
-          Editar
-        </Button>
+        <div className="flex items-center space-x-2">        
+          <Button variant="outline" size="sm" onClick={() => setIsModalOpen(true)}>
+            {t("editButton")}
+          </Button>
+        </div>
       </div>
 
-      <div className="flex items-center">
-        <div className="relative flex-1">
+      <div className="flex items-center space-x-2">
+        <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Filtrar protocolos..."
+            placeholder={t("searchPlaceholder")}
             className="pl-8"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -114,100 +119,91 @@ export default function Protocols() {
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow>              
-              <TableHead className="w-[80%]">Protocolo</TableHead>
-              <TableHead className="text-center">Idioma</TableHead>
+            <TableRow>
+              <TableHead>{t("tableHeaders.name")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedProtocols.length > 0 ? (
-              paginatedProtocols.map((protocol) => (
-                <TableRow key={protocol.id}>                  
-                  <TableCell className="font-medium">{protocol.name}</TableCell>
-                  <TableCell className="text-center">
-                    <Badge variant="outline">{protocol.language}</Badge>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
+            {paginatedProtocols.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={2} className="h-24 text-center">
-                  No se encontraron protocolos.
+                <TableCell colSpan={1} className="text-center py-6 text-muted-foreground">
+                  {filter ? t("noProtocolsSubtitle") : t("noProtocolsTitle")}
                 </TableCell>
               </TableRow>
+            ) : (
+              paginatedProtocols.map((protocol) => (
+                <TableRow key={protocol.id}>
+                  <TableCell className="font-medium">{protocol.name}</TableCell>
+                </TableRow>
+              ))
             )}
           </TableBody>
         </Table>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">
-          {filteredProtocols.length > 0
-            ? `Mostrando ${startIndex + 1} a ${Math.min(startIndex + rowsPerPage, filteredProtocols.length)} de ${filteredProtocols.length
-            } protocolos`
-            : "No se encontraron protocolos"}
+      <div className="flex items-center justify-between space-x-2 py-4">
+        <div className="flex-1 text-sm text-muted-foreground">
+          {t("showing")} {startIndex + 1} {t("of")} {Math.min(startIndex + rowsPerPage, filteredProtocols.length)} {t("entries")}
         </div>
-        <div className="flex items-center space-x-6">
-          <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Filas por página</p>
-            <Select
-              value={rowsPerPage.toString()}
-              onValueChange={(value) => {
-                setRowsPerPage(Number(value))
-                setPage(1)
-              }}
-            >
-              <SelectTrigger className="h-8 w-[70px]">
-                <SelectValue placeholder={rowsPerPage.toString()} />
-              </SelectTrigger>
-              <SelectContent side="top">
-                {[5, 10, 15, 20].map((pageSize) => (
-                  <SelectItem key={pageSize} value={pageSize.toString()}>
-                    {pageSize}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPage(1)} disabled={page === 1}>
-              <ChevronsLeft className="h-4 w-4" />
-              <span className="sr-only">Primera página</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setPage(page - 1)}
-              disabled={page === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <span className="sr-only">Página anterior</span>
-            </Button>
-            <span className="text-sm">
-              Página {page} de {totalPages || 1}
-            </span>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setPage(page + 1)}
-              disabled={page === totalPages || totalPages === 0}
-            >
-              <ChevronRight className="h-4 w-4" />
-              <span className="sr-only">Página siguiente</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setPage(totalPages)}
-              disabled={page === totalPages || totalPages === 0}
-            >
-              <ChevronsRight className="h-4 w-4" />
-              <span className="sr-only">Última página</span>
-            </Button>
-          </div>
+        <div className="flex items-center space-x-2">
+          <p className="text-sm font-medium">{t("rowsPerPage")}</p>
+          <Select
+            value={rowsPerPage.toString()}
+            onValueChange={(value) => {
+              setRowsPerPage(Number(value))
+              setPage(1)
+            }}
+          >
+            <SelectTrigger className="h-8 w-[70px]">
+              <SelectValue placeholder={rowsPerPage.toString()} />
+            </SelectTrigger>
+            <SelectContent side="top">
+              {[5, 10, 20, 30, 40, 50].map((pageSize) => (
+                <SelectItem key={pageSize} value={pageSize.toString()}>
+                  {pageSize}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPage(1)} disabled={page === 1}>
+            <ChevronsLeft className="h-4 w-4" />
+            <span className="sr-only">{t("firstPage")}</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setPage(page - 1)}
+            disabled={page === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span className="sr-only">{t("previousPage")}</span>
+          </Button>
+          <span className="text-sm">
+            {t("page")} {page} {t("of")} {totalPages || 1}
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setPage(page + 1)}
+            disabled={page === totalPages || totalPages === 0}
+          >
+            <ChevronRight className="h-4 w-4" />
+            <span className="sr-only">{t("nextPage")}</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setPage(totalPages)}
+            disabled={page === totalPages || totalPages === 0}
+          >
+            <ChevronsRight className="h-4 w-4" />
+            <span className="sr-only">{t("lastPage")}</span>
+          </Button>
         </div>
       </div>
 

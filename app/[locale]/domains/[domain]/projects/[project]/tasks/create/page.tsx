@@ -1,14 +1,7 @@
 import { cookies } from 'next/headers'
-import { Link } from "@/i18n/routing"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
 import CreateTaskStepper from "@/components/tasks/create-task"
 import { apiClient, Service } from '@/lib/integrations/amplify'
+import { BreadcrumbWithTranslations } from "@/components/ui/breadcrumb-with-translations"
 
 export default async function Page({ 
   params 
@@ -36,23 +29,24 @@ export default async function Page({
 
   return (
     <div className="container w-full pt-4 pb-4">
-      <Breadcrumb className="mb-4">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <Link href={`/domains/${domainId}/projects/${projectId}/tasks`}>
-              {projectName || 'Proyecto'}
-            </Link>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <Link href={`/domains/${domainId}/projects/${projectId}/tasks`}>Tareas</Link>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Crear Tarea</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+      <BreadcrumbWithTranslations
+        items={[
+          {
+            label: projectName || 'Proyecto',
+            href: `/domains/${domainId}/projects/${projectId}/tasks`
+          },
+          {
+            label: "Tareas",
+            href: `/domains/${domainId}/projects/${projectId}/tasks`,
+            translationKey: "CreateTaskBreadcrumb.tasks"
+          },
+          {
+            label: "Crear Tarea",
+            isCurrent: true,
+            translationKey: "CreateTaskBreadcrumb.createTask"
+          }
+        ]}
+      />
 
       <CreateTaskStepper
         projectId={projectId}
