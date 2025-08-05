@@ -67,6 +67,10 @@ interface ServiceFormContextType {
   setLots: React.Dispatch<React.SetStateAction<LotField[]>>
   setUsers: React.Dispatch<React.SetStateAction<User[]>>
   setEnabledTasks: React.Dispatch<React.SetStateAction<Set<number>>>
+  
+  // Step 2 specific setters
+  showFieldsTable: boolean
+  setShowFieldsTable: React.Dispatch<React.SetStateAction<boolean>>
 
   // Setters for loading flags
   setHasLoadedProtocols: (loaded: boolean) => void
@@ -81,6 +85,8 @@ interface ServiceFormContextType {
   // Utility functions
   resetForm: () => void
   validateStep: (step: number) => Promise<boolean>
+  updateTasksWith360Data: (workspaceId: number, workspaceName: string, seasonId: number, seasonName: string, farmId: number, farmName: string) => void
+  updateTasksWithFieldIds: (fieldIds: number[]) => void
 }
 
 // Create the context
@@ -88,19 +94,19 @@ const ServiceFormContext = createContext<ServiceFormContextType | undefined>(und
 
 // Create the provider component
 export function ServiceFormProvider({ children }: { children: ReactNode }) {
+  
   // Initialize react-hook-form with Zod resolver
   const form = useForm<ServiceFormValues>({
     resolver: zodResolver(serviceFormSchema),
     defaultValues: {
+      projectId: "",
+      tmpRequestId: "",
+      requestId: "",
+      name: "",
       protocolId: "",
       protocolName: "",
-      tmpRequestId: "",
-      name: "",
-      projectId: "",
-      requestId: "",
-      deleted: false,
-      fields: [],
       tasks: [],
+      // fieldIdsOnlyIncluded: []
     },
     mode: "onChange",
   })
@@ -118,6 +124,9 @@ export function ServiceFormProvider({ children }: { children: ReactNode }) {
   const [lots, setLots] = useState<LotField[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [enabledTasks, setEnabledTasks] = useState<Set<number>>(new Set())
+  
+  // Step 2 specific state
+  const [showFieldsTable, setShowFieldsTable] = useState<boolean>(false)
 
   // Loading flags
   const [hasLoadedProtocols, setHasLoadedProtocols] = useState(false)
@@ -142,6 +151,7 @@ export function ServiceFormProvider({ children }: { children: ReactNode }) {
     setLots([])
     setUsers([])
     setEnabledTasks(new Set())
+    setShowFieldsTable(false)
     setHasLoadedProtocols(false)
     setHasLoadedProtocolTasks(false)
     setHasLoadedForms(false)
@@ -150,6 +160,37 @@ export function ServiceFormProvider({ children }: { children: ReactNode }) {
     setHasLoadedFarms(false)
     setHasLoadedFields(false)
     setHasLoadedUsers(false)
+  }
+
+  // Update tasks with 360 data
+  const updateTasksWith360Data = (workspaceId: number, workspaceName: string, seasonId: number, seasonName: string, farmId: number, farmName: string) => {
+    const currentTasks = form.getValues("tasks") || []
+    if (currentTasks.length === 0) return
+
+    const updatedTasks = currentTasks.map((task: any) => ({
+      ...task,
+      workspaceId,
+      workspaceName,
+      seasonId,
+      seasonName,
+      farmId,
+      farmName,
+    }))
+
+    form.setValue("tasks", updatedTasks)
+  }
+
+  // Update tasks with field IDs
+  const updateTasksWithFieldIds = (fieldIds: number[]) => {
+    const currentTasks = form.getValues("tasks") || []
+    if (currentTasks.length === 0) return
+
+    const updatedTasks = currentTasks.map((task: any) => ({
+      ...task,
+      fieldIdsOnlyIncluded: fieldIds,
+    }))
+
+    form.setValue("tasks", updatedTasks)
   }
 
   // Validate specific step
@@ -169,16 +210,18 @@ export function ServiceFormProvider({ children }: { children: ReactNode }) {
         return true
 
       case 2:
-        // Validate step 2: fields array must have at least one item
-        if (!formData.fields || formData.fields.length === 0) {
-          form.setError("fields", {
-            type: "manual",
-            message: "Debes seleccionar al menos un lote"
-          })
-          return false
-        }
+        // Validate step 2: If the toggle is on (showFieldsTable is true), validate that at least one field is selected        
+        // if (showFieldsTable) {
+        //   if (!formData.fieldIdsOnlyIncluded || formData.fieldIdsOnlyIncluded.length === 0) {
+        //     form.setError("fieldIdsOnlyIncluded", {
+        //       type: "manual",
+        //       message: "Si seleccionas lotes específicos, al menos uno debe estar seleccionado"
+        //     })
+        //     return false
+        //   }
+        // }
+        
         return true
-
       case 3:
         // Validate step 3: tasks array and enabled tasks with proper validation
         if (!formData.tasks || formData.tasks.length === 0) {
@@ -199,7 +242,7 @@ export function ServiceFormProvider({ children }: { children: ReactNode }) {
         }
 
         // Validate each enabled task
-        const enabledTasksArray = Array.from(enabledTasks)
+        const enabledTasksArray = Array.from(enabledTasks)        
         for (const taskIndex of enabledTasksArray) {
           const task = formData.tasks[taskIndex]
           if (!task) continue
@@ -218,6 +261,31 @@ export function ServiceFormProvider({ children }: { children: ReactNode }) {
             form.setError(`tasks.${taskIndex}.formId`, {
               type: "manual",
               message: "Debes asignar un formulario a cada tarea de tipo recorrida"
+            })
+            return false
+          }
+
+          // Check if 360 fields are properly set
+          if (!task.workspaceId || task.workspaceId <= 0) {
+            form.setError(`tasks.${taskIndex}.workspaceId`, {
+              type: "manual",
+              message: "Workspace debe estar seleccionado"
+            })
+            return false
+          }
+
+          if (!task.seasonId || task.seasonId <= 0) {
+            form.setError(`tasks.${taskIndex}.seasonId`, {
+              type: "manual",
+              message: "Season debe estar seleccionado"
+            })
+            return false
+          }
+
+          if (!task.farmId || task.farmId <= 0) {
+            form.setError(`tasks.${taskIndex}.farmId`, {
+              type: "manual",
+              message: "Farm debe estar seleccionado"
             })
             return false
           }
@@ -268,8 +336,12 @@ export function ServiceFormProvider({ children }: { children: ReactNode }) {
     setHasLoadedFarms,
     setHasLoadedFields,
     setHasLoadedUsers,
+    showFieldsTable,
+    setShowFieldsTable,
     resetForm,
     validateStep,
+    updateTasksWith360Data,
+    updateTasksWithFieldIds,
   }
 
   return (

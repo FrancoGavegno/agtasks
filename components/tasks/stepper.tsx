@@ -19,7 +19,7 @@ import {
   TaskFormProvider
 } from "@/lib/contexts/tasks-context"
 import Step1TaskType from "./step1"
-import Step2Lots from "./step2"
+import Step2 from "./step2"
 import Step3Details from "./step3"
 import { TaskService } from "@/lib/services/task-service"
 import type { TaskFormValues } from "@/lib/schemas"
@@ -37,8 +37,7 @@ function DebugContext() {
       <div className="space-y-1">
         <div>taskName: {formData.taskName || 'none'}</div>
         <div>taskType: {formData.taskType || 'none'}</div>
-        <div>userEmail: {formData.userEmail || 'none'}</div>
-        <div>Fields: {formData.fields?.length || 0}</div>
+        <div>userEmail: {formData.userEmail || 'none'}</div>       
         <div>Mode: {mode || 'create'}</div>
         <div>taskData keys: {formData.taskData ? (typeof formData.taskData === 'string' ? Object.keys(JSON.parse(formData.taskData)).length : Object.keys(formData.taskData).length) : 0}</div>
         <div>tempTaskData keys: {tempTaskData ? Object.keys(tempTaskData).length : 0}</div>
@@ -54,7 +53,7 @@ interface TaskStepperProps {
   projectName: string
   mode?: 'create' | 'edit'
   taskId?: string
-  initialData?: { task: any, fields: any[] }
+  initialData?: { task: any }
 }
 
 const STEPS = [1, 2, 3]
@@ -107,12 +106,11 @@ function TaskStepperForm({
     saveTemporaryChanges,
     discardTemporaryChanges,
     tempTaskData,
-    tempFields,
     tempUserEmail
   } = useTaskForm()
 
   // Check if there are unsaved changes
-  const hasUnsavedChanges = tempTaskData !== null || tempFields.length > 0 || tempUserEmail !== ""
+  const hasUnsavedChanges = tempTaskData !== null || tempUserEmail !== ""
 
   // Load task for edit mode
   useEffect(() => {
@@ -135,17 +133,13 @@ function TaskStepperForm({
         return step1Valid
         
       case 2:
-        // Step 2: Validar que haya al menos un lote seleccionado
-        if (mode === 'edit') {
-          // En modo edición, usar tempFields si están disponibles, sino usar formData.fields
-          const fieldsToCheck = tempFields.length > 0 ? tempFields : formData.fields
-          const step2Valid = Boolean(fieldsToCheck && fieldsToCheck.length > 0)
-          return step2Valid
-        } else {
-          // En modo creación, usar formData.fields
-          const step2Valid = Boolean(formData.fields && formData.fields.length > 0)
-          return step2Valid
-        }
+        // Step 2: Validar que 360 Farm fields estén seleccionados
+        const step2Valid = Boolean(
+          formData.workspaceId && formData.workspaceId > 0 &&
+          formData.seasonId && formData.seasonId > 0 &&
+          formData.farmId && formData.farmId > 0
+        )
+        return step2Valid
         
       case 3:
         // Step 3: Validar userEmail (igual para ambos modos)
@@ -207,7 +201,6 @@ function TaskStepperForm({
         // Prepare form data with temporary changes
         const preparedData = TaskService.prepareFormData(formData, {
           taskData: tempTaskData,
-          fields: tempFields,
           userEmail: tempUserEmail,
         })
         
@@ -226,8 +219,8 @@ function TaskStepperForm({
           throw new Error("Missing required fields: taskName, taskType, or userEmail")
         }
 
-        if (!formData.fields || formData.fields.length === 0) {
-          throw new Error("No fields selected")
+        if (!formData.workspaceId || !formData.seasonId || !formData.farmId) {
+          throw new Error("Workspace, Season, and Farm must be selected")
         }
 
         if (!projectId || typeof projectId !== 'string') {
@@ -247,11 +240,8 @@ function TaskStepperForm({
           agtasksUrl,
         })
 
-        // Mostrar resultado detallado del procesamiento batch
-        const totalFields = formData.fields?.length || 0
-        const successMessage = totalFields > 0 
-          ? `Tarea creada exitosamente. Procesando ${totalFields} asociaciones de campos...`
-          : "Tarea creada exitosamente."
+        // Mostrar resultado del procesamiento
+        const successMessage = "Tarea creada exitosamente."
 
         toast({
           title: "Tarea creada exitosamente",
@@ -289,7 +279,7 @@ function TaskStepperForm({
       case 1:
         return <Step1TaskType />
       case 2:
-        return <Step2Lots thisUserEmail={thisUserEmail} mode={mode} />
+        return <Step2 userEmail={thisUserEmail} />
       case 3:
         return <Step3Details services={services} projectName={projectName} />
       default:

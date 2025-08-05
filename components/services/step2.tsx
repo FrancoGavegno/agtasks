@@ -12,6 +12,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { useParams } from "next/navigation"
 import { useFormContext } from "react-hook-form"
 import { useServiceForm } from "@/lib/contexts/services-context"
@@ -55,7 +56,9 @@ export default function Step2({ userEmail }: Props) {
     establishments,
     setEstablishments,
     lots,
-    setLots
+    setLots,
+    updateTasksWith360Data,
+    updateTasksWithFieldIds
   } = useServiceForm()
   
   const params = useParams()
@@ -63,13 +66,14 @@ export default function Step2({ userEmail }: Props) {
   const projectId = params.project as string
   const [areaId, setAreaId] = useState<number>(0)
   
-  // Watch form values
-  const fields = watch("fields")
+  // Get current tasks to track field selections
+  const currentTasks = watch("tasks") || []
   
   // State for selections
   const [selectedWorkspace, setSelectedWorkspace] = useState<string>("")
   const [selectedCampaign, setSelectedCampaign] = useState<string>("")
   const [selectedEstablishment, setSelectedEstablishment] = useState<string>("")
+  const [showFieldsTable, setShowFieldsTable] = useState<boolean>(false)
 
   // Loading states
   const [workspacesLoading, setWorkspacesLoading] = useState(true)
@@ -83,10 +87,11 @@ export default function Step2({ userEmail }: Props) {
   const [farmsError, setFarmsError] = useState<string | null>(null)
   const [fieldsError, setFieldsError] = useState<string | null>(null)
 
-  const allLotIds = lots.map(lot => lot.id.toString())
-  const selectedLotIds = fields?.map((lot) => lot.fieldId) || []
-  const allSelected = allLotIds.length > 0 && allLotIds.every(id => selectedLotIds.includes(id))
-  const someSelected = allLotIds.some(id => selectedLotIds.includes(id)) && !allSelected
+  const allFieldIds = lots.map(lot => lot.id)
+  // Get field IDs from the first task (all tasks should have the same fieldIdsOnlyIncluded)
+  const selectedFieldIds = currentTasks.length > 0 ? (currentTasks[0]?.fieldIdsOnlyIncluded || []) : []
+  const allSelected = allFieldIds.length > 0 && allFieldIds.every(id => selectedFieldIds.includes(id))
+  const someSelected = allFieldIds.some(id => selectedFieldIds.includes(id)) && !allSelected
 
   // Fetch project to get areaId
   useEffect(() => {
@@ -101,18 +106,19 @@ export default function Step2({ userEmail }: Props) {
 
   // Restaurar valores del contexto cuando el componente se monta
   useEffect(() => {
-    const formValues = watch()
-    // console.log("Restaurando valores del contexto:", {
-    //   fieldsCount: formValues.fields?.length || 0
-    // })
-    
-    if (formValues.fields && formValues.fields.length > 0) {
-      const firstField = formValues.fields[0]
-      setSelectedWorkspace(firstField.workspaceId)
-      setSelectedCampaign(firstField.campaignId)
-      setSelectedEstablishment(firstField.farmId)
+    if (currentTasks.length > 0 && currentTasks[0]?.fieldIdsOnlyIncluded && currentTasks[0].fieldIdsOnlyIncluded.length > 0) {
+      setShowFieldsTable(true)
+      // Restore selections if we have specific field IDs
+      if (lots.length > 0) {
+        const firstField = lots.find(field => currentTasks[0].fieldIdsOnlyIncluded?.includes(field.id))
+        if (firstField) {
+          setSelectedWorkspace(firstField.workspaceId?.toString() || "")
+          setSelectedCampaign(firstField.seasonId?.toString() || "")
+          setSelectedEstablishment(firstField.farmId?.toString() || "")
+        }
+      }
     }
-  }, [watch])
+  }, [currentTasks, lots])
 
   // Fetch workspaces
   useEffect(() => {
@@ -127,7 +133,6 @@ export default function Step2({ userEmail }: Props) {
         setWorkspaces(filteredAndSorted)
         setWorkspacesError(null)
         setHasLoadedWorkspaces(true)
-        // console.log("Workspaces cargados:", filteredAndSorted.length)
       } catch (error) {
         console.error("Error fetching workspaces:", error)
         setWorkspacesError("Failed to load workspaces. Please try again later.")
@@ -138,10 +143,8 @@ export default function Step2({ userEmail }: Props) {
     }
 
     if (userEmail && domainId != 0 && areaId != 0 && !hasLoadedWorkspaces) {
-      //console.log("Cargando workspaces...")
       fetchWorkspaces()
     } else if (hasLoadedWorkspaces) {
-      // console.log("Workspaces ya cargados, saltando carga")
       setWorkspacesLoading(false)
     }
   }, [userEmail, domainId, areaId, hasLoadedWorkspaces, setHasLoadedWorkspaces, setWorkspaces])
@@ -164,7 +167,6 @@ export default function Step2({ userEmail }: Props) {
         setCampaigns(filteredAndSorted)
         setSeasonsError(null)
         setHasLoadedSeasons(true)
-        // console.log("Seasons cargadas:", filteredAndSorted.length)
       } catch (error) {
         console.error("Error fetching seasons:", error)
         setSeasonsError("Failed to load seasons. Please try again later.")
@@ -175,10 +177,8 @@ export default function Step2({ userEmail }: Props) {
     }
 
     if (selectedWorkspace && !hasLoadedSeasons) {
-      // console.log("Cargando seasons...")
       fetchSeasons()
     } else if (hasLoadedSeasons) {
-      // console.log("Seasons ya cargadas, saltando carga")
       setSeasonsLoading(false)
     }
   }, [selectedWorkspace, hasLoadedSeasons, setHasLoadedSeasons, setCampaigns])
@@ -201,7 +201,6 @@ export default function Step2({ userEmail }: Props) {
         setEstablishments(filteredAndSorted)
         setFarmsError(null)
         setHasLoadedFarms(true)
-        // console.log("Farms cargadas:", filteredAndSorted.length)
       } catch (error) {
         console.error("Error fetching farms:", error)
         setFarmsError("Failed to load farms. Please try again later.")
@@ -212,10 +211,8 @@ export default function Step2({ userEmail }: Props) {
     }
 
     if (selectedWorkspace && selectedCampaign && !hasLoadedFarms) {
-      // console.log("Cargando farms...")
       fetchFarms()
     } else if (hasLoadedFarms) {
-      // console.log("Farms ya cargadas, saltando carga")
       setFarmsLoading(false)
     }
   }, [selectedWorkspace, selectedCampaign, hasLoadedFarms, setHasLoadedFarms, setEstablishments])
@@ -236,7 +233,6 @@ export default function Step2({ userEmail }: Props) {
         setLots(sorted)
         setFieldsError(null)
         setHasLoadedFields(true)
-        // console.log("Fields cargados:", sorted.length)
       } catch (error) {
         console.error("Error fetching fields:", error)
         setFieldsError("Failed to load fields. Please try again later.")
@@ -247,23 +243,18 @@ export default function Step2({ userEmail }: Props) {
     }
 
     if (selectedWorkspace && selectedCampaign && selectedEstablishment && !hasLoadedFields) {
-      // console.log("Cargando fields...")
       fetchFields()
     } else if (hasLoadedFields) {
-      // console.log("Fields ya cargados, saltando carga")
       setFieldsLoading(false)
     }
   }, [selectedWorkspace, selectedCampaign, selectedEstablishment, hasLoadedFields, setHasLoadedFields, setLots])
 
   const handleWorkspaceChange = (value: string) => {
-    // Encontrar el workspace seleccionado para obtener su nombre
-    const selectedWorkspaceObj = workspaces.find((workspace) => workspace.id.toString() === value)
-    const workspaceName = selectedWorkspaceObj ? selectedWorkspaceObj.name : ""
-
     setSelectedWorkspace(value)
     setSelectedCampaign("")
     setSelectedEstablishment("")
-    setValue("fields", [])
+    updateTasksWithFieldIds([])
+    setShowFieldsTable(false)
     
     // Reset loading states for dependent data
     setHasLoadedSeasons(false)
@@ -272,13 +263,10 @@ export default function Step2({ userEmail }: Props) {
   }
 
   const handleCampaignChange = (value: string) => {
-    // Encontrar la campaña seleccionada para obtener su nombre
-    const selectedCampaignObj = campaigns.find((season) => season.id.toString() === value)
-    const campaignName = selectedCampaignObj ? selectedCampaignObj.name : ""
-
     setSelectedCampaign(value)
     setSelectedEstablishment("")
-    setValue("fields", [])
+    updateTasksWithFieldIds([])
+    setShowFieldsTable(false)
     
     // Reset loading states for dependent data
     setHasLoadedFarms(false)
@@ -286,86 +274,66 @@ export default function Step2({ userEmail }: Props) {
   }
 
   const handleEstablishmentChange = (value: string) => {
-    // Encontrar el establecimiento seleccionado para obtener su nombre
-    const selectedFarm = establishments.find((farm) => farm.id.toString() === value)
-    const establishmentName = selectedFarm ? selectedFarm.name : ""
-
     setSelectedEstablishment(value)
-    setValue("fields", [])
+    // setValue("fieldIdsOnlyIncluded", [])
+    setShowFieldsTable(false)
     
     // Reset loading states for dependent data
     setHasLoadedFields(false)
+    
+    // Update tasks with workspace, season, and farm data when establishment is selected
+    if (selectedWorkspace && selectedCampaign && value) {
+      const workspace = workspaces.find(w => w.id.toString() === selectedWorkspace)
+      const season = campaigns.find(s => s.id.toString() === selectedCampaign)
+      const farm = establishments.find(f => f.id.toString() === value)
+
+      if (workspace && season && farm) {
+        updateTasksWith360Data(
+          parseInt(selectedWorkspace),
+          workspace.name,
+          parseInt(selectedCampaign),
+          season.name,
+          parseInt(value),
+          farm.name
+        )
+      }
+    }
   }
 
-  const handleLotSelection = (lotId: string) => {
-    const currentLots = fields || []
-    const selectedField = lots.find((field) => field.id.toString() === lotId)
+  const handleFieldSelection = (fieldId: number) => {
+    const currentFieldIds = selectedFieldIds
+    let newFieldIds: number[]
 
-    if (!selectedField) return // No hacer nada si el campo no se encuentra
-
-    // Obtener los valores seleccionados actualmente
-    const workspaceId = selectedWorkspace
-    const campaignId = selectedCampaign
-    const farmId = selectedEstablishment
-
-    // Obtener nombres de los selects o del estado
-    const workspaceName = workspaces.find(w => w.id?.toString() === String(workspaceId))?.name || ""
-    const campaignName = campaigns.find(s => s.id?.toString() === String(campaignId))?.name || ""
-    const farmName = establishments.find(f => f.id?.toString() === String(farmId))?.name || ""
-
-    const lotDetail = {
-      workspaceId: String(selectedField.workspaceId ?? ""),
-      workspaceName,
-      campaignId: String(selectedField.seasonId ?? ""),
-      campaignName,
-      farmId: String(selectedField.farmId ?? ""),
-      farmName,
-      fieldId: String(selectedField.id ?? ""),
-      fieldName: selectedField.name || "",
-      hectares: typeof selectedField.hectares === 'number' ? selectedField.hectares : 0,
-      crop: selectedField.cropName || "",
-      hybrid: selectedField.hybridName || "",
-      deleted: false,
-    }
-
-    let newLots
-    if (currentLots.some((lot) => lot.fieldId === lotId)) {
-      newLots = currentLots.filter((lot) => lot.fieldId !== lotId)
+    if (currentFieldIds.includes(fieldId)) {
+      newFieldIds = currentFieldIds.filter((id: number) => id !== fieldId)
     } else {
-      newLots = [...currentLots, lotDetail]
+      newFieldIds = [...currentFieldIds, fieldId]
     }
-
-    setValue("fields", newLots)
+    
+    // Update tasks with fieldIdsOnlyIncluded
+    updateTasksWithFieldIds(newFieldIds)
   }
+
+
 
   // Nueva función para seleccionar/deseleccionar todos los lotes
-  const handleToggleAllLots = () => {
+  const handleToggleAllFields = () => {
     if (allSelected) {
       // Deseleccionar todos
-      setValue("fields", [])
+      updateTasksWithFieldIds([])
     } else {
       // Seleccionar todos
-      const workspaceId = selectedWorkspace
-      const campaignId = selectedCampaign
-      const farmId = selectedEstablishment
-      const workspaceName = workspaces.find(w => w.id?.toString() === String(workspaceId))?.name || ""
-      const campaignName = campaigns.find(s => s.id?.toString() === String(campaignId))?.name || ""
-      const farmName = establishments.find(f => f.id?.toString() === String(farmId))?.name || ""
-      const newLots = lots.map(selectedField => ({
-        workspaceId: String(selectedField.workspaceId ?? ""),
-        workspaceName,
-        campaignId: String(selectedField.seasonId ?? ""),
-        campaignName,
-        farmId: String(selectedField.farmId ?? ""),
-        farmName,
-        fieldId: String(selectedField.id ?? ""),
-        fieldName: selectedField.name || "",
-        hectares: typeof selectedField.hectares === 'number' ? selectedField.hectares : 0,
-        crop: selectedField.cropName || "",
-        hybrid: selectedField.hybridName || "",
-        deleted: false,
-      }))
-      setValue("fields", newLots)
+      updateTasksWithFieldIds(allFieldIds)
+    }
+  }
+
+
+
+  const handleToggleShowFields = (checked: boolean) => {
+    setShowFieldsTable(checked)
+    if (!checked) {
+      // Si se oculta la tabla, limpiar las selecciones específicas
+      updateTasksWithFieldIds([])
     }
   }
 
@@ -450,90 +418,112 @@ export default function Step2({ userEmail }: Props) {
         </div>
       </div>
 
-      {/* Fields (Lots) Table */}
+      {/* Field Selection Section */}
       {selectedEstablishment && (
-        <div className="mt-6">
-          <h3 className="text-lg font-medium mb-4">{t2("availableLotsTitle")}</h3>
-          {fieldsLoading ? (
-            <div className="text-center py-8 text-muted-foreground">{t2("loadingLots")}</div>
-          ) : fieldsError ? (
-            <div className="text-center py-8 text-red-500">{fieldsError}</div>
-          ) : (
-            <div className="border rounded-md overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={allSelected}
-                        onChange={handleToggleAllLots}
-                        aria-label={t2("selectAllLots")}
-                        className="h-4 w-4 accent-primary rounded-sm border border-primary shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      />
-                      <span className="ml-2">{t2("selectAll")}</span>
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      {t2("lot")}
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      {t2("cropHybrid")}
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      {t2("hectares")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {lots.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
-                        {t2("noLotsAvailable")}
-                      </td>
-                    </tr>
-                  ) : (
-                    lots.map((field) => (
-                      <tr key={field.id}>
-                        <td className="px-6 whitespace-nowrap">
-                          <Checkbox
-                            id={`lot-${field.id}`}
-                            checked={fields?.some((lot) => lot.fieldId === field.id.toString())}
-                            onCheckedChange={() => handleLotSelection(field.id.toString())}
+        <div className="mt-6 space-y-4">
+          {/* Default state - All lots selected */}
+          {!showFieldsTable && (
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <p className="text-gray-700 font-medium">{t2("allLotsSelected")}</p>
+            </div>
+          )}
+
+          {/* Toggle to show specific field selection */}
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="show-fields-table"
+              checked={showFieldsTable}
+              onCheckedChange={handleToggleShowFields}
+            />
+            <Label htmlFor="show-fields-table" className="text-sm font-medium">
+              {t2("includeOnlyTheseLots")}
+            </Label>
+          </div>
+
+          {/* Fields (Lots) Table - Only shown when toggle is enabled */}
+          {showFieldsTable && (
+            <div className="mt-4">
+              <h3 className="text-lg font-medium mb-4">{t2("availableLotsTitle")}</h3>
+              {fieldsLoading ? (
+                <div className="text-center py-8 text-muted-foreground">{t2("loadingLots")}</div>
+              ) : fieldsError ? (
+                <div className="text-center py-8 text-red-500">{fieldsError}</div>
+              ) : (
+                <div className="border rounded-md overflow-hidden">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={allSelected}
+                            onChange={handleToggleAllFields}
+                            aria-label={t2("selectAllLots")}
+                            className="h-4 w-4 accent-primary rounded-sm border border-primary shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                           />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {field.name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {field.cropName} {field.hybridName ? `/ ${field.hybridName}` : ""}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {field.hectares}
-                        </td>
+                          <span className="ml-2">{t2("selectAll")}</span>
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          {t2("lot")}
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          {t2("cropHybrid")}
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          {t2("hectares")}
+                        </th>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {lots.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                            {t2("noLotsAvailable")}
+                          </td>
+                        </tr>
+                      ) : (
+                        lots.map((field) => (
+                          <tr key={field.id}>
+                            <td className="px-6 whitespace-nowrap">
+                              <Checkbox
+                                id={`field-${field.id}`}
+                                checked={selectedFieldIds.includes(field.id)}
+                                onCheckedChange={() => handleFieldSelection(field.id)}
+                              />
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {field.name}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {field.cropName} {field.hybridName ? `/ ${field.hybridName}` : ""}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {field.hectares}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
         </div>
       )}
-      {errors.fields && (
-        <p className="text-red-500 text-sm">{errors.fields.message}</p>
-      )}
+
     </div>
   )
 }

@@ -22,16 +22,7 @@ async function getTaskData(taskId: string) {
       return null
     }
 
-    // Get task fields
-    const taskFields = await apiClient.listTaskFields(taskId)
-    const fields = await Promise.all(
-      taskFields.items.map(async (tf) => {
-        const field = await apiClient.getField(tf.fieldId)
-        return field
-      })
-    )
-
-    return { task, fields }
+    return { task }
   } catch (error) {
     console.error("Error fetching task data:", error)
     return null
@@ -74,7 +65,7 @@ export default async function EditTaskPage({ params }: EditTaskPageProps) {
     notFound()
   }
 
-  const { task, fields } = taskData
+  const { task } = taskData
 
   return (
     <div className="container w-full pt-4 pb-4">
@@ -105,7 +96,7 @@ export default async function EditTaskPage({ params }: EditTaskPageProps) {
           projectName={projectData.name}
           mode="edit"
           taskId={taskId}
-          initialData={{ task, fields }}
+          initialData={{ task }}
         />
       </Suspense>
     </div>

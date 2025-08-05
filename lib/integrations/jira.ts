@@ -16,7 +16,17 @@ import {
   JiraIssue,
   JiraSubtask
 } from "@/lib/interfaces/jira"
-import { type Field } from "@/lib/schemas"
+
+// Define the Field interface for lot/field data
+interface Field {
+  fieldName?: string
+  hectares?: number
+  crop?: string
+  hybrid?: string
+  workspaceName?: string
+  campaignName?: string
+  farmName?: string
+}
 
 const JIRA_API_URL = process.env.NEXT_PUBLIC_JIRA_API_URL
 const JIRA_API_TOKEN = process.env.NEXT_PUBLIC_JIRA_API_TOKEN

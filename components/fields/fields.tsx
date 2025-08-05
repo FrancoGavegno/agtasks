@@ -6,21 +6,15 @@ import { useToast } from "@/hooks/use-toast"
 import { apiClient } from "@/lib/integrations/amplify"
 import { LotSearchForm } from "./lot-search-form"
 import { LotStats } from "./lot-stats"
-import { LotServicesTable } from "./lot-services-table"
 import { LotTasksTable } from "./lot-tasks-table"
 
-interface SelectedLot {
+interface SelectedFilters {
   workspaceId: string
   workspaceName?: string
   campaignId: string
   campaignName?: string
   farmId: string
   farmName?: string
-  fieldId: string
-  fieldName: string
-  cropName?: string
-  hybridName?: string
-  hectares?: number
 }
 
 interface FieldsPageDetailsProps {
@@ -33,62 +27,43 @@ export function FieldsPageDetails({ userEmail }: FieldsPageDetailsProps) {
   const projectId = params.project as string
   const { toast } = useToast()
   
-  const [selectedLot, setSelectedLot] = useState<SelectedLot | null>(null)
+  const [selectedFilters, setSelectedFilters] = useState<SelectedFilters | null>(null)
   const [loading, setLoading] = useState(false)
   const [servicesCount, setServicesCount] = useState(0)
   const [tasksCount, setTasksCount] = useState(0)
 
-  // Calculate statistics for the selected lot
-  const calculateStats = async (lot: SelectedLot) => {
+  // Calculate statistics for the selected filters
+  const calculateStats = async (filters: SelectedFilters) => {
     try {
       setLoading(true)
       
-      console.log('Calculando estadísticas para lote:', lot.fieldId)
+      console.log('Calculando estadísticas para:', filters)
       
-      // 1. Buscar Field cuyo Field.fieldId === value del selector de Field del formulario
-      const fieldsData = await apiClient.listFields({ limit: 100 })
-      const matchingField = fieldsData.items.find(field => field.fieldId === lot.fieldId)
+      // Get tasks that match the workspace, season, and farm criteria
+      const tasksData = await apiClient.listTasks({ 
+        projectId,
+        workspaceId: Number(filters.workspaceId),
+        seasonId: Number(filters.campaignId),
+        farmId: Number(filters.farmId),
+        limit: 100 
+      })
       
-      if (!matchingField) {
-        console.log('No se encontró Field con fieldId:', lot.fieldId)
-        setServicesCount(0)
-        setTasksCount(0)
-        return
-      }
+      const tasksWithFilters = tasksData.items
       
-      // 2. Buscar TaskField cuyo TaskField.fieldId === Field.id
-      const taskFieldsData = await apiClient.listTaskFields(undefined, matchingField.id)
-      
-      if (!taskFieldsData.items.length) {
-        console.log('No se encontraron TaskFields para el Field:', matchingField.id)
-        setServicesCount(0)
-        setTasksCount(0)
-        return
-      }
-      
-      // 3. Buscar Task cuyo Task.id === TaskField.taskId y guardar serviceIds
+      // Count unique services
       const serviceIds = new Set<string>()
-      let tasksWithLot = 0
-      
-      for (const taskField of taskFieldsData.items) {
-        try {
-          const task = await apiClient.getTask(taskField.taskId)
-          if (task) {
-            tasksWithLot++
-            if (task.serviceId) {
-              serviceIds.add(task.serviceId)
-            }
-          }
-        } catch (error) {
-          console.error(`Error getting task ${taskField.taskId}:`, error)
+      tasksWithFilters.forEach(task => {
+        if (task.serviceId) {
+          serviceIds.add(task.serviceId)
         }
-      }
+      })
       
-      const servicesWithLot = serviceIds.size
+      const servicesWithFilters = serviceIds.size
+      const tasksWithFiltersCount = tasksWithFilters.length
       
-      console.log('Estadísticas calculadas:', { servicesWithLot, tasksWithLot })
-      setServicesCount(servicesWithLot)
-      setTasksCount(tasksWithLot)
+      console.log('Estadísticas calculadas:', { servicesWithFilters, tasksWithFiltersCount })
+      setServicesCount(servicesWithFilters)
+      setTasksCount(tasksWithFiltersCount)
       
     } catch (error) {
       console.error("Error calculating stats:", error)
@@ -99,23 +74,24 @@ export function FieldsPageDetails({ userEmail }: FieldsPageDetailsProps) {
     }
   }
 
-  const handleLotSearch = (lot: SelectedLot) => {
-    setSelectedLot(lot)
-    calculateStats(lot)
+  const handleSearch = (filters: SelectedFilters) => {
+    setSelectedFilters(filters)
+    calculateStats(filters)
     
     toast({
       title: "En proceso...",
-      description: `Buscando servicios y tareas del lote: ${lot.fieldName}`,
+      description: `Buscando tareas para: ${filters.workspaceName} - ${filters.campaignName} - ${filters.farmName}`,
+      duration: 5000,
     })
   }
 
   return (
     <div className="space-y-6">
       {/* Search Form */}
-      <LotSearchForm onSearch={handleLotSearch} loading={loading} userEmail={userEmail} />
+      <LotSearchForm onSearch={handleSearch} loading={loading} userEmail={userEmail} />
       
-      {/* Stats Cards - Only show when a lot is selected */}
-      {selectedLot && (
+      {/* Stats Cards - Only show when filters are selected */}
+      {selectedFilters && (
         <LotStats 
           servicesCount={servicesCount} 
           tasksCount={tasksCount} 
@@ -123,11 +99,8 @@ export function FieldsPageDetails({ userEmail }: FieldsPageDetailsProps) {
         />
       )}
       
-      {/* Services Table */}
-      <LotServicesTable selectedLot={selectedLot} loading={loading} />
-      
       {/* Tasks Table */}
-      <LotTasksTable selectedLot={selectedLot} loading={loading} />
+      <LotTasksTable selectedFilters={selectedFilters} loading={loading} />
     </div>
   )
 }

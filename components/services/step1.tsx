@@ -4,9 +4,8 @@ import {
   useState,
   useEffect
 } from "react"
-import { 
- // Check, 
-  SquareCheckBig 
+import {
+  SquareCheckBig
 } from "lucide-react"
 import {
   Select,
@@ -19,12 +18,8 @@ import { useParams } from "next/navigation"
 import { useFormContext } from "react-hook-form"
 import { useServiceForm, } from "@/lib/contexts/services-context"
 import { apiClient } from "@/lib/integrations/amplify"
-// import { listTasksbyService } from "@/lib/integrations/jira"
 import { type ServiceFormValues } from "@/lib/schemas"
 import { useTranslations } from 'next-intl'
-// import type {
-//   JiraSubtask,
-// } from "@/lib/interfaces/jira"
 
 export default function Step1() {
   const t = useTranslations("CreateServiceSteps.step1")
@@ -124,12 +119,12 @@ export default function Step1() {
 
         return tasks
       }
-      
+
       return []
     } catch (err) {
       console.error(`Failed to fetch tasks for protocol ${tmpRequestId}:`, err)
       setError(`Failed to load tasks for the selected protocol. Please try again later.`)
-      
+
       return []
     }
   }
@@ -139,7 +134,7 @@ export default function Step1() {
       setValue("protocolId", "")
       setValue("protocolName", "")
       setValue("tmpRequestId", "")
-      setSelectedProtocolId("")
+      setSelectedProtocolId("")      
       if (tmpRequestId) {
         setProtocolTasks((prev) => {
           const newTasks = { ...prev }
@@ -156,14 +151,14 @@ export default function Step1() {
     if (!selectedProtocol) return
 
     // Update the selected protocol ID for the selector
-    setSelectedProtocolId(selectedProtocol.id || "")
-    
+    setSelectedProtocolId(selectedProtocol?.id || "")
+
     // Set form values correctly according to Amplify schema:
     // - protocolId: DomainProtocol.id (for database relationship)
     // - tmpRequestId: DomainProtocol.tmProtocolId (for Jira integration)
-    setValue("protocolId", selectedProtocol.id) // DomainProtocol.id for database relationship
+    setValue("protocolId", selectedProtocol?.id || "") 
     setValue("protocolName", selectedProtocol.name)
-    setValue("tmpRequestId", selectedProtocol.tmProtocolId) // DomainProtocol.tmProtocolId for Jira integration
+    setValue("tmpRequestId", selectedProtocol.tmProtocolId) 
 
     // Clear tasks when protocol changes
     setValue("tasks", [])
@@ -173,13 +168,13 @@ export default function Step1() {
     if (!tasks) {
       tasks = await fetchProtocolTasks(value)
     }
-    
+
     if (tasks && tasks.length > 0) {
       // Filter duplicate tasks based on tmpSubtaskId
-      const uniqueTasks = tasks.filter((task: any, index: number, self: any[]) => 
+      const uniqueTasks = tasks.filter((task: any, index: number, self: any[]) =>
         index === self.findIndex((t: any) => t.key === task.key)
       );
-      
+
       const formTasks = uniqueTasks.map((task: any) => ({
         taskName: task.summary || "",
         taskType: task.customFields?.customfield_10371 || "Task",
@@ -189,11 +184,18 @@ export default function Step1() {
         formId: "", // Will be filled if needed
         tmpSubtaskId: task.key || "",
         subtaskId: "", // Will be filled when JIRA subtask is created
+        workspaceId: 0, // Will be filled in step 2
+        workspaceName: "", // Will be filled in step 2
+        seasonId: 0, // Will be filled in step 2
+        seasonName: "", // Will be filled in step 2
+        farmId: 0, // Will be filled in step 2
+        farmName: "", // Will be filled in step 2
+        fieldIdsOnlyIncluded: [], // Will be filled in step 2
         deleted: false,
       }))
 
       setValue("tasks", formTasks)
-      
+
       // Initialize all tasks as enabled
       const allTaskIndices = new Set<number>(formTasks.map((_, index) => index))
       setEnabledTasks(allTaskIndices)
@@ -236,20 +238,23 @@ export default function Step1() {
         )}
       </div>
 
-      {tmpRequestId && watch("tasks") && watch("tasks").length > 0 ? (
+      {tmpRequestId && watch("tasks") && (watch("tasks")?.length ?? 0) > 0 ? (
         <div className="mt-6 border rounded-md p-4">
           <h4 className="text-sm font-medium mb-2">
             {t("protocolTasksTitle")}
           </h4>
           <ul className="text-sm">
-            {watch("tasks").map((task: any, index: number) => (
-              <li key={index} className="flex items-start space-x-2">
-                <SquareCheckBig className="h-5 w-5 text-green-500 mt-0.5" />
-                <span>
-                  {task.taskName}
-                </span>
-              </li>
-            ))}
+            {watch("tasks")?.map((task: any, index: number) => {
+              if (!task) return null;
+              return (
+                <li key={index} className="flex items-start space-x-2">
+                  <SquareCheckBig className="h-5 w-5 text-green-500 mt-0.5" />
+                  <span>
+                    {task.taskName || ""}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         </div>
       ) : (

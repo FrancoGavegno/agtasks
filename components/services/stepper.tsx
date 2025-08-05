@@ -28,9 +28,7 @@ import {
   apiClient,
   Service,
   CreateServiceInput,
-  CreateTaskInput,
-  CreateFieldInput,
-  CreateTaskFieldInput
+  CreateTaskInput  
 } from "@/lib/integrations/amplify"
 import {
   createService,
@@ -54,7 +52,6 @@ function DebugContext() {
         <div>protocolId: {formData.protocolId || 'none'}</div>
         <div>protocolName: {formData.protocolName}</div>
         <div>tmpRequestId: {formData.tmpRequestId} </div>
-        <div>Fields: {formData.fields?.length || 0}</div>
         <div>Tasks: {formData.tasks?.length || 0}</div>
       </div>
     </div>
@@ -95,7 +92,6 @@ function ServiceStepperForm({ userEmail }: Props) {
   const localeStr = Array.isArray(locale) ? locale[0] : locale
   const domainStr = Array.isArray(domain) ? domain[0] : domain
   const projectStr = Array.isArray(project) ? project[0] : project
-  const t = useTranslations("CreateService")
   const tStepper = useTranslations("CreateServiceStepper")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const {
@@ -104,42 +100,48 @@ function ServiceStepperForm({ userEmail }: Props) {
     form,
     validateStep,
     enabledTasks,
-    resetForm
+    resetForm,
+    workspaces,
+    campaigns,
+    establishments,
+    lots
   } = useServiceForm()
 
   // Check if current step is valid for button state
-  const isCurrentStepValid = () => {
-    const formData = form.getValues()
+  // const isCurrentStepValid = () => {
+  //   const formData = form.getValues()
 
-    switch (currentStep) {
-      case 1:
-        return formData.protocolId && formData.protocolId.trim() !== ""
-      case 2:
-        return formData.fields && formData.fields.length > 0
-      case 3:
-        // For step 3, we only check if there are tasks and at least one is enabled
-        // The detailed validation (userEmail, formId) is handled in validateStep
-        return formData.tasks && formData.tasks.length > 0 && enabledTasks.size > 0
-      default:
-        return true
-    }
-  }
+  //   switch (currentStep) {
+  //     case 1:
+  //       return formData.protocolId && formData.protocolId.trim() !== ""
+  //     case 2:
+  //       // Step 2 is valid if workspace, campaign, and establishment are selected
+  //       // fieldIdsOnlyIncluded can be empty (all fields) or have specific IDs
+  //       return formData.fieldIdsOnlyIncluded !== undefined
+  //     case 3:
+  //       // For step 3, we only check if there are tasks and at least one is enabled
+  //       // The detailed validation (userEmail, formId) is handled in validateStep
+  //       return formData.tasks && formData.tasks.length > 0 && enabledTasks.size > 0
+  //     default:
+  //       return true
+  //   }
+  // }
 
   // Auto-validate when form data changes
-  useEffect(() => {
-    const subscription = form.watch(() => {
-      // Clear previous errors when data changes
-      if (currentStep === 1) {
-        form.clearErrors("protocolId")
-      } else if (currentStep === 2) {
-        form.clearErrors("fields")
-      } else if (currentStep === 3) {
-        form.clearErrors("tasks")
-      }
-    })
+  // useEffect(() => {
+  //   const subscription = form.watch(() => {
+  //     // Clear previous errors when data changes
+  //     if (currentStep === 1) {
+  //       form.clearErrors("protocolId")
+  //     } else if (currentStep === 2) {
+  //       form.clearErrors("tasks")
+  //     } else if (currentStep === 3) {
+  //       form.clearErrors("tasks")
+  //     }
+  //   })
 
-    return () => subscription.unsubscribe()
-  }, [form, currentStep])
+  //   return () => subscription.unsubscribe()
+  // }, [form, currentStep])
 
   const prevStep = () => {
     if (currentStep > 1) {
@@ -176,36 +178,9 @@ function ServiceStepperForm({ userEmail }: Props) {
     const result = await apiClient.createService(data)
     return result
   }
-
-  // Crear Fields en DB
-  async function createServiceFieldsInDB(lots: CreateFieldInput[]): Promise<string[]> {
-    const fieldIds: string[] = []
-
-    for (const lot of lots) {
-      const fieldData = {
-        workspaceId: lot.workspaceId || "",
-        workspaceName: lot.workspaceName,
-        campaignId: lot.campaignId || "",
-        campaignName: lot.campaignName,
-        farmId: lot.farmId || "",
-        farmName: lot.farmName,
-        fieldId: lot.fieldId || "",
-        fieldName: lot.fieldName || "",
-        hectares: lot.hectares,
-        crop: lot.crop,
-        hybrid: lot.hybrid,
-        deleted: false
-      }
-
-      const result = await apiClient.createField(fieldData)
-      if (result.id) fieldIds.push(result.id)
-    }
-
-    return fieldIds
-  }
+  
   // Crear Tasks en DB
-  async function createServiceTasksInDB(tasks: CreateTaskInput[]):
-    Promise<{ taskIds: string[], tasksCreated: Task[] }> {
+  async function createServiceTasksInDB(tasks: CreateTaskInput[]): Promise<{ taskIds: string[], tasksCreated: Task[] }> {
 
     const taskIds: string[] = []
     const tasksCreated: Task[] = []
@@ -220,53 +195,12 @@ function ServiceStepperForm({ userEmail }: Props) {
 
     return { taskIds, tasksCreated }
   }
-
-  // Asociar cada Field a cada Task mediante TaskField usando la Lambda function
-  async function associateFieldsToTasksBatch(taskIds: string[], fieldIds: string[]) {
-    console.log("=== CREAR SERVICIO: TaskFields que se crearán ===")
-    console.log("Task IDs:", taskIds)
-    console.log("Field IDs:", fieldIds)
-    
-    // Crear array de todas las combinaciones taskId-fieldId
-    const allCombinations: CreateTaskFieldInput[] = []
-    for (const taskId of taskIds) {
-      for (const fieldId of fieldIds) {
-        allCombinations.push({ taskId, fieldId })
-      }
-    }
-    
-    console.log(`Total de combinaciones a procesar: ${allCombinations.length}`)
-    
-    try {
-      // Usar la nueva Lambda function para mejor rendimiento
-      const results = await apiClient.createTaskFieldsBatch(allCombinations)
-      
-      console.log(`TaskFields creados exitosamente: ${results.length}`)
-      console.log("=== FIN CREAR SERVICIO ===")
-      
-      return results
-    } catch (error) {
-      console.error("Error en batch processing:", error)
-      throw error
-    }
-  }
-
+  
   const nextStep = async () => {
     const isValid = await validateStep(currentStep)
 
     if (!isValid) {
-      // Get the first error message from the form
-      const errors = form.formState.errors
       let errorMessage = tStepper("validationErrorMessage")
-
-      if (errors.protocolId?.message) {
-        errorMessage = errors.protocolId.message
-      } else if (errors.fields?.message) {
-        errorMessage = errors.fields.message
-      } else if (errors.tasks?.message) {
-        errorMessage = errors.tasks.message
-      }
-
       toast({
         title: tStepper("validationErrorTitle"),
         description: errorMessage,
@@ -282,10 +216,13 @@ function ServiceStepperForm({ userEmail }: Props) {
 
   const onSubmit = async () => {
     try {
-      setIsSubmitting(true);
-      const formData = form.getValues()
+      setIsSubmitting(true);            
 
-      //       // Validate final step
+      // Used to get project data
+      let serviceDeskId = "";
+      let requestTypeId = "";
+
+      // Validate final step
       const isValid = await validateStep(3)
       if (!isValid) {
         toast({
@@ -296,38 +233,48 @@ function ServiceStepperForm({ userEmail }: Props) {
         return
       }
 
-      // Handle project parameter (can be array in Next.js 13+)
+      // Handle project parameter 
       const projectStr = Array.isArray(project) ? project[0] : project
       if (!projectStr || typeof projectStr !== 'string') {
         throw new Error("Project ID is required")
       }
-
+            
       // Get project data
-      let serviceDeskId = "";
-      let requestTypeId = "";
-      const projectResponse = await apiClient.getProject(projectStr);
-      // console.log("Project response:", projectResponse);
+      const projectResponse = await apiClient.getProject(projectStr);      
       if (projectResponse && projectResponse.id) {
         serviceDeskId = projectResponse.serviceDeskId;
-        requestTypeId = projectResponse.requestTypeId;
-        // console.log("Jira config - serviceDeskId:", serviceDeskId, "requestTypeId:", requestTypeId);
+        requestTypeId = projectResponse.requestTypeId;        
       }
-
-      // Generate service name
-      const serviceName = `${formData.protocolName} - ${formData.fields[0]?.workspaceName || ''} - ${formData.fields[0]?.campaignName || ''} - ${formData.fields[0]?.farmName || ''}`;
 
       // Validate that we have the required Jira configuration
       if (!serviceDeskId || !requestTypeId) {
         throw new Error(`Project configuration is missing required Jira settings. serviceDeskId: "${serviceDeskId}", requestTypeId: "${requestTypeId}"`);
       }
+      
+      // Generate service name
+      const protName = form.getValues("protocolName")
+      const allTasks = form.getValues("tasks")
+      const workName = allTasks[0].workspaceName
+      const seasName = allTasks[0].seasonName
+      const farmName = allTasks[0].farmName      
+      const serviceName = `${protName} - ${workName} - ${seasName} - ${farmName}`
+      
+      // Set last required values
+      form.setValue("projectId", projectStr)
+      form.setValue("name", serviceName)
 
-      // Generate description field
-      const { description, descriptionPlain } = await generateDescriptionField(formData.fields)
+      const formData = form.getValues()
+
+      // console.log("formData: ", formData)
+      // console.log("enabledTasks: ", enabledTasks)
+
+      // Generate description field - use lots data for description
+      // const { description, descriptionPlain } = await generateDescriptionField(lots || [])
 
       // Create Service in JIRA
       const jiraResponse = await createServiceInJiraOnly(
-        serviceName,
-        description,
+        formData.name,
+        formData.name,
         userEmail,
         serviceDeskId,
         requestTypeId
@@ -339,31 +286,23 @@ function ServiceStepperForm({ userEmail }: Props) {
       const { issueKey } = jiraResponse.data;
 
       // Create Service in DB
-      const serviceData = {
-        projectId: projectStr,
+      const serviceData: CreateServiceInput = {
+        projectId: formData.projectId,
         tmpRequestId: formData.tmpRequestId,
         requestId: issueKey,
-        name: serviceName,
-        protocolId: formData.protocolId,
-        deleted: false
+        name: formData.name,
+        protocolId: formData.protocolId,        
       }
       const service = await createServiceInDB(serviceData)
 
-      // Create Fields in DB
-      const fieldIds = await createServiceFieldsInDB(formData.fields)
+      // Create Tasks in DB (only enabled tasks, without subtaskId initially)       
+      const enabledTasksArray: CreateTaskInput[] = Array.from(enabledTasks).map(index => formData.tasks[index])
+      
+      console.log("enabledTasksArray: ", enabledTasksArray)
 
-      // Create Tasks in DB (only enabled tasks, without subtaskId initially) 
-      const enabledTasksArray = Array.from(enabledTasks)
-      const enabledTasksData = enabledTasksArray.map((taskIndex: number) => formData.tasks[taskIndex])
-
-      // Filter duplicate tasks based on tmpSubtaskId
-      const uniqueTasks = enabledTasksData.filter((task: any, index: number, self: any[]) =>
-        index === self.findIndex((t: any) => t.tmpSubtaskId === task.tmpSubtaskId)
-      );
-
-      const tasksToCreate: CreateTaskInput[] = uniqueTasks.map((task: any) => ({
+      const tasksToCreate: CreateTaskInput[] = enabledTasksArray.map((task: any) => ({
         ...task,
-        serviceId: service.id
+        serviceId: service.id,        
       }))
       const { taskIds, tasksCreated } = await createServiceTasksInDB(tasksToCreate)
 
@@ -377,11 +316,11 @@ function ServiceStepperForm({ userEmail }: Props) {
         const agtasksUrl = `${baseUrl}/${localeStr}/domains/${domainStr}/projects/${projectStr}/tasks/${task.id}/edit`;
         const response = await createSubtask(
           issueKey,
-          task.taskName || "",
-          task.userEmail || "",
-          descriptionPlain,
+          task.taskName,
+          task.userEmail,
+          formData.name,
           agtasksUrl,
-          task.taskType || ""
+          task.taskType,
         );
         if (response?.key) {
           subtaskKeys.push(response.key);
@@ -393,30 +332,11 @@ function ServiceStepperForm({ userEmail }: Props) {
       // Update tasks with Jira subtaskId
       await Promise.all(taskIds.map((taskId, idx) =>
         apiClient.updateTask(taskId, { subtaskId: subtaskKeys[idx] })
-      ));
-
-      // Associate fields to tasks
-      const totalCombinations = taskIds.length * fieldIds.length
-      
-      // Mostrar toast informativo para lotes grandes
-      if (totalCombinations > 50) {
-        toast({
-          title: tStepper("processingFieldsTitle"),
-          description: tStepper("processingFieldsMessage", { totalCombinations }),
-          duration: 3000,
-        })
-      }
-      
-      const batchResult = await associateFieldsToTasksBatch(taskIds, fieldIds)
-      
-      // Mostrar resultado detallado del procesamiento batch
-      const successMessage = batchResult.length === totalCombinations 
-        ? tStepper("serviceCreatedMessage")
-        : tStepper("serviceCreatedPartialMessage", { batchResult: batchResult.length, totalCombinations })
+      ));               
 
       toast({
         title: tStepper("serviceCreatedTitle"),
-        description: successMessage,
+        description: tStepper("serviceCreatedMessage"),
         duration: 5000,
       })
  
@@ -488,7 +408,7 @@ function ServiceStepperForm({ userEmail }: Props) {
                 <Button
                   type="button"
                   onClick={nextStep}
-                  disabled={!isCurrentStepValid()}
+                  // disabled={!isCurrentStepValid()}
                 >
                   <ChevronRight className="w-4 h-4 ml-1" /> {tStepper("nextButton")}
                 </Button>
@@ -496,7 +416,7 @@ function ServiceStepperForm({ userEmail }: Props) {
               {currentStep === 3 && (
                 <Button
                   type="button"
-                  disabled={isSubmitting || !isCurrentStepValid()}
+                  disabled={isSubmitting}
                   onClick={onSubmit}
                 >
                   {isSubmitting ? tStepper("creatingButton") : tStepper("createServiceButton")}

@@ -369,7 +369,14 @@
     "select": "Select",
     "choose": "Choose",
     "required": "Required",
-    "optional": "Optional"
+    "optional": "Optional",
+    "home": "Home",
+    "admin": "Admin",
+    "actions": "Actions",
+    "createdSuccessfully": "Created successfully",
+    "updatedSuccessfully": "Updated successfully",
+    "deletedSuccessfully": "Deleted successfully",
+    "unexpectedError": "An unexpected error occurred"
   },
   "Footer": {
     "poweredBy": "Powered by"
@@ -391,6 +398,8 @@
       "workspaceLabel": "Workspace",
       "campaignLabel": "Campaign", 
       "establishmentLabel": "Establishment",
+      "allLotsSelected": "All lots selected",
+      "includeOnlyTheseLots": "Include only these lots...",
       "availableLotsTitle": "Available Lots",
       "loadingLots": "Loading lots...",
       "noLotsAvailable": "No lots available for this establishment",
@@ -471,10 +480,10 @@
       "selectTaskType": "Select a task type",
       "selectForm": "Select a form type"
     },
-    "step2": {
+        "step2": {
       "workspaceLabel": "Workspace",
       "campaignLabel": "Campaign",
-      "establishmentLabel": "Establishment",
+      "establishmentLabel": "Establishment", 
       "availableLotsTitle": "Available Lots",
       "loadingLots": "Loading lots...",
       "noLotsAvailable": "No lots available for this establishment",
@@ -485,7 +494,9 @@
       "selectAllLots": "Select all lots",
       "noWorkspacesAvailable": "No workspaces available",
       "noCampaignsAvailable": "No campaigns available",
-      "noEstablishmentsAvailable": "No establishments available"
+      "noEstablishmentsAvailable": "No establishments available",
+      "allLotsSelected": "All lots selected",
+      "includeOnlyTheseLots": "Include only these lots..."
     },
     "step3": {
       "projectLabel": "Project",
@@ -508,6 +519,203 @@
     "tasks": "Tasks",
     "createTask": "Create Task",
     "editTask": "Edit Task"
+  },  
+  "Admin": {
+    "title": "Admin Panel",
+    "subtitle": "Manage all your application data from this central admin panel",
+    "manage": "Manage",
+    "DomainProtocols": {
+      "title": "Domain Protocols",
+      "subtitle": "Manage domain-specific protocols and configurations",
+      "breadcrumb": "Domain Protocols",
+      "create": "Create Protocol",
+      "createTitle": "Create Domain Protocol",
+      "createDescription": "Add a new domain protocol configuration",
+      "editTitle": "Edit Domain Protocol",
+      "editDescription": "Update domain protocol configuration",
+      "deleteTitle": "Delete Domain Protocol",
+      "deleteDescription": "Are you sure you want to delete this domain protocol? This action cannot be undone.",
+      "columns": {
+        "name": "Name",
+        "domainId": "Domain ID",
+        "tmProtocolId": "Protocol ID",
+        "language": "Language",
+        "createdAt": "Created At"
+      },
+      "form": {
+        "domainId": "Domain ID",
+        "domainIdPlaceholder": "Enter domain ID",
+        "tmProtocolId": "Protocol ID",
+        "tmProtocolIdPlaceholder": "Enter protocol ID",
+        "name": "Name",
+        "namePlaceholder": "Enter protocol name",
+        "language": "Language"
+      }
+    },
+    "DomainForms": {
+      "title": "Domain Forms",
+      "subtitle": "Manage domain-specific forms and data collection",
+      "breadcrumb": "Domain Forms",
+      "create": "Create Form",
+      "createTitle": "Create Domain Form",
+      "createDescription": "Add a new domain form configuration",
+      "editTitle": "Edit Domain Form",
+      "editDescription": "Update domain form configuration",
+      "deleteTitle": "Delete Domain Form",
+      "deleteDescription": "Are you sure you want to delete this domain form? This action cannot be undone.",
+      "columns": {
+        "name": "Name",
+        "domainId": "Domain ID",
+        "ktFormId": "Form ID",
+        "language": "Language",
+        "createdAt": "Created At"
+      },
+      "form": {
+        "domainId": "Domain ID",
+        "domainIdPlaceholder": "Enter domain ID",
+        "ktFormId": "Form ID",
+        "ktFormIdPlaceholder": "Enter form ID",
+        "name": "Name",
+        "namePlaceholder": "Enter form name",
+        "language": "Language"
+      }
+    },
+    "Projects": {
+      "title": "Projects",
+      "subtitle": "Manage agricultural projects and their configurations",
+      "breadcrumb": "Projects",
+      "create": "Create Project",
+      "createTitle": "Create Project",
+      "createDescription": "Add a new agricultural project",
+      "editTitle": "Edit Project",
+      "editDescription": "Update project configuration",
+      "deleteTitle": "Delete Project",
+      "deleteDescription": "Are you sure you want to delete this project? This action will soft delete the project.",
+      "restoredSuccessfully": "Project restored successfully",
+      "showActive": "Show Active",
+      "showDeleted": "Show Deleted",
+      "deleted": "Deleted",
+      "active": "Active",
+      "columns": {
+        "name": "Name",
+        "domainId": "Domain ID",
+        "areaId": "Area ID",
+        "serviceDeskId": "Service Desk ID",
+        "requestTypeId": "Request Type ID",
+        "language": "Language",
+        "status": "Status",
+        "createdAt": "Created At"
+      },
+      "form": {
+        "domainId": "Domain ID",
+        "domainIdPlaceholder": "Enter domain ID",
+        "areaId": "Area ID",
+        "areaIdPlaceholder": "Enter area ID",
+        "name": "Name",
+        "namePlaceholder": "Enter project name",
+        "serviceDeskId": "Service Desk ID",
+        "serviceDeskIdPlaceholder": "Enter service desk ID",
+        "requestTypeId": "Request Type ID",
+        "requestTypeIdPlaceholder": "Enter request type ID",
+        "queueId": "Queue ID",
+        "queueIdPlaceholder": "Enter queue ID (optional)",
+        "language": "Language"
+      }
+    },
+    "Services": {
+      "title": "Services",
+      "subtitle": "Manage project services and workflows",
+      "breadcrumb": "Services",
+      "create": "Create Service",
+      "createTitle": "Create Service",
+      "createDescription": "Add a new service to a project",
+      "editTitle": "Edit Service",
+      "editDescription": "Update service configuration",
+      "deleteTitle": "Delete Service",
+      "deleteDescription": "Are you sure you want to delete this service? This action will soft delete the service.",
+      "restoredSuccessfully": "Service restored successfully",
+      "showActive": "Show Active",
+      "showDeleted": "Show Deleted",
+      "deleted": "Deleted",
+      "active": "Active",
+      "columns": {
+        "name": "Name",
+        "projectId": "Project ID",
+        "tmpRequestId": "Template Request ID",
+        "requestId": "Request ID",
+        "protocolId": "Protocol ID",
+        "status": "Status",
+        "createdAt": "Created At"
+      },
+      "form": {
+        "projectId": "Project ID",
+        "projectIdPlaceholder": "Enter project ID",
+        "name": "Name",
+        "namePlaceholder": "Enter service name",
+        "tmpRequestId": "Template Request ID",
+        "tmpRequestIdPlaceholder": "Enter template request ID (optional)",
+        "requestId": "Request ID",
+        "requestIdPlaceholder": "Enter request ID (optional)",
+        "protocolId": "Protocol ID",
+        "protocolIdPlaceholder": "Enter protocol ID (optional)"
+      }
+    },
+    "Tasks": {
+      "title": "Tasks",
+      "subtitle": "Manage individual tasks and assignments",
+      "breadcrumb": "Tasks",
+      "create": "Create Task",
+      "createTitle": "Create Task",
+      "createDescription": "Add a new task assignment",
+      "editTitle": "Edit Task",
+      "editDescription": "Update task configuration",
+      "deleteTitle": "Delete Task",
+      "deleteDescription": "Are you sure you want to delete this task? This action will soft delete the task.",
+      "restoredSuccessfully": "Task restored successfully",
+      "showActive": "Show Active",
+      "showDeleted": "Show Deleted",
+      "deleted": "Deleted",
+      "active": "Active",
+      "columns": {
+        "taskName": "Task Name",
+        "taskType": "Task Type",
+        "userEmail": "User Email",
+        "projectId": "Project ID",
+        "serviceId": "Service ID",
+        "workspaceName": "Workspace",
+        "farmName": "Farm",
+        "status": "Status",
+        "createdAt": "Created At"
+      },
+      "form": {
+        "taskName": "Task Name",
+        "taskNamePlaceholder": "Enter task name",
+        "taskType": "Task Type",
+        "taskTypePlaceholder": "Enter task type",
+        "userEmail": "User Email",
+        "userEmailPlaceholder": "Enter user email",
+        "projectId": "Project ID",
+        "projectIdPlaceholder": "Enter project ID (optional)",
+        "serviceId": "Service ID",
+        "serviceIdPlaceholder": "Enter service ID (optional)",
+        "workspaceId": "Workspace ID",
+        "workspaceIdPlaceholder": "Enter workspace ID",
+        "workspaceName": "Workspace Name",
+        "workspaceNamePlaceholder": "Enter workspace name (optional)",
+        "seasonId": "Season ID",
+        "seasonIdPlaceholder": "Enter season ID",
+        "seasonName": "Season Name",
+        "seasonNamePlaceholder": "Enter season name (optional)",
+        "farmId": "Farm ID",
+        "farmIdPlaceholder": "Enter farm ID",
+        "farmName": "Farm Name",
+        "farmNamePlaceholder": "Enter farm name (optional)",
+        "formId": "Form ID",
+        "formIdPlaceholder": "Enter form ID (optional)",
+        "taskData": "Task Data",
+        "taskDataPlaceholder": "Enter task data (JSON format, optional)"
+      }
+    }
   }
 }
 
