@@ -1,40 +1,3 @@
-// Funcionalidades Implementadas:
-
-// 1. Configuración 
-// Importa la configuración de Amplify
-// Configura Amplify con los outputs
-// Genera el cliente tipado con el esquema
-
-// 2. Validación con Zod
-// Usa todos los esquemas de /lib/schemas.ts
-// Valida datos de entrada antes de llamar a Amplify
-// Valida respuestas de Amplify antes de devolverlas
-// Maneja errores de validación específicamente
-
-// 3. Operaciones CRUDL Completas
-// Para cada modelo del esquema (DomainProtocol, DomainForm, Project, Service, Task, Field, TaskField):
-// Create: create[Model]() - Crea nuevos registros
-// Read: get[Model]() - Obtiene un registro por ID
-// Update: update[Model]() - Actualiza registros existentes
-// Delete: delete[Model]() - Elimina registros
-// List: list[Models]() - Lista registros con filtros y paginación
-
-// 4. Manejo de Errores
-// ValidationError: Para errores de validación de Zod
-// AmplifyError: Para errores de operaciones de Amplify
-// Manejo específico de errores de validación vs errores de red
-
-// 5. Filtros y Paginación
-// Filtros específicos para cada modelo
-// Paginación con limit y nextToken
-// Validación de parámetros de consulta
-
-// 6. Tipos TypeScript
-// Exporta todos los tipos necesarios
-// Tipos de entrada para operaciones CRUD
-// Tipos de consulta para filtros
-// Tipos de respuesta para listas
-
 import { Amplify } from "aws-amplify";
 import outputs from "@/amplify_outputs.json";
 import { generateClient } from "aws-amplify/api";
@@ -43,61 +6,47 @@ import {
   // Schemas
   domainProtocolSchema,
   domainFormSchema,
-  fieldSchema,
   projectSchema,
   serviceSchema,
   taskSchema,
-  taskFieldSchema,
   // Input schemas
+  createDomainProtocolInputSchema,
+  updateDomainProtocolInputSchema,
+  createDomainFormInputSchema,
+  updateDomainFormInputSchema,
   createProjectInputSchema,
   updateProjectInputSchema,
   createServiceInputSchema,
   updateServiceInputSchema,
   createTaskInputSchema,
   updateTaskInputSchema,
-  createFieldInputSchema,
-  updateFieldInputSchema,
-  createTaskFieldInputSchema,
   // Query schemas
   projectQuerySchema,
   serviceQuerySchema,
   taskQuerySchema,
-  fieldQuerySchema,
   paginationSchema,
-  // Response schemas
-  projectListResponseSchema,
-  serviceListResponseSchema,
-  taskListResponseSchema,
-  fieldListResponseSchema,
-  // New schemas for unified operations
-  taskFieldOperationSchema,
-  unifiedTaskOperationSchema,
-  taskFieldSyncSchema,
   // Types
   type DomainProtocol,
   type DomainForm,
-  type Field,
   type Project,
   type Service,
   type Task,
-  type TaskField,
+  type CreateDomainProtocolInput,
+  type UpdateDomainProtocolInput,
+  type CreateDomainFormInput,
+  type UpdateDomainFormInput,
   type CreateProjectInput,
   type UpdateProjectInput,
   type CreateServiceInput,
   type UpdateServiceInput,
   type CreateTaskInput,
   type UpdateTaskInput,
-  type CreateFieldInput,
-  type UpdateFieldInput,
-  type CreateTaskFieldInput,
   type ProjectQuery,
   type ServiceQuery,
   type TaskQuery,
-  type FieldQuery,
   type Pagination,
-  type TaskFieldOperation,
-  type UnifiedTaskOperation,
-  type TaskFieldSync,
+  unifiedTaskOperationSchema,
+  UnifiedTaskOperation,
 } from "@/lib/schemas";
 
 // Configura Amplify antes de generar el cliente
@@ -125,18 +74,16 @@ export class AmplifyError extends Error {
 export class ApiClient {
   // ==================== DOMAIN PROTOCOL OPERATIONS ====================
   
-  async createDomainProtocol(data: Omit<DomainProtocol, 'id' | 'createdAt' | 'updatedAt'>): Promise<DomainProtocol> {
+  async createDomainProtocol(data: CreateDomainProtocolInput): Promise<DomainProtocol> {
     try {
-      const validatedData = domainProtocolSchema.omit({ id: true, createdAt: true, updatedAt: true }).parse(data);
+      const validatedData = createDomainProtocolInputSchema.parse(data);
       const result = await client.models.DomainProtocol.create(validatedData);
       
       if (!result.data) {
         throw new Error('No data returned from create operation');
       }
       
-      // Return the result directly without additional validation
-      // The data structure should match what we expect
-      return result.data as DomainProtocol;
+      return domainProtocolSchema.parse(result.data);
     } catch (error) {
       if (error instanceof Error && error.name === 'ZodError') {
         throw new ValidationError('Invalid domain protocol data', error);
@@ -157,9 +104,9 @@ export class ApiClient {
     }
   }
 
-  async updateDomainProtocol(id: string, data: Partial<Omit<DomainProtocol, 'id' | 'createdAt' | 'updatedAt'>>): Promise<DomainProtocol> {
+  async updateDomainProtocol(id: string, data: UpdateDomainProtocolInput): Promise<DomainProtocol> {
     try {
-      const validatedData = domainProtocolSchema.partial().omit({ id: true, createdAt: true, updatedAt: true }).parse(data);
+      const validatedData = updateDomainProtocolInputSchema.parse(data);
       const result = await client.models.DomainProtocol.update({ id, ...validatedData });
       return domainProtocolSchema.parse(result.data);
     } catch (error) {
@@ -193,18 +140,16 @@ export class ApiClient {
 
   // ==================== DOMAIN FORM OPERATIONS ====================
   
-  async createDomainForm(data: Omit<DomainForm, 'id' | 'createdAt' | 'updatedAt'>): Promise<DomainForm> {
+  async createDomainForm(data: CreateDomainFormInput): Promise<DomainForm> {
     try {
-      const validatedData = domainFormSchema.omit({ id: true, createdAt: true, updatedAt: true }).parse(data);
+      const validatedData = createDomainFormInputSchema.parse(data);
       const result = await client.models.DomainForm.create(validatedData);
       
       if (!result.data) {
         throw new Error('No data returned from create operation');
       }
       
-      // Return the result directly without additional validation
-      // The data structure should match what we expect
-      return result.data as DomainForm;
+      return domainFormSchema.parse(result.data);
     } catch (error) {
       if (error instanceof Error && error.name === 'ZodError') {
         throw new ValidationError('Invalid domain form data', error);
@@ -225,9 +170,9 @@ export class ApiClient {
     }
   }
 
-  async updateDomainForm(id: string, data: Partial<Omit<DomainForm, 'id' | 'createdAt' | 'updatedAt'>>): Promise<DomainForm> {
+  async updateDomainForm(id: string, data: UpdateDomainFormInput): Promise<DomainForm> {
     try {
-      const validatedData = domainFormSchema.partial().omit({ id: true, createdAt: true, updatedAt: true }).parse(data);
+      const validatedData = updateDomainFormInputSchema.parse(data);
       const result = await client.models.DomainForm.update({ id, ...validatedData });
       return domainFormSchema.parse(result.data);
     } catch (error) {
@@ -429,13 +374,9 @@ export class ApiClient {
   
   async createTask(data: CreateTaskInput): Promise<Task> {
     try {
-      console.log("ApiClient.createTask called with data:", data);
       const validatedData = createTaskInputSchema.parse(data);
-      console.log("ApiClient.createTask - validated data:", validatedData);
       
-      console.log("ApiClient.createTask - calling client.models.Task.create with:", validatedData);
       const result = await client.models.Task.create(validatedData);
-      console.log("ApiClient.createTask - result:", result);
       
       if (!result.data) {
         throw new Error('No data returned from create operation');
@@ -443,13 +384,6 @@ export class ApiClient {
       
       return result.data as Task;
     } catch (error) {
-      console.error("ApiClient.createTask - error details:", {
-        error,
-        errorName: error instanceof Error ? error.name : 'Unknown',
-        errorMessage: error instanceof Error ? error.message : 'Unknown',
-        errorStack: error instanceof Error ? error.stack : 'Unknown'
-      });
-      
       if (error instanceof Error && error.name === 'ZodError') {
         throw new ValidationError('Invalid task data', error);
       }
@@ -504,6 +438,9 @@ export class ApiClient {
       if (validatedQuery.taskType) filter.taskType = { eq: validatedQuery.taskType };
       if (validatedQuery.userEmail) filter.userEmail = { eq: validatedQuery.userEmail };
       if (validatedQuery.deleted !== undefined) filter.deleted = { eq: validatedQuery.deleted };
+      if (validatedQuery.workspaceId) filter.workspaceId = { eq: validatedQuery.workspaceId };
+      if (validatedQuery.seasonId) filter.seasonId = { eq: validatedQuery.seasonId };
+      if (validatedQuery.farmId) filter.farmId = { eq: validatedQuery.farmId };
 
       const result = await client.models.Task.list({
         filter: Object.keys(filter).length > 0 ? filter : undefined,
@@ -523,322 +460,13 @@ export class ApiClient {
     }
   }
 
-  // ==================== FIELD OPERATIONS ====================
-  
-  async createField(data: CreateFieldInput): Promise<Field> {
-    try {
-      const validatedData = createFieldInputSchema.parse(data);
-      const result = await client.models.Field.create(validatedData);
-      
-      if (!result.data) {
-        throw new Error('No data returned from create operation');
-      }
-      
-      return result.data as Field;
-    } catch (error) {
-      if (error instanceof Error && error.name === 'ZodError') {
-        throw new ValidationError('Invalid field data', error);
-      }
-      throw new AmplifyError('Failed to create field', error);
-    }
-  }
-
-  async getField(id: string): Promise<Field> {
-    try {
-      const result = await client.models.Field.get({ id });
-      if (!result) {
-        throw new Error('Field not found');
-      }
-      return fieldSchema.parse(result.data);
-    } catch (error) {
-      throw new AmplifyError('Failed to get field', error);
-    }
-  }
-
-  async updateField(id: string, data: UpdateFieldInput): Promise<Field> {
-    try {
-      const validatedData = updateFieldInputSchema.parse(data);
-      const result = await client.models.Field.update({ id, ...validatedData });
-      return fieldSchema.parse(result.data);
-    } catch (error) {
-      if (error instanceof Error && error.name === 'ZodError') {
-        throw new ValidationError('Invalid field data', error);
-      }
-      throw new AmplifyError('Failed to update field', error);
-    }
-  }
-
-  async deleteField(id: string): Promise<void> {
-    try {
-      await client.models.Field.delete({ id });
-    } catch (error) {
-      throw new AmplifyError('Failed to delete field', error);
-    }
-  }
-
-  async listFields(query?: FieldQuery & Pagination): Promise<{ items: Field[]; nextToken?: string }> {
-    try {
-      const validatedQuery = {
-        ...paginationSchema.parse(query || {}),
-        ...fieldQuerySchema.parse(query || {})
-      };
-      
-      const filter: any = {};
-      if (validatedQuery.workspaceId) filter.workspaceId = { eq: validatedQuery.workspaceId };
-      if (validatedQuery.campaignId) filter.campaignId = { eq: validatedQuery.campaignId };
-      if (validatedQuery.farmId) filter.farmId = { eq: validatedQuery.farmId };
-      if (validatedQuery.deleted !== undefined) filter.deleted = { eq: validatedQuery.deleted };
-
-      const result = await client.models.Field.list({
-        filter: Object.keys(filter).length > 0 ? filter : undefined,
-        limit: validatedQuery.limit,
-        nextToken: validatedQuery.nextToken
-      });
-
-      return {
-        items: result.data.map(item => fieldSchema.parse(item)),
-        nextToken: result.nextToken || undefined
-      };
-    } catch (error) {
-      if (error instanceof Error && error.name === 'ZodError') {
-        throw new ValidationError('Invalid query parameters', error);
-      }
-      throw new AmplifyError('Failed to list fields', error);
-    }
-  }
-
-  // ==================== TASK FIELD OPERATIONS ====================
-  
-  async createTaskField(data: CreateTaskFieldInput): Promise<TaskField> {
-    try {
-      console.log("createTaskField - Input data:", data)
-      const validatedData = createTaskFieldInputSchema.parse(data);
-      console.log("createTaskField - Validated data:", validatedData)
-      
-      const result = await client.models.TaskField.create(validatedData);
-      console.log("createTaskField - Raw result:", result)
-      
-      if (!result.data) {
-        console.error("createTaskField - No data returned from create operation")
-        throw new Error('No data returned from create operation');
-      }
-      
-      console.log("createTaskField - Success, returning:", result.data)
-      return result.data as TaskField;
-    } catch (error) {
-      console.error("createTaskField - Error details:", error)
-      if (error instanceof Error && error.name === 'ZodError') {
-        console.error("createTaskField - Validation error:", error)
-        throw new ValidationError('Invalid task field data', error);
-      }
-      throw new AmplifyError('Failed to create task field', error);
-    }
-  }
-
-  // Crear múltiples TaskFields en batch usando la función Lambda para mejor rendimiento
-  async createTaskFieldsBatch(dataArray: CreateTaskFieldInput[]): Promise<TaskField[]> {
-    try {
-      console.log("createTaskFieldsBatch - Input data array length:", dataArray.length)
-      
-      if (dataArray.length === 0) {
-        return []
-      }
-      
-      // Validar todos los datos primero
-      const validatedDataArray = dataArray.map(data => {
-        console.log("createTaskFieldsBatch - Validating data:", data)
-        return createTaskFieldInputSchema.parse(data)
-      })
-      
-      console.log("createTaskFieldsBatch - All data validated successfully")
-      
-      // Mostrar toast informativo para lotes grandes
-      if (validatedDataArray.length > 50) {
-        console.log(`createTaskFieldsBatch - Processing large batch: ${validatedDataArray.length} items`)
-      }
-      
-      // Intentar usar la función Lambda primero
-      try {
-        console.log("createTaskFieldsBatch - Attempting to use Lambda function")
-        
-        // Preparar input para la función Lambda
-        const lambdaInput = {
-          taskFields: validatedDataArray
-        }
-        
-        console.log("createTaskFieldsBatch - Calling Lambda function with input:", lambdaInput)
-        
-        // Llamar a la función Lambda usando fetch directamente
-        const response = await fetch('/api/lambda/createTaskFields', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(lambdaInput)
-        })
-        
-        if (!response.ok) {
-          const errorText = await response.text()
-          console.error("createTaskFieldsBatch - HTTP error:", response.status, errorText)
-          throw new Error(`Lambda function failed: ${response.status} - ${errorText}`)
-        }
-        
-        const result = await response.json()
-        const lambdaResponse = result
-        console.log("createTaskFieldsBatch - Lambda response:", lambdaResponse)
-        console.log("createTaskFieldsBatch - Lambda response type:", typeof lambdaResponse)
-        console.log("createTaskFieldsBatch - Lambda response keys:", Object.keys(lambdaResponse))
-        
-        // Parse the body string if it exists (Lambda returns body as string)
-        let parsedBody;
-        if (lambdaResponse.body && typeof lambdaResponse.body === 'string') {
-          try {
-            parsedBody = JSON.parse(lambdaResponse.body);
-            console.log("createTaskFieldsBatch - Parsed body:", parsedBody);
-          } catch (parseError) {
-            console.error("createTaskFieldsBatch - Error parsing body:", parseError);
-            throw new Error(`Failed to parse Lambda response body: ${parseError}`);
-          }
-        } else {
-          // If no body or body is already an object, use the response directly
-          parsedBody = lambdaResponse;
-        }
-        
-        // Si la Lambda insertó datos, usar los items creados con IDs reales
-        if (parsedBody.inserted > 0 && parsedBody.createdItems && Array.isArray(parsedBody.createdItems)) {
-          console.log(`createTaskFieldsBatch - Lambda function inserted ${parsedBody.inserted} items successfully`)
-          
-          // Usar los IDs reales de la Lambda
-          const createdTaskFields: TaskField[] = parsedBody.createdItems.map((item: any) => ({
-            id: item.id,           // 👈 ID REAL DE LA LAMBDA
-            taskId: item.taskId,
-            fieldId: item.fieldId,
-            createdAt: item.createdAt,
-            updatedAt: item.updatedAt,
-          }))
-          
-          return createdTaskFields
-        }
-        
-        // Solo fallback si no se insertó nada
-        if (!parsedBody.success) {
-          const errorMessage = parsedBody.errors?.join(', ') || 'Unknown error from Lambda function'
-          console.error("createTaskFieldsBatch - Lambda function failed:", parsedBody)
-          throw new Error(`Lambda function failed: ${errorMessage}`)
-        }
-        
-        console.log(`createTaskFieldsBatch - Successfully created ${parsedBody.inserted} TaskFields via Lambda`)
-        
-        // Si no hay createdItems pero sí inserted, crear objetos básicos (fallback)
-        if (parsedBody.inserted > 0) {
-          console.log("createTaskFieldsBatch - Using fallback: no createdItems returned, generating temporary IDs")
-          const createdTaskFields: TaskField[] = validatedDataArray.slice(0, parsedBody.inserted).map((data, index) => ({
-            id: `generated-${Date.now()}-${index}`, // ID temporal como fallback
-            taskId: data.taskId,
-            fieldId: data.fieldId,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }))
-          
-          return createdTaskFields
-        }
-        
-        return []
-        
-      } catch (lambdaError) {
-        console.warn("createTaskFieldsBatch - Lambda function not available, falling back to individual creates:", lambdaError)
-        
-        // Fallback: crear TaskFields individualmente
-        console.log("createTaskFieldsBatch - Using fallback method: individual creates")
-        
-        const createdTaskFields: TaskField[] = []
-        
-        for (const data of validatedDataArray) {
-          try {
-            const result = await client.models.TaskField.create(data)
-            if (result.data) {
-              createdTaskFields.push(result.data as TaskField)
-            }
-          } catch (individualError) {
-            console.error("createTaskFieldsBatch - Error creating individual TaskField:", individualError)
-            // Continuar con el siguiente item en lugar de fallar todo el batch
-          }
-        }
-        
-        console.log(`createTaskFieldsBatch - Fallback completed: ${createdTaskFields.length}/${validatedDataArray.length} TaskFields created`)
-        
-        return createdTaskFields
-      }
-      
-    } catch (error) {
-      console.error("createTaskFieldsBatch - Error details:", error)
-      if (error instanceof Error && error.name === 'ZodError') {
-        console.error("createTaskFieldsBatch - Validation error:", error)
-        throw new ValidationError('Invalid task field data in batch', error);
-      }
-      throw new AmplifyError('Failed to create task fields batch', error);
-    }
-  }
-
-  async getTaskField(id: string): Promise<TaskField> {
-    try {
-      const result = await client.models.TaskField.get({ id });
-      if (!result) {
-        throw new Error('Task field not found');
-      }
-      return taskFieldSchema.parse(result.data);
-    } catch (error) {
-      throw new AmplifyError('Failed to get task field', error);
-    }
-  }
-
-  async updateTaskField(id: string, data: Partial<Omit<TaskField, 'id' | 'createdAt' | 'updatedAt'>>): Promise<TaskField> {
-    try {
-      const validatedData = taskFieldSchema.partial().omit({ id: true, createdAt: true, updatedAt: true }).parse(data);
-      const result = await client.models.TaskField.update({ id, ...validatedData });
-      return taskFieldSchema.parse(result.data);
-    } catch (error) {
-      if (error instanceof Error && error.name === 'ZodError') {
-        throw new ValidationError('Invalid task field data', error);
-      }
-      throw new AmplifyError('Failed to update task field', error);
-    }
-  }
-
-  async deleteTaskField(id: string): Promise<void> {
-    try {
-      await client.models.TaskField.delete({ id });
-    } catch (error) {
-      throw new AmplifyError('Failed to delete task field', error);
-    }
-  }
-
-  async listTaskFields(taskId?: string, fieldId?: string): Promise<{ items: TaskField[]; nextToken?: string }> {
-    try {
-      const filter: any = {};
-      if (taskId) filter.taskId = { eq: taskId };
-      if (fieldId) filter.fieldId = { eq: fieldId };
-
-      const result = await client.models.TaskField.list({
-        filter: Object.keys(filter).length > 0 ? filter : undefined
-      });
-
-      return {
-        items: result.data.map(item => taskFieldSchema.parse(item)),
-        nextToken: result.nextToken ?? undefined
-      };
-    } catch (error) {
-      throw new AmplifyError('Failed to list task fields', error);
-    }
-  }
-
   // ==================== UNIFIED TASK OPERATIONS ====================
   
   /**
-   * Unified method to create or update a task with its associated fields
-   * This method handles the complete task lifecycle including TaskField associations
+   * Unified method to create or update a task
+   * This method handles the complete task lifecycle using fieldIdsOnlyIncluded
    */
-  async processUnifiedTaskOperation(data: UnifiedTaskOperation): Promise<{ task: Task; fieldIds: string[] }> {
+  async processUnifiedTaskOperation(data: UnifiedTaskOperation): Promise<{ task: Task; fieldIds: number[] }> {
     try {
       console.log("Processing unified task operation with data:", data);
       
@@ -846,11 +474,11 @@ export class ApiClient {
       console.log("Data validated successfully:", validatedData);
       
       if (validatedData.operation === 'create') {
-        console.log("Creating new task with fields...");
-        return await this.createTaskWithFields(validatedData);
+        console.log("Creating new task...");
+        return await this.createTaskWith360Data(validatedData);
       } else {
-        console.log("Updating existing task with fields...");
-        return await this.updateTaskWithFields(validatedData);
+        console.log("Updating existing task...");
+        return await this.updateTaskWith360Data(validatedData);
       }
     } catch (error) {
       console.error("Error in processUnifiedTaskOperation:", error);
@@ -871,10 +499,10 @@ export class ApiClient {
   }
 
   /**
-   * Create a new task with its associated fields
+   * Create a new task with 360 Farm data
    */
-  private async createTaskWithFields(data: UnifiedTaskOperation): Promise<{ task: Task; fieldIds: string[] }> {
-    // Create the task first
+  private async createTaskWith360Data(data: UnifiedTaskOperation): Promise<{ task: Task; fieldIds: number[] }> {
+    // Create the task with 360 Farm data
     const taskData: CreateTaskInput = {
       projectId: data.projectId,
       serviceId: data.serviceId,
@@ -883,25 +511,32 @@ export class ApiClient {
       userEmail: data.userEmail,
       taskData: data.taskData,
       formId: data.formId,
+      workspaceId: data.workspaceId,
+      workspaceName: data.workspaceName,
+      seasonId: data.seasonId,
+      seasonName: data.seasonName,
+      farmId: data.farmId,
+      farmName: data.farmName,
+      fieldIdsOnlyIncluded: data.fieldIdsOnlyIncluded,
     };
 
     const task = await this.createTask(taskData);
 
-    // Create fields and associate them
-    const fieldIds = await this.createFieldsAndAssociate(data.fields, task.id!);
-
-    return { task, fieldIds };
+    return { 
+      task, 
+      fieldIds: data.fieldIdsOnlyIncluded || [] 
+    };
   }
 
   /**
-   * Update an existing task with its associated fields
+   * Update an existing task with 360 Farm data
    */
-  private async updateTaskWithFields(data: UnifiedTaskOperation): Promise<{ task: Task; fieldIds: string[] }> {
+  private async updateTaskWith360Data(data: UnifiedTaskOperation): Promise<{ task: Task; fieldIds: number[] }> {
     if (!data.taskId) {
       throw new Error('Task ID is required for update operations');
     }
 
-    // Update the task
+    // Update the task with 360 Farm data
     const taskData: UpdateTaskInput = {
       taskName: data.taskName,
       taskType: data.taskType,
@@ -909,161 +544,28 @@ export class ApiClient {
       taskData: data.taskData,
       serviceId: data.serviceId,
       formId: data.formId,
+      workspaceId: data.workspaceId,
+      workspaceName: data.workspaceName,
+      seasonId: data.seasonId,
+      seasonName: data.seasonName,
+      farmId: data.farmId,
+      farmName: data.farmName,
+      fieldIdsOnlyIncluded: data.fieldIdsOnlyIncluded,
     };
 
     const task = await this.updateTask(data.taskId, taskData);
 
-    // Synchronize fields
-    const fieldIds = await this.synchronizeTaskFields(data.taskId, data.fields);
-
-    return { task, fieldIds };
+    return { 
+      task, 
+      fieldIds: data.fieldIdsOnlyIncluded || [] 
+    };
   }
 
-  /**
-   * Create fields and associate them to a task
-   */
-  private async createFieldsAndAssociate(fields: any[], taskId: string): Promise<string[]> {
-    const fieldIds: string[] = [];
-
-    // Create each field
-    for (const field of fields) {
-      const fieldData: CreateFieldInput = {
-        workspaceId: field.workspaceId?.toString() || "",
-        workspaceName: field.workspaceName,
-        campaignId: field.campaignId?.toString() || "",
-        campaignName: field.campaignName,
-        farmId: field.farmId?.toString() || "",
-        farmName: field.farmName,
-        fieldId: field.fieldId || "",
-        fieldName: field.fieldName || "",
-        hectares: field.hectares,
-        crop: field.crop,
-        hybrid: field.hybrid,
-      };
-
-      const createdField = await this.createField(fieldData);
-      if (createdField.id) {
-        fieldIds.push(createdField.id);
-      }
-    }
-
-    // Associate fields to task
-    await this.associateFieldsToTask(taskId, fieldIds);
-
-    return fieldIds;
-  }
-
-  /**
-   * Synchronize task fields by comparing current and target field sets
-   * This method efficiently handles adding and removing field associations
-   */
-  async synchronizeTaskFields(taskId: string, targetFields: any[]): Promise<string[]> {
-    try {
-      // Get current task field associations
-      const currentTaskFields = await this.listTaskFields(taskId);
-      
-      // Get current field details for comparison
-      const currentFields = await Promise.all(
-        currentTaskFields.items.map(async (tf) => {
-          const field = await this.getField(tf.fieldId);
-          return {
-            taskFieldId: tf.id,
-            fieldId: tf.fieldId,
-            field360Id: field.fieldId, // 360 field ID for comparison
-            fieldData: field,
-          };
-        })
-      );
-
-      // Create sets for efficient comparison
-      const currentField360Ids = new Set(currentFields.map(cf => cf.field360Id));
-      const targetField360Ids = new Set(targetFields.map(tf => tf.fieldId));
-
-      // Find fields to remove (in current but not in target)
-      const fieldsToRemove = currentFields.filter(cf => !targetField360Ids.has(cf.field360Id));
-      
-      // Find fields to add (in target but not in current)
-      const fieldsToAdd = targetFields.filter(tf => !currentField360Ids.has(tf.fieldId));
-
-      // Remove fields that are no longer selected
-      if (fieldsToRemove.length > 0) {
-        await Promise.all(
-          fieldsToRemove.map(tf => this.deleteTaskField(tf.taskFieldId!))
-        );
-      }
-
-      // Add new fields
-      let newFieldIds: string[] = [];
-      if (fieldsToAdd.length > 0) {
-        newFieldIds = await this.createFieldsAndAssociate(fieldsToAdd, taskId);
-      }
-
-      // Return all current field IDs (existing + new)
-      const remainingFieldIds = currentFields
-        .filter(cf => !fieldsToRemove.some(fr => fr.taskFieldId === cf.taskFieldId))
-        .map(cf => cf.fieldId);
-      
-      return [...remainingFieldIds, ...newFieldIds];
-    } catch (error) {
-      throw new AmplifyError('Failed to synchronize task fields', error);
-    }
-  }
-
-  /**
-   * Associate multiple fields to a task using batch processing
-   */
-  private async associateFieldsToTask(taskId: string, fieldIds: string[]): Promise<void> {
-    if (fieldIds.length === 0) return;
-    
-    // Prepare batch data
-    const taskFieldInputs = fieldIds.map(fieldId => ({ taskId, fieldId }));
-    
-    // Use batch processing for better performance
-    await this.createTaskFieldsBatch(taskFieldInputs);
-  }
-
-  /**
-   * Get task with all its associated fields
-   */
-  async getTaskWithFields(taskId: string): Promise<{ task: Task; fields: Field[] }> {
-    try {
-      const task = await this.getTask(taskId);
-      const taskFields = await this.listTaskFields(taskId);
-      
-      const fields = await Promise.all(
-        taskFields.items.map(tf => this.getField(tf.fieldId))
-      );
-
-      return { task, fields };
-    } catch (error) {
-      throw new AmplifyError('Failed to get task with fields', error);
-    }
-  }
-
-  /**
-   * Validate task field associations
-   * This method checks if a TaskField association should be created or deleted
-   */
-  async validateTaskFieldAssociation(taskId: string, fieldId: string): Promise<{
-    shouldCreate: boolean;
-    shouldDelete: boolean;
-    existingTaskField?: TaskField;
-  }> {
-    try {
-      // Find existing TaskField with this taskId and fieldId
-      const taskFields = await this.listTaskFields(taskId);
-      const existingTaskField = taskFields.items.find(tf => tf.fieldId === fieldId);
-
-      return {
-        shouldCreate: !existingTaskField,
-        shouldDelete: false, // This would be determined by business logic
-        existingTaskField,
-      };
-    } catch (error) {
-      throw new AmplifyError('Failed to validate task field association', error);
-    }
-  }
+  
 }
+
+
+
 
 // Export singleton instance
 export const apiClient = new ApiClient();
@@ -1071,27 +573,18 @@ export const apiClient = new ApiClient();
 // Export types for convenience
 export type {
   DomainProtocol,
-  DomainForm,
-  Field,
+  DomainForm, 
   Project,
   Service,
-  Task,
-  TaskField,
+  Task,  
   CreateProjectInput,
   UpdateProjectInput,
   CreateServiceInput,
   UpdateServiceInput,
   CreateTaskInput,
   UpdateTaskInput,
-  CreateFieldInput,
-  UpdateFieldInput,
-  CreateTaskFieldInput,
   ProjectQuery,
   ServiceQuery,
   TaskQuery,
-  FieldQuery,
-  Pagination,
-  TaskFieldOperation,
-  UnifiedTaskOperation,
-  TaskFieldSync,
+  Pagination  
 };

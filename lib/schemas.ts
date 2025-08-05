@@ -1,44 +1,3 @@
-// Core Entity Schemas:
-
-// domainProtocolSchema - For DomainProtocol model
-// domainFormSchema - For DomainForm model
-// fieldSchema - For Field model
-// projectSchema - For Project model
-// serviceSchema - For Service model
-// taskSchema - For Task model
-// taskFieldSchema - For TaskField junction table
-
-// Relationship Schemas:
-// projectWithRelationsSchema - Project with services and tasks
-// serviceWithRelationsSchema - Service with project and tasks
-// taskWithRelationsSchema - Task with project, service, and taskFields
-// fieldWithRelationsSchema - Field with taskFields
-// taskFieldWithRelationsSchema - TaskField with task and field
-
-// Input Schemas for CRUD Operations:
-// createProjectInputSchema - For creating projects (without auto-generated fields)
-// updateProjectInputSchema - For updating projects (partial, without auto-generated fields)
-// Similar patterns for all other entities
-
-// Query Schemas:
-// projectQuerySchema - For filtering projects
-// serviceQuerySchema - For filtering services
-// taskQuerySchema - For filtering tasks
-// fieldQuerySchema - For filtering fields
-// paginationSchema - For pagination parameters
-
-// Response Schemas:
-// listResponseSchema - Generic list response wrapper
-// Specific list response schemas for each entity type
-
-// All relationships preserved:
-// Project → Services (hasMany)
-// Project → Tasks (hasMany)
-// Service → Tasks (hasMany)
-// Task → TaskFields (hasMany)
-// Field → TaskFields (hasMany)
-// All belongsTo relationships
-
 import { z } from "zod";
 
 // Base schemas for common patterns
@@ -72,16 +31,13 @@ export type DomainForm = z.infer<typeof domainFormSchema>;
 export const projectSchema = baseEntitySchema.extend({
   domainId: z.string().min(1, "Domain ID is required"),
   areaId: z.string().min(1, "Area ID is required"),
-  // 360 Integration defaults
   tmpSourceSystem: z.string().default("jira"),
   tmpServiceDeskId: z.string().default("TEM"),
   tmpRequestTypeId: z.string().default("87"),
-  tmpQueueId: z.string().default("82"),
-  // Task Manager Client Project
+  tmpQueueId: z.string().default("82"),  
   serviceDeskId: z.string().min(1, "Service Desk ID is required"),
   requestTypeId: z.string().min(1, "Request Type ID is required"),
   queueId: z.string().optional(),
-  // Project details
   name: z.string().min(1, "Project name is required"),
   language: z.string().optional(),
   deleted: z.boolean().default(false),
@@ -92,18 +48,18 @@ export type Project = z.infer<typeof projectSchema>;
 // Service Schema
 export const serviceSchema = baseEntitySchema.extend({
   projectId: z.string().min(1, "Project ID is required"),
-  tmpRequestId: z.string().optional(), // template
-  requestId: z.string().optional(), // client
+  tmpRequestId: z.string().min(1, "Template ID is required"), // template
+  requestId: z.string().min(1, "Request ID is required"), // client
   name: z.string().min(1, "Service name is required"),
   deleted: z.boolean().default(false),
-  protocolId: z.string().optional(), // DomainProtocol reference
+  protocolId: z.string().min(1, "Protocol ID is required"), 
 });
 
 export type Service = z.infer<typeof serviceSchema>;
 
-// Task Schema
+// Task Schema - Updated to match database schema exactly
 export const taskSchema = baseEntitySchema.extend({
-  projectId: z.string().optional().nullable(),
+  projectId: z.string().min(1, "Project ID is required"),
   serviceId: z.string().optional().nullable(),
   tmpSubtaskId: z.string().optional().nullable(), // template
   subtaskId: z.string().optional().nullable(), // client
@@ -113,35 +69,16 @@ export const taskSchema = baseEntitySchema.extend({
   userEmail: z.string().email("Valid email is required").min(1, "User email is required"),
   deleted: z.boolean().default(false),
   formId: z.string().optional().nullable(), // DomainForm reference
+  workspaceId: z.number().int().min(1, "Workspace ID is required"),
+  workspaceName: z.string().optional(),
+  seasonId: z.number().int().min(1, "Season ID is required"),
+  seasonName: z.string().optional(),
+  farmId: z.number().int().min(1, "Farm ID is required"),
+  farmName: z.string().optional(),
+  fieldIdsOnlyIncluded: z.array(z.number().int()).optional(),
 });
 
 export type Task = z.infer<typeof taskSchema>;
-
-// Field Schema
-export const fieldSchema = baseEntitySchema.extend({
-  workspaceId: z.string().min(1, "Workspace ID is required"),
-  workspaceName: z.string().optional(),
-  campaignId: z.string().min(1, "Campaign ID is required"),
-  campaignName: z.string().optional(),
-  farmId: z.string().min(1, "Farm ID is required"),
-  farmName: z.string().optional(),
-  fieldId: z.string().min(1, "Field ID is required"),
-  fieldName: z.string().min(1, "Field name is required"),
-  hectares: z.number().positive().optional(),
-  crop: z.string().optional(),
-  hybrid: z.string().optional(),
-  deleted: z.boolean().default(false),
-});
-
-export type Field = z.infer<typeof fieldSchema>;
-
-// TaskField Schema (junction table)
-export const taskFieldSchema = baseEntitySchema.extend({
-  taskId: z.string().min(1, "Task ID is required"),
-  fieldId: z.string().min(1, "Field ID is required"),
-});
-
-export type TaskField = z.infer<typeof taskFieldSchema>;
 
 // Schemas with relationships (for API responses)
 export const projectWithRelationsSchema = projectSchema.extend({
@@ -161,23 +98,9 @@ export type ServiceWithRelations = z.infer<typeof serviceWithRelationsSchema>;
 export const taskWithRelationsSchema = taskSchema.extend({
   project: projectSchema.optional(),
   service: serviceSchema.optional(),
-  taskFields: z.array(taskFieldSchema).optional(),
 });
 
 export type TaskWithRelations = z.infer<typeof taskWithRelationsSchema>;
-
-export const fieldWithRelationsSchema = fieldSchema.extend({
-  taskFields: z.array(taskFieldSchema).optional(),
-});
-
-export type FieldWithRelations = z.infer<typeof fieldWithRelationsSchema>;
-
-export const taskFieldWithRelationsSchema = taskFieldSchema.extend({
-  task: taskSchema.optional(),
-  field: fieldSchema.optional(),
-});
-
-export type TaskFieldWithRelations = z.infer<typeof taskFieldWithRelationsSchema>;
 
 // Input schemas for mutations (without auto-generated fields)
 export const createProjectInputSchema = projectSchema.omit({
@@ -196,6 +119,7 @@ export const createServiceInputSchema = serviceSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  deleted: true,
 });
 
 export const updateServiceInputSchema = serviceSchema.partial().omit({
@@ -217,20 +141,27 @@ export const updateTaskInputSchema = taskSchema.partial().omit({
   updatedAt: true,  
 });
 
-export const createFieldInputSchema = fieldSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  deleted: true,
-});
-
-export const updateFieldInputSchema = fieldSchema.partial().omit({
+// DomainProtocol input schemas
+export const createDomainProtocolInputSchema = domainProtocolSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export const createTaskFieldInputSchema = taskFieldSchema.omit({
+export const updateDomainProtocolInputSchema = domainProtocolSchema.partial().omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// DomainForm input schemas
+export const createDomainFormInputSchema = domainFormSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateDomainFormInputSchema = domainFormSchema.partial().omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -257,14 +188,9 @@ export const taskQuerySchema = z.object({
   taskType: z.string().optional(),
   userEmail: z.string().optional(),
   deleted: z.boolean().optional(),
-  includeFields: z.boolean().optional(),
-});
-
-export const fieldQuerySchema = z.object({
-  workspaceId: z.string().optional(),
-  campaignId: z.string().optional(),
-  farmId: z.string().optional(),
-  deleted: z.boolean().optional(),
+  workspaceId: z.number().int().optional(),
+  seasonId: z.number().int().optional(),
+  farmId: z.number().int().optional(),
 });
 
 export const jiraServiceQuerySchema = z.object({
@@ -293,7 +219,6 @@ export const listResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
 export const projectListResponseSchema = listResponseSchema(projectWithRelationsSchema);
 export const serviceListResponseSchema = listResponseSchema(serviceWithRelationsSchema);
 export const taskListResponseSchema = listResponseSchema(taskWithRelationsSchema);
-export const fieldListResponseSchema = listResponseSchema(fieldWithRelationsSchema);
 
 // Jira protocol subtasks 
 export const protocolTasksSchema = z.record(z.array(z.object({
@@ -308,74 +233,63 @@ export const protocolTasksSchema = z.record(z.array(z.object({
 
 export type ProtocolTasks = z.infer<typeof protocolTasksSchema>
 
-// Form validation 
-
-// Extend serviceSchema with arrays for tasks and fields
+// UI Form
 export const serviceFormSchema = serviceSchema.extend({
-  protocolName: z.string().optional(),
-  tmpRequestId: z.string().optional(),
-  tasks: z.array(taskSchema),
-  fields: z.array(fieldSchema),
-})
-
-// Field Form Values for task fields
-export const fieldFormSchema = z.object({
-  workspaceId: z.string().min(1, "Workspace ID is required"),
-  workspaceName: z.string().optional(),
-  campaignId: z.string().min(1, "Campaign ID is required"),
-  campaignName: z.string().optional(),
-  farmId: z.string().min(1, "Farm ID is required"),
-  farmName: z.string().optional(),
-  fieldId: z.string().min(1, "Field ID is required"),
-  fieldName: z.string().min(1, "Field name is required"),
-  hectares: z.number().positive().optional(),
-  crop: z.string().optional(),
-  hybrid: z.string().optional(),
-})
-
-// Task Form Schema for create/edit task forms
-export const taskFormSchema = z.object({
-  taskName: z.string().min(1, "Task name is required"),
-  taskType: z.string().min(1, "Task type is required"),
-  fields: z.array(fieldFormSchema).min(1, "At least one field must be selected"),
   projectId: z.string().min(1, "Project ID is required"),
-  serviceId: z.string().optional(),
+  tmpRequestId: z.string().min(1, "Template ID is required"),
+  requestId: z.string().min(1, "Request ID is required"),
+  name: z.string().min(1, "Service name is required"),
+  protocolId: z.string().min(1, "Protocol ID is required"),
+  protocolName: z.string().optional(),
+  tasks: z.array(taskSchema).min(1, "At least 1 task is required"),  
+})
+
+// Task Form Schema for create/edit task forms - Updated to match database schema
+export const taskFormSchema = z.object({
+  projectId: z.string().min(1, "Project ID is required"),
+  taskName: z.string().min(1, "Task name is required"),
+  taskType: z.string().min(1, "Task type is required"),  
   userEmail: z.string().email("Valid email is required").min(1, "User email is required"),
+  serviceId: z.string().optional(),
   tmpSubtaskId: z.string().optional(),
   subtaskId: z.string().optional(),
   taskData: z.string().optional().nullable(),
-  deleted: z.boolean().default(false),
-  formId: z.string().optional().nullable(),
-})
-
-// Task Field Form Values for task-field associations
-export const taskFieldFormSchema = z.object({
-  taskId: z.string().min(1, "Task ID is required"),
-  fieldId: z.string().min(1, "Field ID is required"),
-})
-
-// Schema for task field operations (create/delete associations)
-export const taskFieldOperationSchema = z.object({
-  taskId: z.string().min(1, "Task ID is required"),
-  fieldIds: z.array(z.string().min(1, "Field ID is required")),
-})
-
+  formId: z.string().optional().nullable(),    
+  workspaceId: z.number().int().min(1, "Workspace ID is required"),
+  workspaceName: z.string().optional(),
+  seasonId: z.number().int().min(1, "Season ID is required"),
+  seasonName: z.string().optional(),
+  farmId: z.number().int().min(1, "Farm ID is required"),
+  farmName: z.string().optional(),
+  fieldIdsOnlyIncluded: z.array(z.number().int()).optional(),
+}).refine((data) => {
+  // Validate that 360 Farm fields are properly set before submission
+  return data.workspaceId > 0 && data.seasonId > 0 && data.farmId > 0;
+}, {
+  message: "Workspace, Season, and Farm must be selected before submitting the task",
+  path: ["workspaceId"] // This will show the error on the workspace field
+});
+  
 // Schema for unified task operations (create/update with fields)
 export const unifiedTaskOperationSchema = z.object({
-  // Task data
+  projectId: z.string().min(1, "Project ID is required"),
   taskName: z.string().min(1, "Task name is required"),
   taskType: z.string().min(1, "Task type is required"),
   userEmail: z.string().email("Valid email is required").min(1, "User email is required"),
-  projectId: z.string().min(1, "Project ID is required"),
   serviceId: z.string().optional(),
+  tmpSubtaskId: z.string().optional(),
+  subtaskId: z.string().optional(),
   taskData: z.string().optional().nullable(),
-  formId: z.string().optional().nullable(),
-  // Field data
-  fields: z.array(fieldFormSchema).min(1, "At least one field must be selected"),
-  // Operation type
-  operation: z.enum(["create", "update"]),
-  // For update operations
-  taskId: z.string().optional(),
+  formId: z.string().optional().nullable(),  
+  workspaceId: z.number().int().min(1, "Workspace ID is required"),
+  workspaceName: z.string().optional(),
+  seasonId: z.number().int().min(1, "Season ID is required"),
+  seasonName: z.string().optional(),
+  farmId: z.number().int().min(1, "Farm ID is required"),
+  farmName: z.string().optional(),
+  fieldIdsOnlyIncluded: z.array(z.number().int()).optional(),  
+  operation: z.enum(["create", "update"]), // Operation type  
+  taskId: z.string().optional(), // For update operations
 }).refine((data) => {
   // taskId is required when operation is 'update'
   if (data.operation === 'update' && !data.taskId) {
@@ -387,13 +301,6 @@ export const unifiedTaskOperationSchema = z.object({
   path: ["taskId"]
 });
 
-// Schema for task field synchronization
-export const taskFieldSyncSchema = z.object({
-  taskId: z.string().min(1, "Task ID is required"),
-  currentFieldIds: z.array(z.string().min(1, "Field ID is required")),
-  targetFieldIds: z.array(z.string().min(1, "Field ID is required")),
-})
-
 // Export all types
 export type CreateProjectInput = z.infer<typeof createProjectInputSchema>;
 export type UpdateProjectInput = z.infer<typeof updateProjectInputSchema>;
@@ -401,23 +308,16 @@ export type CreateServiceInput = z.infer<typeof createServiceInputSchema>;
 export type UpdateServiceInput = z.infer<typeof updateServiceInputSchema>;
 export type CreateTaskInput = z.infer<typeof createTaskInputSchema>;
 export type UpdateTaskInput = z.infer<typeof updateTaskInputSchema>;
-export type CreateFieldInput = z.infer<typeof createFieldInputSchema>;
-export type UpdateFieldInput = z.infer<typeof updateFieldInputSchema>;
-export type CreateTaskFieldInput = z.infer<typeof createTaskFieldInputSchema>;
-
+export type CreateDomainProtocolInput = z.infer<typeof createDomainProtocolInputSchema>;
+export type UpdateDomainProtocolInput = z.infer<typeof updateDomainProtocolInputSchema>;
+export type CreateDomainFormInput = z.infer<typeof createDomainFormInputSchema>;
+export type UpdateDomainFormInput = z.infer<typeof updateDomainFormInputSchema>;
 export type ProjectQuery = z.infer<typeof projectQuerySchema>;
 export type ServiceQuery = z.infer<typeof serviceQuerySchema>;
 export type TaskQuery = z.infer<typeof taskQuerySchema>;
-export type FieldQuery = z.infer<typeof fieldQuerySchema>;
 export type JiraServiceQuery = z.infer<typeof jiraServiceQuerySchema>;
 export type JiraTaskQuery = z.infer<typeof jiraTaskQuerySchema>;
-
 export type Pagination = z.infer<typeof paginationSchema>;
-
 export type ServiceFormValues = z.infer<typeof serviceFormSchema>
-export type FieldFormValues = z.infer<typeof fieldFormSchema>
 export type TaskFormValues = z.infer<typeof taskFormSchema>
-export type TaskFieldFormValues = z.infer<typeof taskFieldFormSchema>
-export type TaskFieldOperation = z.infer<typeof taskFieldOperationSchema>
 export type UnifiedTaskOperation = z.infer<typeof unifiedTaskOperationSchema>
-export type TaskFieldSync = z.infer<typeof taskFieldSyncSchema>

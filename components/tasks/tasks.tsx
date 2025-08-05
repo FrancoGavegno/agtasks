@@ -84,7 +84,6 @@ export function TasksPageDetails() {
       const cleanedTasks = tasksData.items.map((task) => ({
         project: (task as any).project ?? null,
         service: (task as any).service ?? null,
-        taskFields: (task as any).taskFields ?? [],
         ...task,
       }));
       const sortedTasks = cleanedTasks.sort((a, b) => {

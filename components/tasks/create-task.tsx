@@ -1,5 +1,6 @@
 "use client"
 
+import { Service } from "@/lib/schemas"
 import TaskStepper from "./stepper"
 
 export default function CreateTaskStepper({
@@ -10,7 +11,7 @@ export default function CreateTaskStepper({
 }: {
   projectId: string,
   thisUserEmail: string,
-  services: any[],
+  services: Service[],
   projectName: string
 }) {
   return (

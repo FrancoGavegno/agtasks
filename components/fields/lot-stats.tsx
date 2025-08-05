@@ -26,9 +26,9 @@ export function LotStats({ servicesCount, tasksCount, loading }: LotStatsProps) 
               servicesCount
             )}
           </div>
-          <p className="text-xs text-muted-foreground">
-            Servicios asociados al lote
-          </p>
+          {/* <p className="text-xs text-muted-foreground">
+            Servicios asociados
+          </p> */}
         </CardContent>
       </Card>
 
@@ -46,9 +46,9 @@ export function LotStats({ servicesCount, tasksCount, loading }: LotStatsProps) 
               tasksCount
             )}
           </div>
-          <p className="text-xs text-muted-foreground">
-            Tareas asociadas al lote
-          </p>
+          {/* <p className="text-xs text-muted-foreground">
+            Tareas asociadas
+          </p> */}
         </CardContent>
       </Card>
     </div>

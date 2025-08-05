@@ -3,7 +3,6 @@ import { createIssue, generateDescriptionField } from "@/lib/integrations/jira";
 import type { 
   UnifiedTaskOperation, 
   TaskFormValues, 
-  Field,
   Task,
   CreateTaskInput,
   UpdateTaskInput 
@@ -11,7 +10,7 @@ import type {
 
 export interface TaskServiceResult {
   task: Task;
-  fieldIds: string[];
+  fieldIds: number[];
   jiraIssueKey?: string;
 }
 
@@ -33,23 +32,11 @@ export class TaskService {
     options: TaskServiceOptions = {}
   ): Promise<TaskServiceResult> {
     try {
-      console.log("TaskService.processTask called with:", {
-        operation,
-        taskId,
-        formDataKeys: Object.keys(formData),
-        fieldsCount: formData.fields?.length,
-        taskData: formData.taskData
-      });
-
       // Normalize taskData to ensure it's a valid JSON string or null
       const normalizedTaskData = this.normalizeTaskData(formData.taskData);
-      console.log("Normalized taskData:", normalizedTaskData);
-      console.log("Normalized taskData type:", typeof normalizedTaskData);
-      console.log("Normalized taskData length:", normalizedTaskData ? normalizedTaskData.length : 'null');
 
       // For creation mode, if taskData is not meaningful, send null
       const finalTaskData = operation === 'create' && !normalizedTaskData ? null : normalizedTaskData;
-      console.log("Final taskData for Amplify:", finalTaskData);
 
       // Clean empty strings and convert to null for optional fields
       const cleanServiceId = formData.serviceId?.trim() || undefined;
@@ -64,21 +51,16 @@ export class TaskService {
         serviceId: cleanServiceId,
         taskData: finalTaskData,
         formId: cleanFormId,
-        fields: formData.fields,
+        workspaceId: formData.workspaceId,
+        workspaceName: formData.workspaceName,
+        seasonId: formData.seasonId,
+        seasonName: formData.seasonName,
+        farmId: formData.farmId,
+        farmName: formData.farmName,
+        fieldIdsOnlyIncluded: formData.fieldIdsOnlyIncluded,        
         operation,
         taskId,
       };
-
-      console.log("Unified data prepared:", {
-        operation: unifiedData.operation,
-        taskId: unifiedData.taskId,
-        taskName: unifiedData.taskName,
-        userEmail: unifiedData.userEmail,
-        fieldsCount: unifiedData.fields?.length,
-        taskData: unifiedData.taskData,
-        serviceId: unifiedData.serviceId,
-        formId: unifiedData.formId
-      });
 
       // Process the unified operation
       const result = await apiClient.processUnifiedTaskOperation(unifiedData);
@@ -91,7 +73,7 @@ export class TaskService {
 
       return {
         task: result.task,
-        fieldIds: result.fieldIds,
+        fieldIds: (result.fieldIds || []).map(id => Number(id)),
         jiraIssueKey,
       };
     } catch (error) {
@@ -122,67 +104,14 @@ export class TaskService {
   }
 
   /**
-   * Load a task with all its associated fields for editing
+   * Load a task for editing
    */
-  static async loadTaskForEdit(taskId: string): Promise<{ task: Task; fields: Field[] }> {
+  static async loadTaskForEdit(taskId: string): Promise<{ task: Task }> {
     try {
-      return await apiClient.getTaskWithFields(taskId);
+      const task = await apiClient.getTask(taskId);
+      return { task };
     } catch (error) {
       console.error('Error loading task for edit:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Validate task field associations
-   * This method determines if TaskField associations should be created or deleted
-   */
-  static async validateTaskFieldAssociations(
-    taskId: string,
-    targetFieldIds: string[]
-  ): Promise<{
-    toCreate: string[];
-    toDelete: string[];
-    toKeep: string[];
-  }> {
-    try {
-      // Get current task field associations
-      const currentTaskFields = await apiClient.listTaskFields(taskId);
-      
-      // Get current field details for comparison
-      const currentFields = await Promise.all(
-        currentTaskFields.items.map(async (tf) => {
-          const field = await apiClient.getField(tf.fieldId);
-          return {
-            taskFieldId: tf.id,
-            fieldId: tf.fieldId,
-            field360Id: field.fieldId, // 360 field ID for comparison
-          };
-        })
-      );
-
-      // Create sets for efficient comparison
-      const currentField360Ids = new Set(currentFields.map(cf => cf.field360Id));
-      const targetField360Ids = new Set(targetFieldIds);
-
-      // Find fields to remove (in current but not in target)
-      const fieldsToRemove = currentFields.filter(cf => !targetField360Ids.has(cf.field360Id));
-      
-      // Find fields to add (in target but not in current)
-      const fieldsToAdd = targetFieldIds.filter(tf => !currentField360Ids.has(tf));
-
-      // Find fields to keep (in both current and target)
-      const fieldsToKeep = currentFields
-        .filter(cf => targetField360Ids.has(cf.field360Id))
-        .map(cf => cf.fieldId);
-
-      return {
-        toCreate: fieldsToAdd,
-        toDelete: fieldsToRemove.map(fr => fr.taskFieldId!),
-        toKeep: fieldsToKeep,
-      };
-    } catch (error) {
-      console.error('Error validating task field associations:', error);
       throw error;
     }
   }
@@ -196,8 +125,13 @@ export class TaskService {
     options: TaskServiceOptions
   ): Promise<string> {
     try {
-      // Generate description from fields
-      const { descriptionPlain } = await generateDescriptionField(formData.fields as Field[]);
+      // Generate description from fieldIdsOnlyIncluded if available
+      let descriptionPlain = "";
+      if (formData.fieldIdsOnlyIncluded && formData.fieldIdsOnlyIncluded.length > 0) {
+        descriptionPlain = `Task applies to specific fields: ${formData.fieldIdsOnlyIncluded.join(', ')}`;
+      } else {
+        descriptionPlain = "Task applies to all fields in the establishment";
+      }
 
       // Create issue in Jira
       const jiraResponse = await createIssue(
@@ -274,7 +208,6 @@ export class TaskService {
    */
   static prepareFormData(formData: TaskFormValues, tempData?: {
     taskData?: Record<string, any> | null;
-    fields?: any[];
     userEmail?: string;
   }): TaskFormValues {
     return {
@@ -283,7 +216,14 @@ export class TaskService {
       taskData: tempData?.taskData 
         ? this.normalizeTaskData(tempData.taskData)
         : this.normalizeTaskData(formData.taskData),
-      fields: tempData?.fields?.length ? tempData.fields : formData.fields,
+      // Ensure 360 Farm fields are preserved
+      workspaceId: formData.workspaceId,
+      workspaceName: formData.workspaceName,
+      seasonId: formData.seasonId,
+      seasonName: formData.seasonName,
+      farmId: formData.farmId,
+      farmName: formData.farmName,
+      fieldIdsOnlyIncluded: formData.fieldIdsOnlyIncluded,
     };
   }
 }
