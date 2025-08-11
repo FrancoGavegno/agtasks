@@ -1,11 +1,10 @@
 import type React from "react";
 import ReactQueryProvider from "@/components/react-query-provider";
-import { ClerkProvider } from '@clerk/nextjs';
 import "./globals.css";
 
 export const metadata = {
-  title: 'AgTasks',
-  description: 'Agricultural Task Management System',
+  title: 'Agtasks',
+  description: 'Sistema de Gestión de Tareas Agrícolas',
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon.ico',
@@ -19,18 +18,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
-      <html suppressHydrationWarning>
-        <head>
-          <link rel="icon" href="/favicon.ico" />
-          <link rel="shortcut icon" href="/favicon.ico" />
-        </head>
-        <body className="antialiased flex flex-col">
-          <ReactQueryProvider>
-            {children}
-          </ReactQueryProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+      </head>
+      <body className="antialiased flex flex-col">
+        <ReactQueryProvider>
+          {children}
+        </ReactQueryProvider>
+      </body>
+    </html>
   );
 }

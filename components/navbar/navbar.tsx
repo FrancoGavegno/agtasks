@@ -1,6 +1,5 @@
 "use client"
 
-import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs"
 import { Link } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
 import Image from 'next/image'
@@ -29,7 +28,8 @@ export function Navbar({
   const t = useTranslations("Navbar")
 
   const handleCreateProject = () => {
-    // Aquí puedes abrir un modal o redirigir a la página de creación de proyecto
+    // TO DO: Abrir un modal o redirigir 
+    // a la página de creación de proyecto
     alert('Crear Proyecto')
   }
 
@@ -58,14 +58,11 @@ export function Navbar({
           />
           <nav>
             <div className="flex items-center space-x-4">
-              <SignedOut>
-                <SignInButton />
-                <SignUpButton />
-              </SignedOut>
-              <SignedIn>
-                <LanguageSelector />
-                <UserButton />
-              </SignedIn>
+              {/* TODO: Reemplazar con componentes de autenticación del microservicio de Auth */}
+              <div className="text-sm text-muted-foreground">
+                Auth placeholder
+              </div>
+              <LanguageSelector />
             </div>
           </nav>
         </div>
