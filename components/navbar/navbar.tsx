@@ -42,21 +42,31 @@ export function Navbar({
 
   const handleSignOut = async () => {
     try {
-      await signOut()
+      if (process.env.NODE_ENV === 'development') {
+        // En desarrollo, usar signOut de Amplify
+        await signOut();
+      } else {
+        // En producción, redirigir al microservicio para logout
+        const currentUrl = window.location.href;
+        const logoutUrl = `${process.env.NEXT_PUBLIC_BASEURLAUTH}/logout?returnUrl=${encodeURIComponent(currentUrl)}`;
+        
+        window.location.href = logoutUrl;
+      }
     } catch (error) {
-      console.error('Error signing out:', error)
+      console.error('Error signing out:', error);
     }
   }
 
   const handleSignIn = () => {
-    // Solo redirigir al microservicio en producción
-    if (process.env.NODE_ENV === "production") {
-      const currentUrl = window.location.href
-      const authUrl = `${process.env.NEXT_PUBLIC_BASEURLAUTH}/login?returnUrl=${encodeURIComponent(currentUrl)}`
-      window.location.href = authUrl
-    } else {
+    if (process.env.NODE_ENV === 'development') {
       // En desarrollo, el Authenticator se maneja automáticamente
-      console.log('En desarrollo, el login se maneja con el Authenticator')
+      console.log('En desarrollo, el login se maneja con el Authenticator');
+    } else {
+      // En producción, redirigir al microservicio para login
+      const currentUrl = window.location.href;
+      const authUrl = `${process.env.NEXT_PUBLIC_BASEURLAUTH}/login?returnUrl=${encodeURIComponent(currentUrl)}`;
+      
+      window.location.href = authUrl;
     }
   }
 
