@@ -54,27 +54,27 @@ import {
 // Amplify.configure(outputs);
 
 // Genera el cliente de Amplify usando la configuración Gen2 para datos
-console.log("=== Generating Amplify client ===");
-console.log("=== outputs data ===", {
-  url: outputs.data.url,
-  region: outputs.data.aws_region,
-  authType: outputs.data.default_authorization_type
-});
+// console.log("=== Generating Amplify client ===");
+// console.log("=== outputs data ===", {
+//   url: outputs.data.url,
+//   region: outputs.data.aws_region,
+//   authType: outputs.data.default_authorization_type
+// });
 
 // Configurar Amplify con la configuración completa de outputs
-console.log("=== Configuring Amplify with outputs ===");
+// console.log("=== Configuring Amplify with outputs ===");
 Amplify.configure(outputs);
 
 // Verificar que la configuración esté disponible
-console.log("=== Current Amplify config ===", (globalThis as any).__AMPLIFY_CONFIG__);
+// console.log("=== Current Amplify config ===", (globalThis as any).__AMPLIFY_CONFIG__);
 
 let client: any;
 try {
   client = generateClient<Schema>();
-  console.log("=== Amplify client generated ===", client);
-  console.log("=== Client models ===", client.models);
-  console.log("=== Client models keys ===", Object.keys(client.models || {}));
-  console.log("=== Project model exists ===", !!client.models?.Project);
+  // console.log("=== Amplify client generated ===", client);
+  // console.log("=== Client models ===", client.models);
+  // console.log("=== Client models keys ===", Object.keys(client.models || {}));
+  // console.log("=== Project model exists ===", !!client.models?.Project);
 } catch (error) {
   console.error("=== Error generating client ===", error);
   throw error;
@@ -284,21 +284,21 @@ export class ApiClient {
 
   async listProjects(query?: ProjectQuery & Pagination): Promise<{ items: Project[]; nextToken?: string }> {
     try {
-      console.log("=== listProjects called with query ===", query);
+      // console.log("=== listProjects called with query ===", query);
       
       const validatedQuery = {
         ...paginationSchema.parse(query || {}),
         ...projectQuerySchema.parse(query || {})
       };
       
-      console.log("=== validatedQuery ===", validatedQuery);
+      // console.log("=== validatedQuery ===", validatedQuery);
       
       const filter: any = {};
       if (validatedQuery.domainId) filter.domainId = { eq: validatedQuery.domainId };
       if (validatedQuery.areaId) filter.areaId = { eq: validatedQuery.areaId };
       if (validatedQuery.deleted !== undefined) filter.deleted = { eq: validatedQuery.deleted };
 
-      console.log("=== filter ===", filter);
+      // console.log("=== filter ===", filter);
 
       const result = await client.models.Project.list({
         filter: Object.keys(filter).length > 0 ? filter : undefined,
@@ -306,7 +306,7 @@ export class ApiClient {
         nextToken: validatedQuery.nextToken
       });
 
-      console.log("=== listProjects result ===", result);
+      // console.log("=== listProjects result ===", result);
 
       return {
         items: result.data.map((item: any) => projectSchema.parse(item)),
@@ -509,16 +509,16 @@ export class ApiClient {
    */
   async processUnifiedTaskOperation(data: UnifiedTaskOperation): Promise<{ task: Task; fieldIds: number[] }> {
     try {
-      console.log("Processing unified task operation with data:", data);
+      // console.log("Processing unified task operation with data:", data);
       
       const validatedData = unifiedTaskOperationSchema.parse(data);
-      console.log("Data validated successfully:", validatedData);
+      // console.log("Data validated successfully:", validatedData);
       
       if (validatedData.operation === 'create') {
-        console.log("Creating new task...");
+        // console.log("Creating new task...");
         return await this.createTaskWith360Data(validatedData);
       } else {
-        console.log("Updating existing task...");
+        // console.log("Updating existing task...");
         return await this.updateTaskWith360Data(validatedData);
       }
     } catch (error) {
