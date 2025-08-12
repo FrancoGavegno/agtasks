@@ -244,14 +244,19 @@ Crea un archivo .env.local en la raíz del proyecto. Solicitar a fgavegno@geoagr
 ```
 // file env.local
 
-CLERK_SECRET_KEY=
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+# AWS Configuration
+NEXT_PUBLIC_BASEURLAUTH=https://testing-auth.geoagro.com/
+
 NEXT_PUBLIC_JIRA_API_URL=https://geoagro1.atlassian.net
-NEXT_PUBLIC_JIRA_API_TOKEN=
+NEXT_PUBLIC_JIRA_API_TOKEN=Zmdh****************
 NEXT_PUBLIC_JIRA_PROTOCOLS_PROJECT_ID=TEM
 NEXT_PUBLIC_JIRA_PROTOCOLS_QUEUE_ID=82
-NEXT_PUBLIC_FMS_API_URL=
-NEXT_PUBLIC_FMS_API_KEY=
+
+NEXT_PUBLIC_FMS_WK_ID=5203
+NEXT_PUBLIC_FMS_API_URL=https://******.appsync-api.us-west-2.amazonaws.com/graphql
+NEXT_PUBLIC_FMS_API_KEY=da2-yawqn**************
+
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 ```
 
