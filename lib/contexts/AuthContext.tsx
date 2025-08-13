@@ -22,63 +22,66 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [authStatus, setAuthStatus] = useState<'configuring' | 'authenticated' | 'unauthenticated'>('configuring');
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
+  const [hasRedirected, setHasRedirected] = useState(false);
 
   useEffect(() => {
-    // console.log("=== AuthProvider mounted ===");
+    console.log("=== AuthProvider mounted ===");
+    console.log("=== Environment ===", process.env.NODE_ENV);
+    console.log("=== Base URL Auth ===", process.env.NEXT_PUBLIC_BASEURLAUTH);
     checkAuthStatus();
   }, []);
 
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      // console.log("=== Setting up auth listener for development ===");
+      console.log("=== Setting up auth listener for development ===");
       const authListener = Hub.listen("auth", listener);
       return () => {
-        // console.log("=== Cleaning up auth listener ===");
+        console.log("=== Cleaning up auth listener ===");
         authListener();
       };
     }
   }, []);
 
   const listener = ({ payload }: { payload: any }) => {
-    // console.log("=== Auth event received ===", {
-    //   event: payload.event,
-    //   data: payload.data,
-    //   message: payload.message
-    // });
+    console.log("=== Auth event received ===", {
+      event: payload.event,
+      data: payload.data,
+      message: payload.message
+    });
     
     switch (payload.event) {
       case "signedIn":
-        // console.log("=== User signed in, checking auth status... ===");
+        console.log("=== User signed in, checking auth status... ===");
         setTimeout(() => checkAuthStatus(), 2000);
         break;
       case "signedOut":
-        // console.log("=== User signed out ===");
+        console.log("=== User signed out ===");
         setUser(null);
         setAuthStatus("unauthenticated");
         break;
       case "tokenRefresh":
-        // console.log("=== Token refreshed ===");
+        console.log("=== Token refreshed ===");
         checkAuthStatus();
         break;
       default:
-        // console.log("=== Unhandled auth event ===", payload.event, payload);
+        console.log("=== Unhandled auth event ===", payload.event, payload);
         break;
     }
   };
 
   const checkAuthStatus = async () => {
     try {
-      // console.log("=== Checking auth status ===");
+      console.log("=== Checking auth status ===");
       
       if (process.env.NODE_ENV === 'development') {
         // En desarrollo, usar verificación simple de cookies
-        // console.log("=== Development mode: checking cookies ===");
+        console.log("=== Development mode: checking cookies ===");
         const cookies = document.cookie.split(';');
         const userEmailCookie = cookies.find(cookie => cookie.trim().startsWith('user-email='));
         
         if (userEmailCookie) {
           const userEmail = decodeURIComponent(userEmailCookie.split('=')[1]);
-          // console.log("=== Found user email from cookie ===", userEmail);
+          console.log("=== Found user email from cookie ===", userEmail);
           
           setUser({
             userId: 'dev-user',
@@ -87,19 +90,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
           setAuthStatus("authenticated");
         } else {
-          // console.log("=== No user session found ===");
+          console.log("=== No user session found ===");
           setUser(null);
           setAuthStatus("unauthenticated");
         }
       } else {
         // En producción, verificar cookies del microservicio
-        // console.log("=== Production mode: checking microservice cookies ===");
+        console.log("=== Production mode: checking microservice cookies ===");
         const cookies = document.cookie.split(';');
         const userEmailCookie = cookies.find(cookie => cookie.trim().startsWith('user-email='));
         
         if (userEmailCookie) {
           const userEmail = decodeURIComponent(userEmailCookie.split('=')[1]);
-          // console.log("=== Found user email from cookie ===", userEmail);
+          console.log("=== Found user email from cookie ===", userEmail);
           
           setUser({
             userId: 'microservice-user',
@@ -108,17 +111,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
           setAuthStatus("authenticated");
         } else {
-          // console.log("=== No user session found, redirecting to microservice ===");
+          console.log("=== No user session found ===");
           setUser(null);
           setAuthStatus("unauthenticated");
           
-          // Redirigir al microservicio de Auth
-          if (typeof window !== 'undefined') {
+          // Solo redirigir una vez para evitar loops
+          if (!hasRedirected && typeof window !== 'undefined' && process.env.NEXT_PUBLIC_BASEURLAUTH) {
+            setHasRedirected(true);
             const currentUrl = window.location.href;
             const authUrl = `${process.env.NEXT_PUBLIC_BASEURLAUTH}/login?returnUrl=${encodeURIComponent(currentUrl)}`;
             
-            // console.log("=== Redirecting to ===", authUrl);
-            window.location.href = authUrl;
+            console.log("=== Redirecting to microservice (first time) ===", authUrl);
+            
+            // Usar replace en lugar de href para evitar loops
+            window.location.replace(authUrl);
+          } else if (!process.env.NEXT_PUBLIC_BASEURLAUTH) {
+            console.error("=== NEXT_PUBLIC_BASEURLAUTH not configured ===");
           }
         }
       }
@@ -128,7 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAuthStatus("unauthenticated");
     } finally {
       setHasCheckedAuth(true);
-      // console.log("=== Auth status check completed ===");
+      console.log("=== Auth status check completed ===");
     }
   };
 
@@ -136,10 +144,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (process.env.NODE_ENV === 'development') {
         // En desarrollo, no usar tokens de Amplify
-        // console.log("=== Development mode: no token handling ===");
+        console.log("=== Development mode: no token handling ===");
         return null;
       } else {
-        // console.log("=== Token handling delegated to microservice ===");
+        console.log("=== Token handling delegated to microservice ===");
         return null;
       }
     } catch (error) {
@@ -157,11 +165,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [user, authStatus]
   );
 
-  // console.log("=== AuthContext state ===", { 
-  //   user: user ? { userId: user.userId, email: user.attributes?.email } : null, 
-  //   authStatus, 
-  //   hasCheckedAuth 
-  // });
+  console.log("=== AuthContext state ===", { 
+    user: user ? { userId: user.userId, email: user.attributes?.email } : null, 
+    authStatus, 
+    hasCheckedAuth,
+    hasRedirected
+  });
 
   // Siempre proporcionar el contexto
   const contextProvider = (
@@ -214,7 +223,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
   }
 
-  // Si no está autenticado, mostrar pantalla de redirección
+  // Si no está autenticado en producción, mostrar pantalla de redirección
   if (authStatus === "unauthenticated") {
     return (
       <AuthContext.Provider value={contextData}>
