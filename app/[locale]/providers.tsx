@@ -9,32 +9,28 @@ import { cognitoUserPoolsTokenProvider } from "aws-amplify/auth/cognito";
 import { AuthProvider } from "@/lib/contexts/AuthContext";
 import outputs from "@/amplify_outputs.json";
 
-// Configuración condicional por entorno
-let amplifyConfig;
+// Configuración condicional SOLO para autenticación
+let authConfig;
 
 if (process.env.NODE_ENV === 'development') {
-  console.log("=== Configurando Amplify para DESARROLLO (microservicio) ===");
+  console.log("=== Configurando Auth para DESARROLLO (microservicio) ===");
   
-  // En desarrollo: usar configuración mínima del microservicio de Auth
-  amplifyConfig = {
+  // En desarrollo: usar configuración del microservicio de Auth
+  authConfig = {
     aws_project_region: "us-east-1",
     aws_user_pools_id: "us-east-1_NbQ1xLem2", // User Pool del microservicio
     aws_user_pools_web_client_id: "4qhuppim3cd75kt736hliti2il", // Client ID del microservicio
     aws_cognito_identity_pool_id: "us-east-1:26b40d12-ed93-4d59-842d-42c726179d81", // Identity Pool del microservicio
   };
 } else {
-  console.log("=== Configurando Amplify para PRODUCCIÓN (local + OAuth) ===");
+  console.log("=== Configurando Auth para PRODUCCIÓN (local + OAuth) ===");
   
   // En producción: usar configuración local + OAuth al microservicio
-  amplifyConfig = {
+  authConfig = {
     aws_project_region: outputs.data.aws_region,
     aws_user_pools_id: outputs.auth.user_pool_id,
     aws_user_pools_web_client_id: outputs.auth.user_pool_client_id,
     aws_cognito_identity_pool_id: outputs.auth.identity_pool_id,
-    aws_appsync_graphqlEndpoint: outputs.data.url,
-    aws_appsync_region: outputs.data.aws_region,
-    aws_appsync_authenticationType: outputs.data.default_authorization_type,
-    aws_appsync_apiKey: outputs.data.api_key,
     oauth: {
       domain: "auth586214cc-586214cc-dev.auth.us-east-1.amazoncognito.com",
       scope: ["email", "openid", "profile"],
@@ -45,8 +41,9 @@ if (process.env.NODE_ENV === 'development') {
   };
 }
 
-// Configurar Amplify (usar any para evitar errores de TypeScript con configuración legacy)
-Amplify.configure(amplifyConfig as any);
+// Configurar SOLO la autenticación (no sobrescribir la configuración de API)
+// Usar any para evitar errores de TypeScript con configuración legacy
+Amplify.configure(authConfig as any);
 
 // Create cookie storage for sharing cookies between subdomains (como Datasync)
 const cookieStorage = new CookieStorage({

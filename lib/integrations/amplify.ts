@@ -61,9 +61,11 @@ import {
 //   authType: outputs.data.default_authorization_type
 // });
 
-// Configurar Amplify con la configuración completa de outputs
-// console.log("=== Configuring Amplify with outputs ===");
-// Amplify.configure(outputs); // COMENTADO: La configuración se maneja en providers.tsx
+// Configurar Amplify con la configuración completa de outputs para API
+// En desarrollo: usar configuración del microservicio para Auth, pero outputs para API
+// En producción: usar outputs para todo
+console.log("=== Configurando Amplify para API (outputs) ===");
+Amplify.configure(outputs);
 
 // Verificar que la configuración esté disponible
 // console.log("=== Current Amplify config ===", (globalThis as any).__AMPLIFY_CONFIG__);
