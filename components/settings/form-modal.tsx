@@ -91,7 +91,7 @@ export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onS
         try {
           await apiClient.deleteDomainForm(id)
         } catch (error) {
-          console.error(`Error al eliminar formulario ${id}:`, error)
+          // console.error(`Error al eliminar formulario ${id}:`, error)
           let errorMessage = "Error desconocido"
           if (error instanceof Error) {
             errorMessage = error.message
@@ -143,7 +143,7 @@ export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onS
            await apiClient.createDomainForm(formDataToCreate)
            // console.log(`DomainForm creado exitosamente con ktFormId: ${ktFormId}`)
         } catch (error) {
-          console.error(`Error al crear formulario ${ktFormId}:`, error)
+          // console.error(`Error al crear formulario ${ktFormId}:`, error)
           let errorMessage = "Error desconocido"
           if (error instanceof Error) {
             errorMessage = error.message
@@ -171,7 +171,7 @@ export function FormModal({ isOpen, onClose, forms, allForms, selectedForms, onS
       onSave(localSelected)
       onClose()
     } catch (error) {
-      console.error("Error al procesar formularios:", error)
+      // console.error("Error al procesar formularios:", error)
       let errorMessage = t("errorMessage")
       if (error instanceof Error) {
         errorMessage = error.message

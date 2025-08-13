@@ -37,7 +37,7 @@ export function FieldsPageDetails({ userEmail }: FieldsPageDetailsProps) {
     try {
       setLoading(true)
       
-      console.log('Calculando estadísticas para:', filters)
+      // console.log('Calculando estadísticas para:', filters)
       
       // Get tasks that match the workspace, season, and farm criteria
       const tasksData = await apiClient.listTasks({ 
@@ -61,12 +61,12 @@ export function FieldsPageDetails({ userEmail }: FieldsPageDetailsProps) {
       const servicesWithFilters = serviceIds.size
       const tasksWithFiltersCount = tasksWithFilters.length
       
-      console.log('Estadísticas calculadas:', { servicesWithFilters, tasksWithFiltersCount })
+      // console.log('Estadísticas calculadas:', { servicesWithFilters, tasksWithFiltersCount })
       setServicesCount(servicesWithFilters)
       setTasksCount(tasksWithFiltersCount)
       
     } catch (error) {
-      console.error("Error calculating stats:", error)
+      // console.error("Error calculating stats:", error)
       setServicesCount(0)
       setTasksCount(0)
     } finally {

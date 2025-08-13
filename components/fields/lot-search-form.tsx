@@ -117,7 +117,7 @@ export function LotSearchForm({ onSearch, loading, userEmail }: LotSearchFormPro
           .sort((a, b) => a.name.localeCompare(b.name))
         setWorkspaces(filteredAndSorted)
       } catch (error) {
-        console.error("Error fetching project or workspaces:", error)
+        // console.error("Error fetching project or workspaces:", error)
         const errorMessage = error instanceof Error ? error.message : "Error desconocido"
         setWorkspacesError(`Error al cargar espacios de trabajo: ${errorMessage}`)
         setWorkspaces([])
@@ -161,7 +161,7 @@ export function LotSearchForm({ onSearch, loading, userEmail }: LotSearchFormPro
         setCampaigns(filteredAndSorted)
         setSelectedCampaign("")
       } catch (error) {
-        console.error("Error fetching campaigns:", error)
+        // console.error("Error fetching campaigns:", error)
         const errorMessage = error instanceof Error ? error.message : "Error desconocido"
         setCampaignsError(`Error al cargar campañas: ${errorMessage}`)
         setCampaigns([])
@@ -193,7 +193,7 @@ export function LotSearchForm({ onSearch, loading, userEmail }: LotSearchFormPro
         setEstablishments(filteredAndSorted)
         setSelectedEstablishment("")
       } catch (error) {
-        console.error("Error fetching establishments:", error)
+        // console.error("Error fetching establishments:", error)
         const errorMessage = error instanceof Error ? error.message : "Error desconocido"
         setEstablishmentsError(`Error al cargar establecimientos: ${errorMessage}`)
         setEstablishments([])

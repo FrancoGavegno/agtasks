@@ -94,7 +94,7 @@ export function SettingsProvider({ children, selectedProject }: { children: Reac
         setSelectedProtocols(sortedValues.map((p: DomainProtocol) => p.tmProtocolId))
         setShouldRefetchProtocols(false)
       } catch (error) {
-        console.error("Error fetching protocols:", error)
+        // console.error("Error fetching protocols:", error)
         setProtocols([])
         setSelectedProtocols([])
       } finally {
@@ -162,7 +162,7 @@ export function SettingsProvider({ children, selectedProject }: { children: Reac
         setSelectedForms(sortedValues.map((f: DomainForm) => f.ktFormId))
         setShouldRefetchForms(false)
       } catch (error) {
-        console.error("Error fetching domain forms:", error)
+        // console.error("Error fetching domain forms:", error)
         setForms([])
         setSelectedForms([])
       } finally {
@@ -198,7 +198,7 @@ export function SettingsProvider({ children, selectedProject }: { children: Reac
         })
         setAllForms(newForms)
       } catch (error) {
-        console.error("Error fetching KoboToolbox forms:", error)
+        // console.error("Error fetching KoboToolbox forms:", error)
         setAllForms([])
       }
     }
@@ -229,7 +229,7 @@ export function SettingsProvider({ children, selectedProject }: { children: Reac
         setUsers(fetchedUsers)
         setShouldRefetchUsers(false)
       } catch (error) {
-        console.error("Error fetching domain users:", error)
+        // console.error("Error fetching domain users:", error)
         setUsers([])
       } finally {
         setUsersLoading(false)

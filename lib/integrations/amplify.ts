@@ -64,7 +64,7 @@ import {
 // Configurar Amplify con la configuración completa de outputs para API
 // En desarrollo: usar configuración del microservicio para Auth, pero outputs para API
 // En producción: usar outputs para todo
-console.log("=== Configurando Amplify para API (outputs) ===");
+// console.log("=== Configurando Amplify para API (outputs) ===");
 Amplify.configure(outputs);
 
 // Verificar que la configuración esté disponible
