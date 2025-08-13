@@ -63,7 +63,7 @@ import {
 
 // Configurar Amplify con la configuración completa de outputs
 // console.log("=== Configuring Amplify with outputs ===");
-Amplify.configure(outputs);
+// Amplify.configure(outputs); // COMENTADO: La configuración se maneja en providers.tsx
 
 // Verificar que la configuración esté disponible
 // console.log("=== Current Amplify config ===", (globalThis as any).__AMPLIFY_CONFIG__);

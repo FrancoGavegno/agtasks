@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useContext, useState, useMemo } from "react";
-import { Authenticator } from "@aws-amplify/ui-react";
+import { fetchUserAttributes, fetchAuthSession } from "aws-amplify/auth";
 import { Hub } from "aws-amplify/utils";
 
 interface User {
@@ -22,116 +22,98 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [authStatus, setAuthStatus] = useState<'configuring' | 'authenticated' | 'unauthenticated'>('configuring');
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
-  const [hasRedirected, setHasRedirected] = useState(false);
 
   useEffect(() => {
     console.log("=== AuthProvider mounted ===");
     console.log("=== Environment ===", process.env.NODE_ENV);
-    console.log("=== Base URL Auth ===", process.env.NEXT_PUBLIC_BASEURLAUTH);
+    console.log("=== Configuration mode ===", process.env.NODE_ENV === 'development' ? 'MICROSERVICE (us-east-1)' : 'LOCAL + OAUTH (us-west-2)');
+    
     checkAuthStatus();
-  }, []);
-
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log("=== Setting up auth listener for development ===");
-      const authListener = Hub.listen("auth", listener);
-      return () => {
-        console.log("=== Cleaning up auth listener ===");
-        authListener();
-      };
-    }
-  }, []);
-
-  const listener = ({ payload }: { payload: any }) => {
-    console.log("=== Auth event received ===", {
-      event: payload.event,
-      data: payload.data,
-      message: payload.message
+    
+    // Configurar listener de eventos de autenticación
+    const authListener = Hub.listen("auth", ({ payload }) => {
+      console.log("=== Auth event received ===", {
+        event: payload.event,
+        message: payload.message
+      });
+      
+      switch (payload.event) {
+        case "signedIn":
+          console.log("=== User signed in, checking auth status... ===");
+          setTimeout(() => checkAuthStatus(), 2000);
+          break;
+        case "signedOut":
+          console.log("=== User signed out ===");
+          setUser(null);
+          setAuthStatus("unauthenticated");
+          break;
+        case "tokenRefresh":
+          console.log("=== Token refreshed ===");
+          checkAuthStatus();
+          break;
+        default:
+          console.log("=== Unhandled auth event ===", payload.event);
+          break;
+      }
     });
     
-    switch (payload.event) {
-      case "signedIn":
-        console.log("=== User signed in, checking auth status... ===");
-        setTimeout(() => checkAuthStatus(), 2000);
-        break;
-      case "signedOut":
-        console.log("=== User signed out ===");
-        setUser(null);
-        setAuthStatus("unauthenticated");
-        break;
-      case "tokenRefresh":
-        console.log("=== Token refreshed ===");
-        checkAuthStatus();
-        break;
-      default:
-        console.log("=== Unhandled auth event ===", payload.event, payload);
-        break;
-    }
-  };
+    return () => {
+      console.log("=== Cleaning up auth listener ===");
+      authListener();
+    };
+  }, []);
 
   const checkAuthStatus = async () => {
     try {
       console.log("=== Checking auth status ===");
+      console.log("=== Current Amplify config ===", (globalThis as any).__AMPLIFY_CONFIG__);
       
-      if (process.env.NODE_ENV === 'development') {
-        // En desarrollo, usar verificación simple de cookies
-        console.log("=== Development mode: checking cookies ===");
-        const cookies = document.cookie.split(';');
-        const userEmailCookie = cookies.find(cookie => cookie.trim().startsWith('user-email='));
+      // Verificar sesión de Cognito
+      const session = await fetchAuthSession();
+      console.log("=== Session result ===", session);
+      console.log("=== Session tokens ===", session.tokens);
+      console.log("=== Session userSub ===", session.tokens?.accessToken?.payload?.sub);
+      
+      if (session.tokens && session.tokens.idToken) {
+        console.log("=== Valid session found, fetching user attributes... ===");
         
-        if (userEmailCookie) {
-          const userEmail = decodeURIComponent(userEmailCookie.split('=')[1]);
-          console.log("=== Found user email from cookie ===", userEmail);
+        // Obtener atributos del usuario
+        const userAttributes = await fetchUserAttributes();
+        console.log("=== User attributes ===", userAttributes);
+        
+        setUser({
+          userId: userAttributes.sub || 'unknown',
+          userName: userAttributes.email || userAttributes.sub || 'User',
+          attributes: userAttributes,
+        });
+        setAuthStatus("authenticated");
+        
+        // Establecer cookie user-email para compatibilidad con AgTasks
+        if (userAttributes.email) {
+          const domain = process.env.NODE_ENV === 'development' ? 'localhost' : '.geoagro.com';
+          const secure = process.env.NODE_ENV === 'production';
           
-          setUser({
-            userId: 'dev-user',
-            userName: userEmail,
-            attributes: { email: userEmail },
-          });
-          setAuthStatus("authenticated");
-        } else {
-          console.log("=== No user session found ===");
-          setUser(null);
-          setAuthStatus("unauthenticated");
+          document.cookie = `user-email=${userAttributes.email}; path=/; domain=${domain}; ${secure ? 'secure; ' : ''}samesite=lax`;
+          console.log("=== Set user-email cookie ===", userAttributes.email);
         }
       } else {
-        // En producción, verificar cookies del microservicio
-        console.log("=== Production mode: checking microservice cookies ===");
-        const cookies = document.cookie.split(';');
-        const userEmailCookie = cookies.find(cookie => cookie.trim().startsWith('user-email='));
-        
-        if (userEmailCookie) {
-          const userEmail = decodeURIComponent(userEmailCookie.split('=')[1]);
-          console.log("=== Found user email from cookie ===", userEmail);
-          
-          setUser({
-            userId: 'microservice-user',
-            userName: userEmail,
-            attributes: { email: userEmail },
-          });
-          setAuthStatus("authenticated");
-        } else {
-          console.log("=== No user session found ===");
-          setUser(null);
-          setAuthStatus("unauthenticated");
-          
-          // Solo redirigir una vez para evitar loops
-          if (!hasRedirected && typeof window !== 'undefined' && process.env.NEXT_PUBLIC_BASEURLAUTH) {
-            setHasRedirected(true);
-            const currentUrl = window.location.href;
-            const authUrl = `${process.env.NEXT_PUBLIC_BASEURLAUTH}/login?returnUrl=${encodeURIComponent(currentUrl)}`;
-            
-            console.log("=== Redirecting to microservice (first time) ===", authUrl);
-            
-            // Usar replace en lugar de href para evitar loops
-            window.location.replace(authUrl);
-          } else if (!process.env.NEXT_PUBLIC_BASEURLAUTH) {
-            console.error("=== NEXT_PUBLIC_BASEURLAUTH not configured ===");
-          }
-        }
+        console.log("=== No valid session found ===");
+        console.log("=== Session details ===", {
+          hasTokens: !!session.tokens,
+          hasIdToken: !!session.tokens?.idToken,
+          hasAccessToken: !!session.tokens?.accessToken
+        });
+        setUser(null);
+        setAuthStatus("unauthenticated");
       }
     } catch (error) {
       console.error("=== Error checking auth status ===", error);
+      console.error("=== Error details ===", {
+        name: (error as any).name,
+        message: (error as any).message,
+        code: (error as any).code,
+        stack: (error as any).stack
+      });
       setUser(null);
       setAuthStatus("unauthenticated");
     } finally {
@@ -142,14 +124,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchToken = async () => {
     try {
-      if (process.env.NODE_ENV === 'development') {
-        // En desarrollo, no usar tokens de Amplify
-        console.log("=== Development mode: no token handling ===");
-        return null;
-      } else {
-        console.log("=== Token handling delegated to microservice ===");
-        return null;
-      }
+      const session = await fetchAuthSession();
+      const idToken = session.tokens?.idToken?.toString?.() || null;
+      return idToken;
     } catch (error) {
       console.error("=== Error fetching token ===", error);
       return null;
@@ -168,76 +145,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   console.log("=== AuthContext state ===", { 
     user: user ? { userId: user.userId, email: user.attributes?.email } : null, 
     authStatus, 
-    hasCheckedAuth,
-    hasRedirected
+    hasCheckedAuth
   });
 
-  // Siempre proporcionar el contexto
-  const contextProvider = (
+  // Mostrar pantalla de carga mientras se verifica la autenticación
+  if (!hasCheckedAuth || authStatus === "configuring") {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Verificando autenticación...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Si está autenticado, mostrar la aplicación
+  if (authStatus === "authenticated") {
+    return (
+      <AuthContext.Provider value={contextData}>
+        {children}
+      </AuthContext.Provider>
+    );
+  }
+
+  // Si no está autenticado, el ConditionalWrapper en providers.tsx manejará el Authenticator
+  return (
     <AuthContext.Provider value={contextData}>
       {children}
     </AuthContext.Provider>
   );
-
-  // En desarrollo, mostrar el Authenticator cuando no está autenticado
-  if (process.env.NODE_ENV === 'development') {
-    if (!hasCheckedAuth || authStatus === "configuring") {
-      return (
-        <AuthContext.Provider value={contextData}>
-          <div className="flex items-center justify-center h-screen">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Cargando...</p>
-            </div>
-          </div>
-        </AuthContext.Provider>
-      );
-    }
-
-    if (authStatus === "unauthenticated") {
-      return (
-        <AuthContext.Provider value={contextData}>
-          <Authenticator
-            initialState="signIn"
-            loginMechanisms={["email"]}
-            signUpAttributes={["email"]}
-          >
-            {children}
-          </Authenticator>
-        </AuthContext.Provider>
-      );
-    }
-  }
-
-  // En producción, mostrar pantalla de carga mientras se verifica la autenticación
-  if (!hasCheckedAuth || authStatus === "configuring") {
-    return (
-      <AuthContext.Provider value={contextData}>
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Verificando autenticación...</p>
-          </div>
-        </div>
-      </AuthContext.Provider>
-    );
-  }
-
-  // Si no está autenticado en producción, mostrar pantalla de redirección
-  if (authStatus === "unauthenticated") {
-    return (
-      <AuthContext.Provider value={contextData}>
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Redirigiendo al login...</p>
-          </div>
-        </div>
-      </AuthContext.Provider>
-    );
-  }
-
-  return contextProvider;
 };
 
 export const useAuth = (): AuthContextType => {
