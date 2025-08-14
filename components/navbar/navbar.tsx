@@ -28,7 +28,7 @@ export function Navbar({
   const t = useTranslations("Navbar")
 
   const handleCreateProject = () => {
-    // TO DO: Abrir un modal o redirigir 
+    // TO DO: Abrir un modal o redirigir
     // a la página de creación de proyecto
     alert('Crear Proyecto')
   }

@@ -49,36 +49,14 @@ import {
   UnifiedTaskOperation,
 } from "@/lib/schemas";
 
-// La configuración de Amplify se maneja en providers.tsx
-// Esta configuración solo se usa para datos del proyecto actual (Gen2)
-// Amplify.configure(outputs);
-
-// Genera el cliente de Amplify usando la configuración Gen2 para datos
-// console.log("=== Generating Amplify client ===");
-// console.log("=== outputs data ===", {
-//   url: outputs.data.url,
-//   region: outputs.data.aws_region,
-//   authType: outputs.data.default_authorization_type
-// });
-
-// Configurar Amplify con la configuración completa de outputs para API
-// En desarrollo: usar configuración del microservicio para Auth, pero outputs para API
-// En producción: usar outputs para todo
-// console.log("=== Configurando Amplify para API (outputs) ===");
+// Configurar Amplify con la configuración de AgTasks
 Amplify.configure(outputs);
-
-// Verificar que la configuración esté disponible
-// console.log("=== Current Amplify config ===", (globalThis as any).__AMPLIFY_CONFIG__);
 
 let client: any;
 try {
   client = generateClient<Schema>();
-  // console.log("=== Amplify client generated ===", client);
-  // console.log("=== Client models ===", client.models);
-  // console.log("=== Client models keys ===", Object.keys(client.models || {}));
-  // console.log("=== Project model exists ===", !!client.models?.Project);
 } catch (error) {
-  console.error("=== Error generating client ===", error);
+  console.error("=== AMPLIFY: Error generando cliente ===", error);
   throw error;
 }
 
