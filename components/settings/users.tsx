@@ -102,7 +102,7 @@ export default function Users() {
         description: `Se ha enviado un correo de invitación a ${user.email}`,
       })
     } catch (error) {
-      console.error("Error sending invitation:", error)
+      // console.error("Error sending invitation:", error)
       toast({
         title: "Error",
         description: "No se pudo enviar la invitación. Por favor, inténtalo de nuevo.",
@@ -170,8 +170,8 @@ export default function Users() {
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedUsers.map((user) => (
-                <TableRow key={user.id}>
+              paginatedUsers.map((user, index) => (
+                <TableRow key={user.id || `user-${index}`}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">

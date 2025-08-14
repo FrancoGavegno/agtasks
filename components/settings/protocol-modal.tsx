@@ -80,7 +80,7 @@ export function ModalProtocols({
           if (protocol) {
             return { tmProtocolId, id: protocol.id }
           }
-          console.warn(`No se encontró DomainProtocol para tmProtocolId ${tmProtocolId}`)
+          // console.warn(`No se encontró DomainProtocol para tmProtocolId ${tmProtocolId}`)
           return null
         })
         .filter((item): item is { tmProtocolId: string; id: string } => item !== null)
@@ -98,7 +98,7 @@ export function ModalProtocols({
         try {
           await apiClient.deleteDomainProtocol(id)
         } catch (error) {
-          console.error(`Error al eliminar protocolo ${id}:`, error)
+          // console.error(`Error al eliminar protocolo ${id}:`, error)
           toast({
             title: "Error",
             description: `No se pudo eliminar el protocolo: ${(error as Error).message}`,
@@ -124,7 +124,7 @@ export function ModalProtocols({
             language: protocolData.language || "ES",
           })
         } catch (error) {
-          console.error(`Error al crear protocolo ${protocolId}:`, error)
+          // console.error(`Error al crear protocolo ${protocolId}:`, error)
           let errorMessage = "Error desconocido"
           if (error instanceof Error) {
             errorMessage = error.message
@@ -154,7 +154,7 @@ export function ModalProtocols({
       onSave(localSelected)
       onClose()
     } catch (error) {
-      console.error("Error al procesar protocolos:", error)
+      // console.error("Error al procesar protocolos:", error)
       let errorMessage = t("errorMessage")
       if (error instanceof Error) {
         errorMessage = error.message
@@ -204,7 +204,7 @@ export function ModalProtocols({
         <div className="space-y-4 py-2 max-h-[300px] overflow-y-auto pr-2">
           {filteredProtocols.length > 0 ? (
             filteredProtocols.map((protocol) => (
-              <div key={protocol.id} className="flex items-center justify-between">
+              <div key={protocol.tmProtocolId} className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <div className="text-sm text-foreground">{protocol.name}</div>
                   <div className="text-xs text-muted-foreground">{protocol.language}</div>

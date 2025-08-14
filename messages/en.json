@@ -376,7 +376,8 @@
     "createdSuccessfully": "Created successfully",
     "updatedSuccessfully": "Updated successfully",
     "deletedSuccessfully": "Deleted successfully",
-    "unexpectedError": "An unexpected error occurred"
+    "unexpectedError": "An unexpected error occurred",
+    "signOut": "Sign Out"
   },
   "Footer": {
     "poweredBy": "Powered by"

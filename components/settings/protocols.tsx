@@ -73,7 +73,7 @@ export default function Protocols() {
   const paginatedProtocols = filteredProtocols.slice(startIndex, startIndex + rowsPerPage)
 
   const handleSavePreferences = async (selectedIds: string[]) => {
-    console.log("Saving preferences with selected IDs:", selectedIds)
+    // console.log("Saving preferences with selected IDs:", selectedIds)
     setSelectedProtocols(selectedIds)
     refreshProtocols() // Esto debería volver a cargar los protocolos del dominio
   }

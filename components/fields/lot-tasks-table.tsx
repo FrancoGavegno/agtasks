@@ -87,7 +87,7 @@ export function LotTasksTable({ selectedFilters, loading }: LotTasksTableProps) 
       setLoadingTasks(true)
       setError(null)
 
-      console.log('Buscando tareas con filtros:', selectedFilters)
+      // console.log('Buscando tareas con filtros:', selectedFilters)
 
       // Get tasks that match the workspace, season, and farm criteria
       const tasksData = await apiClient.listTasks({
@@ -107,13 +107,13 @@ export function LotTasksTable({ selectedFilters, loading }: LotTasksTableProps) 
         return subtaskIdA.localeCompare(subtaskIdB);
       });
 
-      console.log('Tareas encontradas:', sorted.length)
+      // console.log('Tareas encontradas:', sorted.length)
       setTasks(sorted as Task[])
 
       // Efficiently fetch only the services needed for the displayed tasks
       await fetchServicesForTasks(sorted)
     } catch (err) {
-      console.error('Error en fetchFilteredTasks:', err)
+      // console.error('Error en fetchFilteredTasks:', err)
       setError(`Error al cargar tareas: ${err instanceof Error ? err.message : "Error desconocido"}`)
       setTasks([])
     } finally {
@@ -138,7 +138,7 @@ export function LotTasksTable({ selectedFilters, loading }: LotTasksTableProps) 
             return
           }
 
-          console.log('Buscando servicios para:', Array.from(serviceIds))
+          // console.log('Buscando servicios para:', Array.from(serviceIds))
 
           // Fetch all services for the project and filter by the needed IDs
           const servicesData = await apiClient.listServices({ projectId, limit: 100 })
@@ -152,9 +152,9 @@ export function LotTasksTable({ selectedFilters, loading }: LotTasksTableProps) 
           })
 
           setServices(servicesMap)
-          console.log('Servicios encontrados:', servicesMap.size)
+          // console.log('Servicios encontrados:', servicesMap.size)
         } catch (err) {
-          console.error('Error fetching services:', err)
+          // console.error('Error fetching services:', err)
           setServices(new Map())
         }
       }

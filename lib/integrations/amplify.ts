@@ -49,11 +49,16 @@ import {
   UnifiedTaskOperation,
 } from "@/lib/schemas";
 
-// Configura Amplify antes de generar el cliente
+// Configurar Amplify con la configuración de AgTasks
 Amplify.configure(outputs);
 
-// Genera el cliente de Amplify
-const client = generateClient<Schema>();
+let client: any;
+try {
+  client = generateClient<Schema>();
+} catch (error) {
+  console.error("=== AMPLIFY: Error generando cliente ===", error);
+  throw error;
+}
 
 // Error types
 export class ValidationError extends Error {
@@ -130,7 +135,7 @@ export class ApiClient {
       const filter = domainId ? { domainId: { eq: domainId } } : undefined;
       const result = await client.models.DomainProtocol.list({ filter });
       return {
-        items: result.data.map(item => domainProtocolSchema.parse(item)),
+        items: result.data.map((item: any) => domainProtocolSchema.parse(item)),
         nextToken: result.nextToken || undefined
       };
     } catch (error) {
@@ -196,7 +201,7 @@ export class ApiClient {
       const filter = domainId ? { domainId: { eq: domainId } } : undefined;
       const result = await client.models.DomainForm.list({ filter });
       return {
-        items: result.data.map(item => domainFormSchema.parse(item)),
+        items: result.data.map((item: any) => domainFormSchema.parse(item)),
         nextToken: result.nextToken || undefined
       };
     } catch (error) {
@@ -259,15 +264,21 @@ export class ApiClient {
 
   async listProjects(query?: ProjectQuery & Pagination): Promise<{ items: Project[]; nextToken?: string }> {
     try {
+      // console.log("=== listProjects called with query ===", query);
+      
       const validatedQuery = {
         ...paginationSchema.parse(query || {}),
         ...projectQuerySchema.parse(query || {})
       };
       
+      // console.log("=== validatedQuery ===", validatedQuery);
+      
       const filter: any = {};
       if (validatedQuery.domainId) filter.domainId = { eq: validatedQuery.domainId };
       if (validatedQuery.areaId) filter.areaId = { eq: validatedQuery.areaId };
       if (validatedQuery.deleted !== undefined) filter.deleted = { eq: validatedQuery.deleted };
+
+      // console.log("=== filter ===", filter);
 
       const result = await client.models.Project.list({
         filter: Object.keys(filter).length > 0 ? filter : undefined,
@@ -275,11 +286,21 @@ export class ApiClient {
         nextToken: validatedQuery.nextToken
       });
 
+      // console.log("=== listProjects result ===", result);
+
       return {
-        items: result.data.map(item => projectSchema.parse(item)),
+        items: result.data.map((item: any) => projectSchema.parse(item)),
         nextToken: result.nextToken || undefined
       };
     } catch (error) {
+      console.error("=== listProjects error details ===", {
+        error,
+        name: (error as any).name,
+        message: (error as any).message,
+        code: (error as any).code,
+        stack: (error as any).stack
+      });
+      
       if (error instanceof Error && error.name === 'ZodError') {
         throw new ValidationError('Invalid query parameters', error);
       }
@@ -359,7 +380,7 @@ export class ApiClient {
       });
 
       return {
-        items: result.data.map(item => serviceSchema.parse(item)),
+        items: result.data.map((item: any) => serviceSchema.parse(item)),
         nextToken: result.nextToken || undefined
       };
     } catch (error) {
@@ -449,7 +470,7 @@ export class ApiClient {
       });
 
       return {
-        items: result.data.map(item => taskSchema.parse(item)),
+        items: result.data.map((item: any) => taskSchema.parse(item)),
         nextToken: result.nextToken || undefined
       };
     } catch (error) {
@@ -468,16 +489,16 @@ export class ApiClient {
    */
   async processUnifiedTaskOperation(data: UnifiedTaskOperation): Promise<{ task: Task; fieldIds: number[] }> {
     try {
-      console.log("Processing unified task operation with data:", data);
+      // console.log("Processing unified task operation with data:", data);
       
       const validatedData = unifiedTaskOperationSchema.parse(data);
-      console.log("Data validated successfully:", validatedData);
+      // console.log("Data validated successfully:", validatedData);
       
       if (validatedData.operation === 'create') {
-        console.log("Creating new task...");
+        // console.log("Creating new task...");
         return await this.createTaskWith360Data(validatedData);
       } else {
-        console.log("Updating existing task...");
+        // console.log("Updating existing task...");
         return await this.updateTaskWith360Data(validatedData);
       }
     } catch (error) {
@@ -563,9 +584,6 @@ export class ApiClient {
 
   
 }
-
-
-
 
 // Export singleton instance
 export const apiClient = new ApiClient();

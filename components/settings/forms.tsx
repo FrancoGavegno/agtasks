@@ -96,7 +96,7 @@ export default function Forms() {
   const paginatedForms = displayedForms.slice(startIndex, startIndex + rowsPerPage)
 
   const handleSavePreferences = async (selectedIds: string[]) => {
-    console.log("Guardando preferencias de formularios:", selectedIds)
+    // console.log("Guardando preferencias de formularios:", selectedIds)
     setSelectedForms(selectedIds)
     refreshForms()
   }
