@@ -253,7 +253,7 @@ NEXT_PUBLIC_JIRA_PROTOCOLS_PROJECT_ID=TEM
 NEXT_PUBLIC_JIRA_PROTOCOLS_QUEUE_ID=82
 
 NEXT_PUBLIC_FMS_WK_ID=5203
-NEXT_PUBLIC_FMS_API_URL=https://******.appsync-api.us-west-2.amazonaws.com/graphql
+NEXT_PUBLIC_FMS_API_URL=https://******.appsync-api.us-east-1.amazonaws.com/graphql
 NEXT_PUBLIC_FMS_API_KEY=da2-yawqn**************
 
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
