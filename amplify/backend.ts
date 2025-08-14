@@ -5,7 +5,4 @@ import { data } from './data/resource';
 defineBackend({
   auth,
   data,
-}, {
-  name: 'agtasks-backend',
-  region: 'us-east-1'
 });
